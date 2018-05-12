@@ -1,0 +1,18 @@
+Version: 1.4
+MainModule
+	Name:	ParsersTestware
+	Dir:	{Project}
+	Dcl
+		WindowPosition
+			X:	0
+			Y:	0
+			SizeX:	500
+			SizeY:	300
+	DclOpen:	False
+	Icl
+		WindowPosition
+			X:	0
+			Y:	236
+			SizeX:	1264
+			SizeY:	842
+	IclOpen:	True

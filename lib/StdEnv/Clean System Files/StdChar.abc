@@ -1,0 +1,1292 @@
+.comp 920 0101110110100
+.start _nostart_
+.depend "StdClass"
+.depend "StdInt"
+.depend "StdBool"
+.depend "StdOverloaded"
+.depend "StdChar"
+.endinfo
+.module m_StdChar "StdChar"
+.impmod _system
+.implab _cycle_in_spine
+.implab _type_error
+.implab _hnf
+.impdesc e_system_dind
+.implab e_system_nind e_system_eaind
+.impdesc e_system_dif
+.implab e_system_nif e_system_eaif
+.implab e_system_sif
+.impdesc e_system_dAP
+.implab e_system_nAP e_system_eaAP
+.implab e_system_sAP
+.impdesc ARRAY
+.impdesc _Nil
+.impdesc _Cons
+.impdesc _Conss
+.implab n_Conss ea_Conss
+.impdesc _Consts
+.implab n_Consts ea_Consts
+.impdesc _Conssts
+.implab n_Conssts ea_Conssts
+.impdesc _Tuple
+.impdesc d_S.1
+.implab n_S.1 ea_S.1
+.impdesc d_S.2
+.implab n_S.2 ea_S.2
+.impdesc d_S.3
+.implab n_S.3 ea_S.3
+.impdesc d_S.4
+.implab n_S.4 ea_S.4
+.impdesc d_S.5
+.implab n_S.5 ea_S.5
+.impdesc d_S.6
+.implab n_S.6 ea_S.6
+.implab _driver
+.impmod StdInt
+.implab e_StdInt_s-;7
+.implab e_StdInt_s<;17
+.implab e_StdInt_stoInt;20
+.impmod StdBool
+.implab e_StdBool_snot
+.export e_StdChar_sfromChar;24
+.descexp e_StdChar_dfromChar;24 e_StdChar_nfromChar;24 e_StdChar_lfromChar;24 1 0 "fromChar;24"
+.o 2 0
+e_StdChar_lfromChar;24
+	pop_a 1
+.d 1 0
+	jsr ea25
+.o 1 0
+	buildh ARRAY 1
+.d 1 0
+	rtn
+.n 1 e_StdChar_dfromChar;24
+.o 1 0
+e_StdChar_nfromChar;24
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea25
+.o 1 0
+	fillh ARRAY 1 1
+.d 1 0
+	rtn
+.o 1 0
+ea25
+	jsr_eval 0
+	pushC_a 0
+	pop_a 1
+.o 0 1 c
+e_StdChar_sfromChar;24
+.o 0 1 c
+s25
+	CtoAC
+
+.d 1 0
+	rtn
+.export e_StdChar_sfromChar;23
+.descexp e_StdChar_dfromChar;23 e_StdChar_nfromChar;23 e_StdChar_lfromChar;23 1 0 "fromChar;23"
+.o 2 0
+e_StdChar_lfromChar;23
+	pop_a 1
+.d 1 0
+	jsr ea24
+.o 0 1 c
+	buildC_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdChar_dfromChar;23
+.o 1 0
+e_StdChar_nfromChar;23
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea24
+.o 0 1 c
+	fillC_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea24
+	jsr_eval 0
+	pushC_a 0
+	pop_a 1
+.o 0 1 c
+e_StdChar_sfromChar;23
+.o 0 1 c
+s24
+.inline fromChar;23
+	no_op
+.end
+
+.d 0 1 c
+	rtn
+.export e_StdChar_sfromChar;22
+.descexp e_StdChar_dfromChar;22 e_StdChar_nfromChar;22 e_StdChar_lfromChar;22 1 0 "fromChar;22"
+.o 2 0
+e_StdChar_lfromChar;22
+	pop_a 1
+.d 1 0
+	jsr ea23
+.o 0 1 i
+	buildI_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdChar_dfromChar;22
+.o 1 0
+e_StdChar_nfromChar;22
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea23
+.o 0 1 i
+	fillI_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea23
+	jsr_eval 0
+	pushC_a 0
+	pop_a 1
+.o 0 1 c
+e_StdChar_sfromChar;22
+.o 0 1 c
+s23
+.inline fromChar;22
+	CtoI
+.end
+
+.d 0 1 i
+	rtn
+.export e_StdChar_stoChar;21
+.descexp e_StdChar_dtoChar;21 e_StdChar_ntoChar;21 e_StdChar_ltoChar;21 1 0 "toChar;21"
+.o 2 0
+e_StdChar_ltoChar;21
+	pop_a 1
+.d 1 0
+	jsr ea22
+.o 0 1 c
+	buildC_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdChar_dtoChar;21
+.o 1 0
+e_StdChar_ntoChar;21
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea22
+.o 0 1 c
+	fillC_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea22
+	jsr_eval 0
+	pushI_a 0
+	pop_a 1
+.o 0 1 i
+e_StdChar_stoChar;21
+.o 0 1 i
+s22
+.inline toChar;21
+	ItoC
+.end
+
+.d 0 1 c
+	rtn
+.export e_StdChar_stoChar;20
+.descexp e_StdChar_dtoChar;20 e_StdChar_ntoChar;20 e_StdChar_ltoChar;20 1 0 "toChar;20"
+.o 2 0
+e_StdChar_ltoChar;20
+	pop_a 1
+.d 1 0
+	jsr ea21
+.o 0 1 c
+	buildC_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdChar_dtoChar;20
+.o 1 0
+e_StdChar_ntoChar;20
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea21
+.o 0 1 c
+	fillC_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea21
+	jsr_eval 0
+	pushC_a 0
+	pop_a 1
+.o 0 1 c
+e_StdChar_stoChar;20
+.o 0 1 c
+s21
+.inline toChar;20
+	no_op
+.end
+
+.d 0 1 c
+	rtn
+.export e_StdChar_sone;17
+.descexp e_StdChar_done;17 e_StdChar_none;17 e_StdChar_lone;17 0 0 "one;17"
+.o 1 0
+e_StdChar_lone;17
+	halt
+.n 0 e_StdChar_done;17
+.o 1 0
+e_StdChar_none;17
+	push_node _cycle_in_spine 0
+.d 0 0
+	jsr ea18
+.o 0 1 c
+	fillC_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 0 0
+ea18
+.o 0 0
+e_StdChar_sone;17
+.o 0 0
+s18
+.inline one;17
+	pushI 1
+	ItoC
+.end
+
+.d 0 1 c
+	rtn
+.export e_StdChar_szero;16
+.descexp e_StdChar_dzero;16 e_StdChar_nzero;16 e_StdChar_lzero;16 0 0 "zero;16"
+.o 1 0
+e_StdChar_lzero;16
+	halt
+.n 0 e_StdChar_dzero;16
+.o 1 0
+e_StdChar_nzero;16
+	push_node _cycle_in_spine 0
+.d 0 0
+	jsr ea17
+.o 0 1 c
+	fillC_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 0 0
+ea17
+.o 0 0
+e_StdChar_szero;16
+.o 0 0
+s17
+.inline zero;16
+	pushI 0
+	ItoC
+.end
+
+.d 0 1 c
+	rtn
+.export e_StdChar_s-;15
+.descexp e_StdChar_d-;15 e_StdChar_n-;15 e_StdChar_l-;15 2 0 "-;15"
+.a 0 a16
+.o 2 0
+e_StdChar_l-;15
+	repl_args 1 1
+.o 2 0
+a16
+.d 2 0
+	jsr ea16
+.o 0 1 c
+	buildC_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 2 e_StdChar_d-;15
+.o 1 0
+e_StdChar_n-;15
+	push_node _cycle_in_spine 2
+.d 2 0
+	jsr ea16
+.o 0 1 c
+	fillC_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 2 0
+ea16
+	jsr_eval 1
+	jsr_eval 0
+	pushC_a 1
+	pushC_a 0
+	pop_a 2
+.o 0 2 cc
+e_StdChar_s-;15
+.o 0 2 cc
+s16
+.inline -;15
+	subI
+	ItoC
+.end
+
+.d 0 1 c
+	rtn
+.export e_StdChar_s+;14
+.descexp e_StdChar_d+;14 e_StdChar_n+;14 e_StdChar_l+;14 2 0 "+;14"
+.a 0 a15
+.o 2 0
+e_StdChar_l+;14
+	repl_args 1 1
+.o 2 0
+a15
+.d 2 0
+	jsr ea15
+.o 0 1 c
+	buildC_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 2 e_StdChar_d+;14
+.o 1 0
+e_StdChar_n+;14
+	push_node _cycle_in_spine 2
+.d 2 0
+	jsr ea15
+.o 0 1 c
+	fillC_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 2 0
+ea15
+	jsr_eval 1
+	jsr_eval 0
+	pushC_a 1
+	pushC_a 0
+	pop_a 2
+.o 0 2 cc
+e_StdChar_s+;14
+.o 0 2 cc
+s15
+.inline +;14
+	addI
+	ItoC
+.end
+
+.d 0 1 c
+	rtn
+.export e_StdChar_sisAscii
+.descexp e_StdChar_disAscii e_StdChar_nisAscii e_StdChar_lisAscii 1 0 "isAscii"
+.o 2 0
+e_StdChar_lisAscii
+	pop_a 1
+.d 1 0
+	jsr ea14
+.o 0 1 b
+	buildB_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdChar_disAscii
+.o 1 0
+e_StdChar_nisAscii
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea14
+.o 0 1 b
+	fillB_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea14
+	jsr_eval 0
+	pushC_a 0
+	pop_a 1
+.o 0 1 c
+e_StdChar_sisAscii
+.o 0 1 c
+s14
+	push_b 0
+	CtoI
+	pushI 128
+	push_b 1
+	update_b 1 2
+	update_b 0 1
+	pop_b 1
+	update_b 1 2
+	updatepop_b 0 1
+	ltI
+.d 0 1 b
+	rtn
+.export e_StdChar_sisPrint
+.descexp e_StdChar_disPrint e_StdChar_nisPrint e_StdChar_lisPrint 1 0 "isPrint"
+.o 2 0
+e_StdChar_lisPrint
+	pop_a 1
+.d 1 0
+	jsr ea13
+.o 0 1 b
+	buildB_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdChar_disPrint
+.o 1 0
+e_StdChar_nisPrint
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea13
+.o 0 1 b
+	fillB_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea13
+	jsr_eval 0
+	pushC_a 0
+	pop_a 1
+.o 0 1 c
+e_StdChar_sisPrint
+.o 0 1 c
+s13
+	pushC ' '
+	push_b 1
+	ltC
+
+	notB
+	jmp_false else.1
+	push_b 0
+	pushC '~'
+	update_b 1 2
+	updatepop_b 0 1
+	ltC
+
+	notB
+.d 0 1 b
+	rtn
+else.1
+	pop_b 1
+	pushB FALSE
+.d 0 1 b
+	rtn
+.export e_StdChar_sisControl
+.descexp e_StdChar_disControl e_StdChar_nisControl e_StdChar_lisControl 1 0 "isControl"
+.o 2 0
+e_StdChar_lisControl
+	pop_a 1
+.d 1 0
+	jsr ea12
+.o 0 1 b
+	buildB_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdChar_disControl
+.o 1 0
+e_StdChar_nisControl
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea12
+.o 0 1 b
+	fillB_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea12
+	jsr_eval 0
+	pushC_a 0
+	pop_a 1
+.o 0 1 c
+e_StdChar_sisControl
+.o 0 1 c
+s12
+	pushC ' '
+	push_b 1
+	ltC
+
+	jmp_false else.2
+	pop_b 1
+	pushB TRUE
+.d 0 1 b
+	rtn
+else.2
+	pushC '\177'
+	push_b 1
+	update_b 1 2
+	updatepop_b 0 1
+	eqC
+
+.d 0 1 b
+	rtn
+.export e_StdChar_sisSpace
+.descexp e_StdChar_disSpace e_StdChar_nisSpace e_StdChar_lisSpace 1 0 "isSpace"
+.o 2 0
+e_StdChar_lisSpace
+	pop_a 1
+.d 1 0
+	jsr ea11
+.o 0 1 b
+	buildB_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdChar_disSpace
+.o 1 0
+e_StdChar_nisSpace
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea11
+.o 0 1 b
+	fillB_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea11
+	jsr_eval 0
+	pushC_a 0
+	pop_a 1
+.o 0 1 c
+e_StdChar_sisSpace
+.o 0 1 c
+s11
+	pushC ' '
+	push_b 1
+	eqC
+
+	jmp_false else.3
+	pop_b 1
+	pushB TRUE
+.d 0 1 b
+	rtn
+else.3
+	pushC '\t'
+	push_b 1
+	eqC
+
+	jmp_false else.4
+	pop_b 1
+	pushB TRUE
+.d 0 1 b
+	rtn
+else.4
+	pushC '\n'
+	push_b 1
+	eqC
+
+	jmp_false else.5
+	pop_b 1
+	pushB TRUE
+.d 0 1 b
+	rtn
+else.5
+	pushC '\r'
+	push_b 1
+	eqC
+
+	jmp_false else.6
+	pop_b 1
+	pushB TRUE
+.d 0 1 b
+	rtn
+else.6
+	pushC '\f'
+	push_b 1
+	eqC
+
+	jmp_false else.7
+	pop_b 1
+	pushB TRUE
+.d 0 1 b
+	rtn
+else.7
+	pushC '\013'
+	push_b 1
+	update_b 1 2
+	updatepop_b 0 1
+	eqC
+
+.d 0 1 b
+	rtn
+.export e_StdChar_s==;18
+.descexp e_StdChar_d==;18 e_StdChar_n==;18 e_StdChar_l==;18 2 0 "==;18"
+.a 0 a19
+.o 2 0
+e_StdChar_l==;18
+	repl_args 1 1
+.o 2 0
+a19
+.d 2 0
+	jsr ea19
+.o 0 1 b
+	buildB_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 2 e_StdChar_d==;18
+.o 1 0
+e_StdChar_n==;18
+	push_node _cycle_in_spine 2
+.d 2 0
+	jsr ea19
+.o 0 1 b
+	fillB_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 2 0
+ea19
+	jsr_eval 1
+	jsr_eval 0
+	pushC_a 1
+	pushC_a 0
+	pop_a 2
+.o 0 2 cc
+e_StdChar_s==;18
+.o 0 2 cc
+s19
+.inline ==;18
+	eqC
+.end
+
+.d 0 1 b
+	rtn
+.export e_StdChar_sisHexDigit
+.descexp e_StdChar_disHexDigit e_StdChar_nisHexDigit e_StdChar_lisHexDigit 1 0 "isHexDigit"
+.o 2 0
+e_StdChar_lisHexDigit
+	pop_a 1
+.d 1 0
+	jsr ea10
+.o 0 1 b
+	buildB_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdChar_disHexDigit
+.o 1 0
+e_StdChar_nisHexDigit
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea10
+.o 0 1 b
+	fillB_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea10
+	jsr_eval 0
+	pushC_a 0
+	pop_a 1
+.o 0 1 c
+e_StdChar_sisHexDigit
+.o 0 1 c
+s10
+	pushC '0'
+	push_b 1
+	ltC
+
+	notB
+	jmp_false else.8
+	push_b 0
+	pushC '9'
+	ltC
+
+	notB
+	jmp_false else.8
+	pop_b 1
+	pushB TRUE
+.d 0 1 b
+	rtn
+else.8
+	push_b 0
+	updatepop_b 0 1
+	pushI 223
+	and%
+
+	pushC 'A'
+	push_b 1
+	ltC
+
+	notB
+	jmp_false else.10
+	push_b 0
+	pushC 'F'
+	update_b 1 2
+	updatepop_b 0 1
+	ltC
+
+	notB
+.d 0 1 b
+	rtn
+else.10
+	pop_b 1
+	pushB FALSE
+.d 0 1 b
+	rtn
+.export e_StdChar_sisOctDigit
+.descexp e_StdChar_disOctDigit e_StdChar_nisOctDigit e_StdChar_lisOctDigit 1 0 "isOctDigit"
+.o 2 0
+e_StdChar_lisOctDigit
+	pop_a 1
+.d 1 0
+	jsr ea9
+.o 0 1 b
+	buildB_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdChar_disOctDigit
+.o 1 0
+e_StdChar_nisOctDigit
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea9
+.o 0 1 b
+	fillB_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea9
+	jsr_eval 0
+	pushC_a 0
+	pop_a 1
+.o 0 1 c
+e_StdChar_sisOctDigit
+.o 0 1 c
+s9
+	pushC '0'
+	push_b 1
+	ltC
+
+	notB
+	jmp_false else.11
+	push_b 0
+	pushC '7'
+	update_b 1 2
+	updatepop_b 0 1
+	ltC
+
+	notB
+.d 0 1 b
+	rtn
+else.11
+	pop_b 1
+	pushB FALSE
+.d 0 1 b
+	rtn
+.export e_StdChar_sisDigit
+.descexp e_StdChar_disDigit e_StdChar_nisDigit e_StdChar_lisDigit 1 0 "isDigit"
+.o 2 0
+e_StdChar_lisDigit
+	pop_a 1
+.d 1 0
+	jsr ea8
+.o 0 1 b
+	buildB_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdChar_disDigit
+.o 1 0
+e_StdChar_nisDigit
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea8
+.o 0 1 b
+	fillB_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea8
+	jsr_eval 0
+	pushC_a 0
+	pop_a 1
+.o 0 1 c
+e_StdChar_sisDigit
+.o 0 1 c
+s8
+	pushC '0'
+	push_b 1
+	ltC
+
+	notB
+	jmp_false else.12
+	push_b 0
+	pushC '9'
+	update_b 1 2
+	updatepop_b 0 1
+	ltC
+
+	notB
+.d 0 1 b
+	rtn
+else.12
+	pop_b 1
+	pushB FALSE
+.d 0 1 b
+	rtn
+.export e_StdChar_sisAlphanum
+.descexp e_StdChar_disAlphanum e_StdChar_nisAlphanum e_StdChar_lisAlphanum 1 0 "isAlphanum"
+.o 2 0
+e_StdChar_lisAlphanum
+	pop_a 1
+.d 1 0
+	jsr ea7
+.o 0 1 b
+	buildB_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdChar_disAlphanum
+.o 1 0
+e_StdChar_nisAlphanum
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea7
+.o 0 1 b
+	fillB_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea7
+	jsr_eval 0
+	pushC_a 0
+	pop_a 1
+.o 0 1 c
+e_StdChar_sisAlphanum
+.o 0 1 c
+s7
+	push_b 0
+	pushI 223
+	and%
+
+	pushC 'A'
+	push_b 1
+	ltC
+
+	notB
+	jmp_false else.13
+	push_b 0
+	pushC 'Z'
+	update_b 1 2
+	updatepop_b 0 1
+	ltC
+
+	notB
+	pushI 0
+	update_b 1 0
+	jmp_false else.13
+	pop_b 2
+	pushB TRUE
+.d 0 1 b
+	rtn
+else.13
+	pushC '0'
+	push_b 2
+	update_b 1 2
+	updatepop_b 0 1
+	ltC
+
+	notB
+	jmp_false else.15
+	push_b 0
+	pushC '9'
+	update_b 1 2
+	updatepop_b 0 1
+	ltC
+
+	notB
+.d 0 1 b
+	rtn
+else.15
+	pop_b 1
+	pushB FALSE
+.d 0 1 b
+	rtn
+.export e_StdChar_sisAlpha
+.descexp e_StdChar_disAlpha e_StdChar_nisAlpha e_StdChar_lisAlpha 1 0 "isAlpha"
+.o 2 0
+e_StdChar_lisAlpha
+	pop_a 1
+.d 1 0
+	jsr ea6
+.o 0 1 b
+	buildB_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdChar_disAlpha
+.o 1 0
+e_StdChar_nisAlpha
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea6
+.o 0 1 b
+	fillB_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea6
+	jsr_eval 0
+	pushC_a 0
+	pop_a 1
+.o 0 1 c
+e_StdChar_sisAlpha
+.o 0 1 c
+s6
+	push_b 0
+	updatepop_b 0 1
+	pushI 223
+	and%
+
+	pushC 'A'
+	push_b 1
+	ltC
+
+	notB
+	jmp_false else.16
+	push_b 0
+	pushC 'Z'
+	update_b 1 2
+	updatepop_b 0 1
+	ltC
+
+	notB
+.d 0 1 b
+	rtn
+else.16
+	pop_b 1
+	pushB FALSE
+.d 0 1 b
+	rtn
+.export e_StdChar_sisLower
+.descexp e_StdChar_disLower e_StdChar_nisLower e_StdChar_lisLower 1 0 "isLower"
+.o 2 0
+e_StdChar_lisLower
+	pop_a 1
+.d 1 0
+	jsr ea5
+.o 0 1 b
+	buildB_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdChar_disLower
+.o 1 0
+e_StdChar_nisLower
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea5
+.o 0 1 b
+	fillB_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea5
+	jsr_eval 0
+	pushC_a 0
+	pop_a 1
+.o 0 1 c
+e_StdChar_sisLower
+.o 0 1 c
+s5
+	pushC 'a'
+	push_b 1
+	ltC
+
+	notB
+	jmp_false else.17
+	push_b 0
+	pushC 'z'
+	update_b 1 2
+	updatepop_b 0 1
+	ltC
+
+	notB
+.d 0 1 b
+	rtn
+else.17
+	pop_b 1
+	pushB FALSE
+.d 0 1 b
+	rtn
+.export e_StdChar_sisUpper
+.descexp e_StdChar_disUpper e_StdChar_nisUpper e_StdChar_lisUpper 1 0 "isUpper"
+.o 2 0
+e_StdChar_lisUpper
+	pop_a 1
+.d 1 0
+	jsr ea4
+.o 0 1 b
+	buildB_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdChar_disUpper
+.o 1 0
+e_StdChar_nisUpper
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea4
+.o 0 1 b
+	fillB_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea4
+	jsr_eval 0
+	pushC_a 0
+	pop_a 1
+.o 0 1 c
+e_StdChar_sisUpper
+.o 0 1 c
+s4
+	pushC 'A'
+	push_b 1
+	ltC
+
+	notB
+	jmp_false else.18
+	push_b 0
+	pushC 'Z'
+	update_b 1 2
+	updatepop_b 0 1
+	ltC
+
+	notB
+.d 0 1 b
+	rtn
+else.18
+	pop_b 1
+	pushB FALSE
+.d 0 1 b
+	rtn
+.export e_StdChar_stoLower
+.descexp e_StdChar_dtoLower e_StdChar_ntoLower e_StdChar_ltoLower 1 0 "toLower"
+.o 2 0
+e_StdChar_ltoLower
+	pop_a 1
+.d 1 0
+	jsr ea3
+.o 0 1 c
+	buildC_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdChar_dtoLower
+.o 1 0
+e_StdChar_ntoLower
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea3
+.o 0 1 c
+	fillC_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea3
+	jsr_eval 0
+	pushC_a 0
+	pop_a 1
+.o 0 1 c
+e_StdChar_stoLower
+.o 0 1 c
+s3
+	pushC 'A'
+	push_b 1
+	ltC
+
+	notB
+	jmp_false else.19
+	push_b 0
+	pushC 'Z'
+	ltC
+
+	notB
+	jmp_false else.19
+	push_b 0
+	updatepop_b 0 1
+	pushI 32
+	or%
+
+.d 0 1 c
+	rtn
+else.19
+.d 0 1 c
+	rtn
+.o 0 1 c
+s27
+.inline set_lowercase_bit
+	pushI 32
+	or%
+.end
+
+.d 0 1 c
+	rtn
+.export e_StdChar_stoUpper
+.descexp e_StdChar_dtoUpper e_StdChar_ntoUpper e_StdChar_ltoUpper 1 0 "toUpper"
+.o 2 0
+e_StdChar_ltoUpper
+	pop_a 1
+.d 1 0
+	jsr ea2
+.o 0 1 c
+	buildC_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdChar_dtoUpper
+.o 1 0
+e_StdChar_ntoUpper
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea2
+.o 0 1 c
+	fillC_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea2
+	jsr_eval 0
+	pushC_a 0
+	pop_a 1
+.o 0 1 c
+e_StdChar_stoUpper
+.o 0 1 c
+s2
+	pushC 'a'
+	push_b 1
+	ltC
+
+	notB
+	jmp_false else.21
+	push_b 0
+	pushC 'z'
+	ltC
+
+	notB
+	jmp_false else.21
+	push_b 0
+	updatepop_b 0 1
+	pushI 223
+	and%
+
+.d 0 1 c
+	rtn
+else.21
+.d 0 1 c
+	rtn
+.export e_StdChar_s<;19
+.descexp e_StdChar_d<;19 e_StdChar_n<;19 e_StdChar_l<;19 2 0 "<;19"
+.a 0 a20
+.o 2 0
+e_StdChar_l<;19
+	repl_args 1 1
+.o 2 0
+a20
+.d 2 0
+	jsr ea20
+.o 0 1 b
+	buildB_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 2 e_StdChar_d<;19
+.o 1 0
+e_StdChar_n<;19
+	push_node _cycle_in_spine 2
+.d 2 0
+	jsr ea20
+.o 0 1 b
+	fillB_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 2 0
+ea20
+	jsr_eval 1
+	jsr_eval 0
+	pushC_a 1
+	pushC_a 0
+	pop_a 2
+.o 0 2 cc
+e_StdChar_s<;19
+.o 0 2 cc
+s20
+.inline <;19
+	ltC
+.end
+
+.d 0 1 b
+	rtn
+.o 0 1 c
+s26
+.inline clear_lowercase_bit
+	pushI 223
+	and%
+.end
+
+.d 0 1 c
+	rtn
+.export e_StdChar_sdigitToInt
+.descexp e_StdChar_ddigitToInt e_StdChar_ndigitToInt e_StdChar_ldigitToInt 1 0 "digitToInt"
+.o 2 0
+e_StdChar_ldigitToInt
+	pop_a 1
+.d 1 0
+	jsr ea1
+.o 0 1 i
+	buildI_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdChar_ddigitToInt
+.o 1 0
+e_StdChar_ndigitToInt
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea1
+.o 0 1 i
+	fillI_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea1
+	jsr_eval 0
+	pushC_a 0
+	pop_a 1
+.o 0 1 c
+e_StdChar_sdigitToInt
+.o 0 1 c
+s1
+	push_b 0
+	CtoI
+	pushI 48
+	push_b 1
+	update_b 1 2
+	update_b 0 1
+	pop_b 1
+	update_b 1 2
+	updatepop_b 0 1
+	subI
+.d 0 1 i
+	rtn

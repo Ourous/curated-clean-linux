@@ -1,0 +1,2149 @@
+.comp 920 0101110110100
+.start _nostart_
+.depend "StdChar"
+.depend "_SystemArray"
+.depend "StdArray"
+.depend "StdInt"
+.depend "StdBool"
+.depend "StdClass"
+.depend "StdOverloaded"
+.depend "StdReal"
+.endinfo
+.module m_StdReal "StdReal"
+.impmod _system
+.implab _cycle_in_spine
+.implab _type_error
+.implab _hnf
+.impdesc e_system_dind
+.implab e_system_nind e_system_eaind
+.impdesc e_system_dif
+.implab e_system_nif e_system_eaif
+.implab e_system_sif
+.impdesc e_system_dAP
+.implab e_system_nAP e_system_eaAP
+.implab e_system_sAP
+.impdesc ARRAY
+.impdesc _Nil
+.impdesc _Cons
+.impdesc _Conss
+.implab n_Conss ea_Conss
+.impdesc _Consts
+.implab n_Consts ea_Consts
+.impdesc _Conssts
+.implab n_Conssts ea_Conssts
+.impdesc _Tuple
+.impdesc d_S.1
+.implab n_S.1 ea_S.1
+.impdesc d_S.2
+.implab n_S.2 ea_S.2
+.impdesc d_S.3
+.implab n_S.3 ea_S.3
+.impdesc d_S.4
+.implab n_S.4 ea_S.4
+.impdesc d_S.5
+.implab n_S.5 ea_S.5
+.impdesc d_S.6
+.implab n_S.6 ea_S.6
+.implab _driver
+.impmod StdChar
+.implab e_StdChar_s==;18
+.implab e_StdChar_s<;19
+.impmod _SystemArray
+.impmod StdInt
+.implab e_StdInt_s+;6
+.implab e_StdInt_s-;7
+.implab e_StdInt_s*;9
+.implab e_StdInt_s~;15
+.implab e_StdInt_s==;16
+.implab e_StdInt_s<;17
+.implab e_StdInt_stoInt;20
+.impmod StdBool
+.implab e_StdBool_snot
+.export e_StdReal_satanh;34
+.descexp e_StdReal_datanh;34 e_StdReal_natanh;34 e_StdReal_latanh;34 1 0 "atanh;34"
+.o 2 0
+e_StdReal_latanh;34
+	pop_a 1
+.d 1 0
+	jsr ea35
+.o 0 1 r
+	buildR_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdReal_datanh;34
+.o 1 0
+e_StdReal_natanh;34
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea35
+.o 0 1 r
+	fillR_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea35
+	jsr_eval 0
+	pushR_a 0
+	pop_a 1
+.o 0 1 r
+e_StdReal_satanh;34
+.o 0 1 r
+s35
+	push_b 0
+	pushR 1.0
+	subR
+
+	push_b 1
+	pushR 1.0
+	addR
+
+	update_b 1 2
+	updatepop_b 0 1
+	divR
+
+	lnR
+
+	pushR 0.5
+	push_b 1
+	update_b 1 2
+	update_b 0 1
+	pop_b 1
+	mulR
+
+.d 0 1 r
+	rtn
+.export e_StdReal_sacosh;33
+.descexp e_StdReal_dacosh;33 e_StdReal_nacosh;33 e_StdReal_lacosh;33 1 0 "acosh;33"
+.o 2 0
+e_StdReal_lacosh;33
+	pop_a 1
+.d 1 0
+	jsr ea34
+.o 0 1 r
+	buildR_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdReal_dacosh;33
+.o 1 0
+e_StdReal_nacosh;33
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea34
+.o 0 1 r
+	fillR_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea34
+	jsr_eval 0
+	pushR_a 0
+	pop_a 1
+.o 0 1 r
+e_StdReal_sacosh;33
+.o 0 1 r
+s34
+	push_b 0
+	push_b 1
+	mulR
+
+	pushR 1.0
+	push_b 1
+	update_b 1 2
+	update_b 0 1
+	pop_b 1
+	subR
+
+	sqrtR
+
+	push_b 1
+	update_b 1 2
+	updatepop_b 0 1
+	addR
+
+	lnR
+
+.d 0 1 r
+	rtn
+.export e_StdReal_sasinh;32
+.descexp e_StdReal_dasinh;32 e_StdReal_nasinh;32 e_StdReal_lasinh;32 1 0 "asinh;32"
+.o 2 0
+e_StdReal_lasinh;32
+	pop_a 1
+.d 1 0
+	jsr ea33
+.o 0 1 r
+	buildR_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdReal_dasinh;32
+.o 1 0
+e_StdReal_nasinh;32
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea33
+.o 0 1 r
+	fillR_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea33
+	jsr_eval 0
+	pushR_a 0
+	pop_a 1
+.o 0 1 r
+e_StdReal_sasinh;32
+.o 0 1 r
+s33
+	push_b 0
+	push_b 1
+	mulR
+
+	pushR 1.0
+	push_b 1
+	update_b 1 2
+	update_b 0 1
+	pop_b 1
+	addR
+
+	sqrtR
+
+	push_b 1
+	update_b 1 2
+	updatepop_b 0 1
+	addR
+
+	lnR
+
+.d 0 1 r
+	rtn
+.export e_StdReal_stanh;31
+.descexp e_StdReal_dtanh;31 e_StdReal_ntanh;31 e_StdReal_ltanh;31 1 0 "tanh;31"
+.o 2 0
+e_StdReal_ltanh;31
+	pop_a 1
+.d 1 0
+	jsr ea32
+.o 0 1 r
+	buildR_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdReal_dtanh;31
+.o 1 0
+e_StdReal_ntanh;31
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea32
+.o 0 1 r
+	fillR_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea32
+	jsr_eval 0
+	pushR_a 0
+	pop_a 1
+.o 0 1 r
+e_StdReal_stanh;31
+.o 0 1 r
+s32
+	push_b 0
+	expR
+
+	push_b 1
+	negR
+
+	expR
+
+	push_b 0
+	push_b 2
+	addR
+
+	push_b 1
+	push_b 3
+	subR
+
+	update_b 1 4
+	updatepop_b 0 3
+	divR
+
+.d 0 1 r
+	rtn
+.export e_StdReal_scosh;30
+.descexp e_StdReal_dcosh;30 e_StdReal_ncosh;30 e_StdReal_lcosh;30 1 0 "cosh;30"
+.o 2 0
+e_StdReal_lcosh;30
+	pop_a 1
+.d 1 0
+	jsr ea31
+.o 0 1 r
+	buildR_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdReal_dcosh;30
+.o 1 0
+e_StdReal_ncosh;30
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea31
+.o 0 1 r
+	fillR_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea31
+	jsr_eval 0
+	pushR_a 0
+	pop_a 1
+.o 0 1 r
+e_StdReal_scosh;30
+.o 0 1 r
+s31
+	push_b 0
+	negR
+
+	expR
+
+	push_b 1
+	expR
+
+	update_b 1 2
+	updatepop_b 0 1
+	addR
+
+	pushR 0.5
+	push_b 1
+	update_b 1 2
+	update_b 0 1
+	pop_b 1
+	mulR
+
+.d 0 1 r
+	rtn
+.export e_StdReal_ssinh;29
+.descexp e_StdReal_dsinh;29 e_StdReal_nsinh;29 e_StdReal_lsinh;29 1 0 "sinh;29"
+.o 2 0
+e_StdReal_lsinh;29
+	pop_a 1
+.d 1 0
+	jsr ea30
+.o 0 1 r
+	buildR_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdReal_dsinh;29
+.o 1 0
+e_StdReal_nsinh;29
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea30
+.o 0 1 r
+	fillR_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea30
+	jsr_eval 0
+	pushR_a 0
+	pop_a 1
+.o 0 1 r
+e_StdReal_ssinh;29
+.o 0 1 r
+s30
+	push_b 0
+	negR
+
+	expR
+
+	push_b 1
+	expR
+
+	update_b 1 2
+	updatepop_b 0 1
+	subR
+
+	pushR 0.5
+	push_b 1
+	update_b 1 2
+	update_b 0 1
+	pop_b 1
+	mulR
+
+.d 0 1 r
+	rtn
+.export e_StdReal_satan;28
+.descexp e_StdReal_datan;28 e_StdReal_natan;28 e_StdReal_latan;28 1 0 "atan;28"
+.o 2 0
+e_StdReal_latan;28
+	pop_a 1
+.d 1 0
+	jsr ea29
+.o 0 1 r
+	buildR_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdReal_datan;28
+.o 1 0
+e_StdReal_natan;28
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea29
+.o 0 1 r
+	fillR_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea29
+	jsr_eval 0
+	pushR_a 0
+	pop_a 1
+.o 0 1 r
+e_StdReal_satan;28
+.o 0 1 r
+s29
+.inline atan;28
+	atanR
+.end
+
+.d 0 1 r
+	rtn
+.export e_StdReal_sacos;27
+.descexp e_StdReal_dacos;27 e_StdReal_nacos;27 e_StdReal_lacos;27 1 0 "acos;27"
+.o 2 0
+e_StdReal_lacos;27
+	pop_a 1
+.d 1 0
+	jsr ea28
+.o 0 1 r
+	buildR_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdReal_dacos;27
+.o 1 0
+e_StdReal_nacos;27
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea28
+.o 0 1 r
+	fillR_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea28
+	jsr_eval 0
+	pushR_a 0
+	pop_a 1
+.o 0 1 r
+e_StdReal_sacos;27
+.o 0 1 r
+s28
+.inline acos;27
+	acosR
+.end
+
+.d 0 1 r
+	rtn
+.export e_StdReal_sasin;26
+.descexp e_StdReal_dasin;26 e_StdReal_nasin;26 e_StdReal_lasin;26 1 0 "asin;26"
+.o 2 0
+e_StdReal_lasin;26
+	pop_a 1
+.d 1 0
+	jsr ea27
+.o 0 1 r
+	buildR_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdReal_dasin;26
+.o 1 0
+e_StdReal_nasin;26
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea27
+.o 0 1 r
+	fillR_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea27
+	jsr_eval 0
+	pushR_a 0
+	pop_a 1
+.o 0 1 r
+e_StdReal_sasin;26
+.o 0 1 r
+s27
+.inline asin;26
+	asinR
+.end
+
+.d 0 1 r
+	rtn
+.export e_StdReal_stan;25
+.descexp e_StdReal_dtan;25 e_StdReal_ntan;25 e_StdReal_ltan;25 1 0 "tan;25"
+.o 2 0
+e_StdReal_ltan;25
+	pop_a 1
+.d 1 0
+	jsr ea26
+.o 0 1 r
+	buildR_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdReal_dtan;25
+.o 1 0
+e_StdReal_ntan;25
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea26
+.o 0 1 r
+	fillR_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea26
+	jsr_eval 0
+	pushR_a 0
+	pop_a 1
+.o 0 1 r
+e_StdReal_stan;25
+.o 0 1 r
+s26
+.inline tan;25
+	tanR
+.end
+
+.d 0 1 r
+	rtn
+.export e_StdReal_scos;24
+.descexp e_StdReal_dcos;24 e_StdReal_ncos;24 e_StdReal_lcos;24 1 0 "cos;24"
+.o 2 0
+e_StdReal_lcos;24
+	pop_a 1
+.d 1 0
+	jsr ea25
+.o 0 1 r
+	buildR_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdReal_dcos;24
+.o 1 0
+e_StdReal_ncos;24
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea25
+.o 0 1 r
+	fillR_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea25
+	jsr_eval 0
+	pushR_a 0
+	pop_a 1
+.o 0 1 r
+e_StdReal_scos;24
+.o 0 1 r
+s25
+.inline cos;24
+	cosR
+.end
+
+.d 0 1 r
+	rtn
+.export e_StdReal_ssin;23
+.descexp e_StdReal_dsin;23 e_StdReal_nsin;23 e_StdReal_lsin;23 1 0 "sin;23"
+.o 2 0
+e_StdReal_lsin;23
+	pop_a 1
+.d 1 0
+	jsr ea24
+.o 0 1 r
+	buildR_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdReal_dsin;23
+.o 1 0
+e_StdReal_nsin;23
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea24
+.o 0 1 r
+	fillR_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea24
+	jsr_eval 0
+	pushR_a 0
+	pop_a 1
+.o 0 1 r
+e_StdReal_ssin;23
+.o 0 1 r
+s24
+.inline sin;23
+	sinR
+.end
+
+.d 0 1 r
+	rtn
+.export e_StdReal_ssqrt;22
+.descexp e_StdReal_dsqrt;22 e_StdReal_nsqrt;22 e_StdReal_lsqrt;22 1 0 "sqrt;22"
+.o 2 0
+e_StdReal_lsqrt;22
+	pop_a 1
+.d 1 0
+	jsr ea23
+.o 0 1 r
+	buildR_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdReal_dsqrt;22
+.o 1 0
+e_StdReal_nsqrt;22
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea23
+.o 0 1 r
+	fillR_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea23
+	jsr_eval 0
+	pushR_a 0
+	pop_a 1
+.o 0 1 r
+e_StdReal_ssqrt;22
+.o 0 1 r
+s23
+.inline sqrt;22
+	sqrtR
+.end
+
+.d 0 1 r
+	rtn
+.export e_StdReal_sexp;21
+.descexp e_StdReal_dexp;21 e_StdReal_nexp;21 e_StdReal_lexp;21 1 0 "exp;21"
+.o 2 0
+e_StdReal_lexp;21
+	pop_a 1
+.d 1 0
+	jsr ea22
+.o 0 1 r
+	buildR_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdReal_dexp;21
+.o 1 0
+e_StdReal_nexp;21
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea22
+.o 0 1 r
+	fillR_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea22
+	jsr_eval 0
+	pushR_a 0
+	pop_a 1
+.o 0 1 r
+e_StdReal_sexp;21
+.o 0 1 r
+s22
+.inline exp;21
+	expR
+.end
+
+.d 0 1 r
+	rtn
+.export e_StdReal_slog10;20
+.descexp e_StdReal_dlog10;20 e_StdReal_nlog10;20 e_StdReal_llog10;20 1 0 "log10;20"
+.o 2 0
+e_StdReal_llog10;20
+	pop_a 1
+.d 1 0
+	jsr ea21
+.o 0 1 r
+	buildR_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdReal_dlog10;20
+.o 1 0
+e_StdReal_nlog10;20
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea21
+.o 0 1 r
+	fillR_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea21
+	jsr_eval 0
+	pushR_a 0
+	pop_a 1
+.o 0 1 r
+e_StdReal_slog10;20
+.o 0 1 r
+s21
+.inline log10;20
+	log10R
+.end
+
+.d 0 1 r
+	rtn
+.export e_StdReal_sln;19
+.descexp e_StdReal_dln;19 e_StdReal_nln;19 e_StdReal_lln;19 1 0 "ln;19"
+.o 2 0
+e_StdReal_lln;19
+	pop_a 1
+.d 1 0
+	jsr ea20
+.o 0 1 r
+	buildR_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdReal_dln;19
+.o 1 0
+e_StdReal_nln;19
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea20
+.o 0 1 r
+	fillR_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea20
+	jsr_eval 0
+	pushR_a 0
+	pop_a 1
+.o 0 1 r
+e_StdReal_sln;19
+.o 0 1 r
+s20
+.inline ln;19
+	lnR
+.end
+
+.d 0 1 r
+	rtn
+.export e_StdReal_sfromReal;18
+.descexp e_StdReal_dfromReal;18 e_StdReal_nfromReal;18 e_StdReal_lfromReal;18 1 0 "fromReal;18"
+.o 2 0
+e_StdReal_lfromReal;18
+	pop_a 1
+.d 1 0
+	jsr ea19
+.o 1 0
+	buildh ARRAY 1
+.d 1 0
+	rtn
+.n 1 e_StdReal_dfromReal;18
+.o 1 0
+e_StdReal_nfromReal;18
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea19
+.o 1 0
+	fillh ARRAY 1 1
+.d 1 0
+	rtn
+.o 1 0
+ea19
+	jsr_eval 0
+	pushR_a 0
+	pop_a 1
+.o 0 1 r
+e_StdReal_sfromReal;18
+.o 0 1 r
+s19
+.inline fromReal;18
+.d 0 1 r
+	jsr RtoAC
+.o 1 0
+.end
+
+.d 1 0
+	rtn
+.export e_StdReal_sfromReal;17
+.descexp e_StdReal_dfromReal;17 e_StdReal_nfromReal;17 e_StdReal_lfromReal;17 1 0 "fromReal;17"
+.o 2 0
+e_StdReal_lfromReal;17
+	pop_a 1
+.d 1 0
+	jsr ea18
+.o 0 1 r
+	buildR_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdReal_dfromReal;17
+.o 1 0
+e_StdReal_nfromReal;17
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea18
+.o 0 1 r
+	fillR_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea18
+	jsr_eval 0
+	pushR_a 0
+	pop_a 1
+.o 0 1 r
+e_StdReal_sfromReal;17
+.o 0 1 r
+s18
+.inline fromReal;17
+	no_op
+.end
+
+.d 0 1 r
+	rtn
+.export e_StdReal_sfromReal;16
+.descexp e_StdReal_dfromReal;16 e_StdReal_nfromReal;16 e_StdReal_lfromReal;16 1 0 "fromReal;16"
+.o 2 0
+e_StdReal_lfromReal;16
+	pop_a 1
+.d 1 0
+	jsr ea17
+.o 0 1 i
+	buildI_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdReal_dfromReal;16
+.o 1 0
+e_StdReal_nfromReal;16
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea17
+.o 0 1 i
+	fillI_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea17
+	jsr_eval 0
+	pushR_a 0
+	pop_a 1
+.o 0 1 r
+e_StdReal_sfromReal;16
+.o 0 1 r
+s17
+.inline fromReal;16
+	RtoI
+.end
+
+.d 0 1 i
+	rtn
+.export e_StdReal_stoReal;15
+.descexp e_StdReal_dtoReal;15 e_StdReal_ntoReal;15 e_StdReal_ltoReal;15 1 0 "toReal;15"
+.o 2 0
+e_StdReal_ltoReal;15
+	pop_a 1
+.d 1 0
+	jsr ea16
+.o 0 1 r
+	buildR_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdReal_dtoReal;15
+.o 1 0
+e_StdReal_ntoReal;15
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea16
+.o 0 1 r
+	fillR_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea16
+	jsr_eval 0
+	push_array 0
+	update_a 0 1
+	pop_a 1
+.o 1 0
+e_StdReal_stoReal;15
+.o 1 0
+s16
+	push_a 0
+	push_arraysize CHAR 0 1
+	pushI 0
+	push_b 1
+	eqI
+	jmp_false else.1
+	pop_a 1
+	pop_b 1
+	pushR 0.0
+.d 0 1 r
+	rtn
+else.1
+	pushI 0
+	push_a 0
+	select CHAR 0 1
+	pushC '-'
+	push_b 1
+	eqC
+	jmp_false else.2
+	pushR 0.0
+	pushI 1
+	push_a 0
+	push_b 3
+	update_b 2 4
+	update_b 1 3
+	updatepop_b 0 2
+	updatepop_a 0 1
+.d 1 3 iir
+	jsr s36
+.o 0 1 r
+	negR
+
+.d 0 1 r
+	rtn
+else.2
+	pushC '+'
+	push_b 1
+	eqC
+	jmp_false else.3
+	pushR 0.0
+	pushI 1
+	push_a 0
+	push_b 3
+	updatepop_a 0 1
+	update_b 2 4
+	update_b 1 3
+	updatepop_b 0 2
+.d 1 3 iir
+	jmp s36
+else.3
+	pushR 0.0
+	pushI 0
+	push_a 0
+	push_b 3
+	updatepop_a 0 1
+	update_b 2 4
+	update_b 1 3
+	updatepop_b 0 2
+.d 1 3 iir
+	jmp s36
+.o 1 3 iir
+s36
+	push_b 0
+	push_b 2
+	eqI
+	jmp_false else.4
+	pop_a 1
+	pop_b 2
+.d 0 1 r
+	rtn
+else.4
+	push_b 1
+	push_a 0
+	select CHAR 0 1
+	pushC '0'
+	push_b 1
+	ltC
+	notB
+	jmp_false else.5
+	push_b 0
+	pushC '9'
+	ltC
+	notB
+	jmp_false else.5
+	push_b 3
+	pushR 10.0
+	mulR
+
+	pushC '0'
+	CtoI
+	push_b 2
+	CtoI
+	subI
+	ItoR
+
+	update_b 1 2
+	updatepop_b 0 1
+	addR
+
+	pushI 1
+	push_b 3
+	addI
+	push_a 0
+	push_b 2
+	updatepop_a 0 1
+	update_b 2 5
+	update_b 1 4
+	updatepop_b 0 3
+.d 1 3 iir
+	jmp s36
+else.5
+	pushC '.'
+	push_b 1
+	eqC
+	jmp_false else.7
+	pushI 1
+	push_b 3
+	addI
+	pushI 0
+	push_b 5
+	push_a 0
+	push_b 4
+	push_b 3
+	update_b 3 4
+	update_b 2 3
+	update_b 0 2
+	pop_b 1
+	updatepop_a 0 1
+	update_b 3 7
+	update_b 2 6
+	update_b 1 5
+	updatepop_b 0 4
+.d 1 4 iiri
+	jmp s37
+else.7
+	pushC 'e'
+	push_b 1
+	eqC
+	jmp_true then.8
+	pushC 'E'
+	push_b 1
+	eqC
+	jmp_false else.8
+then.8
+	pushI 2
+	push_b 2
+	subI
+	push_b 3
+	ltI
+	jmp_false else.10
+	pushI 1
+	push_b 3
+	addI
+	push_a 0
+	updatepop_b 0 1
+	select CHAR 0 1
+	pushC '-'
+	push_b 1
+	update_b 1 2
+	update_b 0 1
+	pop_b 1
+	eqC
+	pushI 0
+	update_b 1 0
+	jmp_false else.10
+	pushI 2
+	push_b 3
+	addI
+	pushI 0
+	pushI -1
+	pushI 0
+	push_b 7
+	push_a 0
+	push_b 6
+	push_b 5
+	update_b 5 6
+	update_b 4 5
+	update_b 3 4
+	update_b 2 3
+	update_b 0 2
+	pop_b 1
+	updatepop_a 0 1
+	update_b 5 9
+	update_b 4 8
+	update_b 3 7
+	update_b 2 6
+	update_b 1 5
+	updatepop_b 0 4
+.d 1 6 iiriii
+	jmp s38
+else.10
+	pushI 2
+	push_b 2
+	subI
+	push_b 3
+	ltI
+	jmp_false else.12
+	pushI 1
+	push_b 3
+	addI
+	push_a 0
+	updatepop_b 0 1
+	select CHAR 0 1
+	pushC '+'
+	push_b 1
+	update_b 1 2
+	update_b 0 1
+	pop_b 1
+	eqC
+	pushI 0
+	update_b 1 0
+	jmp_false else.12
+	pushI 2
+	push_b 3
+	addI
+	pushI 0
+	pushI 1
+	pushI 0
+	push_b 7
+	push_a 0
+	push_b 6
+	push_b 5
+	update_b 5 6
+	update_b 4 5
+	update_b 3 4
+	update_b 2 3
+	update_b 0 2
+	pop_b 1
+	updatepop_a 0 1
+	update_b 5 9
+	update_b 4 8
+	update_b 3 7
+	update_b 2 6
+	update_b 1 5
+	updatepop_b 0 4
+.d 1 6 iiriii
+	jmp s38
+else.12
+	pushI 1
+	push_b 2
+	subI
+	push_b 3
+	ltI
+	jmp_false else.14
+	pushI 1
+	push_b 3
+	addI
+	pushI 0
+	pushI 1
+	pushI 0
+	push_b 7
+	push_a 0
+	push_b 6
+	push_b 5
+	update_b 5 6
+	update_b 4 5
+	update_b 3 4
+	update_b 2 3
+	update_b 0 2
+	pop_b 1
+	updatepop_a 0 1
+	update_b 5 9
+	update_b 4 8
+	update_b 3 7
+	update_b 2 6
+	update_b 1 5
+	updatepop_b 0 4
+.d 1 6 iiriii
+	jmp s38
+else.14
+	pop_a 1
+	pop_b 4
+	pushR 0.0
+.d 0 1 r
+	rtn
+else.8
+	pop_a 1
+	pop_b 4
+	pushR 0.0
+.d 0 1 r
+	rtn
+.o 1 4 iiri
+s37
+	push_b 0
+	push_b 2
+	eqI
+	jmp_false else.15
+	pushI 0
+	push_b 4
+	eqI
+	jmp_false else.16
+	update_b 2 3
+	pop_a 1
+	pop_b 3
+.d 0 1 r
+	rtn
+else.16
+	push_b 3
+	updatepop_b 0 2
+	pop_a 1
+	ItoR
+
+	pushR 10.0
+	powR
+
+	push_b 1
+	update_b 1 3
+	updatepop_b 0 2
+	divR
+
+.d 0 1 r
+	rtn
+else.15
+	push_b 1
+	push_a 0
+	select CHAR 0 1
+	pushC '0'
+	push_b 1
+	ltC
+	notB
+	jmp_false else.17
+	push_b 0
+	pushC '9'
+	ltC
+	notB
+	jmp_false else.17
+	pushI 1
+	push_b 5
+	addI
+	push_b 4
+	pushR 10.0
+	mulR
+
+	pushC '0'
+	CtoI
+	push_b 3
+	CtoI
+	subI
+	ItoR
+
+	addR
+
+	pushI 1
+	push_b 5
+	addI
+	push_a 0
+	push_b 4
+	updatepop_a 0 1
+	update_b 3 8
+	update_b 2 7
+	update_b 1 6
+	updatepop_b 0 5
+.d 1 4 iiri
+	jmp s37
+else.17
+	pushC 'e'
+	push_b 1
+	eqC
+	jmp_true then.19
+	pushC 'E'
+	push_b 1
+	eqC
+	jmp_false else.19
+then.19
+	pushI 2
+	push_b 2
+	subI
+	push_b 3
+	ltI
+	jmp_false else.21
+	pushI 1
+	push_b 3
+	addI
+	push_a 0
+	updatepop_b 0 1
+	select CHAR 0 1
+	pushC '-'
+	push_b 1
+	update_b 1 2
+	update_b 0 1
+	pop_b 1
+	eqC
+	pushI 0
+	update_b 1 0
+	jmp_false else.21
+	pushI 2
+	push_b 3
+	addI
+	pushI 0
+	pushI -1
+	push_b 7
+	push_b 7
+	push_a 0
+	push_b 6
+	push_b 5
+	update_b 5 6
+	update_b 4 5
+	update_b 3 4
+	update_b 2 3
+	update_b 0 2
+	pop_b 1
+	updatepop_a 0 1
+	update_b 5 10
+	update_b 4 9
+	update_b 3 8
+	update_b 2 7
+	update_b 1 6
+	updatepop_b 0 5
+.d 1 6 iiriii
+	jmp s38
+else.21
+	pushI 2
+	push_b 2
+	subI
+	push_b 3
+	ltI
+	jmp_false else.23
+	pushI 1
+	push_b 3
+	addI
+	push_a 0
+	updatepop_b 0 1
+	select CHAR 0 1
+	pushC '+'
+	push_b 1
+	update_b 1 2
+	update_b 0 1
+	pop_b 1
+	eqC
+	pushI 0
+	update_b 1 0
+	jmp_false else.23
+	pushI 2
+	push_b 3
+	addI
+	pushI 0
+	pushI 1
+	push_b 7
+	push_b 7
+	push_a 0
+	push_b 6
+	push_b 5
+	update_b 5 6
+	update_b 4 5
+	update_b 3 4
+	update_b 2 3
+	update_b 0 2
+	pop_b 1
+	updatepop_a 0 1
+	update_b 5 10
+	update_b 4 9
+	update_b 3 8
+	update_b 2 7
+	update_b 1 6
+	updatepop_b 0 5
+.d 1 6 iiriii
+	jmp s38
+else.23
+	pushI 1
+	push_b 2
+	subI
+	push_b 3
+	ltI
+	jmp_false else.25
+	pushI 1
+	push_b 3
+	addI
+	pushI 0
+	pushI 1
+	push_b 7
+	push_b 7
+	push_a 0
+	push_b 6
+	push_b 5
+	update_b 5 6
+	update_b 4 5
+	update_b 3 4
+	update_b 2 3
+	update_b 0 2
+	pop_b 1
+	updatepop_a 0 1
+	update_b 5 10
+	update_b 4 9
+	update_b 3 8
+	update_b 2 7
+	update_b 1 6
+	updatepop_b 0 5
+.d 1 6 iiriii
+	jmp s38
+else.25
+	pop_a 1
+	pop_b 5
+	pushR 0.0
+.d 0 1 r
+	rtn
+else.19
+	pop_a 1
+	pop_b 5
+	pushR 0.0
+.d 0 1 r
+	rtn
+.o 1 6 iiriii
+s38
+	push_b 0
+	push_b 2
+	eqI
+	jmp_false else.26
+	push_b 5
+	push_b 5
+	mulI
+	push_b 4
+	push_b 1
+	update_b 1 2
+	update_b 0 1
+	pop_b 1
+	update_b 1 3
+	updatepop_b 0 2
+	pop_a 1
+	subI
+	pushI 0
+	push_b 1
+	ltI
+	notB
+	jmp_false else.27
+	push_b 0
+	updatepop_b 0 1
+	ItoR
+
+	pushR 10.0
+	powR
+
+	push_b 1
+	update_b 1 5
+	updatepop_b 0 4
+	mulR
+
+.d 0 1 r
+	rtn
+else.27
+	pushI -308
+	push_b 1
+	ltI
+	notB
+	jmp_false else.28
+	push_b 0
+	negI
+	updatepop_b 0 1
+	ItoR
+
+	pushR 10.0
+	powR
+
+	push_b 1
+	update_b 1 5
+	updatepop_b 0 4
+	divR
+
+.d 0 1 r
+	rtn
+else.28
+	push_b 0
+	negI
+	ItoR
+
+	pushR 2.0
+	powR
+
+	push_b 1
+	negI
+	ItoR
+
+	pushR 5.0
+	powR
+
+	push_b 3
+	divR
+
+	update_b 1 6
+	updatepop_b 0 5
+	divR
+
+.d 0 1 r
+	rtn
+else.26
+	push_b 1
+	push_a 0
+	select CHAR 0 1
+	pushC '0'
+	push_b 1
+	ltC
+	notB
+	jmp_false else.29
+	push_b 0
+	pushC '9'
+	ltC
+	notB
+	jmp_false else.29
+	push_b 6
+	pushI 10
+	mulI
+	pushC '0'
+	CtoI
+	push_b 2
+	CtoI
+	subI
+	addI
+	pushI 1
+	push_b 4
+	addI
+	push_b 7
+	push_b 7
+	push_b 7
+	push_a 0
+	push_b 6
+	push_b 4
+	update_b 4 5
+	update_b 3 4
+	update_b 2 3
+	update_b 0 2
+	pop_b 1
+	updatepop_a 0 1
+	update_b 5 12
+	update_b 4 11
+	update_b 3 10
+	update_b 2 9
+	update_b 1 8
+	updatepop_b 0 7
+.d 1 6 iiriii
+	jmp s38
+else.29
+	pop_a 1
+	pop_b 7
+	pushR 0.0
+.d 0 1 r
+	rtn
+.export e_StdReal_stoReal;14
+.descexp e_StdReal_dtoReal;14 e_StdReal_ntoReal;14 e_StdReal_ltoReal;14 1 0 "toReal;14"
+.o 2 0
+e_StdReal_ltoReal;14
+	pop_a 1
+.d 1 0
+	jsr ea15
+.o 0 1 r
+	buildR_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdReal_dtoReal;14
+.o 1 0
+e_StdReal_ntoReal;14
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea15
+.o 0 1 r
+	fillR_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea15
+	jsr_eval 0
+	pushR_a 0
+	pop_a 1
+.o 0 1 r
+e_StdReal_stoReal;14
+.o 0 1 r
+s15
+.inline toReal;14
+	no_op
+.end
+
+.d 0 1 r
+	rtn
+.export e_StdReal_stoReal;13
+.descexp e_StdReal_dtoReal;13 e_StdReal_ntoReal;13 e_StdReal_ltoReal;13 1 0 "toReal;13"
+.o 2 0
+e_StdReal_ltoReal;13
+	pop_a 1
+.d 1 0
+	jsr ea14
+.o 0 1 r
+	buildR_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdReal_dtoReal;13
+.o 1 0
+e_StdReal_ntoReal;13
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea14
+.o 0 1 r
+	fillR_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea14
+	jsr_eval 0
+	pushI_a 0
+	pop_a 1
+.o 0 1 i
+e_StdReal_stoReal;13
+.o 0 1 i
+s14
+.inline toReal;13
+	ItoR
+.end
+
+.d 0 1 r
+	rtn
+.export e_StdReal_s~;10
+.descexp e_StdReal_d~;10 e_StdReal_n~;10 e_StdReal_l~;10 1 0 "~;10"
+.o 2 0
+e_StdReal_l~;10
+	pop_a 1
+.d 1 0
+	jsr ea11
+.o 0 1 r
+	buildR_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdReal_d~;10
+.o 1 0
+e_StdReal_n~;10
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea11
+.o 0 1 r
+	fillR_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea11
+	jsr_eval 0
+	pushR_a 0
+	pop_a 1
+.o 0 1 r
+e_StdReal_s~;10
+.o 0 1 r
+s11
+.inline ~;10
+	negR
+.end
+
+.d 0 1 r
+	rtn
+.export e_StdReal_ssign;9
+.descexp e_StdReal_dsign;9 e_StdReal_nsign;9 e_StdReal_lsign;9 1 0 "sign;9"
+.o 2 0
+e_StdReal_lsign;9
+	pop_a 1
+.d 1 0
+	jsr ea10
+.o 0 1 i
+	buildI_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdReal_dsign;9
+.o 1 0
+e_StdReal_nsign;9
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea10
+.o 0 1 i
+	fillI_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea10
+	jsr_eval 0
+	pushR_a 0
+	pop_a 1
+.o 0 1 r
+e_StdReal_ssign;9
+.o 0 1 r
+s10
+	pushR 0.0
+	push_b 1
+	eqR
+
+	jmp_false else.31
+	pop_b 1
+	pushI 0
+.d 0 1 i
+	rtn
+else.31
+	pushR 0.0
+	push_b 1
+	update_b 1 2
+	updatepop_b 0 1
+	ltR
+
+	jmp_false else.32
+	pushI -1
+.d 0 1 i
+	rtn
+else.32
+	pushI 1
+.d 0 1 i
+	rtn
+.export e_StdReal_s<;12
+.descexp e_StdReal_d<;12 e_StdReal_n<;12 e_StdReal_l<;12 2 0 "<;12"
+.a 0 a13
+.o 2 0
+e_StdReal_l<;12
+	repl_args 1 1
+.o 2 0
+a13
+.d 2 0
+	jsr ea13
+.o 0 1 b
+	buildB_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 2 e_StdReal_d<;12
+.o 1 0
+e_StdReal_n<;12
+	push_node _cycle_in_spine 2
+.d 2 0
+	jsr ea13
+.o 0 1 b
+	fillB_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 2 0
+ea13
+	jsr_eval 1
+	jsr_eval 0
+	pushR_a 1
+	pushR_a 0
+	pop_a 2
+.o 0 2 rr
+e_StdReal_s<;12
+.o 0 2 rr
+s13
+.inline <;12
+	ltR
+.end
+
+.d 0 1 b
+	rtn
+.export e_StdReal_s==;11
+.descexp e_StdReal_d==;11 e_StdReal_n==;11 e_StdReal_l==;11 2 0 "==;11"
+.a 0 a12
+.o 2 0
+e_StdReal_l==;11
+	repl_args 1 1
+.o 2 0
+a12
+.d 2 0
+	jsr ea12
+.o 0 1 b
+	buildB_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 2 e_StdReal_d==;11
+.o 1 0
+e_StdReal_n==;11
+	push_node _cycle_in_spine 2
+.d 2 0
+	jsr ea12
+.o 0 1 b
+	fillB_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 2 0
+ea12
+	jsr_eval 1
+	jsr_eval 0
+	pushR_a 1
+	pushR_a 0
+	pop_a 2
+.o 0 2 rr
+e_StdReal_s==;11
+.o 0 2 rr
+s12
+.inline ==;11
+	eqR
+.end
+
+.d 0 1 b
+	rtn
+.export e_StdReal_sabs;8
+.descexp e_StdReal_dabs;8 e_StdReal_nabs;8 e_StdReal_labs;8 1 0 "abs;8"
+.o 2 0
+e_StdReal_labs;8
+	pop_a 1
+.d 1 0
+	jsr ea9
+.o 0 1 r
+	buildR_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdReal_dabs;8
+.o 1 0
+e_StdReal_nabs;8
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea9
+.o 0 1 r
+	fillR_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea9
+	jsr_eval 0
+	pushR_a 0
+	pop_a 1
+.o 0 1 r
+e_StdReal_sabs;8
+.o 0 1 r
+s9
+.inline abs;8
+	absR
+.end
+
+.d 0 1 r
+	rtn
+.export e_StdReal_s^;7
+.descexp e_StdReal_d^;7 e_StdReal_n^;7 e_StdReal_l^;7 2 0 "^;7"
+.a 0 a8
+.o 2 0
+e_StdReal_l^;7
+	repl_args 1 1
+.o 2 0
+a8
+.d 2 0
+	jsr ea8
+.o 0 1 r
+	buildR_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 2 e_StdReal_d^;7
+.o 1 0
+e_StdReal_n^;7
+	push_node _cycle_in_spine 2
+.d 2 0
+	jsr ea8
+.o 0 1 r
+	fillR_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 2 0
+ea8
+	jsr_eval 1
+	jsr_eval 0
+	pushR_a 1
+	pushR_a 0
+	pop_a 2
+.o 0 2 rr
+e_StdReal_s^;7
+.o 0 2 rr
+s8
+.inline ^;7
+	powR
+.end
+
+.d 0 1 r
+	rtn
+.export e_StdReal_sone;6
+.descexp e_StdReal_done;6 e_StdReal_none;6 e_StdReal_lone;6 0 0 "one;6"
+.o 1 0
+e_StdReal_lone;6
+	halt
+.n 0 e_StdReal_done;6
+.o 1 0
+e_StdReal_none;6
+	push_node _cycle_in_spine 0
+.d 0 0
+	jsr ea7
+.o 0 1 r
+	fillR_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 0 0
+ea7
+.o 0 0
+e_StdReal_sone;6
+.o 0 0
+s7
+.inline one;6
+	pushR 1.0
+.end
+
+.d 0 1 r
+	rtn
+.export e_StdReal_s/;5
+.descexp e_StdReal_d/;5 e_StdReal_n/;5 e_StdReal_l/;5 2 0 "/;5"
+.a 0 a6
+.o 2 0
+e_StdReal_l/;5
+	repl_args 1 1
+.o 2 0
+a6
+.d 2 0
+	jsr ea6
+.o 0 1 r
+	buildR_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 2 e_StdReal_d/;5
+.o 1 0
+e_StdReal_n/;5
+	push_node _cycle_in_spine 2
+.d 2 0
+	jsr ea6
+.o 0 1 r
+	fillR_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 2 0
+ea6
+	jsr_eval 1
+	jsr_eval 0
+	pushR_a 1
+	pushR_a 0
+	pop_a 2
+.o 0 2 rr
+e_StdReal_s/;5
+.o 0 2 rr
+s6
+.inline /;5
+	divR
+.end
+
+.d 0 1 r
+	rtn
+.export e_StdReal_s*;4
+.descexp e_StdReal_d*;4 e_StdReal_n*;4 e_StdReal_l*;4 2 0 "*;4"
+.a 0 a5
+.o 2 0
+e_StdReal_l*;4
+	repl_args 1 1
+.o 2 0
+a5
+.d 2 0
+	jsr ea5
+.o 0 1 r
+	buildR_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 2 e_StdReal_d*;4
+.o 1 0
+e_StdReal_n*;4
+	push_node _cycle_in_spine 2
+.d 2 0
+	jsr ea5
+.o 0 1 r
+	fillR_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 2 0
+ea5
+	jsr_eval 1
+	jsr_eval 0
+	pushR_a 1
+	pushR_a 0
+	pop_a 2
+.o 0 2 rr
+e_StdReal_s*;4
+.o 0 2 rr
+s5
+.inline *;4
+	mulR
+.end
+
+.d 0 1 r
+	rtn
+.export e_StdReal_szero;3
+.descexp e_StdReal_dzero;3 e_StdReal_nzero;3 e_StdReal_lzero;3 0 0 "zero;3"
+.o 1 0
+e_StdReal_lzero;3
+	halt
+.n 0 e_StdReal_dzero;3
+.o 1 0
+e_StdReal_nzero;3
+	push_node _cycle_in_spine 0
+.d 0 0
+	jsr ea4
+.o 0 1 r
+	fillR_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 0 0
+ea4
+.o 0 0
+e_StdReal_szero;3
+.o 0 0
+s4
+.inline zero;3
+	pushR 0.0
+.end
+
+.d 0 1 r
+	rtn
+.export e_StdReal_s-;2
+.descexp e_StdReal_d-;2 e_StdReal_n-;2 e_StdReal_l-;2 2 0 "-;2"
+.a 0 a3
+.o 2 0
+e_StdReal_l-;2
+	repl_args 1 1
+.o 2 0
+a3
+.d 2 0
+	jsr ea3
+.o 0 1 r
+	buildR_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 2 e_StdReal_d-;2
+.o 1 0
+e_StdReal_n-;2
+	push_node _cycle_in_spine 2
+.d 2 0
+	jsr ea3
+.o 0 1 r
+	fillR_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 2 0
+ea3
+	jsr_eval 1
+	jsr_eval 0
+	pushR_a 1
+	pushR_a 0
+	pop_a 2
+.o 0 2 rr
+e_StdReal_s-;2
+.o 0 2 rr
+s3
+.inline -;2
+	subR
+.end
+
+.d 0 1 r
+	rtn
+.export e_StdReal_s+;1
+.descexp e_StdReal_d+;1 e_StdReal_n+;1 e_StdReal_l+;1 2 0 "+;1"
+.a 0 a2
+.o 2 0
+e_StdReal_l+;1
+	repl_args 1 1
+.o 2 0
+a2
+.d 2 0
+	jsr ea2
+.o 0 1 r
+	buildR_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 2 e_StdReal_d+;1
+.o 1 0
+e_StdReal_n+;1
+	push_node _cycle_in_spine 2
+.d 2 0
+	jsr ea2
+.o 0 1 r
+	fillR_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 2 0
+ea2
+	jsr_eval 1
+	jsr_eval 0
+	pushR_a 1
+	pushR_a 0
+	pop_a 2
+.o 0 2 rr
+e_StdReal_s+;1
+.o 0 2 rr
+s2
+.inline +;1
+	addR
+.end
+
+.d 0 1 r
+	rtn
+.export e_StdReal_sentier
+.descexp e_StdReal_dentier e_StdReal_nentier e_StdReal_lentier 1 0 "entier"
+.o 2 0
+e_StdReal_lentier
+	pop_a 1
+.d 1 0
+	jsr ea1
+.o 0 1 i
+	buildI_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.n 1 e_StdReal_dentier
+.o 1 0
+e_StdReal_nentier
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea1
+.o 0 1 i
+	fillI_b 0 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
+ea1
+	jsr_eval 0
+	pushR_a 0
+	pop_a 1
+.o 0 1 r
+e_StdReal_sentier
+.o 0 1 r
+s1
+.inline entier
+	entierR
+.end
+
+.d 0 1 i
+	rtn

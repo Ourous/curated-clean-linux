@@ -1,0 +1,74 @@
+|| Generated Sapl file for _SystemStrictLists.icl
+
+_SystemStrictLists._nil !_vList_0 = _predefined._Nil
+_SystemStrictLists._nil_u !_vUList_0 = _predefined._Nil
+_SystemStrictLists._nil_uts !_vUTSList_0 = _predefined._Nil
+_SystemStrictLists._cons_3 a_0 b_1 = _predefined._Cons a_0 b_1
+_SystemStrictLists._decons_4 !_x_0 = case _x_0 (_predefined._Cons a_1_0 b_1_1 -> _Tuple2 a_1_0 b_1_1) 
+_SystemStrictLists._cons_5 !a_0 b_1 = <{_predefined._!Cons}> a_0 b_1
+_SystemStrictLists._decons_6 !_x_0 = case _x_0 (_predefined._!Cons a_1_0 b_1_1 -> _Tuple2 a_1_0 b_1_1) 
+_SystemStrictLists._cons_7 a_0 !b_1 = <{_predefined._Cons!}> a_0 b_1
+_SystemStrictLists._decons_8 !_x_0 = case _x_0 (_predefined._Cons! a_1_0 b_1_1 -> _Tuple2 a_1_0 b_1_1) 
+_SystemStrictLists._cons_9 !a_0 !b_1 = <{_predefined._!Cons!}> a_0 b_1
+_SystemStrictLists._decons_10 !_x_0 = case _x_0 (_predefined._!Cons! a_1_0 b_1_1 -> _Tuple2 a_1_0 b_1_1) 
+_SystemStrictLists._cons_11 !_vUList_0 a_1 b_2 = _SystemStrictLists.get__cons_u_2 _vUList_0 a_1 b_2
+_SystemStrictLists._decons_12 !_vUList_0 !a_1 = _SystemStrictLists.get__decons_u_3 _vUList_0 a_1
+_SystemStrictLists._cons_13 !_vUTSList_0 a_1 b_2 = _SystemStrictLists.get__cons_uts_4 _vUTSList_0 a_1 b_2
+_SystemStrictLists._decons_14 !_vUTSList_0 !a_1 = _SystemStrictLists.get__decons_uts_5 _vUTSList_0 a_1
+
+_SystemStrictLists._cons_u_15 !a_0 b_1 = _predefined._!Cons a_0 b_1
+_SystemStrictLists._decons_u_16 !_x_0 = case _x_0 (_predefined._!Cons a_10 b_11 -> _Tuple2 a_10 b_11)
+_SystemStrictLists._cons_u_17 !a_0 b_1 = _predefined._!Cons a_0 b_1
+_SystemStrictLists._decons_u_18 !a_0 = case a_0 (_predefined._!Cons a_10 b_11 -> _Tuple2 a_10 b_11)
+_SystemStrictLists._cons_u_19 !a_0 b_1 = _predefined._!Cons a_0 b_1
+_SystemStrictLists._decons_u_20 !a_0 = case a_0 (_predefined._!Cons a_10 b_11 -> _Tuple2 a_10 b_11)
+_SystemStrictLists._cons_u_21 !a_0 b_1 = _predefined._!Cons a_0 b_1
+_SystemStrictLists._decons_u_22 !a_0 = case a_0 (_predefined._!Cons a_10 b_11 -> _Tuple2 a_10 b_11)
+_SystemStrictLists._cons_u_23 !a_0 b_1 = _predefined._!Cons a_0 b_1
+_SystemStrictLists._decons_u_24 !a_0 = case a_0 (_predefined._!Cons a_10 b_11 -> _Tuple2 a_10 b_11)
+_SystemStrictLists._cons_u_25 !a_0 b_1 = _predefined._!Cons a_0 b_1
+_SystemStrictLists._decons_u_26 !a_0 = case a_0 (_predefined._!Cons a_10 b_11 -> _Tuple2 a_10 b_11)
+_SystemStrictLists._cons_u_27 !a_0 b_1 = _predefined._!Cons a_0 b_1
+_SystemStrictLists._decons_u_28 !a_0 = case a_0 (_predefined._!Cons a_10 b_11 -> _Tuple2 a_10 b_11)
+_SystemStrictLists._cons_u_29 !a_0 b_1 = _predefined._!Cons a_0 b_1
+_SystemStrictLists._decons_u_30 !a_0 = case a_0 (_predefined._!Cons a_10 b_11 -> _Tuple2 a_10 b_11)
+_SystemStrictLists._cons_u_31 !a_0 b_1 = _predefined._!Cons a_0 b_1
+_SystemStrictLists._decons_u_32 !a_0 = case a_0 (_predefined._!Cons a_10 b_11 -> _Tuple2 a_10 b_11)
+
+_SystemStrictLists._cons_uts_33 !a_0 !b_1 = _predefined._!Cons! a_0 b_1
+_SystemStrictLists._decons_uts_34 !_x_0 = case _x_0 (_predefined._!Cons! a_10 b_11 -> _Tuple2 a_10 b_11)
+_SystemStrictLists._cons_uts_35 !a_0 !b_1 = _predefined._!Cons! a_0 b_1
+_SystemStrictLists._decons_uts_36 !a_0 = case a_0 (_predefined._!Cons! a_10 b_11 -> _Tuple2 a_10 b_11)
+_SystemStrictLists._cons_uts_37 !a_0 !b_1 = _predefined._!Cons! a_0 b_1
+_SystemStrictLists._decons_uts_38 !a_0 = case a_0 (_predefined._!Cons! a_10 b_11 -> _Tuple2 a_10 b_11)
+_SystemStrictLists._cons_uts_39 !a_0 !b_1 = _predefined._!Cons! a_0 b_1
+_SystemStrictLists._decons_uts_40 !a_0 = case a_0 (_predefined._!Cons! a_10 b_11 -> _Tuple2 a_10 b_11)
+_SystemStrictLists._cons_uts_41 !a_0 !b_1 = _predefined._!Cons! a_0 b_1
+_SystemStrictLists._decons_uts_42 !a_0 = case a_0 (_predefined._!Cons! a_10 b_11 -> _Tuple2 a_10 b_11)
+_SystemStrictLists._cons_uts_43 !a_0 !b_1 = _predefined._!Cons! a_0 b_1
+_SystemStrictLists._decons_uts_44 !a_0 = case a_0 (_predefined._!Cons! a_10 b_11 -> _Tuple2 a_10 b_11)
+_SystemStrictLists._cons_uts_45 !a_0 !b_1 = _predefined._!Cons! a_0 b_1
+_SystemStrictLists._decons_uts_46 !a_0 = case a_0 (_predefined._!Cons! a_10 b_11 -> _Tuple2 a_10 b_11)
+_SystemStrictLists._cons_uts_47 !a_0 !b_1 = _predefined._!Cons! a_0 b_1
+_SystemStrictLists._decons_uts_48 !a_0 = case a_0 (_predefined._!Cons! a_10 b_11 -> _Tuple2 a_10 b_11)
+_SystemStrictLists._cons_uts_49 !a_0 !b_1 = _predefined._!Cons! a_0 b_1
+_SystemStrictLists._decons_uts_50 !a_0 = case a_0 (_predefined._!Cons! a_10 b_11 -> _Tuple2 a_10 b_11)
+
+|| Converted Records
+:: _SystemStrictLists.List = <{_SystemStrictLists.List;}> a1 a2
+_SystemStrictLists.get__cons_0 rec = case rec (\ a1 a2 = a1)
+_SystemStrictLists.get__decons_1 rec = case rec (\ a1 a2 = a2)
+_SystemStrictLists.set__cons_0 rec val = case rec (\ a1 a2 = <{_SystemStrictLists.List;}>  val a2)
+_SystemStrictLists.set__decons_1 rec val = case rec (\ a1 a2 = <{_SystemStrictLists.List;}>  a1 val)
+
+:: _SystemStrictLists.UList = <{_SystemStrictLists.UList;}> a1 a2
+_SystemStrictLists.get__cons_u_2 rec = case rec (\ a1 a2 = a1)
+_SystemStrictLists.get__decons_u_3 rec = case rec (\ a1 a2 = a2)
+_SystemStrictLists.set__cons_u_2 rec val = case rec (\ a1 a2 = <{_SystemStrictLists.UList;}>  val a2)
+_SystemStrictLists.set__decons_u_3 rec val = case rec (\ a1 a2 = <{_SystemStrictLists.UList;}>  a1 val)
+
+:: _SystemStrictLists.UTSList = <{_SystemStrictLists.UTSList;}> a1 a2
+_SystemStrictLists.get__cons_uts_4 rec = case rec (\ a1 a2 = a1)
+_SystemStrictLists.get__decons_uts_5 rec = case rec (\ a1 a2 = a2)
+_SystemStrictLists.set__cons_uts_4 rec val = case rec (\ a1 a2 = <{_SystemStrictLists.UTSList;}>  val a2)
+_SystemStrictLists.set__decons_uts_5 rec val = case rec (\ a1 a2 = <{_SystemStrictLists.UTSList;}>  a1 val)

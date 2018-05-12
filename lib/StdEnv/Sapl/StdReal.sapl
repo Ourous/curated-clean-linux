@@ -1,0 +1,28 @@
+|| StdReal.icl
+|| Externally defined functions:
+
+<{StdReal.+_1}> :== addR
+<{StdReal.-_2}> :== subR
+<{StdReal.zero_3}> :== 0.0
+<{StdReal.*_4}> :== multR
+<{StdReal./_5}> :== divR
+StdReal.one_6 :== 1.0
+<{StdReal.^_7}> :== powR
+<{StdReal.abs_8}> :== absR
+<{StdReal.sign_9}> !x_0 = case (eqR x_0 0.0) (True -> 0) (False -> case (gtR 0.0 x_0) (True -> -1) (False -> 1))
+<{StdReal.~_10}> :== negR
+<{StdReal.==_11}> :== eqR
+<{StdReal.<_12}> :== ltR
+StdReal.toReal_13 :== I2R
+StdReal.toReal_14 :== R2R
+StdReal.toReal_15 :== S2R
+StdReal.sqrt_22 :== sqrt
+StdReal.sin_23 :== sin
+StdReal.cos_24 :== cos
+StdReal.tan_25 :== tan
+StdReal.acos_27 :== acos
+StdReal.atan_28 :== atan
+StdReal.entier :== entier
+
+
+

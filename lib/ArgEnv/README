@@ -1,0 +1,57 @@
+ArgEnv
+Version  1.0.3
+Ronny Wichers Schreur
+ronny@cs.kun.nl
+
+The ArgEnv package provides a Clean interface to the command line
+arguments and the environment variables. 
+
+This is the README for the Unix version. The Unix version has been
+tested on Solaris 5.5 and Clean 1.1 & 1.3, but it should work with all
+Unix versions with Clean 1.1 or better. To use the package with Clean
+version 1.1 you will have to make a few changes, which are documented
+in the source.
+
+FILES
+
+    README
+        This file
+    CHANGES.txt
+        Changes history
+    ArgEnv.dcl
+        Definition of the interface
+    ArgEnv.icl
+        Implementation of the interface
+    ArgEnvC.c
+        Implementation of the C side of the interface
+    Makefile
+        Makefile for the ArgEnv interface and the example program
+    printenv.icl
+        An example program that prints the value of an environment
+        variable
+
+USAGE
+
+To use the ArgEnv interface you have to link the object module that
+is created from the module ArgEnvC.c.
+If you use clm you should specify this extra object file with the -l
+option:
+
+    % clm -l ArgEnvC.o <your-main-module>
+
+In the CleanIDE you can add this extra object file to the Object
+Modules section in the Options->Link Options dialogue.
+
+If you forget this, you will get the link error:
+    Undefined                       first referenced
+     symbol                             in file
+    ArgEnvCopyCStringToCleanStringC     ArgEnv.o
+    ArgEnvGetEnvironmentVariableC       ArgEnv.o
+    ArgEnvGetCommandLineArgumentC       ArgEnv.o
+    ArgEnvGetCommandLineCountC          ArgEnv.o
+
+BUGS
+
+There is no way to stop the Clean run-time system from interpreting
+some of the command-line arguments.
+

@@ -1,0 +1,2443 @@
+.comp 920 01011101101
+.code 0 0 0
+.start _nostart_
+.endinfo
+
+.module m__system "_system"
+
+.implab	e_system_nind e_system_eaind
+
+.export	_channel_code
+
+.export	EMPTY dINT BOOL CHAR REAL FILE _STRING_ _ARRAY_ ARRAY INT32 REAL32
+.export	_reserve _cycle_in_spine _hnf 
+.export	_type_error _match_error selector_m_error index_error
+.export	_print_graph _eval_to_nf
+.export	_Tuple
+.export	_Select _select_code
+.export	_Nil _Cons
+.export e__predef_d_Unit
+
+.export	e_system_dAP e_system_nAP e_system_eaAP e_system_dind
+.export	e_system_dif e_system_lif e_system_sif e_system_nif e_system_eaif
+.export	_HnfReducer _hnf_reducer
+.export	_Defer _defer_code
+
+.export	d_S.1 d_S.2 d_S.3 d_S.4 d_S.5 d_S.6
+.export	n_S.1 n_S.2 n_S.3 n_S.4 n_S.5 n_S.6
+.export	ea_S.1 ea_S.2 ea_S.3 ea_S.4 ea_S.5 ea_S.6
+
+.export	d_Sr.1 d_Sr.2 d_Sr.3 d_Sr.4 d_Sr.5 d_Sr.6
+.export	n_Sr.1 n_Sr.2 n_Sr.3 n_Sr.4 n_Sr.5 n_Sr.6
+.export	ea_Sr.1 ea_Sr.2 ea_Sr.3 ea_Sr.4 ea_Sr.5 ea_Sr.6
+
+|| don't change the order of the following 9 descriptors
+
+|.desc CHANNEL	_channel_code	_hnf	1	""
+.desc GRAPH	_hnf	_hnf	0 0	""
+.desc _ARRAY_	_hnf	_hnf	0 0	"_ARRAY_"
+.desc _STRING_	_hnf	_hnf	0 0	"_STRING_"
+.desc REAL	_hnf	_hnf	0 0	"REAL"
+.desc dINT	_hnf	_hnf	0 0	"INT"
+.desc REAL32	_hnf	_hnf	0 0	"REAL32"
+.desc INT32		_hnf	_hnf	0 0	"INT32"
+.desc BOOL	_hnf	_hnf	0 0	"BOOL"
+.desc CHAR	_hnf	_hnf	0 0	"CHAR"
+
+.desc EMPTY	_reserve	_hnf	0 0	"EMPTY"
+
+.desc _Tuple	_hnf	_hnf	32 0	"_Tuple"
+.desc _Select	_hnf	_hnf	2 0	"_Select"
+.desc _Nil	_hnf	_hnf	0	0 "Nil"
+
+.desc _Cons	_hnf	l_Cons	2	0 "Cons"
+
+.record FILE ii 0 2 "File"
+
+.desc e__predef_d_Unit _hnf _hnf 0 0 "_Unit"
+
+.desc e_system_dAP	_hnf	e_system_lAP	2 0	"AP"
+.desc e_system_dif	e_system_nif	e_system_lif	3 0	"if"
+
+.desc e_system_dind	e_system_nind	_hnf	0 0	"_ind"
+
+.desc _Defer	_defer_code	_hnf	0 0	"_Defer"
+
+.desc ARRAY	_hnf	_hnf	1 0	"ARRAY"
+
+.desc _HnfReducer	_hnf_reducer	_hnf_reducer	0 0	"HnfReducer"
+| .desc _NfReducer	_nf_reducer	_nf_reducer	0 0	"NfReducer"
+
+.export e__system_kFinalizer
+.record e__system_kFinalizer diii 0 3 "Finalizer"
+.export e__system_kFinalizerGCTemp
+.record e__system_kFinalizerGCTemp daii 1 2 "FinalizerGCTemp"
+
+.o 0 2 i i
+_match_error
+	print	"Run time error, rule \'"
+	printD
+	print	"\' in module \'"
+	printD
+	print	"\' does not match\n"
+	halt
+
+.o 0 0
+selector_m_error
+	print	"Run time error, selector does not match"
+	halt
+
+.n 0 _Defer
+.o 1 0
+_defer_code
+	print	"Error: defer code entered"
+	halt
+
+.a 2 ea_Cons
+.o 2 0
+l_Cons
+	push_args 0 1 1
+	update_a 2 1
+	create
+	update_a 0 3
+	pop_a 1
+	fill _Cons 2 _hnf 2
+.d 1 0
+	rtn
+
+.export _Conss n_Conss ea_Conss
+.desc _Conss n_Conss l_Conss 2 0 "Cons!"
+
+.a 2 ea_Conss
+.o 2 0
+l_Conss
+	push_args 0 1 1
+	update_a 2 1
+	create
+	update_a 0 3
+	pop_a 1
+	jsr_eval 0
+	fill _Cons 2 _hnf 2
+.d 1 0
+	rtn
+
+.o 3 0
+ea_Cons
+	fill _Cons 2 _hnf 2
+.d 1 0
+	rtn
+
+.n 2 _Conss ea_Conss
+.o 1 0
+n_Conss
+	push_node _cycle_in_spine 2
+.o 3 0
+ea_Conss
+	jsr_eval 0
+	fill _Cons 2 _hnf 2
+.d 1 0
+	rtn
+
+.export _Consts n_Consts ea_Consts
+.desc _Consts n_Consts l_Consts 2 0 "Cons!"
+
+.a 2 ea_Consts
+.o 2 0
+l_Consts
+	push_args 0 1 1
+	update_a 2 1
+	create
+	update_a 0 3
+	pop_a 1
+	jsr_eval 1
+	fill _Cons 2 _hnf 2
+.d 1 0
+	rtn
+
+.n 2 _Consts ea_Consts
+.o 1 0
+n_Consts
+	push_node _cycle_in_spine 2
+.o 3 0
+ea_Consts
+	jsr_eval 1
+	fill _Cons 2 _hnf 2
+.d 1 0
+	rtn
+
+.export _Conssts n_Conssts ea_Conssts
+.desc _Conssts n_Conssts l_Conssts 2 0 "Cons!!"
+
+.a 2 ea_Conssts
+.o 2 0
+l_Conssts
+	push_args 0 1 1
+	update_a 2 1
+	create
+	update_a 0 3
+	pop_a 1
+	jsr_eval 1
+	jsr_eval 0
+	fill _Cons 2 _hnf 2
+.d 1 0
+	rtn
+
+.n 2 _Conssts ea_Conssts
+.o 1 0
+n_Conssts
+	push_node _cycle_in_spine 2
+.o 3 0
+ea_Conssts
+	jsr_eval 1
+	jsr_eval 0
+	fill _Cons 2 _hnf 2
+.d 1 0
+	rtn
+
+.export _Consi _Consr _Consc _Consb _Consf
+.record _Consi lia 1 1 "[#Int]"
+.record _Consr lra 1 1 "[#Real]"
+.record _Consc lca 1 1 "[#Char]"
+.record _Consb lba 1 1 "[#Bool]"
+.record _Consf lfa 1 2 "[#File]"
+
+.export _Consits _Consrts _Conscts _Consbts _Consfts
+.record _Consits lia 1 1 "[#Int!]"
+.record _Consrts lra 1 1 "[#Real!]"
+.record _Conscts lca 1 1 "[#Char!]"
+.record _Consbts lba 1 1 "[#Bool!]"
+.record _Consfts lfa 1 2 "[#File!]"
+
+.export _Consa
+.record _Consa laa 2 0 "[#{}]"
+
+.descs d_S.1 n_S.1 _ 1 0 "_S.1"
+.pb "_S.1"
+.n -1 d_S.1 ea_S.1
+.o 1 0
+n_S.1
+	push_node _reserve 1
+	jsr_eval 0
+	get_node_arity 0
+	pushI 1
+	push_arg_b 0
+	update_a 0 1
+	pop_a 1
+	jsr_eval 0
+	getWL 1
+	fill_a 0 1
+	release
+	pop_a 1
+.d 1 0
+	rtn
+.o 2 0
+ea_S.1
+	push_arg	0 1 1
+	push_a	2
+.keep 1 0
+	fill	e_system_dind -2 e_system_nind 2
+.keep 1 0
+	update_a	0 1
+	pop_a	1
+	jsr_eval 0
+	get_node_arity	0
+	pushI	1
+	push_arg_b	0
+	update_a	0 1
+	pop_a	1
+	jmp_eval_upd
+.pe
+
+.o 1 0
+o_S.1
+	get_node_arity	0
+	pushI	1
+	push_arg_b	0
+	update_a	0 1
+	pop_a	1
+.d 1 0
+	rtn
+
+.descs d_S.2 n_S.2 _ 2 0 "_S.2"
+.pb "_S.2"
+.n -1 d_S.2 ea_S.2
+.o 1 0
+n_S.2
+	push_node _reserve 1
+	jsr_eval 0
+	get_node_arity 0
+	eqI_b 2 0
+	jmp_false n_S.2_
+	pop_b 1
+	repl_arg 2 2
+	jsr_eval 0
+	getWL 1
+	fill_a 0 1
+	release
+	pop_a 1
+.d 1 0
+	rtn
+n_S.2_
+	pop_b 1
+	repl_arg 3 2
+	jsr_eval 0
+	getWL 1
+	fill_a 0 1
+	release
+	pop_a 1
+.d 1 0
+	rtn
+.o 2 0
+ea_S.2
+	push_arg	0 1 1
+	push_a	2
+.keep 1 0
+	fill	e_system_dind -2 e_system_nind 2
+.keep 1 0
+	update_a	0 1
+	pop_a	1
+	jsr_eval 0
+	get_node_arity	0
+	eqI_b 2 0
+	jmp_false ea_S.2_
+	pop_b 1
+	repl_arg 2 2
+	jmp_eval_upd
+ea_S.2_
+	repl_arg 3 2
+	pop_b 1
+	jmp_eval_upd
+.pe
+
+.o 1 0
+o_S.2
+	get_node_arity	0
+	eqI_b 2 0
+	jmp_false o_S.2_
+	pop_b 1
+	repl_arg 2 2
+.d 1 0
+	rtn
+o_S.2_
+	repl_arg 3 2
+	pop_b 1
+.d 1 0
+	rtn
+
+.descs d_S.3 n_S.3 _ 4 0 "_S.3"
+.pb "_S.3"
+.n -1 d_S.3 ea_S.3
+.o 1 0
+n_S.3
+	push_node _reserve 1
+	jsr_eval 0
+	get_node_arity 0
+	pushI 3
+	push_arg_b 0
+	jsr_eval 0
+	getWL 2
+	fill_a 0 2
+	release
+	pop_a 2
+.d 1 0
+	rtn
+
+.o 2 0
+ea_S.3
+	push_arg	0 1 1
+	push_a	2
+.keep 1 0
+	fill	e_system_dind -2 e_system_nind 2
+.keep 1 0
+	update_a	0 1
+	pop_a	1
+	jsr_eval 0
+	get_node_arity	0
+	pushI	3
+	push_arg_b	0
+	update_a	0 1
+	pop_a	1
+	jmp_eval_upd
+.pe
+
+.o 1 0
+o_S.3
+	get_node_arity	0
+	pushI	3
+	push_arg_b	0
+	update_a	0 1
+	pop_a	1
+.d 1 0
+	rtn
+
+.descs d_S.4 n_S.4 _ 5 0 "_S.4"
+.n -1 d_S.4 ea_S.4
+.o 1 0
+n_S.4
+	push_node _reserve 1
+	jsr_eval 0
+	get_node_arity 0
+	pushI 4
+	push_arg_b 0
+	jsr_eval 0
+	getWL 2
+	fill_a 0 2
+	release
+	pop_a 2
+.d 1 0
+	rtn
+
+.o 2 0
+ea_S.4
+	push_arg	0 1 1
+	push_a	2
+.keep 1 0
+	fill	e_system_dind -2 e_system_nind 2
+.keep 1 0
+	update_a	0 1
+	pop_a	1
+	jsr_eval 0
+	get_node_arity	0
+	pushI	4
+	push_arg_b	0
+	update_a	0 1
+	pop_a	1
+	jmp_eval_upd
+
+.o 1 0
+o_S.4
+	get_node_arity	0
+	pushI	4
+	push_arg_b	0
+	update_a	0 1
+	pop_a	1
+.d 1 0
+	rtn
+
+.descs d_S.5 n_S.5 _ 6 0 "_S.5"
+.n -1 d_S.5 ea_S.5
+.o 1 0
+n_S.5
+	push_node _reserve 1
+	jsr_eval 0
+	get_node_arity 0
+	pushI 5
+	push_arg_b 0
+	jsr_eval 0
+	getWL 2
+	fill_a 0 2
+	release
+	pop_a 2
+.d 1 0
+	rtn
+
+.o 2 0
+ea_S.5
+	push_arg	0 1 1
+	push_a	2
+.keep 1 0
+	fill	e_system_dind -2 e_system_nind 2
+.keep 1 0
+	update_a	0 1
+	pop_a	1
+	jsr_eval 0
+	get_node_arity	0
+	pushI	5
+	push_arg_b	0
+	update_a	0 1
+	pop_a	1
+	jmp_eval_upd
+
+.o 1 0
+o_S.5
+	get_node_arity	0
+	pushI	5
+	push_arg_b	0
+	update_a	0 1
+	pop_a	1
+.d 1 0
+	rtn
+
+.descs d_S.6 n_S.6 _ 7 0 "_S.6"
+.n -1 d_S.6 ea_S.6
+.o 1 0
+n_S.6
+	push_node _reserve 1
+	jsr_eval 0
+	get_node_arity 0
+	pushI 6
+	push_arg_b 0
+	jsr_eval 0
+	getWL 2
+	fill_a 0 2
+	release
+	pop_a 2
+.d 1 0
+	rtn
+
+.o 2 0
+ea_S.6
+	push_arg	0 1 1
+	push_a	2
+.keep 1 0
+	fill	e_system_dind -2 e_system_nind 2
+.keep 1 0
+	update_a	0 1
+	pop_a	1
+	jsr_eval 0
+	get_node_arity	0
+	pushI	6
+	push_arg_b	0
+	update_a	0 1
+	pop_a	1
+	jmp_eval_upd
+
+
+.o 1 0
+o_S.6
+	get_node_arity	0
+	pushI	6
+	push_arg_b	0
+	update_a	0 1
+	pop_a	1
+.d 1 0
+	rtn
+
+
+
+.desc d_Sr.1 n_Sr.1 o_Sr.1 1 0 "_Sr.1"
+.pb "_Sr.1"
+.n -1 d_Sr.1 ea_Sr.1
+.o 1 0
+n_Sr.1
+	push_node _reserve 1
+	jsr_eval 0
+
+	push_args_u 0 1 1
+	buildh _Nil 0
+	fill1 _Tuple 1 2 01
+.keep 1 0
+
+	jsr_eval 0
+	getWL 2
+	fill_a 0 2
+	release
+	pop_a 2
+.d 1 0
+	rtn
+
+.o 2 0
+ea_Sr.1
+	push_arg	0 1 1
+	push_a	2
+.keep 1 0
+	fill	e_system_dind -2 e_system_nind 2
+.keep 1 0
+	update_a	0 1
+	pop_a	1
+	jsr_eval 0
+
+	push_args_u 0 1 1
+	buildh _Nil 0
+	fill1 _Tuple 1 2 01
+.keep 1 0
+
+	update_a	0 1
+	pop_a	1
+	jmp_eval_upd
+.pe
+
+.o 1 0
+o_Sr.1
+	push_args_u 0 1 1
+	buildh _Nil 0
+	fill1 _Tuple 1 2 01
+.keep 1 0
+
+	update_a	0 1
+	pop_a	1
+.d 1 0
+	rtn
+
+.desc d_Sr.2 n_Sr.2 o_Sr.2 1 0 "_Sr.2"
+.pb "_Sr.2"
+.n -1 d_Sr.2 ea_Sr.2
+.o 1 0
+n_Sr.2
+	push_node _reserve 1
+	jsr_eval 0
+	get_node_arity 0
+	eqI_b 2 0
+	update_b 0 1
+	pop_b 1
+	jmp_false n_Sr.2_
+
+	push_args_u 0 2 2
+	pop_a 1
+	buildh _Nil 0
+	fill1 _Tuple 2 2 001
+.keep 1 0
+	update_a 0 1
+	pop_a 1
+
+	jsr_eval 0
+	getWL 1
+	fill_a 0 1
+	release
+	pop_a 1
+.d 1 0
+	rtn
+
+n_Sr.2_
+	push_args_u 0 3 2
+	pop_a 1
+	buildh _Nil 0
+	fill2 _Tuple 3 2 0010
+.keep 1 0
+	update_a 0 1
+	pop_a 1
+
+	jsr_eval 0
+	getWL 1
+	fill_a 0 1
+	release
+	pop_a 1
+.d 1 0
+	rtn
+.o 2 0
+ea_Sr.2
+	push_arg	0 1 1
+	push_a	2
+.keep 1 0
+	fill	e_system_dind -2 e_system_nind 2
+.keep 1 0
+	update_a	0 1
+	pop_a	1
+	jsr_eval 0
+	get_node_arity	0
+	eqI_b 2 0
+	update_b 0 1
+	pop_b 1
+	jmp_false ea_Sr.2_
+
+	push_args_u 0 2 2
+	pop_a 1
+	buildh _Nil 0
+	fill1 _Tuple 2 2 001
+.keep 1 0
+	update_a 0 1
+	pop_a 1
+
+	jmp_eval_upd
+
+ea_Sr.2_
+	push_args_u 0 3 2
+	pop_a 1
+	buildh _Nil 0
+	fill2 _Tuple 3 2 0010
+.keep 1 0
+	update_a 0 1
+	pop_a 1
+
+	jmp_eval_upd
+.pe
+
+.o 1 0
+o_Sr.2
+	get_node_arity	0
+	eqI_b 2 0
+	update_b 0 1
+	pop_b 1
+	jmp_false o_Sr.2_
+
+	push_args_u 0 2 2
+	pop_a 1
+	buildh _Nil 0
+	fill1 _Tuple 2 2 001
+.keep 1 0
+	update_a 0 1
+	pop_a 1
+
+.d 1 0
+	rtn
+
+o_Sr.2_
+	push_args_u 0 3 2
+	pop_a 1
+	buildh _Nil 0
+	fill2 _Tuple 3 2 0010
+.keep 1 0
+	update_a 0 1
+	pop_a 1
+
+.d 1 0
+	rtn
+
+.desc d_Sr.3 n_Sr.3 o_Sr.3 1 0 "_Sr.3"
+.pb "_Sr.3"
+.n -1 d_Sr.3 ea_Sr.3
+.o 1 0
+n_Sr.3
+	push_node _reserve 1
+	jsr_eval 0
+
+	push_args_u 0 3 3
+	pop_a 2
+	buildh _Nil 0
+	fill2 _Tuple 3 2 0001
+.keep 1 0
+
+	jsr_eval 0
+	getWL 2
+	fill_a 0 2
+	release
+	pop_a 2
+.d 1 0
+	rtn
+
+.o 2 0
+ea_Sr.3
+	push_arg	0 1 1
+	push_a	2
+.keep 1 0
+	fill	e_system_dind -2 e_system_nind 2
+.keep 1 0
+	update_a	0 1
+	pop_a	1
+	jsr_eval 0
+
+	push_args_u 0 3 3
+	pop_a 2
+	buildh _Nil 0
+	fill2 _Tuple 3 2 0001
+.keep 1 0
+
+	update_a	0 1
+	pop_a	1
+	jmp_eval_upd
+.pe
+
+.o 1 0
+o_Sr.3
+	push_args_u 0 3 3
+	pop_a 2
+	buildh _Nil 0
+	fill2 _Tuple 3 2 0001
+.keep 1 0
+
+	update_a	0 1
+	pop_a	1
+.d 1 0
+	rtn
+
+.desc d_Sr.4 n_Sr.4 o_Sr.4 1 0 "_Sr.4"
+.n -1 d_Sr.4 ea_Sr.4
+.o 1 0
+n_Sr.4
+	push_node _reserve 1
+	jsr_eval 0
+
+	push_args_u 0 4 4
+	pop_a 3
+	buildh _Nil 0
+	fill2 _Tuple 4 2 00001
+.keep 1 0
+
+	jsr_eval 0
+	getWL 2
+	fill_a 0 2
+	release
+	pop_a 2
+.d 1 0
+	rtn
+
+.o 1 0
+o_Sr.4
+	push_args_u 0 4 4
+	pop_a 3
+	buildh _Nil 0
+	fill2 _Tuple 4 2 00001
+.keep 1 0
+
+	update_a	0 1
+	pop_a	1
+.d 1 0
+	rtn
+
+.o 2 0
+ea_Sr.4
+	push_arg	0 1 1
+	push_a	2
+.keep 1 0
+	fill	e_system_dind -2 e_system_nind 2
+.keep 1 0
+	update_a	0 1
+	pop_a	1
+	jsr_eval 0
+
+	push_args_u 0 4 4
+	pop_a 3
+	buildh _Nil 0
+	fill2 _Tuple 4 2 00001
+.keep 1 0
+
+	update_a	0 1
+	pop_a	1
+	jmp_eval_upd
+
+
+.desc d_Sr.5 n_Sr.5 o_Sr.5 1 0 "_Sr.5"
+.n -1 d_Sr.5 ea_Sr.5
+.o 1 0
+n_Sr.5
+	push_node _reserve 1
+	jsr_eval 0
+
+	push_args_u 0 5 5
+	pop_a 4
+	buildh _Nil 0
+	fill2 _Tuple 5 2 000001
+.keep 1 0
+
+	jsr_eval 0
+	getWL 2
+	fill_a 0 2
+	release
+	pop_a 2
+.d 1 0
+	rtn
+
+.o 1 0
+o_Sr.5
+	push_args_u 0 5 5
+	pop_a 4
+	buildh _Nil 0
+	fill2 _Tuple 5 2 000001
+.keep 1 0
+
+	update_a	0 1
+	pop_a	1
+.d 1 0
+	rtn
+
+.o 2 0
+ea_Sr.5
+	push_arg	0 1 1
+	push_a	2
+.keep 1 0
+	fill	e_system_dind -2 e_system_nind 2
+.keep 1 0
+	update_a	0 1
+	pop_a	1
+	jsr_eval 0
+
+	push_args_u 0 5 5
+	pop_a 4
+	buildh _Nil 0
+	fill2 _Tuple 5 2 000001
+.keep 1 0
+
+	update_a	0 1
+	pop_a	1
+	jmp_eval_upd
+
+
+.desc d_Sr.6 n_Sr.6 o_Sr.6 1 0 "_Sr.6"
+.n -1 d_Sr.6 ea_Sr.6
+.o 1 0
+n_Sr.6
+	push_node _reserve 1
+	jsr_eval 0
+
+	push_args_u 0 6 6
+	pop_a 5
+	buildh _Nil 0
+	fill2 _Tuple 6 2 0000001
+.keep 1 0
+
+	jsr_eval 0
+	getWL 2
+	fill_a 0 2
+	release
+	pop_a 2
+.d 1 0
+	rtn
+
+.o 1 0
+o_Sr.6
+	push_args_u 0 6 6
+	pop_a 5
+	buildh _Nil 0
+	fill2 _Tuple 6 2 0000001
+.keep 1 0
+
+	update_a	0 1
+	pop_a	1
+.d 1 0
+	rtn
+
+.o 2 0
+ea_Sr.6
+	push_arg	0 1 1
+	push_a	2
+.keep 1 0
+	fill	e_system_dind -2 e_system_nind 2
+.keep 1 0
+	update_a	0 1
+	pop_a	1
+	jsr_eval 0
+
+	push_args_u 0 6 6
+	pop_a 5
+	buildh _Nil 0
+	fill2 _Tuple 6 2 0000001
+.keep 1 0
+
+	update_a	0 1
+	pop_a	1
+	jmp_eval_upd
+
+
+
+
+
+.n 2 _Select
+.o 1 0
+_select_code
+	print	"Error: select code entered"
+	halt
+
+.o 0 0
+e_system_lAP
+	print	"Error: lazy entry of AP entered"
+	halt
+
+.o 3 0
+e_system_eaAP
+.d 2 0
+	jmp	ea_AP
+
+.n 2 e_system_dAP e_system_eaAP
+.o 1 0
+e_system_nAP
+	push_node	_reserve 2
+.o 2 0
+ea_AP
+	jsr_eval 0
+	jsr_ap 1
+	fill_a	0 1
+	pop_a	1
+.d 1 0
+	rtn
+
+.o 2 0
+e_system_lif
+	repl_args 2 2
+.d 3 0
+	jmp eval_args_if
+
+.n 3 e_system_dif e_system_eaif
+.o 1 0
+e_system_nif
+	push_node _reserve 3
+.d 3 0
+	jsr eval_args_if
+.o 1 0
+	getWL 1
+	fill_a 0 1
+	release
+	pop_a 1
+.d 1 0
+	rtn
+
+.o 3 0
+eval_args_if
+	jsr_eval 0
+	pushB_a 0
+	pop_a 1
+.o 2 1 b
+e_system_sif
+	jmp_false ifelse
+	update_a 0 1
+	pop_a 1
+	jmp_eval
+ifelse
+	pop_a 1
+	jmp_eval
+
+.o 4 0
+e_system_eaif
+	jsr_eval 0
+	pushB_a 0
+	pop_a 1
+	jmp_false eaifelse
+	update_a 0 1
+	pop_a 1
+	jmp_eval_upd
+eaifelse
+	pop_a 1
+	jmp_eval_upd
+
+.n 0 _Nil
+.o 1 0			
+_hnf
+.d 1 0
+	rtn
+
+.n 0 EMPTY
+.o 1 0
+_cycle_in_spine
+.o 1 0
+_reserve
+	print	"Run Time Warning: cycle in spine detected\n"
+	halt
+
+|.n 0 EMPTY
+|.o 1 0
+|_reserve
+|	setwait	0
+|	suspend
+|.d 1 0
+|	rtn
+
+.o 0 0
+_hnf_reducer
+.o 0 0
+_channel_code
+	halt
+|	jsr_eval 0
+|	stop_reducer
+
+|.o 1 0
+|_nf_reduce:	jsr_eval 0
+|	get_node_arity	0
+|	eqI_b	0 0	| check if arity is zero
+|	jmp_true	_last1
+|	push_b	0	| replace the node by
+|	push_b	0
+|	repl_args_b		| its arguments
+|.o 0 1 i
+|_reduce_args
+|	eqI_b	0 0	| check nr of args to do
+|	jmp_true	_last
+|.d 1 0
+|	jsr	_nf_reduce
+|.o 0 0
+|	decI
+|	jmp	_reduce_args
+|_last1:	pop_a	1
+|_last:	pop_b	1
+|.d 0 0
+|	rtn
+
+|.o 0 0
+|_nf_reducer
+|.d 1 0
+|	jsr	_nf_reduce
+|.o 0 0
+|	stop_reducer
+
+.o 0 0
+_type_error
+	print	"Run Time Error: type error\n"
+	halt
+
+.o 0 0
+index_error
+	print	"Run Time Error: index out of range\n"
+	halt
+
+.o 1 0
+_print_graph
+.d 1 0
+	jsr	_print
+.o 0 0
+	print_sc	"\n"
+.d 0 0
+	rtn
+
+.o 1 0
+_print	
+	pushI	0	| push the bracket count
+_continue_print
+	jsr_eval	0
+.o 1 1 i
+_print2
+	is_record	0
+	jmp_true	_print_record
+	eq_nulldesc	_Tuple 0
+	jmp_true	_print_tuple
+
+	get_node_arity	0
+	eqI_b	0 0
+	jmp_true	_print_last
+
+	eq_desc	_Cons 2 0
+	jmp_true	_print_list
+	eq_desc	ARRAY 1 0
+	jmp_true	_print_array
+
+	print_sc	"("
+	print_symbol_sc	0
+	push_b	0
+	push_b	0	| replace the node by
+	repl_args_b		| leave arity on b-stack
+_print_args
+	print_sc	" "
+	eqI_b	1 0	| check if last argument
+	jmp_true	_print_last_arg
+.d 1 0
+	jsr	_print
+.o 0 0
+	decI		| decrease argument count
+	jmp	_print_args
+_print_last_arg
+	pop_b	1	| remove argument count
+	incI		| increment bracket count
+	jmp	_continue_print	| optimised tail recursion!
+_print_last
+	pop_b	1	| remove arity
+	eq_desc	_Nil 0 0
+	jmp_true	_print_nil
+	eq_desc	_ARRAY_ 0 0
+	jmp_true	_print__array_
+	eq_desc	_STRING_ 0 0
+	jmp_true	_print_char_array
+	eq_desc	e__predef_d_Unit 0 0
+	jmp_true	_print_unit
+	print_symbol_sc	0
+	pop_a	1	| remove node
+_print_brackets
+	eqI_b	0 0	| stop printing brackets if
+	jmp_true	_exit_brackets	| bracket count is zero
+	print_sc	")"
+	decI		| decrement bracket count
+	jmp	_print_brackets
+_exit_brackets
+	pop_b	1	| remove bracket count
+.d 0 0
+	rtn
+
+_print_list
+	pop_b	1
+	print_sc	"["
+_print_rest_list
+	repl_args	2 2
+.d 1 0
+	jsr	_print
+.o 0 0
+	jsr_eval 0
+	eq_desc	_Nil 0 0
+	jmp_true	_print_last_list
+	print_sc	","
+	jmp	_print_rest_list
+_print_last_list
+	print_sc	"]"
+	pop_a	1
+	jmp	_print_brackets
+
+
+
+
+_print_unboxed_list
+	print_sc	"["
+
+_print_unboxed_list_lp0
+	incI
+	push_r_arg_t
+	eqC_b	'R' 0
+	updatepop_b 0 1
+	jmp_true _print_ul_record
+
+	push_t_r_args
+
+_print_unboxed_list_lp1
+	incI
+	push_b	0
+	push_r_arg_t
+_print_unboxed_list_lp2
+	eqC_b	'i' 0
+	jmp_true	_print_ul_integer
+	eqC_b	'c' 0
+	jmp_true	_print_ul_char
+	eqC_b	'r' 0
+	jmp_true	_print_ul_real
+	eqC_b	'b' 0
+	jmp_true	_print_ul_bool
+	eqC_b	'f' 0
+	jmp_true	_print_ul_file
+	eqC_b	'a' 0
+	jmp_true	_print_ul_graph
+	halt
+
+_print_ul_integer
+	pop_b	1
+	push_b	1
+	update_b	1 2
+	updatepop_b	0 1
+
+	print_int
+
+	jmp	_print_rest_unboxed_list
+
+_print_ul_char
+	pop_b	1
+	push_b	1
+	update_b	1 2
+	updatepop_b	0 1
+
+	print_sc "'"
+	print_char
+	print_sc "'"
+
+	jmp	_print_rest_unboxed_list
+
+_print_ul_real
+	pop_b	1
+	push_b	1
+	update_b	1 2
+	updatepop_b	0 1
+
+	print_real
+
+	jmp	_print_rest_unboxed_list
+
+_print_ul_bool
+	pop_b	1
+	push_b	1
+	update_b	1 2
+	updatepop_b	0 1
+.d 0 1 b
+	jsr	_print_bool
+.o 0 0
+	jmp	_print_rest_unboxed_list
+
+_print_ul_file
+	pop_b	1
+	updatepop_b	0 2
+
+	print	"File"
+
+	jmp	_print_rest_unboxed_list
+
+_print_ul_graph
+	pop_b	1
+
+	jsr_eval 0
+
+	pushI	0
+.d 1 1 i
+	jsr	_print2
+.o 0 0
+	jmp	_print_rest_unboxed_list
+
+_print_rest_unboxed_list
+	incI
+	push_b 0
+	push_r_arg_t
+	eqC_b	'a' 0
+	jmp_false _print_ul_next_field
+
+	push_b 1
+	incI
+	push_r_arg_t
+	eqI_b	0 0
+	updatepop_b 0 1
+	jmp_false	_print_ul_next_field
+
+	pop_b 2
+
+	jsr_eval 0
+	eq_desc	_Nil 0 0
+	jmp_true	_print_last_unboxed_list
+
+	print_sc	","
+
+	push_t_r_a 0
+
+	push_b	0
+	push_r_arg_t
+	eqC_b	'l' 0
+	updatepop_b 0 1
+	jmp_true	_print_unboxed_list_lp0
+	halt
+
+_print_last_unboxed_list
+	pop_a	1
+	print_sc	"]"
+	jmp	_print_brackets
+
+_print_ul_next_field
+	eqC_b	',' 0
+	jmp_true _print_ul_comma_next_field
+	eqC_b	'(' 0
+	jmp_true _print_ul_open_tuple_next_field
+	eqC_b	'{' 0
+	jmp_true _print_ul_open_record_next_field
+	eqC_b	')' 0
+	jmp_true _print_ul_close_tuple_or_record_next_field
+	eqC_b	'}' 0
+	jmp_true _print_ul_close_tuple_or_record_next_field
+	print_sc " "
+	jmp	_print_unboxed_list_lp2
+
+_print_ul_open_tuple_next_field
+	pop_b 1
+	print_sc " ("
+	jmp	_print_ul_next_field_without_space
+
+_print_ul_open_record_next_field
+	pop_b 1
+	print_sc " ("
+	jmp	_print_ul_unboxed_record
+
+_print_ul_comma_next_field
+	pop_b 1
+	print_sc ","
+_print_ul_next_field_without_space
+	incI
+	push_b	0
+	push_r_arg_t
+	eqC_b	'(' 0
+	jmp_true _print_ul_next_field_without_space_tuple
+	eqC_b	'{' 0
+	jmp_false _print_unboxed_list_lp2
+
+_print_ul_next_field_without_space_record
+	pop_b 1
+	print_sc "("
+
+_print_ul_unboxed_record
+	pushI 0
+	push_b 1
+count_ul_unboxed_records
+	incI
+	push_b 0
+	push_r_arg_t
+	eqC_b	'{' 0
+	jmp_true count_ul_unboxed_record
+	eqI_b	0 0
+	updatepop_b 0 1
+	jmp_false count_ul_unboxed_records
+
+	incI
+	push_r_arg_D
+
+	pushI 2
+	addI
+	printD
+
+	incI
+	push_b	0
+	push_r_arg_t
+	jmp	_print_ul_next_field
+
+count_ul_unboxed_record
+	pop_b 1
+	push_b 1
+	incI
+	update_b 0 2
+	pop_b 1
+	jmp count_ul_unboxed_records
+
+_print_ul_next_field_without_space_tuple
+	pop_b 1
+	print_sc "("
+	jmp	_print_ul_next_field_without_space
+
+_print_ul_close_tuple_or_record_next_field
+	pop_b 1
+	print_sc ")"
+	jmp	_print_rest_unboxed_list
+
+_print_ul_record
+	pushD_a 0
+.d 0 1 i
+	jsr DtoAC
+.o 1 0
+	push_a 0
+	pushI 2
+	push_arraysize CHAR 0 1
+	subI
+	pushI 2
+.d 1 2 ii
+	jsr sliceAC
+.o 1 0
+.d 1 0
+	jsr	print_chars_sc
+.o 0 0
+
+	print_sc " "
+	push_t_r_args
+	incI
+	jmp	_print_ul_next_field_without_space
+
+
+_print__array_
+.d 1 1 i
+	jmp	_print__array2
+
+_print_array
+	pop_b	1
+	pushA_a	0
+	update_a	0 1
+	pop_a	1
+.o 1 1 i
+_print__array
+	eq_desc	_STRING_ 0 0
+	jmp_true	_print_char_array
+_print__array2
+	push_r_args_b	0 0 2 2 1
+
+	print_sc	"{"
+
+	push_b	0
+	eq_desc_b	BOOL 0
+	jmp_true	_print_bool_array
+
+	push_b	0
+	eq_desc_b	dINT 0
+	jmp_true	_print_int_array
+
+	push_b	0
+	eq_desc_b	REAL 0
+	jmp_true	_print_real_array
+
+	pushI	0
+
+	push_a	0
+	push_arraysize	_ 0 1
+
+	push_b	2
+	update_b	2 3
+	update_b	1 2
+	update_b	0 1
+	pop_b	1
+
+	pushI	0
+	eqI
+	jmp_false	_print_record_array
+
+	jmp	_print_array_lp2
+.o 1 2 i i
+_print_array_lp1
+	eqI_b	0 1
+	jmp_true	_no_comma_0
+	print_sc	","
+_no_comma_0
+	push_b	1
+	push_a	0
+	select	_ 0 1
+.d 1 0
+	jsr	_print
+.o 0 0
+	push_b	1
+	incI
+	update_b	0 2
+	pop_b 1
+	decI
+_print_array_lp2
+	eqI_b	0 0
+	jmp_false	_print_array_lp1
+	pop_a	1
+	pop_b	2
+	print_sc	"}"
+	jmp	_print_brackets
+
+_print_record_array
+	jmp	_print_record_array_lp2
+.o 1 2 i i
+_print_record_array_lp1
+	eqI_b	0 1
+	jmp_true	_no_comma_ar
+	print_sc	","
+_no_comma_ar
+	push_r_args_b	0 0 2 2 1
+	printD
+
+	push_b	1
+	push_a	0
+	push_a_r_args
+
+_print_a_record_lp
+	push_b	0
+	push_r_arg_t
+	eqI_b	0 0
+	jmp_true	_end_print_a_record
+	eqC_b	',' 0
+	jmp_true	_print_ar_tuple_comma
+	eqC_b	')' 0
+	jmp_true	_print_ar_close_tuple_or_record_char
+	eqC_b	'}' 0
+	jmp_true	_print_ar_close_tuple_or_record_char
+	print_sc	" "
+_print_a_record_lp__
+	eqC_b	'r' 0
+	jmp_true	_print_ar_real
+	eqC_b	'i' 0
+	jmp_true	_print_ar_integer
+	eqC_b	'c' 0
+	jmp_true	_print_ar_char
+	eqC_b	'b' 0
+	jmp_true	_print_ar_bool
+	eqC_b	'f' 0
+	jmp_true	_print_ar_file
+	eqC_b	'a' 0
+	jmp_true	_print_ar_graph
+	eqC_b	'(' 0
+	jmp_true	_print_ar_open_tuple_char
+	eqC_b	'{' 0
+	jmp_true	_print_ar_open_record_char
+	halt
+
+_print_ar_integer
+	pop_b	1
+	push_b	1
+	update_b	1 2
+	update_b	0 1
+	pop_b	1
+
+	print_int
+
+	incI
+	jmp	_print_a_record_lp
+
+_print_ar_char
+	pop_b	1
+	push_b	1
+	update_b	1 2
+	update_b	0 1
+	pop_b	1
+
+	print_sc "'"
+	print_char
+	print_sc "'"
+
+	incI
+	jmp	_print_a_record_lp
+
+_print_ar_real
+	pop_b	1
+	push_b	1
+	update_b	1 2
+	update_b	0 1
+	pop_b	1
+
+	print_real
+
+	incI
+	jmp	_print_a_record_lp
+
+_print_ar_bool
+	pop_b	1
+	push_b	1
+	update_b	1 2
+	update_b	0 1
+	pop_b	1
+	jmp_true	_print_ar_true
+	
+	print	"False"
+	incI
+	jmp	_print_a_record_lp	
+
+_print_ar_true
+	print	"True"
+	incI
+	jmp	_print_a_record_lp	
+
+_print_ar_file
+	pop_b	1
+	update_b	0 2
+	pop_b	2
+
+	print	"File"
+
+	incI
+	jmp	_print_a_record_lp
+
+_print_ar_graph
+	pop_b	1
+
+	jsr_eval 0
+	pushI	0
+	eq_desc	_ARRAY_ 0 0
+	jmp_true	_print_a_array
+.d 1 1 i
+	jsr	_print2
+.o 0 0
+	incI
+	jmp	_print_a_record_lp
+
+_print_a_array
+.d 1 1 i
+	jsr	_print__array
+.o 0 0
+	incI
+	jmp	_print_a_record_lp
+
+_print_ar_open_tuple_char
+	pop_b 1
+	incI
+	print_sc "("
+_print_ar_record_lp_no_space
+	push_b	0
+	push_r_arg_t
+	eqC_b	')' 0
+	jmp_true	_print_ar_close_tuple_or_record_char
+	eqI_b	0 0
+	jmp_false	_print_a_record_lp__
+	jmp	_end_print_a_record
+
+_print_ar_open_record_char
+	pop_b 1
+	print_sc "("
+
+	pushI 0
+	push_b 1
+count_ar_unboxed_records
+	incI
+	push_b 0
+	push_r_arg_t
+	eqC_b	'{' 0
+	jmp_true count_ar_unboxed_record
+	eqI_b	0 0
+	updatepop_b 0 1
+	jmp_false count_ar_unboxed_records
+
+	incI
+	push_r_arg_D
+
+	pushI 2
+	addI
+	printD
+
+	incI
+	jmp	_print_a_record_lp
+
+count_ar_unboxed_record
+	pop_b 1
+	push_b 1
+	incI
+	update_b 0 2
+	pop_b 1
+	jmp count_ar_unboxed_records
+
+_print_ar_tuple_comma
+	pop_b 1
+	incI
+	print_sc ","
+	jmp	_print_ar_record_lp_no_space
+
+_print_ar_close_tuple_or_record_char
+	pop_b 1
+	incI
+	print_sc ")"
+	jmp	_print_a_record_lp
+
+_end_print_a_record
+	pop_b	2
+
+	push_b	1
+	incI
+	update_b	0 2
+	pop_b 1
+	decI
+_print_record_array_lp2
+	eqI_b	0 0
+	jmp_false	_print_record_array_lp1
+	pop_a	1
+	pop_b	2
+	print_sc	"}"
+	jmp	_print_brackets
+
+_print_char_array
+	print_sc	"\""
+.d 1 0
+	jsr	print_string_
+.o 0 0
+	print_sc	"\""
+	jmp	_print_brackets
+
+_print_bool_array
+	pop_b	1
+	pushI	0
+	push_a	0
+	push_arraysize	BOOL 0 1
+	jmp	_print_bool_array_lp2
+.o 1 2 i i
+_print_bool_array_lp1
+	eqI_b	0 1
+	jmp_true	_no_comma_1
+	print_sc	","
+_no_comma_1
+	push_b	1
+	push_a	0
+	select	BOOL 0 1
+.d 0 1 b	
+	jsr	_print_bool
+.o 0 0
+	push_b	1
+	incI
+	update_b	0 2
+	pop_b 1
+	decI
+_print_bool_array_lp2
+	eqI_b	0 0
+	jmp_false	_print_bool_array_lp1
+
+	pop_a	1
+	pop_b	2
+	print_sc	"}"
+	jmp	_print_brackets
+
+_print_int_array
+	pop_b	1
+	pushI	0
+	push_a	0
+	push_arraysize	INT 0 1
+	jmp	_print_int_array_lp2
+.o 1 2 i i
+_print_int_array_lp1
+	eqI_b	0 1
+	jmp_true	_no_comma_2
+	print_sc	","
+_no_comma_2
+	push_b	1
+	push_a	0
+	select	INT 0 1
+	print_int
+
+	push_b	1
+	incI
+	update_b	0 2
+	pop_b 1
+	decI
+_print_int_array_lp2
+	eqI_b	0 0
+	jmp_false	_print_int_array_lp1
+
+	pop_a	1
+	pop_b	2
+	print_sc	"}"
+	jmp	_print_brackets
+
+_print_real_array
+	pop_b	1
+	push_a	0
+	pushI	0
+	push_arraysize	REAL 0 2
+	jmp	_print_real_array_lp2
+.o 1 2 i i
+_print_real_array_lp1
+	eqI_b	0 1
+	jmp_true	_no_comma_3
+	print_sc	","
+_no_comma_3
+	push_b	1
+	push_a	0
+	select	REAL 0 2
+
+	create
+	fillR_b	0 0
+	pop_b	1
+	print_symbol_sc	0
+	pop_a	1
+
+	push_b	1
+	incI
+	update_b	0 2
+	pop_b 1
+	decI
+_print_real_array_lp2
+	eqI_b	0 0
+	jmp_false	_print_real_array_lp1
+	pop_a	1
+	pop_b	2
+	print_sc	"}"
+	jmp	_print_brackets
+					
+_print_nil
+	print_sc	"[]"
+	pop_a	1
+	jmp	_print_brackets
+
+_print_unit
+	print_sc	"()"
+	pop_a	1
+	jmp	_print_brackets
+
+_print_tuple
+	print_sc	"("
+	get_node_arity	0
+	push_b	0
+	push_b	0
+	repl_args_b
+_print_rest_tuple
+.d 1 0
+	jsr	_print
+.o 0 0
+	decI
+	eqI_b	0 0
+	jmp_true	_exit_print_tuple
+	print_sc	","
+	jmp	_print_rest_tuple
+_exit_print_tuple
+	pop_b	1
+	print_sc	")"
+	jmp	_print_brackets
+
+_print_record
+	push_t_r_a 0
+
+	push_b 0
+	push_r_arg_t
+	eqC_b	'l' 0
+	updatepop_b 0 1
+	jmp_true	_print_unboxed_list
+
+	pop_b 1
+
+	print_sc	"("
+	print_symbol_sc	0
+
+	push_t_r_args
+
+	push_b	0
+	push_r_arg_t
+	eqC_b	'd' 0
+	jmp_false	_print_record_lp_
+
+	pop_b	1
+
+_print_record_lp
+	incI
+	push_b	0
+	push_r_arg_t
+_print_record_lp_
+	eqI_b	0 0
+	jmp_true	_end_print_record
+	eqC_b	',' 0
+	jmp_true	_print_tuple_comma
+	eqC_b	')' 0
+	jmp_true	_print_close_tuple_or_record_char
+	eqC_b	'}' 0
+	jmp_true	_print_close_tuple_or_record_char
+	print_sc	" "
+_print_record_lp__
+	eqC_b	'i' 0
+	jmp_true	_print_r_integer
+	eqC_b	'c' 0
+	jmp_true	_print_r_char
+	eqC_b	'r' 0
+	jmp_true	_print_r_real
+	eqC_b	'b' 0
+	jmp_true	_print_r_bool
+	eqC_b	'f' 0
+	jmp_true	_print_r_file
+	eqC_b	'a' 0
+	jmp_true	_print_r_graph
+	eqC_b	'(' 0
+	jmp_true	_print_open_tuple_char
+	eqC_b	'{' 0
+	jmp_true	_print_open_record_char
+	halt
+
+_print_r_integer
+	pop_b	1
+	push_b	1
+	update_b	1 2
+	update_b	0 1
+	pop_b	1
+
+	print_int
+
+	jmp	_print_record_lp
+
+_print_r_char
+	pop_b	1
+	push_b	1
+	update_b	1 2
+	update_b	0 1
+	pop_b	1
+
+	print_sc "'"
+	print_char
+	print_sc "'"
+
+	jmp	_print_record_lp
+
+_print_r_real
+	pop_b	1
+	push_b	1
+	update_b	1 2
+	update_b	0 1
+	pop_b	1
+
+	print_real
+
+	jmp	_print_record_lp
+
+_print_r_bool
+	pop_b	1
+	push_b	1
+	update_b	1 2
+	update_b	0 1
+	pop_b	1
+.d 0 1 b
+	jsr	_print_bool
+.o 0 0
+	jmp	_print_record_lp	
+
+.o 0 1 b
+_print_bool
+	jmp_true	_print_r_true
+	
+	print	"False"
+.d 0 0
+	rtn
+_print_r_true
+	print	"True"
+.d 0 0
+	rtn
+
+_print_r_file
+	pop_b	1
+	update_b	0 2
+	pop_b	2
+
+	print	"File"
+
+	jmp	_print_record_lp
+
+_print_r_graph
+	pop_b	1
+
+	jsr_eval 0
+	eq_desc	_ARRAY_ 0 0
+	jmp_true	_print_r_array
+
+	push_b	0
+	incI
+	push_r_arg_t
+	pushI	0
+	eqI
+	jmp_true	_print_last_record_arg
+
+	pushI	0
+.d 1 1 i
+	jsr	_print2
+.o 0 0
+	jmp	_print_record_lp
+
+_print_open_tuple_char
+	pop_b 1
+	print_sc "("
+_print_record_lp_no_space
+	incI
+	push_b	0
+	push_r_arg_t
+	eqC_b	')' 0
+	jmp_true	_print_close_tuple_or_record_char
+	eqI_b	0 0
+	jmp_false	_print_record_lp__
+	jmp	_end_print_record
+
+_print_open_record_char
+	pop_b 1
+	print_sc "("
+
+	pushI 0
+	push_b 1
+count_unboxed_records
+	incI
+	push_b 0
+	push_r_arg_t
+	eqC_b	'{' 0
+	jmp_true count_unboxed_record
+	eqI_b	0 0
+	updatepop_b 0 1
+	jmp_false count_unboxed_records
+
+	incI
+	push_r_arg_D
+
+	pushI 2
+	addI
+	printD
+
+	jmp	_print_record_lp
+
+count_unboxed_record
+	pop_b 1
+	push_b 1
+	incI
+	update_b 0 2
+	pop_b 1
+	jmp count_unboxed_records
+
+_print_tuple_comma
+	pop_b 1
+	print_sc ","
+	jmp	_print_record_lp_no_space
+
+_print_close_tuple_or_record_char
+	pop_b 1
+	print_sc ")"
+	jmp	_print_record_lp
+
+_print_last_record_arg
+	pop_b	1
+	incI
+	jmp	_print2
+
+_print_r_array
+	pushI	0
+.d 1 1 i
+	jsr	_print__array
+.o 0 0
+	jmp	_print_record_lp
+
+_end_print_record
+	pop_b	2
+	incI
+	jmp	_print_brackets
+	
+.o 1 0
+_eval_to_nf
+.d 1 0
+	jsr	_eval
+.o 0 0
+.d 0 0
+	rtn
+
+.o 1 0
+_eval
+	jsr_eval	0
+.o 1 0
+_eval2
+	is_record	0
+	jmp_true	_eval_record
+
+	get_node_arity	0
+	eqI_b	0 0		| check if arity is zero
+	jmp_true	_eval_last
+
+	eq_desc	_Cons 2 0
+	jmp_true	_eval_list
+	eq_desc	ARRAY 1 0
+	jmp_true	_eval_array
+	push_b	0
+	push_b	0		| replace the node by
+	repl_args_b		| leave arity on b-stack
+_eval_args
+	eqI_b	1 0		| check if last argument
+	jmp_true	_eval_last_arg
+.d 1 0
+	jsr	_eval
+.o 0 0
+	decI			| decrease argument count
+	jmp	_eval_args
+_eval_last_arg
+	pop_b	1		| remove argument count
+	jmp	_eval		| optimised tail recursion!
+_eval_last
+	pop_b	1		| remove arity
+	eq_desc	_ARRAY_ 0 0
+	jmp_true	_eval__array_
+	pop_a	1		| remove node
+.d 0 0
+	rtn
+
+_eval_list
+	pop_b	1
+_eval_rest_list
+	repl_args	2 2
+.d 1 0
+	jsr	_eval
+.o 0 0
+	jsr_eval 0
+	eq_desc	_Nil 0 0
+	jmp_false	_eval_rest_list
+	pop_a	1
+.d 0 0
+	rtn
+
+_eval_unboxed_list
+	pop_b 1
+	jmp	_eval_unboxed_list_
+
+_eval_unboxed_list_lp0
+	push_t_r_args
+
+	push_b	0
+	push_r_arg_t
+	eqC_b	'l' 0
+	updatepop_b 0 1
+	jmp_true	_eval_unboxed_list_
+	halt
+
+_eval_unboxed_list_
+	push_b 0
+	incI
+	push_r_arg_t
+	eqC_b	'R' 0
+	updatepop_b 0 1
+	jmp_false _eval_unboxed_list_lp1
+
+_eval_ul_record
+	incI
+
+_eval_unboxed_list_lp1
+	incI
+	push_b	0
+	push_r_arg_t
+_eval_ul_next_field
+_eval_unboxed_list_lp2
+	eqC_b	'i' 0
+	jmp_true	_eval_ul_int_char_bool_or_real
+	eqC_b	'c' 0
+	jmp_true	_eval_ul_int_char_bool_or_real
+	eqC_b	'r' 0
+	jmp_true	_eval_ul_int_char_bool_or_real
+	eqC_b	'b' 0
+	jmp_true	_eval_ul_int_char_bool_or_real
+	eqC_b	'f' 0
+	jmp_true	_eval_ul_file
+	eqC_b	'a' 0
+	jmp_true	_eval_ul_graph
+	pop_b 1
+	jmp	_eval_rest_unboxed_list
+
+_eval_ul_int_char_bool_or_real
+	pop_b	1
+	updatepop_b	0 1
+	jmp	_eval_rest_unboxed_list
+
+_eval_ul_file
+	pop_b	1
+	updatepop_b	0 2
+	jmp	_eval_rest_unboxed_list
+
+_eval_ul_graph
+	pop_b	1
+
+	jsr_eval 0
+.d 1 0
+	jsr	_eval2
+.o 0 0
+	jmp	_eval_rest_unboxed_list
+
+_eval_rest_unboxed_list
+	incI
+	push_b 0
+	push_r_arg_t
+	eqC_b	'a' 0
+	jmp_false _eval_ul_next_field
+
+	push_b 1
+	incI
+	push_r_arg_t
+	eqI_b	0 0
+	updatepop_b 0 1
+	jmp_false	_eval_ul_next_field
+
+	pop_b 2
+
+	jsr_eval 0
+	eq_desc	_Nil 0 0
+	jmp_false _eval_unboxed_list_lp0
+
+_eval_last_unboxed_list
+	pop_a	1
+.d 0 0
+	rtn
+
+_eval__array_
+.d 1 0
+	jmp	_eval__array2
+
+_eval_array
+	pop_b	1
+	pushA_a	0
+	update_a	0 1
+	pop_a	1
+.o 1 0
+_eval__array
+	eq_desc	_STRING_ 0 0
+	jmp_true	_eval_char_array
+.o 1 0
+_eval__array2
+	push_r_args_b	0 0 2 2 1
+
+	push_b	0
+	eq_desc_b	BOOL 0
+	jmp_true	_eval_bool_array
+
+	push_b	0
+	eq_desc_b	dINT 0
+	jmp_true	_eval_int_array
+
+	push_b	0
+	eq_desc_b	REAL 0
+	jmp_true	_eval_real_array
+
+	pushI	0
+
+	push_a	0
+	push_arraysize	_ 0 1
+
+	push_b	2
+	update_b	2 3
+	update_b	1 2
+	update_b	0 1
+	pop_b	1
+
+	pushI	0
+	eqI
+	jmp_false	_eval_record_array
+
+	jmp	_eval_array_lp2
+.o 1 2 i i
+_eval_array_lp1
+	push_b	1
+	push_a	0
+	select	_ 0 1
+.d 1 0
+	jsr	_eval
+.o 0 0
+	push_b	1
+	incI
+	update_b	0 2
+	pop_b 1
+	decI
+_eval_array_lp2
+	eqI_b	0 0
+	jmp_false	_eval_array_lp1
+	pop_a	1
+	pop_b	2
+.d 0 0
+	rtn
+
+_eval_record_array
+	jmp	_eval_record_array_lp2
+.o 1 2 i i
+_eval_record_array_lp1
+	push_b	1
+	push_a	0
+	push_a_r_args
+
+_eval_a_record_lp
+	push_b	0
+	push_r_arg_t
+	eqI_b	0 0
+	jmp_true	_end_eval_a_record
+	eqC_b	'i' 0
+	jmp_true	_eval_ar_integer
+	eqC_b	'c' 0
+	jmp_true	_eval_ar_char
+	eqC_b	'r' 0
+	jmp_true	_eval_ar_real
+	eqC_b	'b' 0
+	jmp_true	_eval_ar_bool
+	eqC_b	'f' 0
+	jmp_true	_eval_ar_file
+	eqC_b	'a' 0
+	jmp_true	_eval_ar_graph
+	pop_b	1
+	incI
+	jmp	_eval_a_record_lp
+
+_eval_ar_bool
+_eval_ar_char
+_eval_ar_integer
+	pop_b	1
+	update_b	0 1
+	pop_b	1
+
+	incI
+	jmp	_eval_a_record_lp
+
+_eval_ar_file
+_eval_ar_real
+	pop_b	1
+	update_b	0 2
+	pop_b	2
+
+	incI
+	jmp	_eval_a_record_lp
+
+_eval_ar_graph
+	pop_b	1
+
+	jsr_eval	0
+	eq_desc	_ARRAY_ 0 0
+	jmp_true	_eval_a_array
+.d 1 0
+	jsr	_eval2
+.o 0 0
+	incI
+	jmp	_eval_a_record_lp
+
+_eval_a_array
+.d 1 0
+	jsr	_eval__array
+.o 0 0
+	incI
+	jmp	_eval_a_record_lp
+
+_end_eval_a_record
+	pop_b	2
+
+	push_b	1
+	incI
+	update_b	0 2
+	pop_b 1
+	decI
+_eval_record_array_lp2
+	eqI_b	0 0
+	jmp_false	_eval_record_array_lp1
+	pop_a	1
+	pop_b	2
+.d 0 0
+	rtn
+
+_eval_char_array
+	pop_a	1
+.d 0 0
+	rtn
+
+_eval_real_array
+_eval_bool_array
+_eval_int_array
+	pop_b	1
+	pop_a	1
+.d 0 0
+	rtn
+					
+_eval_record
+	push_t_r_args
+
+	push_b	0
+	push_r_arg_t
+	eqC_b	'l' 0
+	jmp_true	_eval_unboxed_list
+	eqC_b	'd' 0
+	jmp_false	_eval_record_lp_
+
+	pop_b	1
+	incI
+
+_eval_record_lp
+	push_b	0
+	push_r_arg_t
+_eval_record_lp_
+	eqI_b	0 0
+	jmp_true	_end_eval_record
+	eqC_b	'r' 0
+	jmp_true	_eval_r_real
+	eqC_b	'i' 0
+	jmp_true	_eval_r_integer
+	eqC_b	'c' 0
+	jmp_true	_eval_r_char
+	eqC_b	'b' 0
+	jmp_true	_eval_r_bool
+	eqC_b	'f' 0
+	jmp_true	_eval_r_file
+	eqC_b	'a' 0
+	jmp_true	_eval_r_graph
+	pop_b	1
+	incI
+	jmp	_eval_record_lp
+
+_eval_r_char
+_eval_r_bool
+_eval_r_integer
+_eval_r_real
+	pop_b	1
+	update_b	0 1
+	pop_b	1
+	incI
+	jmp	_eval_record_lp
+
+_eval_r_file
+	pop_b	1
+	update_b	0 2
+	pop_b	2
+	incI
+	jmp	_eval_record_lp
+
+_eval_r_graph
+	pop_b	1
+
+	jsr_eval 0
+	eq_desc	_ARRAY_ 0 0
+	jmp_true	_eval_r_array
+
+	push_b	0
+	incI
+	push_r_arg_t
+	pushI	0
+	eqI
+	jmp_true	_eval_last_record_arg
+
+.d 1 0
+	jsr	_eval2
+.o 0 0
+	incI
+	jmp	_eval_record_lp
+
+_eval_last_record_arg
+	pop_b	1
+	jmp	_eval2
+
+_eval_r_array
+.d 1 0
+	jsr	_eval__array
+.o 0 0
+	incI
+	jmp	_eval_record_lp
+
+_end_eval_record
+	pop_b	2
+.d 0 0
+	rtn
+
+.export d_Sel n_Sel
+
+.descn d_Sel n_Sel 1 0 "_Sel"
+.pb "_Sel"
+.n 1 d_Sel _
+.o 1 0
+n_Sel
+	push_node _ 1
+	jsr_eval 0
+	pop_a 1
+	jmp_eval
+.pe
+
+.export d_indirection n_indirection
+
+.descn d_indirection n_indirection 1 0 "_indirection"
+.pb "_indirection"
+.n -2 d_indirection ea_indirection
+.o 1 0
+n_indirection
+	push_node _cycle_in_spine 1
+	jsr_eval 0
+	fill_a 0 1
+	pop_a 1
+.d 1 0
+	rtn
+
+.o 2 0
+ea_indirection
+	push_node _cycle_in_spine 1
+	jsr_eval 0
+	fill_a 0 1
+	fill_a 0 2
+.keep 1 2
+	pop_a 2
+.d 1 0
+	rtn
+.pe
+

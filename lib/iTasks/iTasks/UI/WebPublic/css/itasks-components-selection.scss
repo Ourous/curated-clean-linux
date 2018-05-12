@@ -1,0 +1,182 @@
+.#{$prefix}checkgroup, {
+    margin: 0;
+    padding: 0;
+}
+.#{$prefix}checkgroup li {
+    list-style: none;
+}
+.#{$prefix}checkgroup label {
+	margin-left: 5px;
+}
+.#{$prefix}choicegrid {
+    display: flex;
+    display: -webkit-flex;
+    flex-direction: column;
+    -webkit-flex-direction: column;
+}
+.#{$prefix}choicegrid-header {
+    color: $panel-header-text-color;
+    background: $panel-header-base-color;
+    background: -moz-linear-gradient(center top, $panel-header-base-color + #0a0a0a, $panel-header-base-color - #0a0907);
+    background: -webkit-linear-gradient(center top, $panel-header-base-color + #0a0a0a, $panel-header-base-color - #0a0907);
+    display: flex;
+    display: -webkit-flex;
+    flex-direction: row;
+    -webkit-flex-direction: row;
+    flex: none;
+}
+.#{$prefix}choicegrid-header > div {
+    $up-color: $panel-header-base-color + #111;
+    $down-color: $panel-header-base-color + #222;
+    border: 1px solid;
+    border-color:  $up-color $up-color $down-color $down-color;
+    flex: 1;
+    -webkit-flex: 1;
+    padding: 3px 5px;
+    font-size: 11px;
+    height: 20px;
+}
+.#{$prefix}choicegrid-body {
+    flex: 1;
+    -webkit-flex: 1;
+    background: #fff;
+    color: #000;
+    overflow: auto;
+	min-height: 100px;
+}
+.#{$prefix}choicegrid-body > div {
+    display: flex;
+    display: -webkit-flex;
+    flex-direction: row;
+    -webkit-flex-direction: row;
+    cursor: default;
+    border: solid transparent;
+    border-width: 1px 0;
+    border-bottom-color: #ddd;
+}
+.#{$prefix}choicegrid-body > div:nth-child(even) {
+    background-color: #fafafa;
+}
+.#{$prefix}choicegrid-body > div:hover {
+    background-color: #eee;
+}
+.#{$prefix}choicegrid-body > div.#{$prefix}selected {
+    background-color: $select-base-color;
+    color: $select-text-color;
+    border: 1px dotted #333;
+}
+.#{$prefix}choicegrid-body > div > div {
+    flex: 1;
+    -webkit-flex: 1;
+    padding: 3px 5px;
+}
+
+.#{$prefix}choicetree {
+    overflow: auto;
+    min-width: 150px;
+    -webkit-min-width: 150px;
+    min-height: 100px;
+    -webkit-min-height: 100px;
+
+    background: #fff;
+    color: #000;
+
+    ol {
+        margin: 5px 0 0 20px;
+        padding: 0;
+    }
+    li {
+        position: relative;
+        margin: 0 0 2px -15px;
+        list-style: none;
+
+        input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            margin-left: 0;
+            opacity: 0;
+            z-index: 2;
+            cursor: pointer;
+            height: 1em;
+            width: 1em;
+
+            + ol {
+                margin: -15px 0 0 -44px;
+                display: block;
+                height: 1em;
+                background: url('#{$icon-path}toggle-small-expand.png') 42px -3px no-repeat;
+
+                > li {
+                    display: none;
+                    margin-left: -24px !important;
+                    padding-left: 1px;
+                }
+            }
+            &:checked + ol {
+                margin: -20px 0 0 -44px;
+                padding: 20px 0 0 80px;
+                height: auto;
+                background: url('#{$icon-path}/toggle-small.png') 42px 0 no-repeat;
+
+                > li {
+                    display: block;
+                    margin: 0 0 2px;
+
+                    &:last-child {
+                        margin: 0 0 1px;
+                    }
+                }
+            }
+        }
+        &.#{$prefix}leaf > label {
+            background-position: 16px 0px;
+            background-repeat: no-repeat;
+        }
+        &.#{$prefix}selected > label {
+            font-weight: bold;
+        }
+        label {
+            cursor: pointer;
+            display: block;
+            white-space: nowrap;
+            font-size: 12px;
+            padding-left: 37px;
+            background-color: #fff;
+            background-position: 15px 1px;
+            background-repeat: no-repeat;
+        }
+        label.#{$prefix}default-folder {
+            background-image: url('#{$icon-path}folder.png');
+        }
+        label.#{$prefix}default-leaf {
+            background-image: url('#{$icon-path}document.png');
+        }
+    }
+}
+.#{$prefix}choice-list {
+    margin: 0;
+    border: 1px solid $select-base-color;
+    display: flex;
+    display: -webkit-flex;
+    overflow: auto;
+    flex-direction: column;
+    -webkit-flex-direction: column;
+    align-items: stretch;
+    -webkit-align-items: stretch;
+}
+.#{$prefix}choice-list-option {
+    border: solid $select-base-color;
+    border-width: 0 0 1px 0;
+    padding: 5px 10px;
+    flex-shrink: 0;
+    -webkit-flex-shrink: 0;
+
+    &:last-child {
+        border-width: 0;
+    }
+}
+.#{$prefix}choice-list-option.#{$prefix}selected {
+    background-color: $select-base-color;
+    color: $select-text-color;
+}

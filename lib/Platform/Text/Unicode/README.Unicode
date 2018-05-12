@@ -1,0 +1,9 @@
+These files are from GHC 7.6.3. UChar also ported from there
+
+WCsubst.c is generated with:
+
+    sh ubconfc < UnicodeData.txt > WCsubst.c
+
+where UnicodeData.txt came from
+
+    http://www.unicode.org/Public/6.0.0/ucd/UnicodeData.txt
