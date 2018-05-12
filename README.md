@@ -12,7 +12,7 @@ All other contents are from:
 	
 	12 May 2018
 	
-With these changes:
+With these changes made to allow compilation:
 	
 	Specializations for UNIT added to several modules in the Generics library
 	
