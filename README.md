@@ -6,7 +6,7 @@ Curated Clean is based off of the nightly Clean builds found at ftp://ftp.cs.ru.
 Currently, it is composed of:
 
 	12 March 2018
-	|-> library:Platform/Data.Generics
+	|-> library:Platform/Data
 	
 All other contents are from:
 	
