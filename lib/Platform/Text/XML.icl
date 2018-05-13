@@ -1,7 +1,7 @@
 implementation module Text.XML
 
 import StdArray, StdBool, StdInt, StdList, StdTuple, StdGeneric, StdFunc, StdString
-import Data.Error, Data.Either, Data.Maybe, Text, Data.Generics.GenEq
+import Data.Error, Data.Either, Data.Maybe, Text, Data.GenEq
 from Text.Parsers.CParsers.ParserCombinators import :: Parser, :: ParsResult, :: CParser, &>, +&+, +&-, -&+, <!>, <&, <&>, <*?>, <@, >?<, @>, begin1, satisfy, symbol, yield, <|>, <+?>
 
 uname :: !String -> XMLQName
