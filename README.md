@@ -15,6 +15,7 @@ With these changes made to allow compilation:
 	
 	Specializations for UNIT added to several modules in the Generics library
 	Dependencies on the old Data.Generics modules have been re-pointed to their new locations
+	Data.Graph.Inductive.Graph has had an import for the toString class from StdOverloaded added
 	
 Below follows Clean's official `README.md`:
 
