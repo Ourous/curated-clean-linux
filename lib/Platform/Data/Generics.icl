@@ -1,6 +1,6 @@
 implementation module Data.Generics
 
-import StdGeneric
+import StdGeneric, StdList
 
 fromOBJECT :: !(OBJECT x) -> x
 fromOBJECT (OBJECT x) = x

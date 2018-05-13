@@ -5,7 +5,7 @@ implementation module Data.Graphviz
 
 import StdArray, StdOverloaded, StdOrdList, StdTuple, StdString, StdBool, StdMisc
 import Data.Maybe, Data.List
-import Text.GenPrint, Data.GenEq
+import Data.Generics.GenPrint, Data.Generics.GenEq
 
 derive gEq    EdgeStyle, NodeStyle, DirType, NodeShape, Side, ArrowShape, ArrowType, Arrow, Color, Maybe
 derive gPrint EdgeStyle, NodeStyle, DirType, NodeShape, Side, ArrowShape,

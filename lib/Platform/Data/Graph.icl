@@ -11,7 +11,7 @@ import StdTuple
 import Data.Map
 import Data.Maybe
 import Data.Functor
-import Text.GenJSON
+import Text.JSON
 from Data.Generics.GenEq import generic gEq
 
 :: Graph n e = 

@@ -2,7 +2,7 @@ definition module Data.Graph
 
 from Data.Maybe import ::Maybe
 from Data.Map import :: Map
-from Text.GenJSON import :: JSONNode, generic JSONEncode, generic JSONDecode
+from Text.JSON import :: JSONNode, generic JSONEncode, generic JSONDecode
 from Data.Generics.GenEq import generic gEq
 
 //:: Graph n e

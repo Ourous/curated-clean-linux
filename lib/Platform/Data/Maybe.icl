@@ -21,7 +21,10 @@ instance == (Maybe x) | == x where
 							Just b  -> a == b
 							nothing -> False
 
-instance Functor Maybe where fmap f m = mapMaybe f m
+instance Functor Maybe
+where
+	fmap f Nothing	= Nothing
+	fmap f (Just a)	= Just (f a)
 
 instance Applicative Maybe
 where
@@ -95,10 +98,6 @@ where
 	sequenceA f = traverse id f
 	mapM f x = unwrapMonad (traverse (WrapMonad o f) x)
 	sequence x = 'T'.mapM id x
-
-mapMaybe :: .(.x -> .y) !(Maybe .x) -> Maybe .y
-mapMaybe f (Just x) = Just (f x)
-mapMaybe _ _        = Nothing
 
 maybe :: w:b v:(.a -> w:b) !.(Maybe .a) -> w:b
 maybe x _ Nothing  = x
