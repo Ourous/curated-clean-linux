@@ -5,8 +5,8 @@ from StdClass import class Ord (..), <=, >
 from Data.Maybe		import :: Maybe
 from Data.List import foldl, map
 from StdBool import not, &&
-from Data.Generics.GenEq import generic gEq
-from Data.Generics.GenLexOrd import generic gLexOrd, :: LexOrd
+from Data.GenEq import generic gEq
+from Data.GenLexOrd import generic gLexOrd, :: LexOrd
 from Data.Foldable import class Foldable
 
 // This module is ported from Haskell Data.Set by László Domoszlai. 2013.sep.6

@@ -1,4 +1,4 @@
-definition module Data.Generics.GenDiff
+definition module Data.GenDiff
 
 import StdGeneric
 from StdOverloaded import class ==
@@ -16,10 +16,10 @@ from StdOverloaded import class ==
  * The status of a node head in a {{`Diff`}}.
  */
 :: DiffStatus
-	= Common  //* The complete node is common to both values
-	| Changed //* The node head is common, but there are diffs in the children
-	| Added   //* The node is added
-	| Removed //* The node is removed
+	= Common    //* The complete node is common to both values
+	| Changed   //* The node head is common, but there are diffs in the children
+	| OnlyRight //* The node only exists in the right argument
+	| OnlyLeft  //* The node only exists in the left argument
 
 instance == DiffStatus
 

@@ -1,4 +1,4 @@
-implementation module Data.Generics._Array
+implementation module Data._Array
 
 import _SystemArray, StdInt, StdClass
 

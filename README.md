@@ -5,8 +5,7 @@ Curated Clean is based off of the nightly Clean builds found at ftp://ftp.cs.ru.
 
 Currently, it is composed of:
 
-	12 March 2018
-	|-> library:Platform/Data
+	.
 	
 All other contents are from:
 	
@@ -15,6 +14,7 @@ All other contents are from:
 With these changes made to allow compilation:
 	
 	Specializations for UNIT added to several modules in the Generics library
+	Dependencies on the old Data.Generics modules have been re-pointed to their new locations
 	
 Below follows Clean's official `README.md`:
 

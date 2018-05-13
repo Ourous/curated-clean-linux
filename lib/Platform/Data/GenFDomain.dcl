@@ -1,4 +1,4 @@
-definition module Data.Generics.GenFDomain
+definition module Data.GenFDomain
 
 import StdGeneric
 

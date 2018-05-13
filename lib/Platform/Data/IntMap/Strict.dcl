@@ -5,8 +5,8 @@ from StdClass		import class Eq, class Ord
 from StdOverloaded	import class ==, class <
 from StdBool        import not
 from StdFunc        import id
-from Text.JSON      import generic JSONEncode, generic JSONDecode, :: JSONNode
-from Data.Generics.GenEq import generic gEq
+from Text.GenJSON   import generic JSONEncode, generic JSONDecode, :: JSONNode
+from Data.GenEq import generic gEq
 from Data.Monoid    import class Monoid, class Semigroup
 import qualified StdList as SL
 from Data.List import foldr
@@ -98,6 +98,9 @@ size :: !(IntMap a) -> Int
 
 member :: !Int !(IntMap a) -> Bool
 
+/**
+ * @type !Int !(IntMap a) -> Bool
+ */
 notMember k m :== not (member k m)
 
 find :: !Int !(IntMap a) -> a

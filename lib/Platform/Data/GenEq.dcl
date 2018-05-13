@@ -1,4 +1,4 @@
-definition module Data.Generics.GenEq
+definition module Data.GenEq
 
 import StdGeneric
 from StdBool import qualified &&, not

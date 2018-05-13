@@ -1,9 +1,8 @@
-implementation module Data.Generics.GenZip
+implementation module Data.GenZip
 
 import StdGeneric
 import StdEnv
-from Data.Maybe import :: Maybe(..)
-from StdMaybe import mapMaybe
+from Data.Maybe import :: Maybe(..), mapMaybe
 
 derive bimap Maybe
 	

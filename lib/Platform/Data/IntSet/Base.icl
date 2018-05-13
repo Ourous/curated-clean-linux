@@ -85,7 +85,7 @@
 implementation module Data.IntSet.Base
 
 import StdInt, StdBool, StdFunc, StdMisc, StdOverloaded, StdClass, StdTuple
-import Data.Generics.GenLexOrd
+import Data.GenLexOrd
 import qualified Data.List as DL
 import Data.Maybe
 import Data.Monoid

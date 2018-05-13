@@ -30,4 +30,4 @@ instance Traversable (Either a)
 
 instance Bifunctor Either
 
-either :: (.a -> .c) (.b -> .c) !(Either .a .b) -> .c
+either :: .(.a -> .c) .(.b -> .c) !(Either .a .b) -> .c

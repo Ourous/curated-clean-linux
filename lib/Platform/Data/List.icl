@@ -8,7 +8,7 @@ import StdOrdList
 import StdTuple
 
 import Data.Functor
-import Data.Generics.GenEq
+import Data.GenEq
 import Data.Maybe
 import Data.Monoid
 from Data.Foldable import class Foldable(foldMap)
@@ -22,8 +22,8 @@ where
 	fmap f l = [f e \\ e <- l]
 
 instance Applicative [] where
-	pure x     = [x]
-	(<*>) xs x = liftA2 id xs x
+	pure x      = [x]
+	(<*>) fs xs = [f x\\f<-fs, x<-xs]
 
 instance Alternative [] where
 	empty        = []
@@ -401,14 +401,14 @@ strictFoldr :: !(.a -> .(.b -> .b)) !.b ![.a] -> .b
 strictFoldr _ b []     = b
 strictFoldr f b [x:xs] = f x (strictFoldr f b xs)
 
-strictFoldrSt :: !(.a -> .(.b *st -> *(.b, *st))) !.b ![.a] *st -> *(.b, *st)
+strictFoldrSt       :: !(.a -> .(.b -> .(.st -> .(.b, .st)))) !.b ![.a] .st -> .(.b, .st)
 strictFoldrSt _ b []     st = (b, st)
 strictFoldrSt f b [x:xs] st
   #! (acc, st) = strictFoldrSt f b xs st
   #! (r, st)   = f x acc st
   = (r, st)
 
-strictFoldlSt :: !(.a -> .(.b *st -> *(.a, *st))) !.a ![.b] *st -> *(.a, *st)
+strictFoldlSt       :: !(.a -> .(.b -> .(.st -> .(.a, .st)))) !.a ![.b] .st -> .(.a, .st)
 strictFoldlSt _ b [] st = (b, st)
 strictFoldlSt f b [x:xs] st
   #! (r, st) = f b x st

@@ -1,4 +1,4 @@
-implementation module Data.Generics.GenEq
+implementation module Data.GenEq
 
 import StdGeneric, StdEnv
 

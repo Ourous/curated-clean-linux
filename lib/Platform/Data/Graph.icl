@@ -11,8 +11,8 @@ import StdTuple
 import Data.Map
 import Data.Maybe
 import Data.Functor
-import Text.JSON
-from Data.Generics.GenEq import generic gEq
+import Text.GenJSON
+from Data.GenEq import generic gEq
 
 :: Graph n e = 
 	{ nodes		:: !Map NodeIndex (Node n)

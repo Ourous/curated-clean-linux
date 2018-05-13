@@ -1,4 +1,4 @@
-implementation module Data.Generics.GenDefault
+implementation module Data.GenDefault
 
 import StdArray
 import StdGeneric

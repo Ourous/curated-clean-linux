@@ -1,6 +1,6 @@
-implementation module Data.Generics.GenCompress
+implementation module Data.GenCompress
 
-import StdGeneric, StdEnv, Data.Generics._Array
+import StdGeneric, StdEnv, Data._Array
 from Data.Maybe import :: Maybe(..)
 
 //--------------------------------------------------

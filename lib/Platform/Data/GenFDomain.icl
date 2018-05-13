@@ -1,4 +1,4 @@
-implementation module Data.Generics.GenFDomain
+implementation module Data.GenFDomain
 
 import StdChar, StdEnum, StdInt, StdList
 import StdGeneric

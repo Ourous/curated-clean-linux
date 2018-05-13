@@ -1,4 +1,4 @@
-definition module Data.Generics._Array
+definition module Data._Array
 
 import StdArray
 

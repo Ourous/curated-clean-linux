@@ -1,4 +1,4 @@
-definition module Data.Generics.GenDefault
+definition module Data.GenDefault
 
 import StdGeneric
 

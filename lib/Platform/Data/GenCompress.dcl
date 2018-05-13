@@ -1,4 +1,4 @@
-definition module Data.Generics.GenCompress
+definition module Data.GenCompress
 
 import StdGeneric
 from Data.Maybe import :: Maybe

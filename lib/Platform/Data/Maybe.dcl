@@ -33,6 +33,11 @@ instance Foldable Maybe
 instance Traversable Maybe
 
 /**
+ * Like {{`fmap`}}, but with less restrictive uniqueness constraints.
+ */
+mapMaybe :: .(.x -> .y) !(Maybe .x) -> Maybe .y
+
+/**
  * Apply a function to the the contents of a Just value and directly return
  * the result, or return a default value if the argument is a Nothing value.
  */

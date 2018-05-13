@@ -1,4 +1,4 @@
-definition module Data.Generics.GenZip
+definition module Data.GenZip
 
 import StdGeneric
 from Data.Maybe import :: Maybe

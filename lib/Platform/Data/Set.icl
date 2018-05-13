@@ -1,7 +1,7 @@
 implementation module Data.Set
 
 import StdClass, StdMisc, StdBool, StdFunc, StdInt, StdTuple
-import Data.Maybe, Data.Generics.GenEq, Data.Generics.GenLexOrd, Data.Monoid
+import Data.Maybe, Data.GenEq, Data.GenLexOrd, Data.Monoid
 from Data.Foldable import class Foldable (..)
 import qualified StdList
 from StdList import instance == [a]

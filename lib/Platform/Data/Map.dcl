@@ -9,9 +9,9 @@ from Data.Maybe		import :: Maybe (..)
 from StdOverloaded	import class ==, class <
 from StdBool        import not
 from StdFunc        import id
-from Text.JSON      import generic JSONEncode, generic JSONDecode, :: JSONNode
-from Data.Generics.GenEq import generic gEq
-from Data.Generics.GenLexOrd import generic gLexOrd, :: LexOrd
+from Text.GenJSON      import generic JSONEncode, generic JSONDecode, :: JSONNode
+from Data.GenEq import generic gEq
+from Data.GenLexOrd import generic gLexOrd, :: LexOrd
 from Data.Monoid    import class Monoid, class Semigroup
 import qualified StdList as SL
 from Data.List import foldr
@@ -199,6 +199,42 @@ find :: !k !(Map k a) -> a | < k
  * @param The key to look up.
  */
 findWithDefault :: !a !k !(Map k a) -> a | < k
+
+
+/**
+ * Find the (Just key) of an element in a Map.
+ * When the element does not exist, return Nothing.
+ *
+ * @param The element you're looking for.
+ */
+findKey :: !a !(Map k a) -> Maybe k | == a
+
+/**
+ * Find a (Just key) of an element in a Map, for which the function yields True.
+ * When the element does not exist, return Nothing.
+ *
+ * @param The search function for checking values in the Map.
+ */
+findKeyWith :: !(a -> Bool) !(Map k a) -> Maybe k
+
+/**
+ * Find the key of an element in a Map.
+ * If the element is not a member, return the first parameter.
+ *
+ * @param The result if the second parameter does not occur as a value in the Map.
+ * @param The element you're looking for.
+ */
+findKeyWithDefault :: !k !a !(Map k a) -> k | == a
+
+/**
+ * Find the key of an element in a Map, for which the function yields True.
+ * If the element is not a member, return the second parameter.
+ *
+ * @param The search function for checking values in the Map.
+ * @param The result when all values in the Map check as False.
+ */
+findKeyWithDefaultWith :: !(a -> Bool) !k !(Map k a) -> k
+
 
 alter :: !((Maybe a) -> Maybe a) !k !(Map k a) -> Map k a | < k
 

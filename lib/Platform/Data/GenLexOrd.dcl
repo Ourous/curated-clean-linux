@@ -1,6 +1,6 @@
-definition module Data.Generics.GenLexOrd
+definition module Data.GenLexOrd
 
-import StdGeneric, Data.Generics.GenEq
+import StdGeneric, Data.GenEq
 
 :: LexOrd = LT | EQ | GT
 derive gEq LexOrd

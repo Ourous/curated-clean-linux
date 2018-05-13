@@ -1,7 +1,7 @@
-implementation module Data.Generics.GenLexOrd
+implementation module Data.GenLexOrd
 
 import StdEnv
-import StdGeneric, Data.Generics.GenEq
+import StdGeneric, Data.GenEq
 
 :: LexOrd = LT |EQ | GT
 derive gEq LexOrd

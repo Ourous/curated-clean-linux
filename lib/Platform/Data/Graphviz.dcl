@@ -5,7 +5,7 @@ definition module Data.Graphviz
 
 from StdOverloaded import class toString, class ==
 from Data.Maybe import :: Maybe
-from Data.Generics.GenEq import generic gEq
+from Data.GenEq import generic gEq
 
 // A digraph contains a title and a list of node definitions
 :: Digraph

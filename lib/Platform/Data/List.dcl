@@ -1,7 +1,7 @@
 definition module Data.List
 
 import StdList
-from Data.Generics.GenEq import generic gEq
+from Data.GenEq import generic gEq
 from Data.Functor import class Functor
 from Data.Maybe import :: Maybe
 from Data.Monoid import class Semigroup, class Monoid
@@ -151,8 +151,8 @@ strictTRMapAcc      :: !(u:a -> v:b) !w:[u:a] !x:[v:b] -> y:[v:b], [w <= u,y <= 
 strictTRMap         :: !(.a -> .b) ![.a] -> [.b]
 reverseTR           :: ![.a] -> [.a]
 flattenTR           :: ![[a]] -> [a]
-strictFoldrSt       :: !(.a -> .(.b *st -> *(.b, *st))) !.b ![.a] *st -> *(.b, *st)
-strictFoldlSt       :: !(.a -> .(.b *st -> *(.a, *st))) !.a ![.b] *st -> *(.a, *st)
+strictFoldrSt       :: !(.a -> .(.b -> .(.st -> .(.b, .st)))) !.b ![.a] .st -> .(.b, .st)
+strictFoldlSt       :: !(.a -> .(.b -> .(.st -> .(.a, .st)))) !.a ![.b] .st -> .(.a, .st)
 strictTRMapSt       :: !(a .st -> (!b, !.st)) ![a] !.st -> (![b], !.st)
 strictTRMapStAcc    :: !(a .st -> (!b, !.st)) ![a] ![b] !.st -> (![b], !.st)
 strictTRZipWith     :: !(a b -> c) ![a] ![b] -> [c]

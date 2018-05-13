@@ -13,7 +13,7 @@ import StdBool, StdTuple, StdFunc, StdMisc, StdEnum, StdString, StdOverloaded, S
 import Data.List
 import Data.Maybe
 import Data.Functor
-import Data.Generics.GenLexOrd
+import Data.GenLexOrd
 
 unLPath :: (LPath a) -> [LNode a]
 unLPath (LP xs) = xs
