@@ -20,6 +20,12 @@ instance Monoid (a -> b) | Monoid b
 ($) f :== f
 
 /**
+ * If function
+ * @type Bool a a -> a
+ */
+if` c t e :== if c t e
+
+/**
  * Function application.
  * @type a -> a
  */

@@ -35,12 +35,12 @@ editorLinker initUIFunc iworld=:{world,current={sessionInstance=Just currentInst
 				Ok (script, pst) = Ok (script,Just pst)
 				Error e 		 = Error e
 	| mbInitPs =:(Error _)
-		= (liftError mbInitPs, {iworld & world=world, jsCompilerState = Just jsCompilerState})
+		= (liftError mbInitPs, {iworld & world=world})
 	# (js_lib, parserState) = fromOk mbInitPs
 	/* 3. Generate expressions by ParserState */
 	# mbExprPs = exprGenerateJS flavour False sapl_IU parserState js_lib
 	| mbExprPs =:(Error _)
-		= (liftError mbExprPs, {iworld & world=world, jsCompilerState = Just jsCompilerState})
+		= (liftError mbExprPs, {iworld & world=world})
 	# (js_IU, js_lib, parserstate) = fromOk mbExprPs
 	/* Update global compiler state */
 	# jsCompilerState 

@@ -43,15 +43,14 @@ toSpec :: (state input -> [(state,[output])]) -> Spec state input output
 genLongInputs :: s (Spec s i o) [i] Int ![Int] -> [[i]]
 generateFSMpaths :: s (Spec s i o) ![i] (s->[i]) -> [[i]] | gEq{|*|} s
 
-testConfSM :: [TestOption s i o] (Spec s i o) s (IUTstep .t i o) .t (.t->.t) *d -> (.t,*d)
-			| FileSystem d & gEq{|*|}, gLess{|*|}, genShow{|*|} s & gEq{|*|}, genShow{|*|} o & ggen{|*|}, genShow{|*|} i // & genType{|*|} i
-//			| FileSystem d & ggen{|*|} i & gEq{|*|} s & gEq{|*|} o & genShow{|*|} s & genShow{|*|} i & genShow{|*|} o
-//testConfSM :: [TestOption s i o] (Spec s i o) s (IUTstep .t i o) .t (.t->.t) *File *File -> (.t,*File,*File)
-//			| ggen{|*|} i & gEq{|*|} s & gEq{|*|} o & genShow{|*|} s & genShow{|*|} i & genShow{|*|} o
+testConfSM :: [TestOption s i o] (Spec s i o) s (IUTstep .t i o) .t (.t->.t) *d -> ((.t,[i]),*d)
+      | FileSystem d
+      & gEq{|*|}, gLess{|*|}, genShow{|*|} s
+      & gEq{|*|}, genShow{|*|} o
+      & ggen{|*|}, genShow{|*|} i
 
 (after) infix 0 :: [s] (Spec s i o) -> ([i] -> [s])
 
 propDeterministic :: !(Spec s i o) s i -> Bool
 propTotal :: !(Spec s i o) s i -> Bool
-//propComplete :: (Spec s i o) s i -> Bool // equal to propTotal
 propComplete spec s i :== propTotal spec s i

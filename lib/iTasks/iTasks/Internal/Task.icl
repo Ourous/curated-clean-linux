@@ -12,6 +12,7 @@ import iTasks.WF.Definition
 import iTasks.WF.Tasks.IO
 from   iTasks.WF.Combinators.Core import :: AttachmentStatus
 import iTasks.UI.Editor, iTasks.UI.Editor.Common
+from iTasks.UI.Layout import :: LUI, :: LUIMoves, :: LUIMoveID, :: LUIEffectStage, :: LUINo
 
 from iTasks.Internal.TaskState		import :: TaskTree(..), :: DeferredJSON(..), :: TIMeta(..)
 from iTasks.Internal.TaskEval         import :: TaskEvalInfo(..)
@@ -87,31 +88,6 @@ where
     onDisconnect` (l :: l^) (r :: r^) env
         # (mbl, mbw, env) = onDisconnect l r env
         = (toDyn <$> mbl, toDyn <$> mbw, env)
-
-wrapExternalProcTask :: !(ExternalProcessHandlers l r w) !(RWShared () r w) -> ExternalProcessTask | TC l & TC r & TC w & iTask l
-wrapExternalProcTask {onStartup, onOutData, onErrData, onShareChange, onExit} sds = ExternalProcessTask
-    {onStartup = onStartup`, onOutData = onOutData`, onErrData = onErrData`, onShareChange = onShareChange`, onExit = onExit`}
-    (toDynamic sds)
-where
-    onStartup` (r :: r^)
-        # (mbl, mbw, out, close) = onStartup r
-        = (toDyn <$> mbl, toDyn <$> mbw, out, close)
-        
-    onOutData` data (l :: l^) (r :: r^)
-        # (mbl, mbw, out, close) = onOutData data l r
-        = (toDyn <$> mbl, toDyn <$> mbw, out, close)
-
-    onErrData` data (l :: l^) (r :: r^)
-        # (mbl, mbw, out, close) = onErrData data l r
-        = (toDyn <$> mbl, toDyn <$> mbw, out, close)
-        
-    onShareChange` (l :: l^) (r :: r^)
-        # (mbl, mbw, out, close) = onShareChange l r
-        = (toDyn <$> mbl, toDyn <$> mbw, out, close)
-        
-    onExit` eCode (l :: l^) (r :: r^)
-        # (mbl, mbw) = onExit eCode l r
-        = (toDyn <$> mbl, toDyn <$> mbw)
 
 mkInstantTask :: (TaskId *IWorld -> (!MaybeError (Dynamic,String) a,!*IWorld)) -> Task a | iTask a
 mkInstantTask iworldfun = Task (evalOnce iworldfun)

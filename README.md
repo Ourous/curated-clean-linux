@@ -5,11 +5,12 @@ Curated Clean is based off of the nightly Clean builds found at ftp://ftp.cs.ru.
 
 Currently, it is composed of:
 
-	.
+	12 May 2018:
+		lib/Generics
 	
 All other contents are from:
 	
-	12 May 2018
+	27 July 2018
 	
 With these changes made to allow compilation:
 	

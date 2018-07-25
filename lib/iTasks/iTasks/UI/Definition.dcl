@@ -42,6 +42,7 @@ derive class iTask UITreeNode
 					 | RemoveChild                     //Remove the child at the given index (next children 'move down')
 					 | InsertChild !UI                 //Insert a new child at the given index (next children 'move up')
                      | MoveChild !Int                  //Move an existing child a given index to a new index
+                                                       //(i,MoveChild j) == [(i,RemoveChild),(j,InsertChild _)]
 
 derive class iTask UIChange, UIAttributeChange, UIChildChange
 
@@ -108,6 +109,8 @@ derive class iTask UIChange, UIAttributeChange, UIChildChange
 	| UIData 
 
 :: UIAttributes 		:== Map String JSONNode
+:: UIAttribute          :== (!String,!JSONNode)
+:: UIAttributeKey       :== String
 
 // Floating window
 :: UIWindowType
@@ -172,6 +175,7 @@ LABEL_ATTRIBUTE			:== "label"
 PREFIX_ATTRIBUTE		:== "prefix"
 POSTFIX_ATTRIBUTE		:== "postfix"
 ICON_ATTRIBUTE			:== "icon"
+STEPPED_ATTRIBUTE       :== "stepped"
 
 
 //Construction functions
@@ -236,7 +240,8 @@ resizableAttr     :: ![UISide]                            -> UIAttributes
 maxlengthAttr     :: !Int                                 -> UIAttributes
 minlengthAttr     :: !Int                                 -> UIAttributes
 boundedlengthAttr :: !Int !Int                            -> UIAttributes
-eventTimeoutAttr  :: !(Maybe Int)                          -> UIAttributes
+eventTimeoutAttr  :: !(Maybe Int)                         -> UIAttributes
+steppedAttr       :: !Bool                                -> UIAttributes
 
 editAttrs         :: !String !String !(Maybe JSONNode)    -> UIAttributes
 choiceAttrs       :: !String !String ![Int] ![JSONNode]   -> UIAttributes

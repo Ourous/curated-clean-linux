@@ -63,10 +63,10 @@ withClientSideInit ::
 withClientSideInit initUI genUI dp val vst=:{VSt|taskId} = case genUI dp val vst of
     (Ok (UI type attr items,mask),vst=:{VSt|iworld}) = case editorLinker initUI iworld of
         (Ok (saplDeps, saplInit),iworld)
-			# extraAttr = 'DM'.fromList [("taskId",JSONString taskId)
-                                         ,("editorId",JSONString (editorId dp))
-                                         ,("saplDeps",JSONString saplDeps)
-                                         ,("saplInit",JSONString saplInit)
+			# extraAttr = 'DM'.fromList [("taskId",  JSONString taskId)
+                                        ,("editorId",JSONString (editorId dp))
+                                        ,("saplDeps",JSONString saplDeps)
+                                        ,("saplInit",JSONString saplInit)
                                         ]
             = (Ok (UI type ('DM'.union extraAttr attr) items,mask), {VSt|vst & iworld = iworld})
         (Error e,iworld)

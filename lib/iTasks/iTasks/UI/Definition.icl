@@ -209,8 +209,11 @@ minlengthAttr l = 'DM'.fromList [("minlength", JSONInt l)]
 boundedlengthAttr :: !Int !Int -> UIAttributes
 boundedlengthAttr min max = 'DM'.unions [minlengthAttr min, maxlengthAttr max]
 
-eventTimeoutAttr  :: !(Maybe Int) -> UIAttributes
+eventTimeoutAttr :: !(Maybe Int) -> UIAttributes
 eventTimeoutAttr to = 'DM'.fromList [("eventTimeout", maybe JSONNull JSONInt to)]
+
+steppedAttr :: !Bool -> UIAttributes
+steppedAttr stepped = 'DM'.fromList [(STEPPED_ATTRIBUTE, JSONBool stepped)]
 
 editAttrs :: !String !String !(Maybe JSONNode) -> UIAttributes
 editAttrs taskId editorId mbValue 

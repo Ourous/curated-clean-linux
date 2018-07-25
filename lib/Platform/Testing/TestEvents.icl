@@ -64,21 +64,42 @@ where
 	getField field = lookup field fields >>= fromJSON
 JSONDecode{|EndEvent|} _ _ = (Nothing, [])
 
+instance toString Expression
+where
+	toString (JSON json) = toString json
+	toString (GPrint s)  = s
+
+JSONEncode{|Expression|} _ e = case e of
+	JSON json -> [JSONArray [JSONString "JSON",json]]
+	GPrint e  -> [JSONArray [JSONString "GPrint",JSONString e]]
+
+JSONDecode{|Expression|} _ [JSONArray [JSONString type,json]:rest] = case type of
+	"JSON"   -> (Just (JSON json),rest)
+	"GPrint" -> case json of
+		JSONString e -> (Just (GPrint e),rest)
+		_            -> (Nothing, [])
+	_ -> (Nothing, [])
+JSONDecode{|Expression|} _ _ = (Nothing, [])
+
 JSONEncode{|FailedAssertion|} _ fa = [JSONArray arr]
 where
 	arr = case fa of
 		ExpectedRelation x r y ->
 			[ JSONString "expected"
-			, x
+			, hd (JSONEncode{|*|} False x)
 			, hd (JSONEncode{|*|} False r)
-			, y
+			, hd (JSONEncode{|*|} False y)
 			]
 
 JSONDecode{|FailedAssertion|} _ [JSONArray arr:rest] = (mbFA, rest)
 where
 	mbFA = case arr of
 		[JSONString "expected":x:r:y:[]] -> case JSONDecode{|*|} False [r] of
-			(Just r, []) -> Just (ExpectedRelation x r y)
+			(Just r, []) -> case JSONDecode{|*|} False [x] of
+				(Just x, []) -> case JSONDecode{|*|} False [y] of
+					(Just y, []) -> Just (ExpectedRelation x r y)
+					_ -> Nothing
+				_ -> Nothing
 			_ -> Nothing
 		_ -> Nothing
 JSONDecode{|FailedAssertion|} _ _ = (Nothing, [])

@@ -1,5 +1,6 @@
 implementation module Data.GenDiff
 
+import StdArray
 import StdBool
 from StdFunc import flip, o
 import StdGeneric
@@ -70,7 +71,12 @@ eqDiff x y
 	, {status=OnlyRight, value=printToString y, children=[]}
 	]
 
-derive gDiff [], (,), (,,), (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,)
+derive gDiff [], [!], [ !], [!!]
+
+gDiff{|{}|}  fx xs ys = [{diff & value="_Array"}  \\ diff <- gDiff{|*->*|} fx [x \\ x <-: xs] [y \\ y <-: ys]]
+gDiff{|{!}|} fx xs ys = [{diff & value="_!Array"} \\ diff <- gDiff{|*->*|} fx [x \\ x <-: xs] [y \\ y <-: ys]]
+
+derive gDiff (,), (,,), (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,)
 
 :: PrState =
 	{ indent :: !Int

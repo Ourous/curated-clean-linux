@@ -18,7 +18,8 @@ derive bimap Editor,(,),(,,),(,,,), MaybeError
 
 gEditor{|UNIT|} = emptyEditor
 
-gEditor{|RECORD of {grd_arity}|} ex _ _ _ _ = {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
+gEditor{|RECORD of {grd_arity}|} {genUI=exGenUI,onEdit=exOnEdit,onRefresh=exOnRefresh} _ _ _ _
+	= {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
 where
 	genUI dp (RECORD x) vst=:{VSt|taskId,mode,optional}
 		= case mode of
@@ -27,11 +28,11 @@ where
 					# (enableUI,enableMask) = genEnableUI taskId dp False	
 					= (Ok (uic UIRecord [enableUI], CompoundMask [enableMask]), vst)
 				| otherwise
-					= case ex.Editor.genUI (pairPath grd_arity dp) x {VSt|vst & optional = False} of
-						(Ok viz,vst) = (Ok (fromPairUI UIRecord grd_arity viz),vst)
+					= case exGenUI (pairPath grd_arity dp) x {VSt|vst & optional = False} of
+						(Ok viz, vst) = (Ok (fromPairUI UIRecord grd_arity viz),vst)
 						(Error e,vst) = (Error e,vst)
 			Update
-				= case ex.Editor.genUI (pairPath grd_arity dp) x {VSt|vst & optional = False} of
+				= case exGenUI (pairPath grd_arity dp) x {VSt|vst & optional = False} of
 					(Ok viz,vst) 
 						# (UI type attr items, CompoundMask masks) = fromPairUI UIRecord grd_arity viz 
 						//When optional we add a checkbox to clear the record
@@ -42,7 +43,7 @@ where
 							= (Ok (UI type attr items,CompoundMask masks),vst)
 					(Error e,vst) = (Error e,vst)
 			View 
-				= case ex.Editor.genUI (pairPath grd_arity dp) x {VSt|vst & optional = False} of
+				= case exGenUI (pairPath grd_arity dp) x {VSt|vst & optional = False} of
 					(Ok viz,vst)  = (Ok (fromPairUI UIRecord grd_arity viz),vst)
 					(Error e,vst) = (Error e,vst)
 
@@ -52,7 +53,7 @@ where
 		| not optional
 			= (Error "Enabling non-optional record",RECORD val,vst)
 		//Create and add the fields
-		= case ex.Editor.genUI (pairPath grd_arity dp) val {vst & mode = Enter, optional = False} of
+		= case exGenUI (pairPath grd_arity dp) val {vst & mode = Enter, optional = False} of
 			(Ok viz,vst)
 				# (UI type attr items, CompoundMask masks) = fromPairUI UIRecord grd_arity viz 
 				# change = ChangeUI [] [(i,InsertChild ui) \\ ui <- items & i <- [1..]]
@@ -76,7 +77,7 @@ where
 		//When optional we need to adjust for the added checkbox, so we need to offset the record field index with one
 		//In the generated UI and mask (but not in the paths when targeting the edit!!).
 		# idx = if optional (d + 1) d
-		= case ex.Editor.onEdit (pairPath grd_arity dp) (pairSelectPath d grd_arity ++ ds,e) val (masks !! idx) {VSt|vst & optional = False} of
+		= case exOnEdit (pairPath grd_arity dp) (pairSelectPath d grd_arity ++ ds,e) val (masks !! idx) {VSt|vst & optional = False} of
 			(Ok (change,mask),val,vst)
 				//Extend the change
 				# change = case change of NoChange = NoChange; _ = ChangeUI [] [(idx,ChangeChild change)]
@@ -91,7 +92,7 @@ where
 		| optional && not (mode =: View)
 			//Account for the extra mask of the enable/disable checkbox
 			# enableMask = hd fields
-			= case ex.Editor.onRefresh (pairPath grd_arity dp) new old (toPairMask (CompoundMask (tl fields))) {VSt|vst & optional = False} of
+			= case exOnRefresh (pairPath grd_arity dp) new old (toPairMask (CompoundMask (tl fields))) {VSt|vst & optional = False} of
 				(Ok (change,mask),val,vst)
 					# change = fromPairChange 0 grd_arity change
 					# (CompoundMask fields) = fromPairMask grd_arity mask
@@ -106,7 +107,7 @@ where
 				(Error e,val,vst)
 					= (Error e, RECORD val, vst)
 		| otherwise
-			= case ex.Editor.onRefresh (pairPath grd_arity dp) new old (toPairMask mask) {VSt|vst & optional = False} of
+			= case exOnRefresh (pairPath grd_arity dp) new old (toPairMask mask) {VSt|vst & optional = False} of
 				(Ok (change,mask),val,vst)
 					= (Ok (fromPairChange 0 grd_arity change, fromPairMask grd_arity mask), RECORD val, vst)
 				(Error e,val,vst)
@@ -114,18 +115,19 @@ where
 	onRefresh dp (RECORD new) (RECORD old) mask vst=:{VSt|taskId,optional,mode}
 		= (Error "Corrupt mask in generic RECORD editor",RECORD old, vst)
 
-gEditor{|FIELD of {gfd_name}|} ex _ _ _ _ = {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
+gEditor{|FIELD of {gfd_name}|} {genUI=exGenUI,onEdit=exOnEdit,onRefresh=exOnRefresh} _ _ _ _
+	= {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
 where
-	genUI dp (FIELD x) vst = case ex.Editor.genUI dp x vst of //Just add the field name as a label
+	genUI dp (FIELD x) vst = case exGenUI dp x vst of //Just add the field name as a label
 		(Ok (UI type attr items, mask),vst) = (Ok (UI type ('DM'.union attr (labelAttr gfd_name)) items, mask),vst) 
 		(Error e,vst)                       = (Error e,vst)
 
 	onEdit dp (tp,e) (FIELD field) mask vst
-		# (mbmask,field,vst) = ex.Editor.onEdit dp (tp,e) field mask vst
+		# (mbmask,field,vst) = exOnEdit dp (tp,e) field mask vst
 		= (mbmask,FIELD field,vst)
 
 	onRefresh dp (FIELD new) (FIELD old) mask vst
-		# (change,val,vst) = ex.Editor.onRefresh dp new old mask vst
+		# (change,val,vst) = exOnRefresh dp new old mask vst
 		= (change,FIELD val,vst)
 
 /*
@@ -133,55 +135,63 @@ where
 * - There is only one constructor
 * - There are multiple constructors
 */
-gEditor{|OBJECT of {gtd_num_conses,gtd_conses}|} ex _ _ _ _ = withEditModeAttr {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
+gEditor{|OBJECT of {gtd_num_conses,gtd_conses}|} ce=:{genUI=exGenUI,onEdit=exOnEdit,onRefresh=exOnRefresh} _ _ _ _
+	//This is a newtype
+	| gtd_num_conses == 0
+		= bijectEditorValue (\(OBJECT i)->i) (\i->OBJECT i) ce
+	//This is not a newtype
+	= withEditModeAttr {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
 where
+	gcd_names   = [gcd_name  \\ {GenericConsDescriptor | gcd_name}  <- gtd_conses]  // preselect cons names   to circumvent cyclic dependencies
+	gcd_arities = [gcd_arity \\ {GenericConsDescriptor | gcd_arity} <- gtd_conses]  // preselect cons arities to circumvent cyclic dependencies
+	
 	genUI dp (OBJECT x) vst=:{VSt|taskId,mode,optional,selectedConsIndex}
 		= case mode of
 			Enter
 				//If there is only one constructor, we generate the UI for that constructor
 				| gtd_num_conses == 1
-					= case ex.Editor.genUI dp x vst of
+					= case exGenUI dp x vst of
 						(Ok (consUI,consMask), vst) //The CONS will already create a ui of type UICons
 							= (Ok (consUI,consMask), {vst & selectedConsIndex = selectedConsIndex})
 						(Error e, vst)
 							= (Error e, {vst & selectedConsIndex = selectedConsIndex})
 				//If there are multiple constructors, we only generate a UI to select the constructor
 				| otherwise
-					# (consChooseUI,consChooseMask) = genConsChooseUI taskId dp optional gtd_conses Nothing
+					# (consChooseUI,consChooseMask) = genConsChooseUI taskId dp optional gcd_names Nothing
 					= (Ok (UI UIVarCons 'DM'.newMap [consChooseUI],CompoundMask [consChooseMask]),{vst & selectedConsIndex = selectedConsIndex})
 			Update
 				//Generate the ui for the current value
-				= case ex.Editor.genUI dp x vst of
+				= case exGenUI dp x vst of
 					(Ok (consUI=:(UI UICons attr items), consMask=:(CompoundMask fields)),vst)
 						//If there is only constructor, we are done
 						| gtd_num_conses == 1
 							= (Ok (consUI, consMask),{vst & selectedConsIndex = selectedConsIndex})
 						//If there are multiple constructors, we add the UI to select the constructor and change the type to UIVarCons	
 						| otherwise
-							# (consChooseUI,consChooseMask) = genConsChooseUI taskId dp optional gtd_conses (Just vst.selectedConsIndex)
+							# (consChooseUI,consChooseMask) = genConsChooseUI taskId dp optional gcd_names (Just vst.selectedConsIndex)
 							= (Ok (UI UIVarCons attr [consChooseUI:items],CompoundMask [consChooseMask:fields])
 								,{vst & selectedConsIndex = selectedConsIndex})
 					(Error e,vst) = (Error e,vst)
 			View
 				//If there is only one constructor we don't need to show the constructor name
-				= case ex.Editor.genUI dp x vst of
+				= case exGenUI dp x vst of
 					(Ok (consUI=:(UI UICons attr items), consMask=:(CompoundMask fields)),vst)
 						| gtd_num_conses == 1
 							= (Ok (consUI, consMask),{vst & selectedConsIndex = selectedConsIndex})
 						| otherwise
-							# (consViewUI,consViewMask) = genConsViewUI gtd_conses vst.selectedConsIndex
+							# (consViewUI,consViewMask) = genConsViewUI gcd_names vst.selectedConsIndex
 							= (Ok (UI UIVarCons attr [consViewUI:items],CompoundMask [consViewMask:fields])
 								,{vst & selectedConsIndex = selectedConsIndex})
 					(Error e,vst) = (Error e,vst)
 
-	genConsChooseUI taskId dp optional gtd_conses mbSelectedCons = (consChooseUI,consChooseMask)
+	genConsChooseUI taskId dp optional gcd_names mbSelectedCons = (consChooseUI,consChooseMask)
 	where
-		consOptions = [JSONObject [("id",JSONInt i),("text",JSONString gdc.gcd_name)] \\ gdc <- gtd_conses & i <- [0..]]
+		consOptions = [JSONObject [("id",JSONInt i),("text",JSONString gcd_name)] \\ gcd_name <- gcd_names & i <- [0..]]
 		consChooseUI = uia UIDropdown (choiceAttrs taskId (editorId dp) (maybe [] (\x -> [x]) mbSelectedCons) consOptions)
 		consChooseMask = FieldMask {touched=False,valid=optional || isJust mbSelectedCons,state=maybe JSONNull (\x -> JSONInt x) mbSelectedCons}
 
-	genConsViewUI gtd_conses selectedCons
-		= (uia UITextView (valueAttr (JSONString (gtd_conses !! selectedCons).gcd_name)), newFieldMask)
+	genConsViewUI gcd_names selectedCons
+		= (uia UITextView (valueAttr (JSONString (gcd_names !! selectedCons))), newFieldMask)
 
 	//Update is a constructor switch
 	onEdit dp ([],JSONArray [JSONInt consIdx]) (OBJECT val) (CompoundMask [FieldMask {FieldMask|touched,valid,state}:masks]) vst=:{VSt|mode} 
@@ -190,14 +200,14 @@ where
 		//Create a default value for the selected constructor
 		//This is a rather ugly trick: We create a special target path that consists only of negative values that is
 		//decoded by the the onEdit instance of EITHER to create a value that consists of the correct nesting of LEFT's and RIGHT's
-    	# (_,val,vst)	= ex.Editor.onEdit dp (consCreatePath consIdx gtd_num_conses,JSONNull) val newCompoundMask vst 
+    	# (_,val,vst)	= exOnEdit dp (consCreatePath consIdx gtd_num_conses,JSONNull) val newCompoundMask vst 
 		//Create a UI for the new constructor 
-		= case ex.Editor.genUI dp val {vst & mode = Enter} of
+		= case exGenUI dp val {vst & mode = Enter} of
 			(Ok (UI UICons attr items, CompoundMask masks),vst)
 				//Construct a UI change that does the following: 
 				//1: If necessary remove the fields of the previously selected constructor
 				# removals = case state of
-					(JSONInt prevConsIdx) = repeatn (gtd_conses !! prevConsIdx).gcd_arity (1,RemoveChild)
+					(JSONInt prevConsIdx) = repeatn (gcd_arities !! prevConsIdx) (1,RemoveChild)
 					_                 = []
 				//2: Inserts the fields of the newly created ui
 				# inserts = [(i,InsertChild ui) \\ ui <- items & i <- [1..]]
@@ -212,7 +222,7 @@ where
 		| e =: JSONNull || e =: (JSONArray []) // A null or an empty array are accepted as a reset events
 			//If necessary remove the fields of the previously selected constructor
 			# change = case state of
-				(JSONInt prevConsIdx) = ChangeUI [] (repeatn (gtd_conses !! prevConsIdx).gcd_arity (1,RemoveChild))
+				(JSONInt prevConsIdx) = ChangeUI [] (repeatn (gcd_arities !! prevConsIdx) (1,RemoveChild))
 				_                     = NoChange		
 			# consChooseMask = FieldMask {touched=True,valid=optional,state=JSONNull}
 			= (Ok (change,CompoundMask [consChooseMask:masks]),OBJECT val, vst)	
@@ -223,13 +233,13 @@ where
 	onEdit dp (tp,e) (OBJECT val) mask=:(CompoundMask fields) vst 
 		| gtd_num_conses == 1
 			//Just call onEdit for the inner value
-			= case ex.Editor.onEdit dp (tp,e) val mask vst of
+			= case exOnEdit dp (tp,e) val mask vst of
 				(Ok (change,mask),val,vst) = (Ok (change,mask),OBJECT val,vst)
 				(Error e,val,vst) = (Error e, OBJECT val, vst)
 		| otherwise
 			//Adjust for the added constructor switch UI
 			# consChooseMask = hd fields
-			= case ex.Editor.onEdit dp (tp,e) val (CompoundMask (tl fields)) vst of
+			= case exOnEdit dp (tp,e) val (CompoundMask (tl fields)) vst of
 				(Ok (change,CompoundMask fields),val,vst)
 					# change = case change of
 						(ChangeUI attrChanges itemChanges) = ChangeUI attrChanges [(i + 1,c) \\ (i,c) <- itemChanges]
@@ -239,7 +249,7 @@ where
 
 	onRefresh dp (OBJECT new) (OBJECT old) mask=:(CompoundMask fields) vst=:{VSt|mode,taskId,optional,selectedConsIndex=curSelectedConsIndex}
 		| gtd_num_conses == 1
-			# (change,val,vst) = ex.Editor.onRefresh dp new old mask vst
+			# (change,val,vst) = exOnRefresh dp new old mask vst
 			= (change,OBJECT val,vst)
 		| otherwise
 			//Adjust for the added constructor view/choose UI
@@ -247,7 +257,7 @@ where
 			//Don't recursively refresh if no constructor has been chosen
 			| (not mode =: View) && consChooseMask =: (FieldMask {FieldMask|state=JSONNull})
 				= (Ok (NoChange,mask),OBJECT old,vst)
-			= case ex.Editor.onRefresh dp new old (CompoundMask (tl fields)) {vst & selectedConsIndex = 0} of
+			= case exOnRefresh dp new old (CompoundMask (tl fields)) {vst & selectedConsIndex = 0} of
 				(Ok (change,CompoundMask fields),val,vst=:{VSt|selectedConsIndex}) 
 					//If the cons was changed we need to update the selector
 					# consIndex = ~selectedConsIndex - 1
@@ -261,8 +271,8 @@ where
 						(ReplaceUI ui=:(UI type attr items))
 							//Add the constructor selection/view ui
 							# (consUI,_) = if (mode =: View) 
-												(genConsViewUI gtd_conses consIndex)
-												(genConsChooseUI taskId dp optional gtd_conses (Just consIndex))
+												(genConsViewUI gcd_names consIndex)
+												(genConsChooseUI taskId dp optional gcd_names (Just consIndex))
 							= ReplaceUI (UI type attr [consUI:items])
 					| otherwise
 						= (Ok (change, CompoundMask [consChooseMask:fields]), OBJECT val,{vst & selectedConsIndex = curSelectedConsIndex})
@@ -273,51 +283,54 @@ where
 	onRefresh dp (OBJECT new) (OBJECT old) mask vst
 		= (Error "Corrupt mask in generic OBJECT editor",OBJECT old, vst)
 
-gEditor{|EITHER|} ex _ dx _ _ ey _ dy _ _  = {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
+gEditor{|EITHER|} {genUI=exGenUI,onEdit=exOnEdit,onRefresh=exOnRefresh} _ dx _ _ 
+                  {genUI=eyGenUI,onEdit=eyOnEdit,onRefresh=eyOnRefresh} _ dy _ _
+	= {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
 where
-	genUI dp (LEFT x) vst = ex.Editor.genUI dp x vst
-	genUI dp (RIGHT y) vst = ey.Editor.genUI dp y vst	
+	genUI dp (LEFT  x) vst = exGenUI dp x vst
+	genUI dp (RIGHT y) vst = eyGenUI dp y vst	
 
 	//Special case to create a LEFT, after a constructor switch
 	onEdit dp ([-1],e) _ mask vst = (Ok (NoChange,mask),LEFT dx,vst)
 	onEdit dp ([-1:ds],e) _ mask vst
-		# (mask,x,vst) = ex.Editor.onEdit dp (ds,e) dx mask vst
+		# (mask,x,vst) = exOnEdit dp (ds,e) dx mask vst
 		= (mask,LEFT x,vst)
 	//Special cases to create a RIGHT, after a constructor switch
 	onEdit dp ([-2],e) _ mask vst = (Ok (NoChange,mask),RIGHT dy,vst)
 	onEdit dp ([-2:ds],e) _ mask vst 
-		# (mask,y,vst) = ey.Editor.onEdit dp (ds,e) dy mask vst
+		# (mask,y,vst) = eyOnEdit dp (ds,e) dy mask vst
 		= (mask,RIGHT y,vst)
 	//Just pass the edit event through 
 	onEdit dp (tp,e) (LEFT x) mask vst
-		# (mask,x,vst) = ex.Editor.onEdit dp (tp,e) x mask vst
+		# (mask,x,vst) = exOnEdit dp (tp,e) x mask vst
 		= (mask,LEFT x,vst)
 	onEdit dp (tp,e) (RIGHT y) mask vst
-		# (mask,y,vst) = ey.Editor.onEdit dp (tp,e) y mask vst
+		# (mask,y,vst) = eyOnEdit dp (tp,e) y mask vst
 		= (mask,RIGHT y,vst)
 
 	onRefresh dp (LEFT new) (LEFT old) mask vst 
-		# (change,val,vst) = ex.Editor.onRefresh dp new old mask vst
+		# (change,val,vst) = exOnRefresh dp new old mask vst
 		= (change,LEFT val,vst)
 	onRefresh dp (RIGHT new) (RIGHT old) mask vst
-		# (change,val,vst) = ey.Editor.onRefresh dp new old mask vst
+		# (change,val,vst) = eyOnRefresh dp new old mask vst
 		= (change,RIGHT val,vst)
 
 	//A different constructor is selected -> generate a new UI
 	//We use a negative selConsIndex to encode that the constructor was changed
 	onRefresh dp (RIGHT new) (LEFT old) mask vst 
-		= case ey.Editor.genUI dp new vst of
+		= case eyGenUI dp new vst of
 			(Ok (ui,mask),vst=:{selectedConsIndex}) = (Ok (ReplaceUI ui,mask),RIGHT new,{vst & selectedConsIndex = -1 - selectedConsIndex})
 			(Error e,vst=:{selectedConsIndex}) = (Error e,LEFT old,{vst & selectedConsIndex = -1 - selectedConsIndex})
 
 	onRefresh dp (LEFT new) (RIGHT old) mask vst 
-		= case ex.Editor.genUI dp new vst of
+		= case exGenUI dp new vst of
 			(Ok (ui,mask),vst=:{selectedConsIndex}) = (Ok (ReplaceUI ui,mask),LEFT new,{vst & selectedConsIndex = -1 - selectedConsIndex})
 			(Error e,vst=:{selectedConsIndex}) = (Error e,RIGHT old,{vst & selectedConsIndex = -1 - selectedConsIndex})
 
-gEditor{|CONS of {gcd_index,gcd_arity}|} ex _ _ _ _ = {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
+gEditor{|CONS of {gcd_index,gcd_arity}|} {genUI=exGenUI,onEdit=exOnEdit,onRefresh=exOnRefresh} _ _ _ _
+	= {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
 where
-	genUI dp (CONS x) vst = case ex.Editor.genUI (pairPath gcd_arity dp) x vst of
+	genUI dp (CONS x) vst = case exGenUI (pairPath gcd_arity dp) x vst of
 		(Ok viz,vst)  = (Ok (fromPairUI UICons gcd_arity viz), {VSt| vst & selectedConsIndex = gcd_index})
 		(Error e,vst) = (Error e,{VSt| vst & selectedConsIndex = gcd_index})
 
@@ -325,7 +338,7 @@ where
 		| d >= gcd_arity
 			= (Error "Edit aimed at non-existent constructor field",CONS val,vst)
 		//Update the targeted field in the constructor
-		= case ex.Editor.onEdit (pairPath gcd_arity dp) (pairSelectPath d gcd_arity ++ ds,e) val (masks !! d) vst of	
+		= case exOnEdit (pairPath gcd_arity dp) (pairSelectPath d gcd_arity ++ ds,e) val (masks !! d) vst of	
 			(Ok (change,mask),val,vst)
 				//Extend the change
 				# change = case change of NoChange = NoChange; _ = ChangeUI [] [(d,ChangeChild change)]
@@ -336,58 +349,60 @@ where
 
 	onRefresh dp (CONS new) (CONS old) mask vst 
 		//Refresh 
-		= case ex.Editor.onRefresh (pairPath gcd_arity dp) new old (toPairMask mask) vst of
+		= case exOnRefresh (pairPath gcd_arity dp) new old (toPairMask mask) vst of
 			(Ok (change,mask),val,vst)
 				= (Ok (fromPairChange 0 gcd_arity change, fromPairMask gcd_arity mask), CONS val, vst)
 			(Error e,val,vst)
 				= (Error e, CONS val, vst)
 
-gEditor{|PAIR|} ex _ _ _ _ ey _ _ _ _ = {Editor|genUI=genUI,onRefresh=onRefresh,onEdit=onEdit}
+gEditor{|PAIR|} {genUI=exGenUI,onEdit=exOnEdit,onRefresh=exOnRefresh} _ _ _ _
+				{genUI=eyGenUI,onEdit=eyOnEdit,onRefresh=eyOnRefresh} _ _ _ _
+	= {Editor|genUI=genUI,onRefresh=onRefresh,onEdit=onEdit}
 where
 	genUI dp (PAIR x y) vst
 		# (dpx,dpy)		= pairPathSplit dp
-		# (vizx, vst)	= ex.Editor.genUI dpx x vst
+		# (vizx, vst)	= exGenUI dpx x vst
 		| vizx =: (Error _) = (vizx,vst)
-		# (vizy, vst)	= ey.Editor.genUI dpy y vst
+		# (vizy, vst)	= eyGenUI dpy y vst
 		| vizy =: (Error _) = (vizy,vst)
 		# ((vizx,maskx),(vizy,masky)) = (fromOk vizx,fromOk vizy)
 		= (Ok (uic UIPair [vizx,vizy],CompoundMask [maskx,masky]),vst)
 
 	onEdit dp ([0:ds],e) (PAIR x y) xmask ust
 		# (dpx,_)		= pairPathSplit dp
-		# (xmask,x,ust) = ex.Editor.onEdit dpx (ds,e) x xmask ust
+		# (xmask,x,ust) = exOnEdit dpx (ds,e) x xmask ust
 		= (xmask,PAIR x y,ust)
 	onEdit dp ([1:ds],e) (PAIR x y) ymask ust
 		# (_,dpy)		= pairPathSplit dp
-		# (ymask,y,ust) = ey.Editor.onEdit dpy (ds,e) y ymask ust
+		# (ymask,y,ust) = eyOnEdit dpy (ds,e) y ymask ust
 		= (ymask,PAIR x y,ust)
 	onEdit _ _ val mask ust = (Ok (NoChange,mask),val,ust)
 
 	onRefresh dp (PAIR newx newy) (PAIR oldx oldy) (CompoundMask [maskx,masky]) vst
 		# (dpx,dpy)		= pairPathSplit dp
-		# (changex,newx,vst) 	= ex.Editor.onRefresh dpx newx oldx maskx vst
+		# (changex,newx,vst) 	= exOnRefresh dpx newx oldx maskx vst
 		| changex=: (Error _) = (changex,PAIR oldx oldy,vst)
-		# (changey,newy,vst) 	= ey.Editor.onRefresh dpy newy oldy masky vst
+		# (changey,newy,vst) 	= eyOnRefresh dpy newy oldy masky vst
 		| changey =: (Error _) = (changey,PAIR oldx oldy,vst)
 		# ((changex,maskx),(changey,masky)) = (fromOk changex,fromOk changey)
-		= (Ok (ChangeUI [] [(0,ChangeChild changex),(1,ChangeChild changey)]
-			  ,CompoundMask [maskx,masky]),PAIR newx newy, vst)
+		= (Ok (ChangeUI [] [(0,ChangeChild changex),(1,ChangeChild changey)],CompoundMask [maskx,masky]),PAIR newx newy, vst)
 
 	onRefresh dp (PAIR newx newy) (PAIR oldx oldy) mask vst
 		= (Error "Corrupt mask in generic PAIR editor",PAIR oldx oldy, vst)
 
 //The maybe editor makes it content optional
-gEditor{|Maybe|} ex _ dx _ _ = {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
+gEditor{|Maybe|} {genUI=exGenUI,onEdit=exOnEdit,onRefresh=exOnRefresh} _ dx _ _
+	= {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
 where
 	genUI dp val vst=:{VSt|mode,optional}
 		| mode =: View && val =: Nothing // Viewing Nothing is always the empty UI
 			= (Ok (ui UIEmpty,newFieldMask),vst)
-		= case ex.Editor.genUI dp (fromMaybe dx val) {VSt|vst & optional = True} of
+		= case exGenUI dp (fromMaybe dx val) {VSt|vst & optional = True} of
 			(Ok (UI type attr items, mask),vst) = (Ok (UI type ('DM'.union (optionalAttr True) attr) items,mask), {VSt|vst & optional = optional})
 			(Error e,vst) = (Error e, {VSt|vst & optional = optional})
 
 	onEdit dp (tp,e) val mask vst=:{VSt|optional}
-		= case ex.Editor.onEdit dp (tp,e) (fromMaybe dx val) mask {VSt|vst & optional = True} of
+		= case exOnEdit dp (tp,e) (fromMaybe dx val) mask {VSt|vst & optional = True} of
 			(Ok (change, mask),val,vst)
 				| isEmpty tp && (e === JSONNull || e === JSONBool False)
 					= (Ok (change, mask),Nothing, {VSt|vst & optional = optional}) //The event was a direct reset (switch to nothing)
@@ -397,8 +412,8 @@ where
 
 	onRefresh dp Nothing Nothing mask vst = (Ok (NoChange,mask),Nothing,vst)
 	onRefresh dp (Just new) Nothing mask vst=:{VSt|optional}
-		//Genrate a UI and replace
-		= case ex.Editor.genUI dp new {VSt|vst & optional = True} of
+		//Generate a UI and replace
+		= case exGenUI dp new {VSt|vst & optional = True} of
 			(Ok (UI type attr items, mask),vst) 
 				= (Ok (ReplaceUI (UI type ('DM'.union (optionalAttr True) attr) items),mask), Just new, {VSt|vst & optional = optional})
 			(Error e,vst) = (Error e, Just new, {VSt|vst & optional = optional})
@@ -406,7 +421,7 @@ where
 		//Change to empty ui
 		= (Ok (ReplaceUI (ui UIEmpty),newFieldMask),Nothing,{VSt|vst & optional = optional})
 	onRefresh dp (Just new) (Just old) mask vst=:{VSt|optional}
-		# (change,val,vst) = ex.Editor.onRefresh dp new old mask {VSt|vst & optional = True}
+		# (change,val,vst) = exOnRefresh dp new old mask {VSt|vst & optional = True}
 		= (change,Just val,{VSt|vst & optional = optional})
 
 //Encode the full range of fields in the datapath, such that it can be decomposed in PAIRs by the pairSplit
@@ -521,8 +536,8 @@ gEditor{|Char|}   = bijectEditorValue toString (\c -> c.[0]) (selectByMode
 						
 gEditor{|String|} = selectByMode
 						textView
-						(withDynamicHintAttributes "single line of text" (withEditModeAttr textField ))
-						(withDynamicHintAttributes "single line of text" (withEditModeAttr textField ))
+						(withDynamicHintAttributes "single line of text" (withEditModeAttr textField <<@ minlengthAttr 1))
+						(withDynamicHintAttributes "single line of text" (withEditModeAttr textField <<@ minlengthAttr 1))
 gEditor{|Bool|}   = selectByMode (checkBox <<@ enabledAttr False) (withEditMode Update checkBox) checkBox
 
 gEditor{|[]|} ex _ dx tjx _ = listEditor_ tjx dx (Just (const Nothing)) True True (Just (\l -> pluralisen English (length l) "item")) ex

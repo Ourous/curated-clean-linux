@@ -10,7 +10,7 @@ from System.Time import :: Timestamp
 from iTasks.Internal.Generic.Visualization import generic gText, :: TextFormat
 
 /**
-* Main eneric editor function
+* Main generic editor function
 */
 generic gEditor a | gText a, gDefault a, JSONEncode a, JSONDecode a :: Editor a
 

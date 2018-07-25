@@ -1,6 +1,7 @@
 implementation module Text.GenPrint
 
 import StdGeneric, StdEnv
+import _SystemStrictLists
 from Data.Maybe import :: Maybe(..)
 
 //-------------------------------------------------------------------------------------
@@ -163,9 +164,9 @@ printList f xs ps=:{ps_context}
 		& ps_context = ps_context 
 		}
 where
-	print_list f [] = id
-	print_list f [x] = f x
-	print_list f [x:xs] 
+	print_list f [|] = id
+	print_list f [|x] = f x
+	print_list f [|x:xs] 
 		= f x 			
 		$ printString ", "
 		$ print_list f xs	
@@ -217,9 +218,9 @@ gPrint{|CONS of d|} print_arg (CONS x) st=:{ps_context}
 	#! ctx = mkContextCons d
 	#! st = { st & ps_context = ctx }
 	| needParenthesis ctx ps_context
-		= 	{ printChar '(' 
-			$ print print_arg ctx 
-			$ printChar ')' 
+		= 	{ printChar '('
+			$ print print_arg ctx
+			$ printChar ')'
 			@ st 
 			& ps_context = ps_context 
 			}
@@ -239,10 +240,10 @@ where
 	print print_arg (CtxInfix _ _ _ _)  		
 		= print_arg x
 
-gPrint{|RECORD of d|} print_arg (RECORD x) st=:{ps_context}
+gPrint{|RECORD of {grd_name}|} print_arg (RECORD x) st=:{ps_context}
 	#! st = {st & ps_context = CtxRecord}
 	= { printString "{ "
-		$ printStringLiteral d.grd_name 
+		$ printStringLiteral grd_name 
 		$ printString " | "
 		$ print_arg x
 		$ printString " }"
@@ -250,12 +251,17 @@ gPrint{|RECORD of d|} print_arg (RECORD x) st=:{ps_context}
 		& ps_context = ps_context
 	  }
 
-gPrint{|FIELD of d|} f (FIELD x) st
-	= printStringLiteral d.gfd_name
+gPrint{|FIELD of {gfd_name}|} f (FIELD x) st
+	= printStringLiteral gfd_name
 	$ printString " = " 
 	$ f x 
 	@ st
-gPrint{|OBJECT|} f (OBJECT x) st
+gPrint{|OBJECT of {gtd_num_conses,gtd_conses}|} f (OBJECT x) st=:{ps_context}
+	| gtd_num_conses == 0
+		# cnsstr = (hd gtd_conses).gcd_name +++ " "
+		| needParenthesis CtxNonfix ps_context
+			= printChar '(' $ printString cnsstr $ f x $ printChar ')' @ st 
+			= printString cnsstr $ f x @ st
 	= f x st	
 	
 gPrint{|[]|} f xs st
@@ -263,7 +269,6 @@ gPrint{|[]|} f xs st
 	$ printList f xs 
 	$ printChar ']'
 	@ st
-
 gPrint{|{}|} f xs st
 	= printChar '{'
 	$ printList f [ x \\ x <-: xs] 

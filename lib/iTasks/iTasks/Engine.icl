@@ -1,6 +1,8 @@
 implementation module iTasks.Engine
 
 import StdMisc, StdArray, StdList, StdOrdList, StdTuple, StdChar, StdFile, StdBool, StdEnum
+import iTasks.WF.Combinators.Common
+import iTasks.WF.Tasks.System
 from StdFunc import o, seqList, ::St, const, id
 from Data.Map import :: Map
 from Data.Queue import :: Queue(..)
@@ -32,6 +34,8 @@ from Sapl.Linker.SaplLinkerShared import :: SkipSet
 from Sapl.Target.Flavour import :: Flavour, toFlavour
 
 from System.OS import IF_POSIX_OR_WINDOWS
+import System.GetOpt
+import Data.Functor
 
 MAX_EVENTS 		        :== 5
 
@@ -60,63 +64,46 @@ defaultEngineOptions world
 	= (options,world)
 
 defaultEngineCLIOptions :: [String] EngineOptions -> (!Maybe EngineOptions,![String])
-defaultEngineCLIOptions cli defaults
-	//If -help option is given show help and stop
-	# help					= fromMaybe False (boolOpt "-help" "-no-help" cli)
-	| help					= (Nothing, instructions defaults)
-	//Check commandline options
-	# options =	
-		{ defaults 
-		& serverPort		= fromMaybe defaults.serverPort (intOpt "-port" cli)
-		, webDirPath 		= fromMaybe defaults.webDirPath (stringOpt "-webdir" cli)
-		, storeDirPath      = fromMaybe defaults.storeDirPath (stringOpt "-storedir" cli)
-		, tempDirPath 		= fromMaybe defaults.webDirPath (stringOpt "-tempdir" cli)
-		, saplDirPath 	    = fromMaybe defaults.saplDirPath (stringOpt "-sapldir" cli)
-		}
-	= (Just options,running options.appName options.serverPort)
+defaultEngineCLIOptions [argv0:argv] defaults
+	# (settings, positionals, errs) = getOpt Permute opts argv
+	| not (errs =: []) = (Nothing, errs)
+	| not (positionals =: []) = (Nothing, ["Positional arguments not allowed"])
+	= case foldl (o) id settings (Just defaults) of
+		Nothing = (Nothing, [usageInfo ("Usage " +++ argv0 +++ "[OPTIONS]") opts])
+		Just settings = (Just settings,
+			["*** " +++ settings.appName +++ " HTTP server ***"
+			,""
+			,"Running at http://localhost" +++ if (settings.serverPort == 80) "/" (":" +++ toString settings.serverPort +++ "/")])
 where
-	instructions :: EngineOptions -> [String]
-	instructions {serverPort,webDirPath,storeDirPath,tempDirPath,saplDirPath} =
-		["Available commandline options:"
-		," -help            : Show this message and exit"
-		," -port <port>     : Listen on TCP port number (default " +++ toString serverPort +++ ")"
-		," -webdir <path>   : Use <path> to point to the folder that contain the application's static web content"
-		,"                  : (default "+++ webDirPath +++ ")"
-	    ," -storedir <path> : Use <path> as data store location"
-		,"                  : (default " +++ storeDirPath +++ ")"
-	    ," -tempdir <path>  : Use <path> as temporary file location"
-		,"                  : (default " +++ tempDirPath +++ ")"
-	    ," -sapldir <path>  : Use <path> to point to the folder that contains the sapl version of the application"
-		,"                  : (default "+++ saplDirPath +++ ")"
-		,""
+	opts :: [OptDescr ((Maybe EngineOptions) -> Maybe EngineOptions)]
+	opts =
+		[ Option ['?'] ["help"] (NoArg $ const Nothing)
+			"Display this message"
+		, Option ['p'] ["port"] (ReqArg (\p->fmap \o->{o & serverPort=toInt p}) "PORT")
+			("Specify the HTTP port (default: " +++ toString defaults.serverPort)
+		, Option [] ["timeout"] (OptArg (\mp->fmap \o->{o & timeout=fmap toInt mp}) "MILLISECONDS")
+			"Specify the timeout in ms (default: 500)\nIf not given, use an indefinite timeout."
+		, Option [] ["keepalive"] (ReqArg (\p->fmap \o->{o & keepaliveTime={tv_sec=toInt p,tv_nsec=0}}) "SECONDS")
+			"Specify the keepalive time in seconds (default: 300)"
+		, Option [] ["sessiontime"] (ReqArg (\p->fmap \o->{o & sessionTime={tv_sec=toInt p,tv_nsec=0}}) "SECONDS")
+			"Specify the expiry time for a session in seconds (default: 60)"
+		, Option [] ["autolayout"] (NoArg (fmap \o->{o & autoLayout=True}))
+			"Enable autolayouting (default)"
+		, Option [] ["no-autolayout"] (NoArg (fmap \o->{o & autoLayout=False}))
+			"Disable autolayouting"
+		, Option [] ["persist-tasks"] (NoArg (fmap \o->{o & persistTasks=True}))
+			"Enable the persistence of tasks"
+		, Option [] ["no-persist-tasks"] (NoArg (fmap \o->{o & persistTasks=False}))
+			"Disable the persistence of tasks (default)"
+		, Option [] ["webdir"] (ReqArg (\p->fmap \o->{o & webDirPath=p}) "PATH")
+			("Specify the folder containing static web content\ndefault: " +++ defaults.webDirPath)
+		, Option [] ["storedir"] (ReqArg (\p->fmap \o->{o & storeDirPath=p}) "PATH")
+			("Specify the folder containing the data stores\ndefault: " +++ defaults.storeDirPath)
+		, Option [] ["tempdir"] (ReqArg (\p->fmap \o->{o & tempDirPath=p}) "PATH")
+			("Specify the folder containing the temporary files\ndefault: " +++ defaults.tempDirPath)
+		, Option [] ["sapldir"] (ReqArg (\p->fmap \o->{o & saplDirPath=p}) "PATH")
+			("Specify the folder containing the sapl files\ndefault: " +++ defaults.saplDirPath)
 		]
-
-	running :: !String !Int -> [String]
-	running app port = ["*** " +++ app +++ " HTTP server ***"
-                       ,""
-                       ,"Running at http://localhost" +++ (if (port == 80) "/" (":" +++ toString port +++ "/"))]
-
-	boolOpt :: !String !String ![String] -> Maybe Bool
-	boolOpt trueKey falseKey opts
-		| isMember trueKey opts = Just True
-		| isMember falseKey opts = Just False
-		                         = Nothing
-	
-	intOpt :: !String ![String] -> Maybe Int
-	intOpt key []	= Nothing
-	intOpt key [_]	= Nothing
-	intOpt key [n,v:r]
-		| n == key && isInteger v	= Just (toInt v)
-									= intOpt key [v:r]
-	where								
-		isInteger v = and (map isDigit (fromString v))
-
-	stringOpt :: !String [String] -> Maybe String
-	stringOpt key [] = Nothing
-	stringOpt key [_] = Nothing
-	stringOpt key [n,v:r]
-		| n == key	= Just v
-					= stringOpt key [v:r]
 
 startEngine :: a !*World -> *World | Publishable a
 startEngine publishable world = startEngineWithOptions defaultEngineCLIOptions publishable world

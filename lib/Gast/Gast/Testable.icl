@@ -21,6 +21,7 @@ import Math.Random
 import Testing.TestEvents
 import Text
 import Text.GenJSON
+import Text.GenPrint
 import Text.Language
 
 import Gast.Gen
@@ -31,19 +32,19 @@ derive gLess Result
 instance == Result where (==) x y = x===y
 
 newAdmin :: Admin
-newAdmin = { res=Undef, labels=[], args=[], argsJSON = [], failedAssertions = []
+newAdmin = { res=Undef, labels=[], args=[], argsRepresentation = [], failedAssertions = []
            , namePath = []
            , recFieldValueNrLimits = 'Map'.newMap
            }
 
 instance Testable Bool where
-    evaluate b genState result=:{Admin| args, argsJSON} =
-        [{result & args = reverse args, argsJSON = reverse argsJSON, res = if b OK CE}]
+    evaluate b genState result=:{Admin| args, argsRepresentation} =
+        [{result & args = reverse args, argsRepresentation = reverse argsRepresentation, res = if b OK CE}]
 	testname b = "Bool"
 
 instance Testable Result where
-    evaluate r genState result=:{Admin| args, argsJSON} =
-        [{result & args = reverse args, argsJSON = reverse argsJSON, res = r}]
+    evaluate r genState result=:{Admin| args, argsRepresentation} =
+        [{result & args = reverse args, argsRepresentation = reverse argsRepresentation, res = r}]
 	testname r = "Result"
 
 instance Testable Property
@@ -67,12 +68,12 @@ prop :: a -> Property | Testable a
 prop p = Prop (testname p) (evaluate p)
 
 forAll :: !(a->b) ![a] GenState !Admin -> [Admin] | Testable b & TestArg a
-forAll f []   genState r=:{Admin| args, argsJSON} = [{r & args = reverse args, argsJSON = argsJSON, res = OK}] // to handle empty sets of values
+forAll f []   genState r=:{Admin| args} = [{r & args = reverse args, res = OK}] // to handle empty sets of values
 forAll f list genState r = diagonal [apply f a genState r \\ a<-list ] // copy the genState
 
 apply :: !(a->b) a GenState !Admin -> [Admin] | Testable b & TestArg a
 apply f a genState r =
-    evaluate (f a) genState {Admin| r & args = [show1 a:r.Admin.args], argsJSON = [toJSON a : r.Admin.argsJSON]}
+    evaluate (f a) genState {Admin| r & args = [show1 a:r.Admin.args], argsRepresentation = [printToString a : r.Admin.argsRepresentation]}
 
 diagonal :: ![[a]] -> [a]
 diagonal list = f 1 2 list []
@@ -124,7 +125,7 @@ defaultTestConfig =
 
 verbosePrintConfig =
 	{ everyOutput          = verboseEvery
-	, counterExampleOutput = humanReadableCEOutput
+	, counterExampleOutput = humanReadableCEOutput True False
 	, beforeStartOutput    = noBeforeOutput
 	, resultOutput         = humanReadableResOutput True
 	}
@@ -132,7 +133,7 @@ verboseEvery n r = blank <+ n <+ ":" <+ join " " r.Admin.args
 
 tracePrintConfig =
 	{ everyOutput          = traceEvery
-	, counterExampleOutput = humanReadableCEOutput
+	, counterExampleOutput = humanReadableCEOutput False False
 	, beforeStartOutput    = noBeforeOutput
 	, resultOutput         = humanReadableResOutput True
 	}
@@ -141,9 +142,9 @@ traceEvery n r = n <+ ":" <+ join " " r.Admin.args <+ "\n"
 blank :: String
 blank =: { createArray len ' ' & [0] = '\r', [len-1] = '\r' } where len = 81
 
-countPrintConfig =
-	{ everyOutput          = countEvery 100
-	, counterExampleOutput = humanReadableCEOutput
+countPrintConfig n =
+	{ everyOutput          = countEvery n
+	, counterExampleOutput = humanReadableCEOutput True True
 	, beforeStartOutput    = noBeforeOutput
 	, resultOutput         = humanReadableResOutput True
 	}
@@ -154,9 +155,9 @@ countEvery steps n r
 
 quietPrintConfig =
 	{ everyOutput          = noEveryOutput
-	, counterExampleOutput = humanReadableCEOutput
+	, counterExampleOutput = noCounterExampleOutput
 	, beforeStartOutput    = noBeforeOutput
-	, resultOutput         = humanReadableResOutput True
+	, resultOutput         = humanReadableResOutput False
 	}
 
 testEventsPrintConfig =
@@ -175,47 +176,49 @@ noBeforeOutput _ = ""
 noEveryOutput :: !Int Admin -> String
 noEveryOutput n _ = ""
 
-humanReadableCEOutput :: CounterExampleRes -> String
-humanReadableCEOutput {maxTests, nTests, nE, args, name, failedAssertions} = concat
-	[ "\n"
-	, showName True name
+humanReadableCEOutput :: Bool Bool CounterExampleRes -> String
+humanReadableCEOutput newLine showArgs {maxTests, nTests, nE, args, name, failedAssertions} = concat $
+	if showArgs [(maxTests-nTests+1) <+ ":" <+ join " " args] [] ++
+	if newLine ["\n"] [] ++
+	[ showName True name
 	, "Counterexample "
 	, toString (nE+1)
 	, " found after "
 	, pluralisen English (maxTests-nTests+1) "test"
-	, ":"
+	, ": "
 	, join " " args
+	, "\n"
 	: concatMap showFailedAssertion failedAssertions
 	]
 where
 	showFailedAssertion :: !(!FailedAssertion, !String, !String) -> [String]
-	showFailedAssertion (ExpectedRelation _ rel _, x, y) = ["\nnot (", x, " ", toString rel, " ", y, ")"]
+	showFailedAssertion (ExpectedRelation _ rel _, x, y) = ["not (", x, " ", toString rel, " ", y, ")\n"]
 
 humanReadableResOutput :: Bool String TestsResult [CounterExampleRes] [(String, Int)] -> String
 humanReadableResOutput addWhite name {maxTests, nRej, resultType} _ labels = withBlank $ showName True name +++ resStr
 where
 	resStr = case resultType of
-		Proof nTests -> "Proof: " +++ msgStr +++ conclude addWhite nTests 0 labels
+		Proof nTests -> "Proof: " +++ msgStr +++ conclude nTests 0 labels
 		with
 			msgStr = if (nRej == 0) "success for all arguments" "success for all non-rejected arguments"
-		PassedTest maxArgs nTests nUnd allArgsGenerated -> msgStr +++ conclude addWhite nTests nUnd labels
+		PassedTest maxArgs nTests nUnd allArgsGenerated -> msgStr +++ conclude nTests nUnd labels
 		with
 			msgStr
 			| allArgsGenerated = "Passed: success for arguments"
 			| nTests == 0      = "Passed"
 			| otherwise        = "Passed: maximum number of arguments (" <+ maxArgs <+ ") generated"
-		CounterExpls nTests nUnd nE -> pluralisen English nE "counterexample" +++ " found" +++ conclude addWhite nTests nUnd labels
-		Undefined nUnd -> "Undefined: no success nor counterexample found, all tests rejected or undefined" +++ conclude addWhite maxTests nUnd labels
-		NoTests maxArgs nTests nUnd -> "No tests performed, maximum number of arguments (" <+ maxArgs <+ ") generated" +++ conclude addWhite nTests nUnd labels
+		CounterExpls nTests nUnd nE -> pluralisen English nE "counterexample" +++ " found" +++ conclude nTests nUnd labels
+		Undefined nUnd -> "Undefined: no success nor counterexample found, all tests rejected or undefined" +++ conclude maxTests nUnd labels
+		NoTests maxArgs nTests nUnd -> "No tests performed, maximum number of arguments (" <+ maxArgs <+ ") generated" +++ conclude nTests nUnd labels
 
 	withBlank x
 	| addWhite  = blank +++ x
 	| otherwise = x
 
-	conclude :: Bool Int Int [(String, Int)] -> String
-	conclude addWhite ntests nund labels
+	conclude :: Int Int [(String, Int)] -> String
+	conclude ntests nund labels
 		# n    = maxTests-ntests
-		# rest = showLabels addWhite n (sort labels)
+		# rest = showLabels n (sort labels)
 		# rest = case nRej of
 			0 -> rest
 			n -> [", ", pluralisen English n "case", " rejected": rest]
@@ -226,10 +229,10 @@ where
 			= concat rest
 			= concat [" after ",pluralisen English n "test":rest]
 
-	showLabels :: !Bool !Int ![(String,Int)] -> [String]
-	showLabels addWhite ntests [] = if addWhite ["\n"] []
-	showLabels addWhite 0      [(lab,n):rest] = ["\n",lab,": ",toString n:showLabels addWhite 0 rest]
-	showLabels addWhite ntests [(lab,n):rest] = ["\n",lab,": ",toString n," (",toString (toReal (n*100)/toReal ntests),"%)":showLabels addWhite ntests rest]
+	showLabels :: !Int ![(String,Int)] -> [String]
+	showLabels ntests [] = ["\n"]
+	showLabels 0      [(lab,n):rest] = ["\n",lab,": ",toString n:showLabels 0 rest]
+	showLabels ntests [(lab,n):rest] = ["\n",lab,": ",toString n," (",toString (toReal (n*100)/toReal ntests),"%)":showLabels ntests rest]
 
 jsonEventStart :: !String -> String
 jsonEventStart name = toString (toJSON {StartEvent | name=name}) +++ "\n"
@@ -242,7 +245,7 @@ where
 		, event   = eventType
 		, message = concat
 			[ humanReadableResOutput False name res counterExamples labels
-			: map humanReadableCEOutput counterExamples
+			: map (humanReadableCEOutput False False) counterExamples
 			]
 		}
 
@@ -251,7 +254,7 @@ where
 		PassedTest _ _ _ _ -> Passed
 		CounterExpls _ _ _ -> Failed $ Just $ CounterExamples $
 			(\ce ->
-				{ counterExample   = ce.CounterExampleRes.argsJSON
+				{ counterExample   = map GPrint ce.CounterExampleRes.argsRepresentation
 				, failedAssertions = fst3 <$> ce.CounterExampleRes.failedAssertions
 				}
 			) <$> counterExamples
@@ -264,10 +267,10 @@ showName quoteName l = if quoteName ("\"" <+ l <+ "\" ") l
 toPrintConfig :: ([PrintOption] -> PrintConfig)
 toPrintConfig = foldl handleOption verbosePrintConfig
 where
-	handleOption pc Verbose          = {pc & everyOutput = verboseEvery}
-	handleOption pc Trace            = {pc & everyOutput = traceEvery}
-	handleOption pc (Concise n)      = {pc & everyOutput = countEvery n}
-	handleOption pc Quiet            = {pc & everyOutput = noEveryOutput}
+	handleOption pc Verbose          = verbosePrintConfig
+	handleOption pc Trace            = tracePrintConfig
+	handleOption pc (Concise n)      = countPrintConfig n
+	handleOption pc Quiet            = quietPrintConfig
 	handleOption pc OutputTestEvents =
 		{ pc
 		& everyOutput          = noEveryOutput
@@ -320,10 +323,10 @@ verbosen :: !Int !RandomStream !p -> [String] | Testable p
 verbosen n rs p = printEvents verbosePrintConfig $ testConfig rs { defaultTestConfig & maxTests = n, maxArgs = 100*n } p
 
 concise :: !RandomStream !p -> [String] | Testable p
-concise rs p = printEvents countPrintConfig $ testConfig rs defaultTestConfig p
+concise rs p = printEvents (countPrintConfig 100) $ testConfig rs defaultTestConfig p
 
 concisen   :: !Int !RandomStream !p -> [String] | Testable p
-concisen n rs p = printEvents countPrintConfig $ testConfig rs { defaultTestConfig & maxTests = n, maxArgs = 100*n } p
+concisen n rs p = printEvents (countPrintConfig 100) $ testConfig rs { defaultTestConfig & maxTests = n, maxArgs = 100*n } p
 
 quiet :: !RandomStream !p -> [String] | Testable p
 quiet rs p = printEvents quietPrintConfig $ testConfig rs defaultTestConfig p
@@ -363,13 +366,13 @@ where
 					CE   -> [GE_CounterExample counterExample:more]
 					with
 						counterExample =
-							{ maxTests         = maxTests
-							, nTests           = nTests
-							, nE               = nE
-							, args             = res.Admin.args
-							, argsJSON         = res.Admin.argsJSON
-							, name             = let n = testname p in join "." [n:dropWhile ((==) n) (reverse res.namePath)]
-							, failedAssertions = res.Admin.failedAssertions
+							{ maxTests           = maxTests
+							, nTests             = nTests
+							, nE                 = nE
+							, args               = res.Admin.args
+							, argsRepresentation = res.Admin.argsRepresentation
+							, name               = let n = testname p in join "." [n:dropWhile ((==) n) (reverse res.namePath)]
+							, failedAssertions   = res.Admin.failedAssertions
 							}
 						more | nE+1<fails
 							= analyse rest (nTests-1) (nArgs-1) nRej nUnd (nE+1) [counterExample: counterExamples] (admin res.labels labels)

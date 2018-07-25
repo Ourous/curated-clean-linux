@@ -307,11 +307,9 @@ typed_fun name type ts =
 skip_newlines [TEndOfLine:ts] = skip_newlines ts
 skip_newlines ts = returnS ts
 
-program ts fs =
-			skip_newlines ts
-		>>= \ts = func ts
-		>>= \(f, ts) = skip_newlines ts
-		>>= \ts = if (length ts == 0) (returnS ([f:fs], ts)) (program ts [f:fs])
+program ts fs = skip_newlines ts >>= \ts
+	| isEmpty ts -> returnS (fs, ts)
+	| otherwise  -> func ts >>= \(f, ts) -> program ts [f:fs]
 		
 parse :: [PosToken] -> MaybeError ErrorMsg ([FuncType],ParserState)
 parse pts 

@@ -46,7 +46,7 @@ clock world
 	where
 	clockC :: !*World -> (!Int, !*World)
 	clockC world = code {
-		ccall clock ":I:p"
+		ccall clock ":I:A"
 	}
 
 time :: !*World -> (!Timestamp, !*World)
@@ -56,7 +56,7 @@ time world
 	where
 	timeC :: !Int !*World -> (!Int,!*World)
 	timeC a0 world = code {
-		ccall time "I:I:p"
+		ccall time "I:I:A"
 	}
 
 gmTime :: !*World -> (!Tm, !*World)
@@ -67,7 +67,7 @@ gmTime world
 	where
 	gmTimeC :: !{#Int} !*World -> (!Int, !*World)
 	gmTimeC tm world = code {
-    	ccall gmtime "A:p:p"
+		ccall gmtime "A:p:A"
 	}
 
 localTime :: !*World -> (!Tm, !*World)
@@ -78,7 +78,7 @@ localTime world
 	where
 	localTimeC :: !{#Int} !*World -> (!Int, !*World)
 	localTimeC tm world = code {
-    	ccall localtime "A:p:p"
+		ccall localtime "A:p:A"
 	}
 
 mkTime :: !Tm !*World-> (!Timestamp, !*World)
@@ -123,7 +123,7 @@ gmTimeC tm = code {
 
 localTimeC :: !{#Int} !*World -> (!Pointer, !*World)
 localTimeC tm world = code {
-    ccall localtime "A:p:p"
+	ccall localtime "A:p:A"
 }
 
 derefTm :: !Pointer-> Tm
@@ -203,7 +203,7 @@ where
 		# tv_nsec = t1.tv_nsec - t2.tv_nsec
 		| tv_nsec < 0
 			= {tv_sec = t1.tv_sec - t2.tv_sec - 1, tv_nsec = 1000000000 - tv_nsec}
-			= {tv_sec = t1.tv_sec - t2.tv_sec - 1, tv_nsec = tv_nsec}
+			= {tv_sec = t1.tv_sec - t2.tv_sec,     tv_nsec = tv_nsec}
 
 instance zero Timespec
 where zero = {tv_sec=0, tv_nsec=0}

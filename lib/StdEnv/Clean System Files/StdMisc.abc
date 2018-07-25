@@ -1,4 +1,4 @@
-.comp 920 0101110110100
+.comp 920 0001100110100
 .start _nostart_
 .depend "StdMisc"
 .endinfo
@@ -40,9 +40,11 @@
 .implab _driver
 .export e_StdMisc_sundef
 .descexp e_StdMisc_dundef e_StdMisc_nundef e_StdMisc_lundef 0 0 "undef"
+.pb "undef"
 .o 1 0
 e_StdMisc_lundef
 	halt
+.pd
 .n 0 e_StdMisc_dundef _
 .o 1 0
 e_StdMisc_nundef
@@ -55,6 +57,7 @@ e_StdMisc_nundef
 .d 1 0
 	rtn
 .o 0 0
+.pn
 ea2
 .o 0 0
 e_StdMisc_sundef
@@ -68,13 +71,18 @@ s2
 
 .d 1 0
 	rtn
+.pe
 .export e_StdMisc_sabort
 .descexp e_StdMisc_dabort e_StdMisc_nabort e_StdMisc_labort 1 0 "abort"
+.pb "abort"
+.pl
 .o 2 0
 e_StdMisc_labort
 	pop_a 1
 .d 1 0
+.pn
 	jmp ea1
+.pd
 .n 1 e_StdMisc_dabort _
 .o 1 0
 e_StdMisc_nabort
@@ -87,6 +95,7 @@ e_StdMisc_nabort
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea1
 	jsr_eval 0
 	push_array 0
@@ -105,3 +114,4 @@ s1
 
 .d 1 0
 	rtn
+.pe

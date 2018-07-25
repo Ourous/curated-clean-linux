@@ -1,4 +1,4 @@
-.comp 920 0101110110100
+.comp 920 0001100110100
 .start _nostart_
 .depend "StdOverloaded"
 .depend "StdBool"
@@ -41,6 +41,8 @@
 .implab _driver
 .export e_StdBool_sfromBool;6
 .descexp e_StdBool_dfromBool;6 e_StdBool_nfromBool;6 e_StdBool_lfromBool;6 1 0 "fromBool;6"
+.pb "fromBool;6"
+.pld
 .o 2 0
 e_StdBool_lfromBool;6
 	pop_a 1
@@ -50,6 +52,7 @@ e_StdBool_lfromBool;6
 	buildh ARRAY 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdBool_dfromBool;6
 .o 1 0
 e_StdBool_nfromBool;6
@@ -61,6 +64,7 @@ e_StdBool_nfromBool;6
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea7
 	jsr_eval 0
 	pushB_a 0
@@ -77,8 +81,11 @@ s7
 
 .d 1 0
 	rtn
+.pe
 .export e_StdBool_sfromBool;5
 .descexp e_StdBool_dfromBool;5 e_StdBool_nfromBool;5 e_StdBool_lfromBool;5 1 0 "fromBool;5"
+.pb "fromBool;5"
+.pld
 .o 2 0
 e_StdBool_lfromBool;5
 	pop_a 1
@@ -89,6 +96,7 @@ e_StdBool_lfromBool;5
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdBool_dfromBool;5
 .o 1 0
 e_StdBool_nfromBool;5
@@ -101,6 +109,7 @@ e_StdBool_nfromBool;5
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea6
 	jsr_eval 0
 	pushB_a 0
@@ -115,8 +124,11 @@ s6
 
 .d 0 1 b
 	rtn
+.pe
 .export e_StdBool_stoBool;4
 .descexp e_StdBool_dtoBool;4 e_StdBool_ntoBool;4 e_StdBool_ltoBool;4 1 0 "toBool;4"
+.pb "toBool;4"
+.pld
 .o 2 0
 e_StdBool_ltoBool;4
 	pop_a 1
@@ -127,6 +139,7 @@ e_StdBool_ltoBool;4
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdBool_dtoBool;4
 .o 1 0
 e_StdBool_ntoBool;4
@@ -139,6 +152,7 @@ e_StdBool_ntoBool;4
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea5
 	jsr_eval 0
 	pushB_a 0
@@ -153,13 +167,17 @@ s5
 
 .d 0 1 b
 	rtn
+.pe
 .export e_StdBool_s==;3
 .descexp e_StdBool_d==;3 e_StdBool_n==;3 e_StdBool_l==;3 2 0 "==;3"
+.pb "==;3"
+.pld
 .a 0 a4
 .o 2 0
 e_StdBool_l==;3
 	repl_args 1 1
 .o 2 0
+.pn
 a4
 .d 2 0
 	jsr ea4
@@ -168,6 +186,7 @@ a4
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdBool_d==;3
 .o 1 0
 e_StdBool_n==;3
@@ -180,6 +199,7 @@ e_StdBool_n==;3
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea4
 	jsr_eval 1
 	jsr_eval 0
@@ -196,13 +216,17 @@ s4
 
 .d 0 1 b
 	rtn
+.pe
 .export e_StdBool_s&&
 .descexp e_StdBool_d&& e_StdBool_n&& e_StdBool_l&& 2 0 "&&"
+.pb "&&"
+.pld
 .a 0 a3
 .o 2 0
 e_StdBool_l&&
 	repl_args 1 1
 .o 2 0
+.pn
 a3
 .d 2 0
 	jsr ea3
@@ -211,6 +235,7 @@ a3
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdBool_d&&
 .o 1 0
 e_StdBool_n&&
@@ -223,6 +248,7 @@ e_StdBool_n&&
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea3
 	jsr_eval 0
 	pushB_a 0
@@ -246,13 +272,17 @@ l1
 
 .d 0 1 b
 	rtn
+.pe
 .export e_StdBool_s||
 .descexp e_StdBool_d|| e_StdBool_n|| e_StdBool_l|| 2 0 "||"
+.pb "||"
+.pld
 .a 0 a2
 .o 2 0
 e_StdBool_l||
 	repl_args 1 1
 .o 2 0
+.pn
 a2
 .d 2 0
 	jsr ea2
@@ -261,6 +291,7 @@ a2
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdBool_d||
 .o 1 0
 e_StdBool_n||
@@ -273,6 +304,7 @@ e_StdBool_n||
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea2
 	jsr_eval 0
 	pushB_a 0
@@ -296,8 +328,11 @@ l2
 
 .d 0 1 b
 	rtn
+.pe
 .export e_StdBool_snot
 .descexp e_StdBool_dnot e_StdBool_nnot e_StdBool_lnot 1 0 "not"
+.pb "not"
+.pld
 .o 2 0
 e_StdBool_lnot
 	pop_a 1
@@ -308,6 +343,7 @@ e_StdBool_lnot
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdBool_dnot
 .o 1 0
 e_StdBool_nnot
@@ -320,6 +356,7 @@ e_StdBool_nnot
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea1
 	jsr_eval 0
 	pushB_a 0
@@ -334,3 +371,4 @@ s1
 
 .d 0 1 b
 	rtn
+.pe

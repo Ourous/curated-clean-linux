@@ -1,35 +1,40 @@
 Version: 1.4
 Global
-	Built:	True
-	Target:	Object IO
-	Exec:	{Project}\TestMetarParser.exe
+	ProjectRoot:	.
+	Target:	StdEnv
+	Exec:	{Project}/saplcg
 	CodeGen
 		CheckStacks:	False
 		CheckIndexes:	True
 	Application
-		HeapSize:	409600
-		StackSize:	102400
-		ExtraMemory:	81920
+		HeapSize:	209715200
+		StackSize:	5120000
+		ExtraMemory:	8192
 		IntialHeapSize:	204800
 		HeapSizeMultiplier:	4096
 		ShowExecutionTime:	False
 		ShowGC:	False
 		ShowStackSize:	False
 		MarkingCollector:	False
+		DisableRTSFlags:	True
 		StandardRuntimeEnv:	True
 		Profile
 			Memory:	False
 			MemoryMinimumHeapSize:	0
 			Time:	False
 			Stack:	False
+			Dynamics:	False
+			GenericFusion:	False
+			DescExL:	False
 		Output
-			Output:	BasicValuesOnly
-			Font:	Courier
+			Output:	NoConsole
+			Font:	Monaco
 			FontSize:	9
 			WriteStdErr:	False
 	Link
 		LinkMethod:	Static
 		GenerateRelocations:	False
+		GenerateSymbolTable:	False
 		GenerateLinkMap:	False
 		LinkResources:	False
 		ResourceSource:	
@@ -37,37 +42,20 @@ Global
 		ExportedNames:	
 	Paths
 		Path:	{Project}
-		Path:	{Application}\Libraries\Parsers
-		Path:	{Application}\Libraries\Parsers\LanguageDependent\English
-		Path:	{Application}\Libraries\StdLib
+		Path:	{Application}/lib/Platform
 	Precompile:	
 	Postlink:	
 MainModule
-	Name:	TestMetarParser
+	Name:	saplcg
 	Dir:	{Project}
 	Compiler
 		NeverMemoryProfile:	False
 		NeverTimeProfile:	False
 		StrictnessAnalysis:	True
-		ListTypes:	AllTypes
+		ListTypes:	StrictExportTypes
 		ListAttributes:	True
 		Warnings:	True
 		Verbose:	True
 		ReadableABC:	False
 		ReuseUniqueNodes:	True
-	Dcl
-		WindowPosition
-			X:	0
-			Y:	0
-			SizeX:	500
-			SizeY:	300
-	DclOpen:	False
-	Icl
-		WindowPosition
-			X:	0
-			Y:	0
-			SizeX:	935
-			SizeY:	519
-	IclOpen:	True
-	LastModified:	No 0 0 0 0 0 0
-OtherModules
+		Fusion:	False

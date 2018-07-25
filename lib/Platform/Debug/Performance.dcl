@@ -1,22 +1,24 @@
 definition module Debug.Performance
 
-from System.Time import :: Clock
+from System.Time import :: Clock, :: Timespec
 
 /**
 * Measures the duration of the computation on a unique environment.
-* The time is measure as the delta of clock ticks as defined in System.Time. 
+* The time is measured in ms. Both the time spent in the process and the wall time is measured.
+* The latter is useful in case the process spends a lot of time waiting for IO (e.g. HDD accesses).
 * @param computation on the unique environment
-* @return function that additionally measures the duration of the given computation
+* @return function that additionally measures the duration of the given computation (second result integer is wall time)
 */
-measureTime :: !u:(*env -> *env) -> v:(*env -> (!Clock, !*env)), [v <= u]
+measureTime :: !u:(*env -> *env) -> v:(*env -> (!Int, !Int, !*env)), [v <= u]
 
 /**
 * Measures the duration of the computation on a unique environment, returning an additional result.
-* The time is measure as the delta of clock ticks as defined in System.Time. 
+* The time is measured in ms. Both the time spent in the process and the wall time is measured.
+* The latter is useful in case the process spends a lot of time waiting for IO (e.g. HDD accesses).
 * @param computation on the unique environment
-* @return function that additionally measures the duration of the given computation
+* @return function that additionally measures the duration of the given computation (second result integer is wall time)
 */
-measureTimeRes :: !u:(*env -> (!.a, !*env)) -> v:(*env -> (!Clock, !.a, !*env)), [v <= u]
+measureTimeRes :: !u:(*env -> (!.a, !*env)) -> v:(*env -> (!Int, !Int, !.a, !*env)), [v <= u]
 
 /**
 * Prints the duration of the computation on a unique environment.

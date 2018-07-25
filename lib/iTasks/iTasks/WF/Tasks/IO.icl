@@ -1,5 +1,9 @@
 implementation module iTasks.WF.Tasks.IO
 
+import iTasks.Internal.SDS
+import iTasks.Internal.Util
+import iTasks.SDS.Combinators.Common
+import iTasks.SDS.Definition
 import iTasks.WF.Definition
 import iTasks.UI.Definition
 import iTasks.UI.Editor
@@ -14,7 +18,7 @@ import iTasks.Internal.Generic.Visualization
 import iTasks.Internal.Generic.Defaults
 
 import System.Process
-import Text, Text.GenJSON, StdString, StdInt
+import Text, Text.GenJSON, StdString, StdInt, StdBool, StdList, StdTuple, Data.Tuple, Data.Func, StdFunc
 import qualified Data.Map as DM
 import qualified Data.Set as DS
 
@@ -34,65 +38,67 @@ import qualified Data.Set as DS
     , onExit        :: !(ExitCode l r -> (!MaybeErrorString l, !Maybe w                  ))
     }
 
-externalProcess :: !d !FilePath ![String] !(Maybe FilePath) !(SDS () r w) !(ExternalProcessHandlers l r w) !(Maybe ProcessPtyOptions) !(Editor l) -> Task l | toPrompt d & iTask l & TC r & TC w
-externalProcess prompt cmd args dir sds handlers mopts editor = Task eval
+derive JSONEncode ProcessHandle, ProcessIO
+derive JSONDecode ProcessHandle, ProcessIO
+
+liftOSErr f iw = case (liftIWorld f) iw of
+	(Error (_, e), iw) = (Error (exception e), iw)
+	(Ok a, iw) = (Ok a, iw)
+
+externalProcess :: !Timespec !FilePath ![String] !(Maybe FilePath) !(Maybe ProcessPtyOptions) !(Shared [String]) !(Shared ([String], [String])) -> Task Int
+externalProcess poll cmd args dir mopts sdsin sdsout = Task eval
 where
-    eval event evalOpts tree=:(TCInit taskId ts) iworld
-        = case addExternalProc taskId cmd args dir (wrapExternalProcTask handlers sds) mopts iworld of
-            (Error e, iworld)
-                = (ExceptionResult e, iworld)
-            (Ok (initialValue :: l^), iworld)
-				= case resetUI taskId initialValue iworld of
-					(Ok (change,mask), iworld)
-						# tree = TCBasic taskId ts (toJSON (initialValue,mask)) False
-						= (ValueResult (Value initialValue False) (info ts) change tree, iworld)
-                    (Error e, iworld)   = (ExceptionResult (exception e),iworld)
-            (Ok _, iworld)
-                = (ExceptionResult (exception "Corrupt IO task init in externalProcess"), iworld)
+	fjson = mb2error (exception "Corrupt taskstate") o fromDeferredJSON
 
-    eval event evalOpts tree=:(TCBasic taskId ts encodedLocalValue _) iworld=:{ioStates}
-        = case 'DM'.get taskId ioStates of
-            Nothing
-                = (ValueResult NoValue (info ts) NoChange tree, iworld)
-            Just (IOActive values)
-                = case 'DM'.get 0 values of 
-                    Just (ioStateValue :: l^, stable) = case event of 
-                         (RefreshEvent taskIds _ )| 'DS'.member taskId taskIds
-							 = case refreshUI taskId (fromJSON encodedLocalValue) ioStateValue iworld of
-                            	(Ok (change,mask), nextValue, iworld)
-									# tree = TCBasic taskId ts (toJSON (nextValue,mask)) stable
-									= (ValueResult (Value ioStateValue stable) (info ts) change tree, iworld)
-								(Error e, nextValue, iworld)   = (ExceptionResult (exception e),iworld)
-                         _ = case resetUI taskId ioStateValue iworld of 
-                            (Ok (change,mask),iworld)
-								# tree = TCBasic taskId ts (toJSON (ioStateValue,mask)) stable
-								= (ValueResult (Value ioStateValue stable) (info ts) change tree, iworld)
-                            (Error e,iworld)   = (ExceptionResult (exception e),iworld)
-                    _
-                        = (ExceptionResult (exception "Corrupt IO task result in externalProcess"),iworld)
-            Just (IOException e)
-                = (ExceptionResult (exception e),iworld)
+	eval :: Event TaskEvalOpts TaskTree *IWorld -> *(TaskResult Int, *IWorld)
+	eval event evalOpts tree=:(TCInit taskId ts) iworld
+		= case liftOSErr (maybe (runProcessIO cmd args dir) (runProcessPty cmd args dir) mopts) iworld of
+			(Error e, iworld) = (ExceptionResult e, iworld)
+			(Ok ph, iworld) = eval event evalOpts (TCBasic taskId ts (DeferredJSON ph) False) iworld
 
-    eval event evalOpts tree=:(TCDestroy (TCBasic taskId ts _ _)) iworld=:{ioStates}
-        # ioStates = case 'DM'.get taskId ioStates of
-            Just (IOActive values)  = 'DM'.put taskId (IODestroyed values) ioStates
-            _                       = ioStates
-        = (DestroyedResult,{iworld & ioStates = ioStates})
+	eval event evalOpts tree=:(TCBasic taskId ts jsonph _) iworld
+		= apIWTransformer iworld $
+			tuple (fjson jsonph)                        >-= \(ph, pio)->
+			read sdsout                                 >-= \(stdoutq, stderrq)->
+			liftOSErr (readPipeNonBlocking pio.stdOut)  >-= \stdoutData->
+			liftOSErr (readPipeNonBlocking pio.stdErr)  >-= \stderrData->
+			(if (stdoutData == "" && stderrData == "")
+				(tuple (Ok ()))
+				(write (stdoutq ++ filter ((<>)"") [stdoutData]
+				       ,stderrq ++ filter ((<>)"") [stderrData]
+				       ) sdsout))                       >-= \()->
+			liftOSErr (checkProcess ph)                 >-= \mexitcode->case mexitcode of
+				(Just i) = tuple (Ok (ValueResult (Value i True) (info ts) (rep event) (TCStable taskId ts (DeferredJSONNode (JSONInt i)))))
+				Nothing =
+					readRegister taskId clock                            >-= \_->
+					readRegister taskId sdsin                            >-= \stdinq->
+					liftOSErr (writePipe (concat stdinq) pio.stdIn)      >-= \_->
+					(if (stdinq =: []) (tuple (Ok ())) (write [] sdsin)) >-= \()->
+					tuple (Ok (ValueResult NoValue (info ts) (rep event) tree))
+
+	//Stable
+	eval event evalOpts tree=:(TCStable tid ts (DeferredJSONNode (JSONInt i))) iworld
+		= (ValueResult (Value i True) (info ts) (rep event) tree, iworld)
+
+	//Destroyed while the process was still running
+	eval event evalOpts tree=:(TCDestroy (TCBasic taskId ts jsonph _)) iworld
+		# iworld = clearTaskSDSRegistrations ('DS'.singleton $ fromOk $ taskIdFromTaskTree tree) iworld
+		= apIWTransformer iworld
+		$             tuple (fjson jsonph)
+		>-= \(ph, _)->liftOSErr (terminateProcess ph)
+		>-= \_      ->tuple (Ok DestroyedResult)
+
+	//Destroyed when the task was already stable
+	eval event evalOpts tree=:(TCDestroy _) iworld
+		# iworld = clearTaskSDSRegistrations ('DS'.singleton $ fromOk $ taskIdFromTaskTree tree) iworld
+		= (DestroyedResult, iworld)
 
 	info ts = {TaskEvalInfo|lastEvent=ts,removedTasks=[],refreshSensitive=True}
 
-	resetUI taskId value iworld
-		# vst = {VSt| taskId = toString taskId, mode = View, optional = False, selectedConsIndex = -1, iworld = iworld}
-		= case editor.Editor.genUI [] value vst of
-         	(Ok (editorUI,mask), {VSt|iworld}) = (Ok (ReplaceUI (uic UIInteract [toPrompt prompt, editorUI]),mask), iworld)
-            (Error e,{VSt|iworld})             = (Error e,iworld)
+	rep ResetEvent = ReplaceUI (stringDisplay ("External process: " <+++ cmd))
+	rep _ = NoChange
 
-	refreshUI taskId Nothing newValue iworld = (Error "Corrupt stored value in externalProcess", newValue, iworld)
-	refreshUI taskId (Just (oldValue,mask)) newValue iworld
-		# vst = {VSt| taskId = toString taskId, mode = View, optional = False, selectedConsIndex = -1, iworld = iworld}
-		= case editor.Editor.onRefresh [] newValue oldValue mask vst of
-         	(Ok (editorChange,mask), nextValue, {VSt|iworld}) = (Ok (ChangeUI [] [(1,ChangeChild editorChange)],mask), nextValue, iworld)
-            (Error e, nextValue, {VSt|iworld})                = (Error e,nextValue,iworld)
+	clock = sdsFocus {start=zero,interval=poll} iworldTimespec
 
 tcplisten :: !Int !Bool !(RWShared () r w) (ConnectionHandlers l r w) -> Task [l] | iTask l & iTask r & iTask w
 tcplisten port removeClosed sds handlers = Task eval
@@ -103,7 +109,7 @@ where
                 = (ExceptionResult (exception ("Error: port "+++ toString port +++ " already in use.")), iworld)
             (Ok _,iworld)
                 = (ValueResult (Value [] False) {TaskEvalInfo|lastEvent=ts,removedTasks=[],refreshSensitive=True} (rep port)
-                                                    (TCBasic taskId ts JSONNull False),iworld)
+                                                    (TCBasic taskId ts (DeferredJSONNode JSONNull) False),iworld)
 
     eval event evalOpts tree=:(TCBasic taskId ts _ _) iworld=:{ioStates} 
         = case 'DM'.get taskId ioStates of 
@@ -111,9 +117,9 @@ where
                 = (ExceptionResult (exception e), iworld)
             Just (IOActive values)
                 # value = Value [l \\ (_,(l :: l^,_)) <- 'DM'.toList values] False
-                = (ValueResult value {TaskEvalInfo|lastEvent=ts,removedTasks=[],refreshSensitive=True} (rep port) (TCBasic taskId ts JSONNull False),iworld)
+                = (ValueResult value {TaskEvalInfo|lastEvent=ts,removedTasks=[],refreshSensitive=True} (rep port) (TCBasic taskId ts (DeferredJSONNode JSONNull) False),iworld)
             Nothing
-                = (ValueResult (Value [] False) {TaskEvalInfo|lastEvent=ts,removedTasks=[],refreshSensitive=True} (rep port) (TCBasic taskId ts JSONNull False), iworld)
+                = (ValueResult (Value [] False) {TaskEvalInfo|lastEvent=ts,removedTasks=[],refreshSensitive=True} (rep port) (TCBasic taskId ts (DeferredJSONNode JSONNull) False), iworld)
 
     eval event evalOpts tree=:(TCDestroy (TCBasic taskId ts _ _)) iworld=:{ioStates}
         # ioStates = case 'DM'.get taskId ioStates of
@@ -131,7 +137,7 @@ where
             (Error e,iworld)
                 = (ExceptionResult e, iworld)
             (Ok _,iworld)
-                = (ValueResult NoValue {TaskEvalInfo|lastEvent=ts,removedTasks=[],refreshSensitive=True} rep (TCBasic taskId ts JSONNull False),iworld)
+                = (ValueResult NoValue {TaskEvalInfo|lastEvent=ts,removedTasks=[],refreshSensitive=True} rep (TCBasic taskId ts (DeferredJSONNode JSONNull) False),iworld)
 
     eval event evalOpts tree=:(TCBasic taskId ts _ _) iworld=:{ioStates}
         = case 'DM'.get taskId ioStates of

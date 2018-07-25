@@ -5,9 +5,10 @@ definition module Data.Either
 * used inside generic functions, since most generic functions treat this
 * type in a special way which may lead to strange behavior.
 */
-from Control.Applicative import class Applicative, class *>, class <*
+from Control.Applicative import class Applicative, class *>, class <*, class Alternative
 from Control.Monad import class Monad
 from Data.Functor import class Functor
+from Data.Monoid import class Monoid, class Semigroup
 from Data.Foldable import class Foldable
 from Data.Traversable import class Traversable
 from Data.Bifunctor import class Bifunctor
@@ -30,4 +31,10 @@ instance Traversable (Either a)
 
 instance Bifunctor Either
 
-either :: .(.a -> .c) .(.b -> .c) !(Either .a .b) -> .c
+instance Alternative (Either m) | Monoid m
+
+either    :: .(.a -> .c) .(.b -> .c) !(Either .a .b) -> .c
+lefts     :: .[Either .a .b] -> .[.a]
+rights    :: .[Either .a .b] -> .[.b]
+fromLeft :: .a (Either .a .b) -> .a
+fromRight :: .b (Either .a .b) -> .b

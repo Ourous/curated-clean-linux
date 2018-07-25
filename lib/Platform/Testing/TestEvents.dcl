@@ -57,9 +57,13 @@ from Text.GenJSON import generic JSONEncode, generic JSONDecode, :: JSONNode, ::
  * A counter-example to a test.
  */
 :: CounterExample =
-	{ counterExample   :: ![JSONNode]        //* The values that disproves the property
+	{ counterExample   :: ![Expression]      //* The values that disprove the property, in {{`gPrint`}} format
 	, failedAssertions :: ![FailedAssertion] //* The assertions that failed in testing the property for that value
 	}
+
+:: Expression
+	= JSON !JSONNode
+	| GPrint !String
 
 /**
  * A failed test assertion.
@@ -67,7 +71,7 @@ from Text.GenJSON import generic JSONEncode, generic JSONDecode, :: JSONNode, ::
  * have to be adapted in case the type definition is changed!
  */
 :: FailedAssertion
-	= ExpectedRelation JSONNode Relation JSONNode //* A relation test failed
+	= ExpectedRelation Expression Relation Expression //* A relation test failed
 
 /**
  * A relation between two values.
@@ -86,4 +90,5 @@ from Text.GenJSON import generic JSONEncode, generic JSONDecode, :: JSONNode, ::
 derive JSONEncode TestEvent, StartEvent, EndEvent, FailReason, CounterExample, FailedAssertion, Relation
 derive JSONDecode TestEvent, StartEvent, EndEvent, FailReason, CounterExample, FailedAssertion, Relation
 
+instance toString Expression
 instance toString Relation

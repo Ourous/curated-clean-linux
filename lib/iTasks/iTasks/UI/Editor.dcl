@@ -21,9 +21,15 @@ from StdOverloaded import class toString
 *	Definition of an editor editor
 */
 :: Editor a = 
-	{ genUI     :: DataPath                     a          *VSt -> *(!MaybeErrorString (!UI, !EditMask),           !*VSt) //Generating the initial UI
-	, onEdit    :: DataPath (DataPath,JSONNode) a EditMask *VSt -> *(!MaybeErrorString (!UIChange, !EditMask), !a, !*VSt) //React to edit events
-	, onRefresh :: DataPath a                   a EditMask *VSt -> *(!MaybeErrorString (!UIChange, !EditMask), !a, !*VSt) //React to a new model value 
+	//Generating the initial UI
+	{ genUI :: DataPath a *VSt ->
+		*(!MaybeErrorString (!UI, !EditMask), !*VSt)
+	//React to edit events
+	, onEdit :: DataPath (DataPath,JSONNode) a EditMask *VSt ->
+		*(!MaybeErrorString (!UIChange, !EditMask), !a, !*VSt)
+	//React to a new model value
+	, onRefresh :: DataPath a a EditMask *VSt ->
+		*(!MaybeErrorString (!UIChange, !EditMask), !a, !*VSt)
 	}
 
 //* Datapaths identify sub structures in a composite structure
@@ -65,11 +71,11 @@ newFieldMask :: EditMask
 newCompoundMask :: EditMask
 
 //Generate the editorId string for a given datapath
-editorId 				:: !DataPath 		-> String
-s2dp					:: !String			-> DataPath
+editorId :: !DataPath -> String
+s2dp     :: !String -> DataPath
 
-subMasks	:: !Int EditMask -> [EditMask]
-isTouched	:: !EditMask -> Bool
+subMasks  :: !Int EditMask -> [EditMask]
+isTouched :: !EditMask -> Bool
 
 containsInvalidFields :: !EditMask -> Bool
 
@@ -77,5 +83,6 @@ containsInvalidFields :: !EditMask -> Bool
 withClientSideInit ::
 	((JSObj ()) *JSWorld -> *JSWorld)
 	(DataPath a *VSt -> *(!MaybeErrorString (!UI, !EditMask), !*VSt))
-	DataPath a *VSt -> *(!MaybeErrorString (!UI, !EditMask), !*VSt)
+	DataPath a *VSt ->
+		*(!MaybeErrorString (!UI, !EditMask), !*VSt)
 

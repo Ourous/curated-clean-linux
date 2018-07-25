@@ -6,61 +6,15 @@ definition module iTasks.UI.Layout
 * updates that are later applied accordingly.
 */
 
-from iTasks.UI.Definition import :: UI, :: UIType, :: UIAttributes, :: UIChange
+from iTasks.UI.Definition import :: UI, :: UIType, :: UIAttribute, :: UIAttributes, :: UIAttributeKey, :: UIChange, :: UIChildChange
 
 from Data.Maybe import :: Maybe
 from Data.Map  import :: Map
+from Data.Set import :: Set
 from Data.Either import :: Either
 
 from Text.GenJSON import :: JSONNode
-
-// When a layout changes the stucture of the UI, changes to the UI have to be
-// changed too to route the changes to the correct place in the structure
-:: Layout =
-	{ apply   :: UI                     -> (UIChange,LayoutState) // Modify the UI layout to the existing UI
-	, adjust  :: (UIChange,LayoutState) -> (UIChange,LayoutState) // Rewrite changes to the UI to accomodate for the changes caused by the layout
-	, restore :: LayoutState -> UIChange                          // Modify the UI to a state as if the layout had never been applied
-	}
-
-:: LayoutState
-	= LSNone                                           //No state is tracked for a layout
-	| LSType !UI                                       //State for layouts that change the type
-	| LSAttributes !UIAttributes                       //State for layouts that modify attributes
-	| LSModifyAttributes !UIAttributes !UIAttributes   //A more extended state for layouts that modify attributes
-	| LSCopyAttributes !UI                             //A more extended state for layouts that copy attributes
-	| LSWrap !UI                                       //State for unwrap layouts
-	| LSUnwrap !UI                                     //State for unwrap layouts
-	| LSInsert !Int                                    //State for inserting layouts
-	| LSSequence !LayoutState !LayoutState             //Combined state of two sequenced layouts
-	| LSLayoutSubUIs !UI (LayoutTree LayoutState ())   //States of layouts applied to sub-ui's 
-	| LSRemoveSubUIs !MvUI                             //UI's that were removed by the layout
-	| LSReference !UI
-
-:: LayoutTree a b
-	= UIModified !a
-	| SubUIsModified !b ![(Int,LayoutTree a b)]
-
-// This is an extended version of UI that annotates UI's with additional information about nodes that were removed, moved or restored.
-:: MvUI = { type      :: UIType            //From UI
-		  , attr      :: UIAttributes      //From UI
-          , matched   :: Bool              //Does this node match the selection upstream? (we hide this node downstream)
-		  , moved     :: Bool              //Have we moved this node to another node?
-                                           //They were inserted somewhere, so we should know that we have to remove them there
-		  , deleted   :: Bool              //When an upstream change replaces, or removes a UI, we only mark it, and remove it after we have adjusted the destination
-		  , dstChange :: UIChange          //If we have moved an item, we need to store local changes such that they can be applied in the target location
-		  , children  :: [MvUIChild]       //Either items original nodes, or additional marks
-		  }
-
-:: MvUIChild
-	= MvUIItem MvUI           //Upstream UI nodes with their annotations
-	| MvUIMoveDestination Int //A marker for the segment in the upstream ui where the moved nodes have been inserted (n should equal the amount of moved nodes)
-//	| MvUINoLongerMoved Int   //A marker that indicates that at this location in the UI there were previously 'moved' nodes.
-//                             //A RemoveChild or ReplaceUI change has removed them.
-	
-
-// In specifications of layouts, sub-parts of UI's are commonly addressed as 
-// a path of child selections in the UI tree.
-:: UIPath :== [Int]
+from StdOverloaded import class <
 
 // This type is a mini query language to describe a selection
 // of nodes in a UI (use for removing, moving, hiding or layouting)
@@ -108,82 +62,142 @@ SelectChildren :== SelectByDepth 1
 	= SelectAll
 	| SelectKeys ![String]
 
+// In specifications of layouts, sub-parts of UI's are commonly addressed as 
+// a path of child selections in the UI tree.
+:: UIPath :== [Int]
+
 // Basic DSL for creating layouts
 
-// == Do nothing ==
-idLayout :: Layout 
-
 // == Changing node types ==
-setUIType :: UIType -> Layout
+setUIType:: UIType -> LayoutRule
 
 // == Changing attributes ==
-setUIAttributes      :: UIAttributes -> Layout
-delUIAttributes      :: UIAttributeSelection -> Layout
-modifyUIAttributes   :: UIAttributeSelection (UIAttributes -> UIAttributes) -> Layout
-
-copySubUIAttributes  :: UIAttributeSelection UIPath UIPath -> Layout
+setUIAttributes :: UIAttributes -> LayoutRule
+delUIAttributes :: UIAttributeSelection -> LayoutRule
+modifyUIAttributes :: UIAttributeSelection (UIAttributes -> UIAttributes) -> LayoutRule
+copySubUIAttributes :: UIAttributeSelection UIPath UIPath -> LayoutRule
 
 // == Changing the structure of a UI ==
+wrapUI :: UIType -> LayoutRule
+unwrapUI :: LayoutRule
 
-//* Create a new UI node which has the original UI as its only child.
-wrapUI :: UIType -> Layout
-
-//* Replace the UI by its first child. 
-unwrapUI :: Layout
+/*
+* Hide a (piece of a) UI
+*/
+hideUI :: LayoutRule
+removeSubUIs selection :== layoutSubUIs selection hideUI
 
 /*
 * Insert a (static) element into a UI
 */
-insertChildUI :: Int UI -> Layout
-/**
-* Remove all elements that match the predicate, but keep the removed elements in the state.
-* Further changes to these elements are processed in the background. When the predicate no longer holds, the elements are inserted back into the UI.
-* When new elements are added dynamically they are also tested against the predicate
-*/
-removeSubUIs   :: UISelection -> Layout 
+insertChildUI :: Int UI -> LayoutRule
+
 /**
 * Move all elements that match the predicate to a particular location in the tree.
 * Further changes to these elements are rewritten to target the new location.
 * When new elements are added dynamically they are also tested against the predicate
 */
-moveSubUIs   :: UISelection UIPath Int -> Layout
-
-// == Composition of layouts ==
-/**
-* Apply a layout locally to parts of a UI
-*/
-layoutSubUIs :: UISelection Layout -> Layout
-/**
-* Apply multiple layouts sequentially. The UI changes that have been transformed by one layout are further transformed by the next layout
-*/
-sequenceLayouts :: Layout Layout -> Layout
+moveSubUIs :: UISelection UIPath Int -> LayoutRule
 
 /**
-* This layout can apply any transformation on UI's, but it replaces everything on each change.
-* Use this only as a debugging tool, because it will effectively remove the minimal data exchange of editors with UIChanges
+* Applying a rule locally to matching parts of a UI
+* When the predicate no longer holds, the elements are inserted back into the UI.
+* When new elements are added dynamically they are also tested against the predicate.
 */
-referenceLayout :: (UI -> UI) -> Layout 
+layoutSubUIs :: UISelection LayoutRule -> LayoutRule
 
-applyLayout :: Layout UI -> UI 
+/**
+* Applying multiple rules one after another.
+*/
+sequenceLayouts :: [LayoutRule] -> LayoutRule
 
-//Reference layouts of all core layouts for testing
-setUITypeRef_            :: UIType -> Layout
-setUIAttributesRef_      :: UIAttributes -> Layout
-delUIAttributesRef_      :: UIAttributeSelection -> Layout
-modifyUIAttributesRef_   :: UIAttributeSelection (UIAttributes -> UIAttributes) -> Layout
-copySubUIAttributesRef_  :: UIAttributeSelection UIPath UIPath -> Layout
-wrapUIRef_               :: UIType -> Layout
-unwrapUIRef_             :: Layout
-insertChildUIRef_        :: Int UI -> Layout
-removeSubUIsRef_         :: UISelection -> Layout 
-moveSubUIsRef_           :: UISelection UIPath Int -> Layout
-layoutSubUIsRef_         :: UISelection Layout -> Layout
-sequenceLayoutsRef_      :: Layout Layout -> Layout
+// ### Implementation: ####
 
-//This type records the states of layouts applied somewhere in a ui tree
-:: NodeLayoutStates :== [(Int,NodeLayoutState)]
-:: NodeLayoutState
-	= BranchLayout LayoutState
-	| ChildBranchLayout NodeLayoutStates
-	
-:: TaskHost a = InTaskHost | NoTaskHost
+//Experimental type that encodes all changes that are in effect by layouts
+//From this data structure both the UI with, and without the layout effects, can be deduced
+:: LUI
+	//UI nodes (with upstream changes)
+	= LUINode !UIType !UIAttributes ![LUI] !LUIChanges !LUIEffects
+	//Placeholder nodes
+	| LUIShiftDestination !LUIShiftID
+	| LUIMoveSource !LUIMoveID
+	| LUIMoveDestination !LUIMoveID !LUINo
+
+//Upstream UI changes
+:: LUIChanges =
+	{ toBeInserted  :: !Bool
+	, toBeRemoved   :: !Bool
+	, toBeReplaced  :: !Maybe LUI
+	, toBeShifted   :: !Maybe LUIShiftID
+	, setAttributes :: !UIAttributes
+	, delAttributes :: !Set UIAttributeKey
+	}
+
+:: LUIEffects =
+	{ overwrittenType       :: !LUIEffectStage (!LUINo, !UIType)
+	, overwrittenAttributes :: !Map UIAttributeKey (LUIEffectStage (!LUINo, !JSONNode))
+	, hiddenAttributes      :: !Map UIAttributeKey (LUIEffectStage LUINo)
+	, additional            :: !LUIEffectStage LUINo
+	, hidden                :: !LUIEffectStage LUINo
+	, wrapper               :: !LUIEffectStage LUINo
+	, unwrapped             :: !LUIEffectStage LUINo
+	}
+
+//Layout rules determine that an effect should according to that rule be applied or restored.
+//This desired state change can be undone by a later rule
+//Only when the downstream changes have been collected is an effect marked as 'applied'
+:: LUIEffectStage a
+	//In between events effects can only be either applied or not
+	= ESNotApplied
+	| ESApplied !a
+	//While the layout rules are applied the effects can be in intermediate state
+	| ESToBeApplied !a
+	| ESToBeUpdated !a !a
+	| ESToBeRemoved !a
+
+//Nodes that are moved by a moveSubUIs rule need to be accesible both in their source location (to apply changes)
+//and in their destination location (to apply further effects).
+//To make this possible, we put those nodes in a separate table and put references in the tree
+
+:: LUIMoves :== Map LUIMoveID (LUIEffectStage LUINo, LUI)
+
+noChanges :: LUIChanges
+noEffects :: LUIEffects
+
+//When layout rules make changes, it must be tracable which layout rule caused the change
+:: LUINo = LUINo ![Int]
+
+instance < LUINo
+instance == LUINo
+instance toString LUINo
+
+//When shifting children, it must be tracable which source connects to which destination
+:: LUIShiftID :== Int
+
+:: LUIMoveID :== Int
+
+//A layout rule is simply a function that applies (or undoes) an effect to a LUI tree
+:: LayoutRule :== LUINo (LUI,LUIMoves) -> (LUI, LUIMoves)
+
+initLUI :: UI -> LUI
+initLUIMoves :: LUIMoves
+
+extractResetChange :: (LUI,LUIMoves) -> (UIChange,(LUI,LUIMoves))
+
+applyUpstreamChange :: UIChange (LUI,LUIMoves) -> (LUI,LUIMoves)
+
+extractDownstreamChange :: (LUI,LUIMoves) -> (!UIChange,!(LUI,LUIMoves))
+
+//Helper functions (exported for unit testing)
+scanToPosition_ :: LUINo Int [LUI] LUIMoves -> (Int,Bool,Maybe LUI)
+nodeExists_ :: !LUINo !LUI LUIMoves -> Bool
+selectChildNodes_ :: LUINo ([LUI],LUIMoves) -> [LUI]
+updateChildNodes_ :: LUINo (Int (LUI,LUIMoves) -> (LUI,LUIMoves)) ([LUI],LUIMoves) -> ([LUI],LUIMoves)
+selectSubNode_ :: LUINo UIPath (LUI,LUIMoves) -> Maybe LUI
+updateSubNode_ :: LUINo UIPath ((LUI,LUIMoves) -> (LUI,LUIMoves)) (LUI,LUIMoves) -> (LUI,LUIMoves)
+selectAttributes_ :: UIAttributeSelection UIAttributes -> UIAttributes
+overwriteAttribute_ :: LUINo UIAttribute (Map UIAttributeKey (LUIEffectStage (LUINo,JSONNode))) -> (Map UIAttributeKey (LUIEffectStage (LUINo,JSONNode)))
+hideAttribute_ :: LUINo (UIAttributeKey -> Bool) UIAttributeKey (Map UIAttributeKey (LUIEffectStage LUINo)) -> (Map UIAttributeKey (LUIEffectStage LUINo))
+matchAttributeKey_ :: UIAttributeSelection UIAttributeKey -> Bool
+extractUIWithEffects_ :: (LUI,LUIMoves) -> Maybe UI
+isPartOf_ :: LUINo LUINo -> Bool

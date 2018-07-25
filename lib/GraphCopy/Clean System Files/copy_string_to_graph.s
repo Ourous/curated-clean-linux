@@ -1076,5 +1076,5 @@ remove_forwarding_pointers_from_string:
 
 .LFE17:
 	.size	remove_forwarding_pointers_from_string, .-remove_forwarding_pointers_from_string
-	.ident	"GCC: (Ubuntu 5.4.0-6ubuntu1~16.04.9) 5.4.0 20160609"
+	.ident	"GCC: (Ubuntu 5.4.0-6ubuntu1~16.04.10) 5.4.0 20160609"
 	.section	.note.GNU-stack,"",@progbits

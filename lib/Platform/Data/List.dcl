@@ -75,7 +75,6 @@ unzip5          :: ![(.a,.b,.c,.d,.e)] -> ([.a],[.b],[.c],[.d],[.e])
  * @result The original list, with all elements x for which p r x holds replaced by r
  */
 replaceInList   :: !(a a -> Bool) !a ![a] -> [a]
-splitWith       :: !(a -> Bool) ![a] -> (![a],![a])
 sortByIndex     :: ![(!Int,!a)] -> [a]
 intersperse     :: !a ![a] -> [a]
 intercalate     :: !.[a] ![.[a]] -> .[a]

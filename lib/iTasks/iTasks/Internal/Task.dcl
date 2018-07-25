@@ -5,7 +5,7 @@ definition module iTasks.Internal.Task
 
 import iTasks.WF.Definition
 from iTasks.Internal.Tonic.AbsSyn import :: ExprId (..)
-from iTasks.WF.Tasks.IO import :: ExternalProcessHandlers, :: ConnectionHandlers
+from iTasks.WF.Tasks.IO import :: ConnectionHandlers
 
 from iTasks.Internal.TaskState			import :: TaskTree
 from iTasks.SDS.Definition import :: SDS, :: RWShared
@@ -44,20 +44,6 @@ derive gEq				Task
     , onDisconnect  :: !(       l r *IWorld -> *(!MaybeErrorString l, Maybe w,                   !*IWorld))
     }
 
-//Low-level task that handles external processes
-:: ExternalProcessTask = ExternalProcessTask !(ExternalProcessHandlers Dynamic Dynamic Dynamic) !(RWShared () Dynamic Dynamic)
-
-/*
-:: ExitCode = ExitCode !Int
-:: ExternalProcessHandlers l r w =
-    { onStartup     :: !(           r -> (!MaybeErrorString l, !Maybe w, ![String], !Bool))
-    , onOutData     :: !(String   l r -> (!MaybeErrorString l, !Maybe w, ![String], !Bool))
-    , onErrData     :: !(String   l r -> (!MaybeErrorString l, !Maybe w, ![String], !Bool))
-    , onShareChange :: !(         l r -> (!MaybeErrorString l, !Maybe w, ![String], !Bool))
-    , onExit        :: !(ExitCode l r -> (!MaybeErrorString l, !Maybe w                  ))
-    }
-*/
-
 //Background computation tasks
 :: BackgroundTask = BackgroundTask !(*IWorld -> *(!MaybeError TaskException (), !*IWorld))
 
@@ -67,10 +53,6 @@ derive gEq				Task
 wrapConnectionTask :: (ConnectionHandlers l r w) (RWShared () r w) -> ConnectionTask | TC l & TC r & TC w
 wrapIWorldConnectionTask :: (ConnectionHandlersIWorld l r w) (RWShared () r w) -> ConnectionTask | TC l & TC r & TC w
 
-/**
-* Wraps a set of handlers and a shared source as an external process task
-*/
-wrapExternalProcTask :: !(ExternalProcessHandlers l r w) !(RWShared () r w) -> ExternalProcessTask | TC l & TC r & TC w & iTask l
 
 /**
 * Create a task that finishes instantly

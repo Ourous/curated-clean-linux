@@ -16,6 +16,7 @@ import Data.List
 import Data.Tuple
 import System.CommandLine
 import System.Options
+import System.File
 import Testing.Options
 import Text
 
@@ -85,7 +86,7 @@ where
 	where
 		stream :: !PrintConfig ![GastEvent] !*File !*World -> *(!*File, !*World)
 		stream pc [ge:ges] io w
-		# io = foldl (<<<) io $ printEvents pc [ge]
+		# io = foldl (\io ev -> snd $ fflush $ io <<< ev) io $ printEvents pc [ge]
 		# w = case ge of
 			GE_TestFinished _ {resultType=CounterExpls _ _ _} _ _ -> setReturnCode 1 w
 			GE_TestFinished _ {resultType=Undefined _}        _ _ -> setReturnCode 1 w

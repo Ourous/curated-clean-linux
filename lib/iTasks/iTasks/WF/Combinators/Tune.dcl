@@ -2,7 +2,7 @@ definition module iTasks.WF.Combinators.Tune
 
 import iTasks.WF.Definition
 from iTasks.UI.Tune import class tune(..)
-from iTasks.UI.Layout import :: Layout
+from iTasks.UI.Layout import :: LayoutRule, :: LUI, :: LUINo, :: LUIMoves, :: LUIMoveID, :: LUIEffectStage
 from Text.GenJSON import :: JSONNode
 
 /**
@@ -15,7 +15,9 @@ from Text.GenJSON import :: JSONNode
 instance tune	LazyRefresh Task
 
 //* Apply a layout to a task
-:: ApplyLayout	= ApplyLayout Layout
+applyLayout :: LayoutRule (Task a) -> Task a
+
+:: ApplyLayout	= ApplyLayout LayoutRule
 instance tune	ApplyLayout Task
 
 :: ApplyAttribute a = ApplyAttribute String a

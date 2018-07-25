@@ -422,9 +422,6 @@ instance html HtmlTag
 instance html [a] | html a
 instance html (Maybe a) | html a
 
-//BACKWARDS COMPATIBILITY
-RawText :== Html
-
 browserFriendlySVGEltToString :: !SVGElt -> String
 
 escapeStr :: !String -> String

@@ -8,7 +8,7 @@ from iTasks.WF.Combinators.Core     import :: TaskListItem
 from iTasks.Internal.IWorld		import :: IWorld
 from iTasks.Internal.SDS          import :: SDS, :: Shared, :: ReadOnlyShared
 from iTasks.Internal.Tonic        import :: ExprId
-
+from iTasks.Internal.TaskState import :: DeferredJSON
 from Text.GenJSON import :: JSONNode
 from Data.Maybe         import :: Maybe
 from Data.Error import :: MaybeErrorString, :: MaybeError
@@ -70,7 +70,7 @@ processEvents :: !Int *IWorld -> *(!MaybeError TaskException (), !*IWorld)
 * @return The result of the targeted main task or an error
 * @return The IWorld state
 */
-evalTaskInstance :: !InstanceNo !Event !*IWorld -> (!MaybeErrorString (TaskValue JSONNode),!*IWorld)
+evalTaskInstance :: !InstanceNo !Event !*IWorld -> (!MaybeErrorString (TaskValue DeferredJSON),!*IWorld)
 
 //Update the I/O information for task instances
 updateInstanceLastIO        ::          ![InstanceNo]       !*IWorld -> *(!MaybeError TaskException (), !*IWorld)

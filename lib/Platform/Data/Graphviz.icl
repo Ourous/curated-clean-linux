@@ -7,7 +7,7 @@ import StdArray, StdOverloaded, StdOrdList, StdTuple, StdString, StdBool, StdMis
 import Data.Maybe, Data.List
 import Text.GenPrint, Data.GenEq
 
-derive gEq    EdgeStyle, NodeStyle, DirType, NodeShape, Side, ArrowShape, ArrowType, Arrow, Color, Maybe
+derive gEq    EdgeStyle, NodeStyle, DirType, NodeShape, Side, ArrowShape, ArrowType, Arrow, Color
 derive gPrint EdgeStyle, NodeStyle, DirType, NodeShape, Side, ArrowShape,
               Maybe, CompassPoint, StartStyle, ClusterMode, OutputMode,
               PageDir, RankDir, RankType

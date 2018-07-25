@@ -43,7 +43,7 @@ tokenH :: ([s] -> Parser s t [s]) | ==,toChar s
 tokenH = toString :=> token
 
 identifier :: Parser Char t String
-identifier = satisfy isAlpha <&> \c -> <.*> (satisfy isAlphanum) <@ \r -> toString [c:r]
+identifier = satisfy isAlpha <&> \c -> <!*> (satisfy isAlphanum) <@ \r -> toString [c:r]
 
 // Example: See Dutch Demo
 

@@ -1,4 +1,4 @@
-.comp 920 0101110110100
+.comp 920 0001100110100
 .start _nostart_
 .depend "StdChar"
 .depend "_SystemArray"
@@ -61,6 +61,8 @@
 .implab e_StdBool_snot
 .export e_StdReal_satanh;34
 .descexp e_StdReal_datanh;34 e_StdReal_natanh;34 e_StdReal_latanh;34 1 0 "atanh;34"
+.pb "atanh;34"
+.pld
 .o 2 0
 e_StdReal_latanh;34
 	pop_a 1
@@ -71,6 +73,7 @@ e_StdReal_latanh;34
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdReal_datanh;34
 .o 1 0
 e_StdReal_natanh;34
@@ -83,6 +86,7 @@ e_StdReal_natanh;34
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea35
 	jsr_eval 0
 	pushR_a 0
@@ -114,8 +118,11 @@ s35
 
 .d 0 1 r
 	rtn
+.pe
 .export e_StdReal_sacosh;33
 .descexp e_StdReal_dacosh;33 e_StdReal_nacosh;33 e_StdReal_lacosh;33 1 0 "acosh;33"
+.pb "acosh;33"
+.pld
 .o 2 0
 e_StdReal_lacosh;33
 	pop_a 1
@@ -126,6 +133,7 @@ e_StdReal_lacosh;33
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdReal_dacosh;33
 .o 1 0
 e_StdReal_nacosh;33
@@ -138,6 +146,7 @@ e_StdReal_nacosh;33
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea34
 	jsr_eval 0
 	pushR_a 0
@@ -168,8 +177,11 @@ s34
 
 .d 0 1 r
 	rtn
+.pe
 .export e_StdReal_sasinh;32
 .descexp e_StdReal_dasinh;32 e_StdReal_nasinh;32 e_StdReal_lasinh;32 1 0 "asinh;32"
+.pb "asinh;32"
+.pld
 .o 2 0
 e_StdReal_lasinh;32
 	pop_a 1
@@ -180,6 +192,7 @@ e_StdReal_lasinh;32
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdReal_dasinh;32
 .o 1 0
 e_StdReal_nasinh;32
@@ -192,6 +205,7 @@ e_StdReal_nasinh;32
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea33
 	jsr_eval 0
 	pushR_a 0
@@ -222,8 +236,11 @@ s33
 
 .d 0 1 r
 	rtn
+.pe
 .export e_StdReal_stanh;31
 .descexp e_StdReal_dtanh;31 e_StdReal_ntanh;31 e_StdReal_ltanh;31 1 0 "tanh;31"
+.pb "tanh;31"
+.pld
 .o 2 0
 e_StdReal_ltanh;31
 	pop_a 1
@@ -234,6 +251,7 @@ e_StdReal_ltanh;31
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdReal_dtanh;31
 .o 1 0
 e_StdReal_ntanh;31
@@ -246,6 +264,7 @@ e_StdReal_ntanh;31
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea32
 	jsr_eval 0
 	pushR_a 0
@@ -276,8 +295,11 @@ s32
 
 .d 0 1 r
 	rtn
+.pe
 .export e_StdReal_scosh;30
 .descexp e_StdReal_dcosh;30 e_StdReal_ncosh;30 e_StdReal_lcosh;30 1 0 "cosh;30"
+.pb "cosh;30"
+.pld
 .o 2 0
 e_StdReal_lcosh;30
 	pop_a 1
@@ -288,6 +310,7 @@ e_StdReal_lcosh;30
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdReal_dcosh;30
 .o 1 0
 e_StdReal_ncosh;30
@@ -300,6 +323,7 @@ e_StdReal_ncosh;30
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea31
 	jsr_eval 0
 	pushR_a 0
@@ -329,8 +353,11 @@ s31
 
 .d 0 1 r
 	rtn
+.pe
 .export e_StdReal_ssinh;29
 .descexp e_StdReal_dsinh;29 e_StdReal_nsinh;29 e_StdReal_lsinh;29 1 0 "sinh;29"
+.pb "sinh;29"
+.pld
 .o 2 0
 e_StdReal_lsinh;29
 	pop_a 1
@@ -341,6 +368,7 @@ e_StdReal_lsinh;29
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdReal_dsinh;29
 .o 1 0
 e_StdReal_nsinh;29
@@ -353,6 +381,7 @@ e_StdReal_nsinh;29
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea30
 	jsr_eval 0
 	pushR_a 0
@@ -382,8 +411,11 @@ s30
 
 .d 0 1 r
 	rtn
+.pe
 .export e_StdReal_satan;28
 .descexp e_StdReal_datan;28 e_StdReal_natan;28 e_StdReal_latan;28 1 0 "atan;28"
+.pb "atan;28"
+.pld
 .o 2 0
 e_StdReal_latan;28
 	pop_a 1
@@ -394,6 +426,7 @@ e_StdReal_latan;28
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdReal_datan;28
 .o 1 0
 e_StdReal_natan;28
@@ -406,6 +439,7 @@ e_StdReal_natan;28
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea29
 	jsr_eval 0
 	pushR_a 0
@@ -420,8 +454,11 @@ s29
 
 .d 0 1 r
 	rtn
+.pe
 .export e_StdReal_sacos;27
 .descexp e_StdReal_dacos;27 e_StdReal_nacos;27 e_StdReal_lacos;27 1 0 "acos;27"
+.pb "acos;27"
+.pld
 .o 2 0
 e_StdReal_lacos;27
 	pop_a 1
@@ -432,6 +469,7 @@ e_StdReal_lacos;27
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdReal_dacos;27
 .o 1 0
 e_StdReal_nacos;27
@@ -444,6 +482,7 @@ e_StdReal_nacos;27
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea28
 	jsr_eval 0
 	pushR_a 0
@@ -458,8 +497,11 @@ s28
 
 .d 0 1 r
 	rtn
+.pe
 .export e_StdReal_sasin;26
 .descexp e_StdReal_dasin;26 e_StdReal_nasin;26 e_StdReal_lasin;26 1 0 "asin;26"
+.pb "asin;26"
+.pld
 .o 2 0
 e_StdReal_lasin;26
 	pop_a 1
@@ -470,6 +512,7 @@ e_StdReal_lasin;26
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdReal_dasin;26
 .o 1 0
 e_StdReal_nasin;26
@@ -482,6 +525,7 @@ e_StdReal_nasin;26
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea27
 	jsr_eval 0
 	pushR_a 0
@@ -496,8 +540,11 @@ s27
 
 .d 0 1 r
 	rtn
+.pe
 .export e_StdReal_stan;25
 .descexp e_StdReal_dtan;25 e_StdReal_ntan;25 e_StdReal_ltan;25 1 0 "tan;25"
+.pb "tan;25"
+.pld
 .o 2 0
 e_StdReal_ltan;25
 	pop_a 1
@@ -508,6 +555,7 @@ e_StdReal_ltan;25
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdReal_dtan;25
 .o 1 0
 e_StdReal_ntan;25
@@ -520,6 +568,7 @@ e_StdReal_ntan;25
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea26
 	jsr_eval 0
 	pushR_a 0
@@ -534,8 +583,11 @@ s26
 
 .d 0 1 r
 	rtn
+.pe
 .export e_StdReal_scos;24
 .descexp e_StdReal_dcos;24 e_StdReal_ncos;24 e_StdReal_lcos;24 1 0 "cos;24"
+.pb "cos;24"
+.pld
 .o 2 0
 e_StdReal_lcos;24
 	pop_a 1
@@ -546,6 +598,7 @@ e_StdReal_lcos;24
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdReal_dcos;24
 .o 1 0
 e_StdReal_ncos;24
@@ -558,6 +611,7 @@ e_StdReal_ncos;24
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea25
 	jsr_eval 0
 	pushR_a 0
@@ -572,8 +626,11 @@ s25
 
 .d 0 1 r
 	rtn
+.pe
 .export e_StdReal_ssin;23
 .descexp e_StdReal_dsin;23 e_StdReal_nsin;23 e_StdReal_lsin;23 1 0 "sin;23"
+.pb "sin;23"
+.pld
 .o 2 0
 e_StdReal_lsin;23
 	pop_a 1
@@ -584,6 +641,7 @@ e_StdReal_lsin;23
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdReal_dsin;23
 .o 1 0
 e_StdReal_nsin;23
@@ -596,6 +654,7 @@ e_StdReal_nsin;23
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea24
 	jsr_eval 0
 	pushR_a 0
@@ -610,8 +669,11 @@ s24
 
 .d 0 1 r
 	rtn
+.pe
 .export e_StdReal_ssqrt;22
 .descexp e_StdReal_dsqrt;22 e_StdReal_nsqrt;22 e_StdReal_lsqrt;22 1 0 "sqrt;22"
+.pb "sqrt;22"
+.pld
 .o 2 0
 e_StdReal_lsqrt;22
 	pop_a 1
@@ -622,6 +684,7 @@ e_StdReal_lsqrt;22
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdReal_dsqrt;22
 .o 1 0
 e_StdReal_nsqrt;22
@@ -634,6 +697,7 @@ e_StdReal_nsqrt;22
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea23
 	jsr_eval 0
 	pushR_a 0
@@ -648,8 +712,11 @@ s23
 
 .d 0 1 r
 	rtn
+.pe
 .export e_StdReal_sexp;21
 .descexp e_StdReal_dexp;21 e_StdReal_nexp;21 e_StdReal_lexp;21 1 0 "exp;21"
+.pb "exp;21"
+.pld
 .o 2 0
 e_StdReal_lexp;21
 	pop_a 1
@@ -660,6 +727,7 @@ e_StdReal_lexp;21
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdReal_dexp;21
 .o 1 0
 e_StdReal_nexp;21
@@ -672,6 +740,7 @@ e_StdReal_nexp;21
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea22
 	jsr_eval 0
 	pushR_a 0
@@ -686,8 +755,11 @@ s22
 
 .d 0 1 r
 	rtn
+.pe
 .export e_StdReal_slog10;20
 .descexp e_StdReal_dlog10;20 e_StdReal_nlog10;20 e_StdReal_llog10;20 1 0 "log10;20"
+.pb "log10;20"
+.pld
 .o 2 0
 e_StdReal_llog10;20
 	pop_a 1
@@ -698,6 +770,7 @@ e_StdReal_llog10;20
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdReal_dlog10;20
 .o 1 0
 e_StdReal_nlog10;20
@@ -710,6 +783,7 @@ e_StdReal_nlog10;20
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea21
 	jsr_eval 0
 	pushR_a 0
@@ -724,8 +798,11 @@ s21
 
 .d 0 1 r
 	rtn
+.pe
 .export e_StdReal_sln;19
 .descexp e_StdReal_dln;19 e_StdReal_nln;19 e_StdReal_lln;19 1 0 "ln;19"
+.pb "ln;19"
+.pld
 .o 2 0
 e_StdReal_lln;19
 	pop_a 1
@@ -736,6 +813,7 @@ e_StdReal_lln;19
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdReal_dln;19
 .o 1 0
 e_StdReal_nln;19
@@ -748,6 +826,7 @@ e_StdReal_nln;19
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea20
 	jsr_eval 0
 	pushR_a 0
@@ -762,8 +841,11 @@ s20
 
 .d 0 1 r
 	rtn
+.pe
 .export e_StdReal_sfromReal;18
 .descexp e_StdReal_dfromReal;18 e_StdReal_nfromReal;18 e_StdReal_lfromReal;18 1 0 "fromReal;18"
+.pb "fromReal;18"
+.pld
 .o 2 0
 e_StdReal_lfromReal;18
 	pop_a 1
@@ -773,6 +855,7 @@ e_StdReal_lfromReal;18
 	buildh ARRAY 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdReal_dfromReal;18
 .o 1 0
 e_StdReal_nfromReal;18
@@ -784,6 +867,7 @@ e_StdReal_nfromReal;18
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea19
 	jsr_eval 0
 	pushR_a 0
@@ -800,8 +884,11 @@ s19
 
 .d 1 0
 	rtn
+.pe
 .export e_StdReal_sfromReal;17
 .descexp e_StdReal_dfromReal;17 e_StdReal_nfromReal;17 e_StdReal_lfromReal;17 1 0 "fromReal;17"
+.pb "fromReal;17"
+.pld
 .o 2 0
 e_StdReal_lfromReal;17
 	pop_a 1
@@ -812,6 +899,7 @@ e_StdReal_lfromReal;17
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdReal_dfromReal;17
 .o 1 0
 e_StdReal_nfromReal;17
@@ -824,6 +912,7 @@ e_StdReal_nfromReal;17
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea18
 	jsr_eval 0
 	pushR_a 0
@@ -838,8 +927,11 @@ s18
 
 .d 0 1 r
 	rtn
+.pe
 .export e_StdReal_sfromReal;16
 .descexp e_StdReal_dfromReal;16 e_StdReal_nfromReal;16 e_StdReal_lfromReal;16 1 0 "fromReal;16"
+.pb "fromReal;16"
+.pld
 .o 2 0
 e_StdReal_lfromReal;16
 	pop_a 1
@@ -850,6 +942,7 @@ e_StdReal_lfromReal;16
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdReal_dfromReal;16
 .o 1 0
 e_StdReal_nfromReal;16
@@ -862,6 +955,7 @@ e_StdReal_nfromReal;16
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea17
 	jsr_eval 0
 	pushR_a 0
@@ -876,8 +970,11 @@ s17
 
 .d 0 1 i
 	rtn
+.pe
 .export e_StdReal_stoReal;15
 .descexp e_StdReal_dtoReal;15 e_StdReal_ntoReal;15 e_StdReal_ltoReal;15 1 0 "toReal;15"
+.pb "toReal;15"
+.pld
 .o 2 0
 e_StdReal_ltoReal;15
 	pop_a 1
@@ -888,6 +985,7 @@ e_StdReal_ltoReal;15
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdReal_dtoReal;15
 .o 1 0
 e_StdReal_ntoReal;15
@@ -900,6 +998,7 @@ e_StdReal_ntoReal;15
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea16
 	jsr_eval 0
 	push_array 0
@@ -969,6 +1068,8 @@ else.3
 	updatepop_b 0 2
 .d 1 3 iir
 	jmp s36
+.pe
+.pb "toReal1;35"
 .o 1 3 iir
 s36
 	push_b 0
@@ -1190,6 +1291,8 @@ else.8
 	pushR 0.0
 .d 0 1 r
 	rtn
+.pe
+.pb "toRealWithDot;36"
 .o 1 4 iiri
 s37
 	push_b 0
@@ -1410,6 +1513,8 @@ else.19
 	pushR 0.0
 .d 0 1 r
 	rtn
+.pe
+.pb "toRealWithExp;37"
 .o 1 6 iiriii
 s38
 	push_b 0
@@ -1544,8 +1649,11 @@ else.29
 	pushR 0.0
 .d 0 1 r
 	rtn
+.pe
 .export e_StdReal_stoReal;14
 .descexp e_StdReal_dtoReal;14 e_StdReal_ntoReal;14 e_StdReal_ltoReal;14 1 0 "toReal;14"
+.pb "toReal;14"
+.pld
 .o 2 0
 e_StdReal_ltoReal;14
 	pop_a 1
@@ -1556,6 +1664,7 @@ e_StdReal_ltoReal;14
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdReal_dtoReal;14
 .o 1 0
 e_StdReal_ntoReal;14
@@ -1568,6 +1677,7 @@ e_StdReal_ntoReal;14
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea15
 	jsr_eval 0
 	pushR_a 0
@@ -1582,8 +1692,11 @@ s15
 
 .d 0 1 r
 	rtn
+.pe
 .export e_StdReal_stoReal;13
 .descexp e_StdReal_dtoReal;13 e_StdReal_ntoReal;13 e_StdReal_ltoReal;13 1 0 "toReal;13"
+.pb "toReal;13"
+.pld
 .o 2 0
 e_StdReal_ltoReal;13
 	pop_a 1
@@ -1594,6 +1707,7 @@ e_StdReal_ltoReal;13
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdReal_dtoReal;13
 .o 1 0
 e_StdReal_ntoReal;13
@@ -1606,6 +1720,7 @@ e_StdReal_ntoReal;13
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea14
 	jsr_eval 0
 	pushI_a 0
@@ -1620,8 +1735,11 @@ s14
 
 .d 0 1 r
 	rtn
+.pe
 .export e_StdReal_s~;10
 .descexp e_StdReal_d~;10 e_StdReal_n~;10 e_StdReal_l~;10 1 0 "~;10"
+.pb "~;10"
+.pld
 .o 2 0
 e_StdReal_l~;10
 	pop_a 1
@@ -1632,6 +1750,7 @@ e_StdReal_l~;10
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdReal_d~;10
 .o 1 0
 e_StdReal_n~;10
@@ -1644,6 +1763,7 @@ e_StdReal_n~;10
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea11
 	jsr_eval 0
 	pushR_a 0
@@ -1658,8 +1778,11 @@ s11
 
 .d 0 1 r
 	rtn
+.pe
 .export e_StdReal_ssign;9
 .descexp e_StdReal_dsign;9 e_StdReal_nsign;9 e_StdReal_lsign;9 1 0 "sign;9"
+.pb "sign;9"
+.pld
 .o 2 0
 e_StdReal_lsign;9
 	pop_a 1
@@ -1670,6 +1793,7 @@ e_StdReal_lsign;9
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdReal_dsign;9
 .o 1 0
 e_StdReal_nsign;9
@@ -1682,6 +1806,7 @@ e_StdReal_nsign;9
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea10
 	jsr_eval 0
 	pushR_a 0
@@ -1714,13 +1839,17 @@ else.32
 	pushI 1
 .d 0 1 i
 	rtn
+.pe
 .export e_StdReal_s<;12
 .descexp e_StdReal_d<;12 e_StdReal_n<;12 e_StdReal_l<;12 2 0 "<;12"
+.pb "<;12"
+.pld
 .a 0 a13
 .o 2 0
 e_StdReal_l<;12
 	repl_args 1 1
 .o 2 0
+.pn
 a13
 .d 2 0
 	jsr ea13
@@ -1729,6 +1858,7 @@ a13
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdReal_d<;12
 .o 1 0
 e_StdReal_n<;12
@@ -1741,6 +1871,7 @@ e_StdReal_n<;12
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea13
 	jsr_eval 1
 	jsr_eval 0
@@ -1757,13 +1888,17 @@ s13
 
 .d 0 1 b
 	rtn
+.pe
 .export e_StdReal_s==;11
 .descexp e_StdReal_d==;11 e_StdReal_n==;11 e_StdReal_l==;11 2 0 "==;11"
+.pb "==;11"
+.pld
 .a 0 a12
 .o 2 0
 e_StdReal_l==;11
 	repl_args 1 1
 .o 2 0
+.pn
 a12
 .d 2 0
 	jsr ea12
@@ -1772,6 +1907,7 @@ a12
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdReal_d==;11
 .o 1 0
 e_StdReal_n==;11
@@ -1784,6 +1920,7 @@ e_StdReal_n==;11
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea12
 	jsr_eval 1
 	jsr_eval 0
@@ -1800,8 +1937,11 @@ s12
 
 .d 0 1 b
 	rtn
+.pe
 .export e_StdReal_sabs;8
 .descexp e_StdReal_dabs;8 e_StdReal_nabs;8 e_StdReal_labs;8 1 0 "abs;8"
+.pb "abs;8"
+.pld
 .o 2 0
 e_StdReal_labs;8
 	pop_a 1
@@ -1812,6 +1952,7 @@ e_StdReal_labs;8
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdReal_dabs;8
 .o 1 0
 e_StdReal_nabs;8
@@ -1824,6 +1965,7 @@ e_StdReal_nabs;8
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea9
 	jsr_eval 0
 	pushR_a 0
@@ -1838,13 +1980,17 @@ s9
 
 .d 0 1 r
 	rtn
+.pe
 .export e_StdReal_s^;7
 .descexp e_StdReal_d^;7 e_StdReal_n^;7 e_StdReal_l^;7 2 0 "^;7"
+.pb "^;7"
+.pld
 .a 0 a8
 .o 2 0
 e_StdReal_l^;7
 	repl_args 1 1
 .o 2 0
+.pn
 a8
 .d 2 0
 	jsr ea8
@@ -1853,6 +1999,7 @@ a8
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdReal_d^;7
 .o 1 0
 e_StdReal_n^;7
@@ -1865,6 +2012,7 @@ e_StdReal_n^;7
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea8
 	jsr_eval 1
 	jsr_eval 0
@@ -1881,11 +2029,14 @@ s8
 
 .d 0 1 r
 	rtn
+.pe
 .export e_StdReal_sone;6
 .descexp e_StdReal_done;6 e_StdReal_none;6 e_StdReal_lone;6 0 0 "one;6"
+.pb "one;6"
 .o 1 0
 e_StdReal_lone;6
 	halt
+.pd
 .n 0 e_StdReal_done;6
 .o 1 0
 e_StdReal_none;6
@@ -1898,6 +2049,7 @@ e_StdReal_none;6
 .d 1 0
 	rtn
 .o 0 0
+.pn
 ea7
 .o 0 0
 e_StdReal_sone;6
@@ -1909,13 +2061,17 @@ s7
 
 .d 0 1 r
 	rtn
+.pe
 .export e_StdReal_s/;5
 .descexp e_StdReal_d/;5 e_StdReal_n/;5 e_StdReal_l/;5 2 0 "/;5"
+.pb "/;5"
+.pld
 .a 0 a6
 .o 2 0
 e_StdReal_l/;5
 	repl_args 1 1
 .o 2 0
+.pn
 a6
 .d 2 0
 	jsr ea6
@@ -1924,6 +2080,7 @@ a6
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdReal_d/;5
 .o 1 0
 e_StdReal_n/;5
@@ -1936,6 +2093,7 @@ e_StdReal_n/;5
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea6
 	jsr_eval 1
 	jsr_eval 0
@@ -1952,13 +2110,17 @@ s6
 
 .d 0 1 r
 	rtn
+.pe
 .export e_StdReal_s*;4
 .descexp e_StdReal_d*;4 e_StdReal_n*;4 e_StdReal_l*;4 2 0 "*;4"
+.pb "*;4"
+.pld
 .a 0 a5
 .o 2 0
 e_StdReal_l*;4
 	repl_args 1 1
 .o 2 0
+.pn
 a5
 .d 2 0
 	jsr ea5
@@ -1967,6 +2129,7 @@ a5
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdReal_d*;4
 .o 1 0
 e_StdReal_n*;4
@@ -1979,6 +2142,7 @@ e_StdReal_n*;4
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea5
 	jsr_eval 1
 	jsr_eval 0
@@ -1995,11 +2159,14 @@ s5
 
 .d 0 1 r
 	rtn
+.pe
 .export e_StdReal_szero;3
 .descexp e_StdReal_dzero;3 e_StdReal_nzero;3 e_StdReal_lzero;3 0 0 "zero;3"
+.pb "zero;3"
 .o 1 0
 e_StdReal_lzero;3
 	halt
+.pd
 .n 0 e_StdReal_dzero;3
 .o 1 0
 e_StdReal_nzero;3
@@ -2012,6 +2179,7 @@ e_StdReal_nzero;3
 .d 1 0
 	rtn
 .o 0 0
+.pn
 ea4
 .o 0 0
 e_StdReal_szero;3
@@ -2023,13 +2191,17 @@ s4
 
 .d 0 1 r
 	rtn
+.pe
 .export e_StdReal_s-;2
 .descexp e_StdReal_d-;2 e_StdReal_n-;2 e_StdReal_l-;2 2 0 "-;2"
+.pb "-;2"
+.pld
 .a 0 a3
 .o 2 0
 e_StdReal_l-;2
 	repl_args 1 1
 .o 2 0
+.pn
 a3
 .d 2 0
 	jsr ea3
@@ -2038,6 +2210,7 @@ a3
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdReal_d-;2
 .o 1 0
 e_StdReal_n-;2
@@ -2050,6 +2223,7 @@ e_StdReal_n-;2
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea3
 	jsr_eval 1
 	jsr_eval 0
@@ -2066,13 +2240,17 @@ s3
 
 .d 0 1 r
 	rtn
+.pe
 .export e_StdReal_s+;1
 .descexp e_StdReal_d+;1 e_StdReal_n+;1 e_StdReal_l+;1 2 0 "+;1"
+.pb "+;1"
+.pld
 .a 0 a2
 .o 2 0
 e_StdReal_l+;1
 	repl_args 1 1
 .o 2 0
+.pn
 a2
 .d 2 0
 	jsr ea2
@@ -2081,6 +2259,7 @@ a2
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdReal_d+;1
 .o 1 0
 e_StdReal_n+;1
@@ -2093,6 +2272,7 @@ e_StdReal_n+;1
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea2
 	jsr_eval 1
 	jsr_eval 0
@@ -2109,8 +2289,11 @@ s2
 
 .d 0 1 r
 	rtn
+.pe
 .export e_StdReal_sentier
 .descexp e_StdReal_dentier e_StdReal_nentier e_StdReal_lentier 1 0 "entier"
+.pb "entier"
+.pld
 .o 2 0
 e_StdReal_lentier
 	pop_a 1
@@ -2121,6 +2304,7 @@ e_StdReal_lentier
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdReal_dentier
 .o 1 0
 e_StdReal_nentier
@@ -2133,6 +2317,7 @@ e_StdReal_nentier
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea1
 	jsr_eval 0
 	pushR_a 0
@@ -2147,3 +2332,4 @@ s1
 
 .d 0 1 i
 	rtn
+.pe

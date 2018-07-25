@@ -9,17 +9,16 @@ from Data.Queue             import :: Queue
 from StdFile			                import class FileSystem		
 from System.Time				        import :: Timestamp, :: Timespec
 from Text.GenJSON				            import :: JSONNode
-from System.Process         import :: ProcessHandle, :: ProcessIO
 from iTasks.Engine                      import :: EngineOptions
 from iTasks.UI.Definition				import :: UI, :: UIType
 from iTasks.Internal.TaskState		import :: ParallelTaskState, :: TIMeta, :: DeferredJSON
-from iTasks.Internal.Task             import :: ExternalProcessTask, :: ConnectionTask, :: BackgroundTask
+from iTasks.Internal.Task             import :: ConnectionTask, :: BackgroundTask
 from iTasks.Internal.TaskEval         import :: TaskTime
 
 from iTasks.WF.Definition import :: TaskValue, :: Event, :: TaskId, :: InstanceNo, :: TaskNo
 from iTasks.WF.Combinators.Core import :: ParallelTaskType, :: TaskListItem 
 from iTasks.SDS.Definition import :: SDS, :: RWShared, :: ReadWriteShared, :: Shared, :: ReadOnlyShared
-from iTasks.Internal.SDS import :: SDSNotifyRequest, :: JSONShared, :: DeferredWrite
+from iTasks.Internal.SDS import :: SDSNotifyRequest, :: JSONShared, :: DeferredWrite, :: SDSIdentity
 from iTasks.Extensions.DateTime import :: Time, :: Date, :: DateTime
 
 from Sapl.Linker.LazyLinker import :: LoaderState
@@ -30,23 +29,24 @@ from TCPIP import :: TCP_Listener, :: TCP_Listener_, :: TCP_RChannel_, :: TCP_SC
 
 CLEAN_HOME_VAR	:== "CLEAN_HOME"
 
-:: *IWorld		=	{ options               :: !EngineOptions                               // Engine configuration
-                    , clock                 :: !Timespec                                    // Server side clock
-                    , current               :: !TaskEvalState                               // Shared state during task evaluation
+:: *IWorld		=	{ options               :: !EngineOptions                                   // Engine configuration
+                    , clock                 :: !Timespec                                        // Server side clock
+                    , current               :: !TaskEvalState                                   // Shared state during task evaluation
 
-                    , random                :: [Int]                                        // Infinite random stream
+                    , random                :: [Int]                                            // Infinite random stream
 
-                    , sdsNotifyRequests     :: ![SDSNotifyRequest]                          // Notification requests from previously read sds's
-                    , memoryShares          :: !Map String Dynamic                          // Run-time memory shares
-                    , readCache             :: !Map (String,String) Dynamic                 // Cached share reads
-                    , writeCache            :: !Map (String,String) (Dynamic,DeferredWrite) // Cached deferred writes
-					, exposedShares			:: !Map String (Dynamic, JSONShared)            // Shared source
-					, jsCompilerState 		:: !Maybe JSCompilerState 					    // Sapl to Javascript compiler state
+                    , sdsNotifyRequests     :: !Map SDSIdentity (Map SDSNotifyRequest Timespec) // Notification requests from previously read sds's
+                    , sdsNotifyReqsByTask   :: !Map TaskId (Set SDSIdentity)                    // Allows to efficiently find notification by taskID for clearing notifications
+                    , memoryShares          :: !Map String Dynamic                              // Run-time memory shares
+                    , readCache             :: !Map (String,String) Dynamic                     // Cached share reads
+                    , writeCache            :: !Map (String,String) (Dynamic,DeferredWrite)     // Cached deferred writes
+					, exposedShares			:: !Map String (Dynamic, JSONShared)                // Shared source
+					, jsCompilerState 		:: !Maybe JSCompilerState 					        // Sapl to Javascript compiler state
 
-	                , ioTasks               :: !*IOTasks                                    // The low-level input/output tasks
-                    , ioStates              :: !IOStates                                    // Results of low-level io tasks, indexed by the high-level taskid that it is linked to
+	                , ioTasks               :: !*IOTasks                                        // The low-level input/output tasks
+                    , ioStates              :: !IOStates                                        // Results of low-level io tasks, indexed by the high-level taskid that it is linked to
 
-					, world					:: !*World									    // The outside world
+					, world					:: !*World									        // The outside world
 
                     //Experimental database connection cache
                     , resources             :: *[*Resource]
@@ -78,7 +78,6 @@ CLEAN_HOME_VAR	:== "CLEAN_HOME"
 :: *IOTaskInstance
     = ListenerInstance        !ListenerInstanceOpts !*TCP_Listener
     | ConnectionInstance      !ConnectionInstanceOpts !*TCP_DuplexChannel
-    | ExternalProcessInstance !ExternalProcessInstanceOpts !ProcessHandle !ProcessIO
     | BackgroundInstance      !BackgroundInstanceOpts !BackgroundTask
 
 :: ListenerInstanceOpts =
@@ -98,12 +97,6 @@ CLEAN_HOME_VAR	:== "CLEAN_HOME"
     }
 
 :: ConnectionId             :== Int
-
-:: ExternalProcessInstanceOpts =
-    { taskId                :: !TaskId              //Reference to the task that started the external process
-    , connectionId          :: !ConnectionId        //Unique connection id (per listener/outgoing connection)     
-    , externalProcessTask   :: !ExternalProcessTask //The io task definition that defines how the process IO is handled
-    }
 
 :: BackgroundInstanceOpts =
     { bgInstId              :: !BackgroundTaskId

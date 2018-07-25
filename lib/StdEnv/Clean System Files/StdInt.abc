@@ -1,4 +1,4 @@
-.comp 920 0101110110100
+.comp 920 0001100110100
 .start _nostart_
 .depend "_SystemArray"
 .depend "StdArray"
@@ -54,11 +54,14 @@
 .implab e_StdMisc_sabort
 .export e_StdInt_slcm;30
 .descexp e_StdInt_dlcm;30 e_StdInt_nlcm;30 e_StdInt_llcm;30 2 0 "lcm;30"
+.pb "lcm;30"
+.pld
 .a 0 a31
 .o 2 0
 e_StdInt_llcm;30
 	repl_args 1 1
 .o 2 0
+.pn
 a31
 .d 2 0
 	jsr ea31
@@ -67,6 +70,7 @@ a31
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdInt_dlcm;30
 .o 1 0
 e_StdInt_nlcm;30
@@ -79,6 +83,7 @@ e_StdInt_nlcm;30
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea31
 	jsr_eval 1
 	jsr_eval 0
@@ -128,13 +133,17 @@ case.4
 
 .d 0 1 i
 	jmp s14
+.pe
 .export e_StdInt_sgcd;29
 .descexp e_StdInt_dgcd;29 e_StdInt_ngcd;29 e_StdInt_lgcd;29 2 0 "gcd;29"
+.pb "gcd;29"
+.pld
 .a 0 a30
 .o 2 0
 e_StdInt_lgcd;29
 	repl_args 1 1
 .o 2 0
+.pn
 a30
 .d 2 0
 	jsr ea30
@@ -143,6 +152,7 @@ a30
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdInt_dgcd;29
 .o 1 0
 e_StdInt_ngcd;29
@@ -155,6 +165,7 @@ e_StdInt_ngcd;29
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea30
 	jsr_eval 1
 	jsr_eval 0
@@ -177,6 +188,8 @@ s30
 	updatepop_b 0 2
 .d 0 2 ii
 	jmp s33
+.pe
+.pb "gcdnat;32"
 .o 0 2 ii
 s33
 	eqI_b 0 1
@@ -199,13 +212,17 @@ case.6
 	updatepop_b 0 1
 .d 0 2 ii
 	jmp s33
+.pe
 .export e_StdInt_srem;28
 .descexp e_StdInt_drem;28 e_StdInt_nrem;28 e_StdInt_lrem;28 2 0 "rem;28"
+.pb "rem;28"
+.pld
 .a 0 a29
 .o 2 0
 e_StdInt_lrem;28
 	repl_args 1 1
 .o 2 0
+.pn
 a29
 .d 2 0
 	jsr ea29
@@ -214,6 +231,7 @@ a29
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdInt_drem;28
 .o 1 0
 e_StdInt_nrem;28
@@ -226,6 +244,7 @@ e_StdInt_nrem;28
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea29
 	jsr_eval 1
 	jsr_eval 0
@@ -242,8 +261,11 @@ s29
 
 .d 0 1 i
 	rtn
+.pe
 .export e_StdInt_sfromInt;27
 .descexp e_StdInt_dfromInt;27 e_StdInt_nfromInt;27 e_StdInt_lfromInt;27 1 0 "fromInt;27"
+.pb "fromInt;27"
+.pld
 .o 2 0
 e_StdInt_lfromInt;27
 	pop_a 1
@@ -253,6 +275,7 @@ e_StdInt_lfromInt;27
 	buildh ARRAY 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdInt_dfromInt;27
 .o 1 0
 e_StdInt_nfromInt;27
@@ -264,6 +287,7 @@ e_StdInt_nfromInt;27
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea28
 	jsr_eval 0
 	pushI_a 0
@@ -280,8 +304,11 @@ s28
 
 .d 1 0
 	rtn
+.pe
 .export e_StdInt_sfromInt;26
 .descexp e_StdInt_dfromInt;26 e_StdInt_nfromInt;26 e_StdInt_lfromInt;26 1 0 "fromInt;26"
+.pb "fromInt;26"
+.pld
 .o 2 0
 e_StdInt_lfromInt;26
 	pop_a 1
@@ -292,6 +319,7 @@ e_StdInt_lfromInt;26
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdInt_dfromInt;26
 .o 1 0
 e_StdInt_nfromInt;26
@@ -304,6 +332,7 @@ e_StdInt_nfromInt;26
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea27
 	jsr_eval 0
 	pushI_a 0
@@ -318,8 +347,11 @@ s27
 
 .d 0 1 r
 	rtn
+.pe
 .export e_StdInt_sfromInt;25
 .descexp e_StdInt_dfromInt;25 e_StdInt_nfromInt;25 e_StdInt_lfromInt;25 1 0 "fromInt;25"
+.pb "fromInt;25"
+.pld
 .o 2 0
 e_StdInt_lfromInt;25
 	pop_a 1
@@ -330,6 +362,7 @@ e_StdInt_lfromInt;25
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdInt_dfromInt;25
 .o 1 0
 e_StdInt_nfromInt;25
@@ -342,6 +375,7 @@ e_StdInt_nfromInt;25
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea26
 	jsr_eval 0
 	pushI_a 0
@@ -356,8 +390,11 @@ s26
 
 .d 0 1 c
 	rtn
+.pe
 .export e_StdInt_sfromInt;24
 .descexp e_StdInt_dfromInt;24 e_StdInt_nfromInt;24 e_StdInt_lfromInt;24 1 0 "fromInt;24"
+.pb "fromInt;24"
+.pld
 .o 2 0
 e_StdInt_lfromInt;24
 	pop_a 1
@@ -368,6 +405,7 @@ e_StdInt_lfromInt;24
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdInt_dfromInt;24
 .o 1 0
 e_StdInt_nfromInt;24
@@ -380,6 +418,7 @@ e_StdInt_nfromInt;24
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea25
 	jsr_eval 0
 	pushI_a 0
@@ -394,8 +433,11 @@ s25
 
 .d 0 1 i
 	rtn
+.pe
 .export e_StdInt_stoInt;23
 .descexp e_StdInt_dtoInt;23 e_StdInt_ntoInt;23 e_StdInt_ltoInt;23 1 0 "toInt;23"
+.pb "toInt;23"
+.pld
 .o 2 0
 e_StdInt_ltoInt;23
 	pop_a 1
@@ -406,6 +448,7 @@ e_StdInt_ltoInt;23
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdInt_dtoInt;23
 .o 1 0
 e_StdInt_ntoInt;23
@@ -418,6 +461,7 @@ e_StdInt_ntoInt;23
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea24
 	jsr_eval 0
 	push_array 0
@@ -497,6 +541,8 @@ else.9
 	updatepop_b 0 1
 .d 1 3 iii
 	jmp s34
+.pe
+.pb "toInt2;33"
 .o 1 3 iii
 s34
 	push_b 1
@@ -558,8 +604,11 @@ else.11
 	pushI 0
 .d 0 1 i
 	rtn
+.pe
 .export e_StdInt_stoInt;22
 .descexp e_StdInt_dtoInt;22 e_StdInt_ntoInt;22 e_StdInt_ltoInt;22 1 0 "toInt;22"
+.pb "toInt;22"
+.pld
 .o 2 0
 e_StdInt_ltoInt;22
 	pop_a 1
@@ -570,6 +619,7 @@ e_StdInt_ltoInt;22
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdInt_dtoInt;22
 .o 1 0
 e_StdInt_ntoInt;22
@@ -582,6 +632,7 @@ e_StdInt_ntoInt;22
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea23
 	jsr_eval 0
 	pushR_a 0
@@ -596,8 +647,11 @@ s23
 
 .d 0 1 i
 	rtn
+.pe
 .export e_StdInt_stoInt;21
 .descexp e_StdInt_dtoInt;21 e_StdInt_ntoInt;21 e_StdInt_ltoInt;21 1 0 "toInt;21"
+.pb "toInt;21"
+.pld
 .o 2 0
 e_StdInt_ltoInt;21
 	pop_a 1
@@ -608,6 +662,7 @@ e_StdInt_ltoInt;21
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdInt_dtoInt;21
 .o 1 0
 e_StdInt_ntoInt;21
@@ -620,6 +675,7 @@ e_StdInt_ntoInt;21
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea22
 	jsr_eval 0
 	pushI_a 0
@@ -634,8 +690,11 @@ s22
 
 .d 0 1 i
 	rtn
+.pe
 .export e_StdInt_stoInt;20
 .descexp e_StdInt_dtoInt;20 e_StdInt_ntoInt;20 e_StdInt_ltoInt;20 1 0 "toInt;20"
+.pb "toInt;20"
+.pld
 .o 2 0
 e_StdInt_ltoInt;20
 	pop_a 1
@@ -646,6 +705,7 @@ e_StdInt_ltoInt;20
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdInt_dtoInt;20
 .o 1 0
 e_StdInt_ntoInt;20
@@ -658,6 +718,7 @@ e_StdInt_ntoInt;20
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea21
 	jsr_eval 0
 	pushC_a 0
@@ -672,8 +733,11 @@ s21
 
 .d 0 1 i
 	rtn
+.pe
 .export e_StdInt_sisOdd;19
 .descexp e_StdInt_disOdd;19 e_StdInt_nisOdd;19 e_StdInt_lisOdd;19 1 0 "isOdd;19"
+.pb "isOdd;19"
+.pld
 .o 2 0
 e_StdInt_lisOdd;19
 	pop_a 1
@@ -684,6 +748,7 @@ e_StdInt_lisOdd;19
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdInt_disOdd;19
 .o 1 0
 e_StdInt_nisOdd;19
@@ -696,6 +761,7 @@ e_StdInt_nisOdd;19
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea20
 	jsr_eval 0
 	pushI_a 0
@@ -714,8 +780,11 @@ s20
 
 .d 0 1 b
 	rtn
+.pe
 .export e_StdInt_s~;15
 .descexp e_StdInt_d~;15 e_StdInt_n~;15 e_StdInt_l~;15 1 0 "~;15"
+.pb "~;15"
+.pld
 .o 2 0
 e_StdInt_l~;15
 	pop_a 1
@@ -726,6 +795,7 @@ e_StdInt_l~;15
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdInt_d~;15
 .o 1 0
 e_StdInt_n~;15
@@ -738,6 +808,7 @@ e_StdInt_n~;15
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea16
 	jsr_eval 0
 	pushI_a 0
@@ -752,8 +823,11 @@ s16
 
 .d 0 1 i
 	rtn
+.pe
 .export e_StdInt_ssign;14
 .descexp e_StdInt_dsign;14 e_StdInt_nsign;14 e_StdInt_lsign;14 1 0 "sign;14"
+.pb "sign;14"
+.pld
 .o 2 0
 e_StdInt_lsign;14
 	pop_a 1
@@ -764,6 +838,7 @@ e_StdInt_lsign;14
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdInt_dsign;14
 .o 1 0
 e_StdInt_nsign;14
@@ -776,6 +851,7 @@ e_StdInt_nsign;14
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea15
 	jsr_eval 0
 	pushI_a 0
@@ -808,13 +884,17 @@ else.14
 	pushI 1
 .d 0 1 i
 	rtn
+.pe
 .export e_StdInt_s==;16
 .descexp e_StdInt_d==;16 e_StdInt_n==;16 e_StdInt_l==;16 2 0 "==;16"
+.pb "==;16"
+.pld
 .a 0 a17
 .o 2 0
 e_StdInt_l==;16
 	repl_args 1 1
 .o 2 0
+.pn
 a17
 .d 2 0
 	jsr ea17
@@ -823,6 +903,7 @@ a17
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdInt_d==;16
 .o 1 0
 e_StdInt_n==;16
@@ -835,6 +916,7 @@ e_StdInt_n==;16
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea17
 	jsr_eval 1
 	jsr_eval 0
@@ -851,8 +933,11 @@ s17
 
 .d 0 1 b
 	rtn
+.pe
 .export e_StdInt_sabs;13
 .descexp e_StdInt_dabs;13 e_StdInt_nabs;13 e_StdInt_labs;13 1 0 "abs;13"
+.pb "abs;13"
+.pld
 .o 2 0
 e_StdInt_labs;13
 	pop_a 1
@@ -863,6 +948,7 @@ e_StdInt_labs;13
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdInt_dabs;13
 .o 1 0
 e_StdInt_nabs;13
@@ -875,6 +961,7 @@ e_StdInt_nabs;13
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea14
 	jsr_eval 0
 	pushI_a 0
@@ -899,13 +986,17 @@ s14
 else.15
 .d 0 1 i
 	rtn
+.pe
 .export e_StdInt_s^;12
 .descexp e_StdInt_d^;12 e_StdInt_n^;12 e_StdInt_l^;12 2 0 "^;12"
+.pb "^;12"
+.pld
 .a 0 a13
 .o 2 0
 e_StdInt_l^;12
 	repl_args 1 1
 .o 2 0
+.pn
 a13
 .d 2 0
 	jsr ea13
@@ -914,6 +1005,7 @@ a13
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdInt_d^;12
 .o 1 0
 e_StdInt_n^;12
@@ -926,6 +1018,7 @@ e_StdInt_n^;12
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea13
 	jsr_eval 1
 	jsr_eval 0
@@ -958,13 +1051,17 @@ else.16
 	updatepop_b 0 2
 .d 0 2 ii
 	jmp s32
+.pe
 .export e_StdInt_s<;17
 .descexp e_StdInt_d<;17 e_StdInt_n<;17 e_StdInt_l<;17 2 0 "<;17"
+.pb "<;17"
+.pld
 .a 0 a18
 .o 2 0
 e_StdInt_l<;17
 	repl_args 1 1
 .o 2 0
+.pn
 a18
 .d 2 0
 	jsr ea18
@@ -973,6 +1070,7 @@ a18
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdInt_d<;17
 .o 1 0
 e_StdInt_n<;17
@@ -985,6 +1083,7 @@ e_StdInt_n<;17
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea18
 	jsr_eval 1
 	jsr_eval 0
@@ -1001,6 +1100,8 @@ s18
 
 .d 0 1 b
 	rtn
+.pe
+.pb "pow;31"
 .o 0 2 ii
 s32
 	eqI_b 0 1
@@ -1061,8 +1162,11 @@ else.19
 
 .d 0 1 i
 	rtn
+.pe
 .export e_StdInt_sisEven;18
 .descexp e_StdInt_disEven;18 e_StdInt_nisEven;18 e_StdInt_lisEven;18 1 0 "isEven;18"
+.pb "isEven;18"
+.pld
 .o 2 0
 e_StdInt_lisEven;18
 	pop_a 1
@@ -1073,6 +1177,7 @@ e_StdInt_lisEven;18
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdInt_disEven;18
 .o 1 0
 e_StdInt_nisEven;18
@@ -1085,6 +1190,7 @@ e_StdInt_nisEven;18
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea19
 	jsr_eval 0
 	pushI_a 0
@@ -1102,11 +1208,14 @@ s19
 
 .d 0 1 b
 	rtn
+.pe
 .export e_StdInt_sone;11
 .descexp e_StdInt_done;11 e_StdInt_none;11 e_StdInt_lone;11 0 0 "one;11"
+.pb "one;11"
 .o 1 0
 e_StdInt_lone;11
 	halt
+.pd
 .n 0 e_StdInt_done;11
 .o 1 0
 e_StdInt_none;11
@@ -1119,6 +1228,7 @@ e_StdInt_none;11
 .d 1 0
 	rtn
 .o 0 0
+.pn
 ea12
 .o 0 0
 e_StdInt_sone;11
@@ -1130,13 +1240,17 @@ s12
 
 .d 0 1 i
 	rtn
+.pe
 .export e_StdInt_s/;10
 .descexp e_StdInt_d/;10 e_StdInt_n/;10 e_StdInt_l/;10 2 0 "/;10"
+.pb "/;10"
+.pld
 .a 0 a11
 .o 2 0
 e_StdInt_l/;10
 	repl_args 1 1
 .o 2 0
+.pn
 a11
 .d 2 0
 	jsr ea11
@@ -1145,6 +1259,7 @@ a11
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdInt_d/;10
 .o 1 0
 e_StdInt_n/;10
@@ -1157,6 +1272,7 @@ e_StdInt_n/;10
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea11
 	jsr_eval 1
 	jsr_eval 0
@@ -1173,13 +1289,17 @@ s11
 
 .d 0 1 i
 	rtn
+.pe
 .export e_StdInt_s*;9
 .descexp e_StdInt_d*;9 e_StdInt_n*;9 e_StdInt_l*;9 2 0 "*;9"
+.pb "*;9"
+.pld
 .a 0 a10
 .o 2 0
 e_StdInt_l*;9
 	repl_args 1 1
 .o 2 0
+.pn
 a10
 .d 2 0
 	jsr ea10
@@ -1188,6 +1308,7 @@ a10
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdInt_d*;9
 .o 1 0
 e_StdInt_n*;9
@@ -1200,6 +1321,7 @@ e_StdInt_n*;9
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea10
 	jsr_eval 1
 	jsr_eval 0
@@ -1216,11 +1338,14 @@ s10
 
 .d 0 1 i
 	rtn
+.pe
 .export e_StdInt_szero;8
 .descexp e_StdInt_dzero;8 e_StdInt_nzero;8 e_StdInt_lzero;8 0 0 "zero;8"
+.pb "zero;8"
 .o 1 0
 e_StdInt_lzero;8
 	halt
+.pd
 .n 0 e_StdInt_dzero;8
 .o 1 0
 e_StdInt_nzero;8
@@ -1233,6 +1358,7 @@ e_StdInt_nzero;8
 .d 1 0
 	rtn
 .o 0 0
+.pn
 ea9
 .o 0 0
 e_StdInt_szero;8
@@ -1244,13 +1370,17 @@ s9
 
 .d 0 1 i
 	rtn
+.pe
 .export e_StdInt_s-;7
 .descexp e_StdInt_d-;7 e_StdInt_n-;7 e_StdInt_l-;7 2 0 "-;7"
+.pb "-;7"
+.pld
 .a 0 a8
 .o 2 0
 e_StdInt_l-;7
 	repl_args 1 1
 .o 2 0
+.pn
 a8
 .d 2 0
 	jsr ea8
@@ -1259,6 +1389,7 @@ a8
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdInt_d-;7
 .o 1 0
 e_StdInt_n-;7
@@ -1271,6 +1402,7 @@ e_StdInt_n-;7
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea8
 	jsr_eval 1
 	jsr_eval 0
@@ -1287,13 +1419,17 @@ s8
 
 .d 0 1 i
 	rtn
+.pe
 .export e_StdInt_s+;6
 .descexp e_StdInt_d+;6 e_StdInt_n+;6 e_StdInt_l+;6 2 0 "+;6"
+.pb "+;6"
+.pld
 .a 0 a7
 .o 2 0
 e_StdInt_l+;6
 	repl_args 1 1
 .o 2 0
+.pn
 a7
 .d 2 0
 	jsr ea7
@@ -1302,6 +1438,7 @@ a7
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdInt_d+;6
 .o 1 0
 e_StdInt_n+;6
@@ -1314,6 +1451,7 @@ e_StdInt_n+;6
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea7
 	jsr_eval 1
 	jsr_eval 0
@@ -1330,8 +1468,11 @@ s7
 
 .d 0 1 i
 	rtn
+.pe
 .export e_StdInt_sbitnot
 .descexp e_StdInt_dbitnot e_StdInt_nbitnot e_StdInt_lbitnot 1 0 "bitnot"
+.pb "bitnot"
+.pld
 .o 2 0
 e_StdInt_lbitnot
 	pop_a 1
@@ -1342,6 +1483,7 @@ e_StdInt_lbitnot
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdInt_dbitnot
 .o 1 0
 e_StdInt_nbitnot
@@ -1354,6 +1496,7 @@ e_StdInt_nbitnot
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea6
 	jsr_eval 0
 	pushI_a 0
@@ -1368,13 +1511,17 @@ s6
 
 .d 0 1 i
 	rtn
+.pe
 .export e_StdInt_s>>
 .descexp e_StdInt_d>> e_StdInt_n>> e_StdInt_l>> 2 0 ">>"
+.pb ">>"
+.pld
 .a 0 a5
 .o 2 0
 e_StdInt_l>>
 	repl_args 1 1
 .o 2 0
+.pn
 a5
 .d 2 0
 	jsr ea5
@@ -1383,6 +1530,7 @@ a5
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdInt_d>>
 .o 1 0
 e_StdInt_n>>
@@ -1395,6 +1543,7 @@ e_StdInt_n>>
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea5
 	jsr_eval 1
 	jsr_eval 0
@@ -1411,13 +1560,17 @@ s5
 
 .d 0 1 i
 	rtn
+.pe
 .export e_StdInt_s<<
 .descexp e_StdInt_d<< e_StdInt_n<< e_StdInt_l<< 2 0 "<<"
+.pb "<<"
+.pld
 .a 0 a4
 .o 2 0
 e_StdInt_l<<
 	repl_args 1 1
 .o 2 0
+.pn
 a4
 .d 2 0
 	jsr ea4
@@ -1426,6 +1579,7 @@ a4
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdInt_d<<
 .o 1 0
 e_StdInt_n<<
@@ -1438,6 +1592,7 @@ e_StdInt_n<<
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea4
 	jsr_eval 1
 	jsr_eval 0
@@ -1454,13 +1609,17 @@ s4
 
 .d 0 1 i
 	rtn
+.pe
 .export e_StdInt_sbitxor
 .descexp e_StdInt_dbitxor e_StdInt_nbitxor e_StdInt_lbitxor 2 0 "bitxor"
+.pb "bitxor"
+.pld
 .a 0 a3
 .o 2 0
 e_StdInt_lbitxor
 	repl_args 1 1
 .o 2 0
+.pn
 a3
 .d 2 0
 	jsr ea3
@@ -1469,6 +1628,7 @@ a3
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdInt_dbitxor
 .o 1 0
 e_StdInt_nbitxor
@@ -1481,6 +1641,7 @@ e_StdInt_nbitxor
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea3
 	jsr_eval 1
 	jsr_eval 0
@@ -1497,13 +1658,17 @@ s3
 
 .d 0 1 i
 	rtn
+.pe
 .export e_StdInt_sbitand
 .descexp e_StdInt_dbitand e_StdInt_nbitand e_StdInt_lbitand 2 0 "bitand"
+.pb "bitand"
+.pld
 .a 0 a2
 .o 2 0
 e_StdInt_lbitand
 	repl_args 1 1
 .o 2 0
+.pn
 a2
 .d 2 0
 	jsr ea2
@@ -1512,6 +1677,7 @@ a2
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdInt_dbitand
 .o 1 0
 e_StdInt_nbitand
@@ -1524,6 +1690,7 @@ e_StdInt_nbitand
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea2
 	jsr_eval 1
 	jsr_eval 0
@@ -1540,13 +1707,17 @@ s2
 
 .d 0 1 i
 	rtn
+.pe
 .export e_StdInt_sbitor
 .descexp e_StdInt_dbitor e_StdInt_nbitor e_StdInt_lbitor 2 0 "bitor"
+.pb "bitor"
+.pld
 .a 0 a1
 .o 2 0
 e_StdInt_lbitor
 	repl_args 1 1
 .o 2 0
+.pn
 a1
 .d 2 0
 	jsr ea1
@@ -1555,6 +1726,7 @@ a1
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdInt_dbitor
 .o 1 0
 e_StdInt_nbitor
@@ -1567,6 +1739,7 @@ e_StdInt_nbitor
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea1
 	jsr_eval 1
 	jsr_eval 0
@@ -1583,3 +1756,4 @@ s1
 
 .d 0 1 i
 	rtn
+.pe

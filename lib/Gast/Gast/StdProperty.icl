@@ -18,7 +18,7 @@ from Math.Random import genRandInt
 import System.OS
 import Testing.TestEvents
 import Text
-import Text.GenJSON
+import Text.GenPrint
 
 import Gast.Testable
 import Gast.ThunkNames
@@ -157,23 +157,35 @@ ForEach list f = Prop ("ForEach " +++ thunk_name_to_string list +++ " " +++ thun
 (For) infixl 0 :: !(x->p) ![x] -> Property | Testable p & TestArg x
 (For) p list = ForEach list p
 
-check :: !(a b -> Bool) !a !b -> Property | genShow{|*|}, JSONEncode{|*|} a & genShow{|*|}, JSONEncode{|*|} b
+check :: !(a b -> Bool) !a !b -> Property | genShow{|*|}, gPrint{|*|} a & genShow{|*|}, gPrint{|*|} b
 check op x y = Prop name (\gs a -> affirm op (Other relName) x y gs {a & namePath=[name:a.namePath]})
 where
 	name = thunk_name_to_string op
 	relName = concat [name, "{", thunk_to_module_name_string op, "}"]
 
-(=.=) infix 4 :: !a !a -> Property | Eq, genShow{|*|}, JSONEncode{|*|} a
+(=.=) infix 4 :: !a !a -> Property | Eq, genShow{|*|}, gPrint{|*|} a
 (=.=) x y = Prop "=.=" (affirm (==) Eq x y)
 
-affirm :: !(a b->Bool) !Relation a b .GenState !.Admin -> [Admin] | genShow{|*|}, JSONEncode{|*|} a & genShow{|*|}, JSONEncode{|*|} b
+(<.)  infix 4 :: !a !a -> Property | Ord, genShow{|*|}, gPrint{|*|} a
+(<.) x y = Prop "<." (affirm (<) Lt x y)
+
+(<=.) infix 4 :: !a !a -> Property | Ord, genShow{|*|}, gPrint{|*|} a
+(<=.) x y = Prop "<=." (affirm (<=) Le x y)
+
+(>.)  infix 4 :: !a !a -> Property | Ord, genShow{|*|}, gPrint{|*|} a
+(>.) x y = Prop ">." (affirm (>) Gt x y)
+
+(>=.) infix 4 :: !a !a -> Property | Ord, genShow{|*|}, gPrint{|*|} a
+(>=.) x y = Prop ">=." (affirm (>=) Ge x y)
+
+affirm :: !(a b->Bool) !Relation a b .GenState !.Admin -> [Admin] | genShow{|*|}, gPrint{|*|} a & genShow{|*|}, gPrint{|*|} b
 affirm op rel x y rs admin
     | op x y = evaluate True rs admin
     | otherwise = evaluate
         False
         rs
         { Admin | admin
-        & failedAssertions = [ ( ExpectedRelation (toJSON x) rel (toJSON y)
+        & failedAssertions = [ ( ExpectedRelation (GPrint (printToString x)) rel (GPrint (printToString y))
                                , concat $ genShow{|*|} "" False x []
                                , concat $ genShow{|*|} "" False y []
                                )
@@ -216,3 +228,8 @@ where
 
 instance ~ Property
 where ~ (Prop n p) = Prop ("~" +++ n) (\rs r = let r` = testAnalysis r (p rs r) in [{r` & res = ~r`.res}])
+
+approxEqual :: !a !a !a -> Property | abs, Ord, -, genShow{|*|}, gPrint{|*|} a
+approxEqual err x y = Prop "approximately equals"
+                           (affirm (\x y -> abs (x - y) <= err)
+                           (Other $ concat ["approximately equals (error = ", printToString err, ")"]) x y)

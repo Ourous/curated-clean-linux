@@ -1,6 +1,6 @@
 implementation module iTasks.Internal.Client.RunOnClient
 
-import StdMisc
+import StdMisc, Data.Func
 import iTasks
 import iTasks.Internal.TaskStore
 import iTasks.Internal.TaskEval
@@ -21,7 +21,7 @@ import Text.GenJSON
 			, sessionId  :: !String
 			, taskId     :: !Maybe TaskId
 			, task		 :: !Task a			
-			, value		 :: !Maybe (TaskValue JSONNode)
+			, value		 :: !Maybe (TaskValue DeferredJSON)
 			}
 
 runOnClient :: !(Task m) -> Task m | iTask m
@@ -38,7 +38,7 @@ runOnClient task = task
 */
 gen_res {TaskState|value=Nothing} = NoValue
 gen_res {TaskState|value=Just NoValue} = NoValue
-gen_res {TaskState|value=Just (Value json stability)} = Value (fromJust (fromJSON json)) stability
+gen_res {TaskState|value=Just (Value json stability)} = Value (fromJust (fromDeferredJSON json)) stability
 
 /*
 roc_generator :: !(Task m) !TaskId (Maybe (TaskState m)) !*IWorld -> *(!TaskletGUI (TaskState m), !TaskState m, !*IWorld) | iTask m
@@ -143,7 +143,8 @@ createClientIWorld serverURL currentInstance
 		    ,attachmentChain    = []
 		    ,nextTaskNo			= 6666
           }
-          ,sdsNotifyRequests    = []
+          ,sdsNotifyRequests    = 'Data.Map'.newMap
+          ,sdsNotifyReqsByTask  = 'Data.Map'.newMap
           ,memoryShares         = 'Data.Map'.newMap
           ,readCache            = 'Data.Map'.newMap
           ,writeCache           = 'Data.Map'.newMap

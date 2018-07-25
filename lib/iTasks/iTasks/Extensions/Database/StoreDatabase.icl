@@ -41,7 +41,7 @@ dbUpdateItem new
 dbDeleteItem :: !(DBRef a) -> Task (Maybe a) | iTask, DB a
 dbDeleteItem itemid
 	= get databaseId >>= \items ->
-		let (match, nomatch) = splitWith (\i -> getItemId i == itemid) items in
+		let (match, nomatch) = partition (\i -> getItemId i == itemid) items in
 			dbWriteAll nomatch >>| case match of
 				[] 			= return Nothing
 				[item:_]	= return (Just item)

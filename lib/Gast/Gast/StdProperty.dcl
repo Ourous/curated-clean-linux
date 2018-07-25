@@ -28,8 +28,12 @@ instance \/ Property Bool
 instance \/ Bool     Property
 instance \/ Property Property
 
-(=.=) infix 4 :: !a !a -> Property | Eq, genShow{|*|}, JSONEncode{|*|} a // shows values x and y if x =.= y yields False
-check :: !(a b -> Bool) !a !b -> Property | genShow{|*|}, JSONEncode{|*|} a & genShow{|*|}, JSONEncode{|*|} b
+(=.=) infix 4 :: !a !a -> Property | Eq, genShow{|*|}, gPrint{|*|} a // shows values x and y if x == y yields False
+(<.)  infix 4 :: !a !a -> Property | Ord, genShow{|*|}, gPrint{|*|} a // shows values x and y if x <  y yields False
+(<=.) infix 4 :: !a !a -> Property | Ord, genShow{|*|}, gPrint{|*|} a // shows values x and y if x <= y yields False
+(>.)  infix 4 :: !a !a -> Property | Ord, genShow{|*|}, gPrint{|*|} a // shows values x and y if x >  y yields False
+(>=.) infix 4 :: !a !a -> Property | Ord, genShow{|*|}, gPrint{|*|} a // shows values x and y if x >= y yields False
+check :: !(a b -> Bool) !a !b -> Property | genShow{|*|}, gPrint{|*|} a & genShow{|*|}, gPrint{|*|} b
 
 class (==>) infixr 1 b :: !b p -> Property | Testable p
 
@@ -48,8 +52,23 @@ ForEach :: ![x] !(x->p) -> Property | Testable p & TestArg x
 
 classify :: !Bool l !p -> Property | Testable p & genShow{|*|} l
 label ::  !l !p -> Property | Testable p & genShow{|*|} l
+
 name :: !n !p -> Property | Testable p & toString n
+
+/**
+* Assigns a name to a testable property.
+*
+* @param The name
+* @param The testable property
+* @return The named property
+* @type n p -> Property | Testable p & toString n
+*/
+(as) infix 0 
+(as) p n :== name n p
+
 limitNrOfRecFieldValues :: !(Map (TypeName, RecFieldName) Int) !p -> Property | Testable p
 
 instance ~ Bool
 instance ~ Property
+
+approxEqual :: !a !a !a -> Property | abs, Ord, -, genShow{|*|}, gPrint{|*|} a

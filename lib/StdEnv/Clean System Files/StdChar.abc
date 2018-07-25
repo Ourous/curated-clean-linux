@@ -1,4 +1,4 @@
-.comp 920 0101110110100
+.comp 920 0001100110100
 .start _nostart_
 .depend "StdClass"
 .depend "StdInt"
@@ -50,6 +50,8 @@
 .implab e_StdBool_snot
 .export e_StdChar_sfromChar;24
 .descexp e_StdChar_dfromChar;24 e_StdChar_nfromChar;24 e_StdChar_lfromChar;24 1 0 "fromChar;24"
+.pb "fromChar;24"
+.pld
 .o 2 0
 e_StdChar_lfromChar;24
 	pop_a 1
@@ -59,6 +61,7 @@ e_StdChar_lfromChar;24
 	buildh ARRAY 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdChar_dfromChar;24
 .o 1 0
 e_StdChar_nfromChar;24
@@ -70,6 +73,7 @@ e_StdChar_nfromChar;24
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea25
 	jsr_eval 0
 	pushC_a 0
@@ -82,8 +86,11 @@ s25
 
 .d 1 0
 	rtn
+.pe
 .export e_StdChar_sfromChar;23
 .descexp e_StdChar_dfromChar;23 e_StdChar_nfromChar;23 e_StdChar_lfromChar;23 1 0 "fromChar;23"
+.pb "fromChar;23"
+.pld
 .o 2 0
 e_StdChar_lfromChar;23
 	pop_a 1
@@ -94,6 +101,7 @@ e_StdChar_lfromChar;23
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdChar_dfromChar;23
 .o 1 0
 e_StdChar_nfromChar;23
@@ -106,6 +114,7 @@ e_StdChar_nfromChar;23
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea24
 	jsr_eval 0
 	pushC_a 0
@@ -120,8 +129,11 @@ s24
 
 .d 0 1 c
 	rtn
+.pe
 .export e_StdChar_sfromChar;22
 .descexp e_StdChar_dfromChar;22 e_StdChar_nfromChar;22 e_StdChar_lfromChar;22 1 0 "fromChar;22"
+.pb "fromChar;22"
+.pld
 .o 2 0
 e_StdChar_lfromChar;22
 	pop_a 1
@@ -132,6 +144,7 @@ e_StdChar_lfromChar;22
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdChar_dfromChar;22
 .o 1 0
 e_StdChar_nfromChar;22
@@ -144,6 +157,7 @@ e_StdChar_nfromChar;22
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea23
 	jsr_eval 0
 	pushC_a 0
@@ -158,8 +172,11 @@ s23
 
 .d 0 1 i
 	rtn
+.pe
 .export e_StdChar_stoChar;21
 .descexp e_StdChar_dtoChar;21 e_StdChar_ntoChar;21 e_StdChar_ltoChar;21 1 0 "toChar;21"
+.pb "toChar;21"
+.pld
 .o 2 0
 e_StdChar_ltoChar;21
 	pop_a 1
@@ -170,6 +187,7 @@ e_StdChar_ltoChar;21
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdChar_dtoChar;21
 .o 1 0
 e_StdChar_ntoChar;21
@@ -182,6 +200,7 @@ e_StdChar_ntoChar;21
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea22
 	jsr_eval 0
 	pushI_a 0
@@ -196,8 +215,11 @@ s22
 
 .d 0 1 c
 	rtn
+.pe
 .export e_StdChar_stoChar;20
 .descexp e_StdChar_dtoChar;20 e_StdChar_ntoChar;20 e_StdChar_ltoChar;20 1 0 "toChar;20"
+.pb "toChar;20"
+.pld
 .o 2 0
 e_StdChar_ltoChar;20
 	pop_a 1
@@ -208,6 +230,7 @@ e_StdChar_ltoChar;20
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdChar_dtoChar;20
 .o 1 0
 e_StdChar_ntoChar;20
@@ -220,6 +243,7 @@ e_StdChar_ntoChar;20
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea21
 	jsr_eval 0
 	pushC_a 0
@@ -234,11 +258,14 @@ s21
 
 .d 0 1 c
 	rtn
+.pe
 .export e_StdChar_sone;17
 .descexp e_StdChar_done;17 e_StdChar_none;17 e_StdChar_lone;17 0 0 "one;17"
+.pb "one;17"
 .o 1 0
 e_StdChar_lone;17
 	halt
+.pd
 .n 0 e_StdChar_done;17
 .o 1 0
 e_StdChar_none;17
@@ -251,6 +278,7 @@ e_StdChar_none;17
 .d 1 0
 	rtn
 .o 0 0
+.pn
 ea18
 .o 0 0
 e_StdChar_sone;17
@@ -263,11 +291,14 @@ s18
 
 .d 0 1 c
 	rtn
+.pe
 .export e_StdChar_szero;16
 .descexp e_StdChar_dzero;16 e_StdChar_nzero;16 e_StdChar_lzero;16 0 0 "zero;16"
+.pb "zero;16"
 .o 1 0
 e_StdChar_lzero;16
 	halt
+.pd
 .n 0 e_StdChar_dzero;16
 .o 1 0
 e_StdChar_nzero;16
@@ -280,6 +311,7 @@ e_StdChar_nzero;16
 .d 1 0
 	rtn
 .o 0 0
+.pn
 ea17
 .o 0 0
 e_StdChar_szero;16
@@ -292,13 +324,17 @@ s17
 
 .d 0 1 c
 	rtn
+.pe
 .export e_StdChar_s-;15
 .descexp e_StdChar_d-;15 e_StdChar_n-;15 e_StdChar_l-;15 2 0 "-;15"
+.pb "-;15"
+.pld
 .a 0 a16
 .o 2 0
 e_StdChar_l-;15
 	repl_args 1 1
 .o 2 0
+.pn
 a16
 .d 2 0
 	jsr ea16
@@ -307,6 +343,7 @@ a16
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdChar_d-;15
 .o 1 0
 e_StdChar_n-;15
@@ -319,6 +356,7 @@ e_StdChar_n-;15
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea16
 	jsr_eval 1
 	jsr_eval 0
@@ -336,13 +374,17 @@ s16
 
 .d 0 1 c
 	rtn
+.pe
 .export e_StdChar_s+;14
 .descexp e_StdChar_d+;14 e_StdChar_n+;14 e_StdChar_l+;14 2 0 "+;14"
+.pb "+;14"
+.pld
 .a 0 a15
 .o 2 0
 e_StdChar_l+;14
 	repl_args 1 1
 .o 2 0
+.pn
 a15
 .d 2 0
 	jsr ea15
@@ -351,6 +393,7 @@ a15
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdChar_d+;14
 .o 1 0
 e_StdChar_n+;14
@@ -363,6 +406,7 @@ e_StdChar_n+;14
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea15
 	jsr_eval 1
 	jsr_eval 0
@@ -380,8 +424,11 @@ s15
 
 .d 0 1 c
 	rtn
+.pe
 .export e_StdChar_sisAscii
 .descexp e_StdChar_disAscii e_StdChar_nisAscii e_StdChar_lisAscii 1 0 "isAscii"
+.pb "isAscii"
+.pld
 .o 2 0
 e_StdChar_lisAscii
 	pop_a 1
@@ -392,6 +439,7 @@ e_StdChar_lisAscii
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdChar_disAscii
 .o 1 0
 e_StdChar_nisAscii
@@ -404,6 +452,7 @@ e_StdChar_nisAscii
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea14
 	jsr_eval 0
 	pushC_a 0
@@ -424,8 +473,11 @@ s14
 	ltI
 .d 0 1 b
 	rtn
+.pe
 .export e_StdChar_sisPrint
 .descexp e_StdChar_disPrint e_StdChar_nisPrint e_StdChar_lisPrint 1 0 "isPrint"
+.pb "isPrint"
+.pld
 .o 2 0
 e_StdChar_lisPrint
 	pop_a 1
@@ -436,6 +488,7 @@ e_StdChar_lisPrint
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdChar_disPrint
 .o 1 0
 e_StdChar_nisPrint
@@ -448,6 +501,7 @@ e_StdChar_nisPrint
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea13
 	jsr_eval 0
 	pushC_a 0
@@ -476,8 +530,11 @@ else.1
 	pushB FALSE
 .d 0 1 b
 	rtn
+.pe
 .export e_StdChar_sisControl
 .descexp e_StdChar_disControl e_StdChar_nisControl e_StdChar_lisControl 1 0 "isControl"
+.pb "isControl"
+.pld
 .o 2 0
 e_StdChar_lisControl
 	pop_a 1
@@ -488,6 +545,7 @@ e_StdChar_lisControl
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdChar_disControl
 .o 1 0
 e_StdChar_nisControl
@@ -500,6 +558,7 @@ e_StdChar_nisControl
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea12
 	jsr_eval 0
 	pushC_a 0
@@ -526,8 +585,11 @@ else.2
 
 .d 0 1 b
 	rtn
+.pe
 .export e_StdChar_sisSpace
 .descexp e_StdChar_disSpace e_StdChar_nisSpace e_StdChar_lisSpace 1 0 "isSpace"
+.pb "isSpace"
+.pld
 .o 2 0
 e_StdChar_lisSpace
 	pop_a 1
@@ -538,6 +600,7 @@ e_StdChar_lisSpace
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdChar_disSpace
 .o 1 0
 e_StdChar_nisSpace
@@ -550,6 +613,7 @@ e_StdChar_nisSpace
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea11
 	jsr_eval 0
 	pushC_a 0
@@ -616,13 +680,17 @@ else.7
 
 .d 0 1 b
 	rtn
+.pe
 .export e_StdChar_s==;18
 .descexp e_StdChar_d==;18 e_StdChar_n==;18 e_StdChar_l==;18 2 0 "==;18"
+.pb "==;18"
+.pld
 .a 0 a19
 .o 2 0
 e_StdChar_l==;18
 	repl_args 1 1
 .o 2 0
+.pn
 a19
 .d 2 0
 	jsr ea19
@@ -631,6 +699,7 @@ a19
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdChar_d==;18
 .o 1 0
 e_StdChar_n==;18
@@ -643,6 +712,7 @@ e_StdChar_n==;18
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea19
 	jsr_eval 1
 	jsr_eval 0
@@ -659,8 +729,11 @@ s19
 
 .d 0 1 b
 	rtn
+.pe
 .export e_StdChar_sisHexDigit
 .descexp e_StdChar_disHexDigit e_StdChar_nisHexDigit e_StdChar_lisHexDigit 1 0 "isHexDigit"
+.pb "isHexDigit"
+.pld
 .o 2 0
 e_StdChar_lisHexDigit
 	pop_a 1
@@ -671,6 +744,7 @@ e_StdChar_lisHexDigit
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdChar_disHexDigit
 .o 1 0
 e_StdChar_nisHexDigit
@@ -683,6 +757,7 @@ e_StdChar_nisHexDigit
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea10
 	jsr_eval 0
 	pushC_a 0
@@ -733,8 +808,11 @@ else.10
 	pushB FALSE
 .d 0 1 b
 	rtn
+.pe
 .export e_StdChar_sisOctDigit
 .descexp e_StdChar_disOctDigit e_StdChar_nisOctDigit e_StdChar_lisOctDigit 1 0 "isOctDigit"
+.pb "isOctDigit"
+.pld
 .o 2 0
 e_StdChar_lisOctDigit
 	pop_a 1
@@ -745,6 +823,7 @@ e_StdChar_lisOctDigit
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdChar_disOctDigit
 .o 1 0
 e_StdChar_nisOctDigit
@@ -757,6 +836,7 @@ e_StdChar_nisOctDigit
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea9
 	jsr_eval 0
 	pushC_a 0
@@ -785,8 +865,11 @@ else.11
 	pushB FALSE
 .d 0 1 b
 	rtn
+.pe
 .export e_StdChar_sisDigit
 .descexp e_StdChar_disDigit e_StdChar_nisDigit e_StdChar_lisDigit 1 0 "isDigit"
+.pb "isDigit"
+.pld
 .o 2 0
 e_StdChar_lisDigit
 	pop_a 1
@@ -797,6 +880,7 @@ e_StdChar_lisDigit
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdChar_disDigit
 .o 1 0
 e_StdChar_nisDigit
@@ -809,6 +893,7 @@ e_StdChar_nisDigit
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea8
 	jsr_eval 0
 	pushC_a 0
@@ -837,8 +922,11 @@ else.12
 	pushB FALSE
 .d 0 1 b
 	rtn
+.pe
 .export e_StdChar_sisAlphanum
 .descexp e_StdChar_disAlphanum e_StdChar_nisAlphanum e_StdChar_lisAlphanum 1 0 "isAlphanum"
+.pb "isAlphanum"
+.pld
 .o 2 0
 e_StdChar_lisAlphanum
 	pop_a 1
@@ -849,6 +937,7 @@ e_StdChar_lisAlphanum
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdChar_disAlphanum
 .o 1 0
 e_StdChar_nisAlphanum
@@ -861,6 +950,7 @@ e_StdChar_nisAlphanum
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea7
 	jsr_eval 0
 	pushC_a 0
@@ -916,8 +1006,11 @@ else.15
 	pushB FALSE
 .d 0 1 b
 	rtn
+.pe
 .export e_StdChar_sisAlpha
 .descexp e_StdChar_disAlpha e_StdChar_nisAlpha e_StdChar_lisAlpha 1 0 "isAlpha"
+.pb "isAlpha"
+.pld
 .o 2 0
 e_StdChar_lisAlpha
 	pop_a 1
@@ -928,6 +1021,7 @@ e_StdChar_lisAlpha
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdChar_disAlpha
 .o 1 0
 e_StdChar_nisAlpha
@@ -940,6 +1034,7 @@ e_StdChar_nisAlpha
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea6
 	jsr_eval 0
 	pushC_a 0
@@ -973,8 +1068,11 @@ else.16
 	pushB FALSE
 .d 0 1 b
 	rtn
+.pe
 .export e_StdChar_sisLower
 .descexp e_StdChar_disLower e_StdChar_nisLower e_StdChar_lisLower 1 0 "isLower"
+.pb "isLower"
+.pld
 .o 2 0
 e_StdChar_lisLower
 	pop_a 1
@@ -985,6 +1083,7 @@ e_StdChar_lisLower
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdChar_disLower
 .o 1 0
 e_StdChar_nisLower
@@ -997,6 +1096,7 @@ e_StdChar_nisLower
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea5
 	jsr_eval 0
 	pushC_a 0
@@ -1025,8 +1125,11 @@ else.17
 	pushB FALSE
 .d 0 1 b
 	rtn
+.pe
 .export e_StdChar_sisUpper
 .descexp e_StdChar_disUpper e_StdChar_nisUpper e_StdChar_lisUpper 1 0 "isUpper"
+.pb "isUpper"
+.pld
 .o 2 0
 e_StdChar_lisUpper
 	pop_a 1
@@ -1037,6 +1140,7 @@ e_StdChar_lisUpper
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdChar_disUpper
 .o 1 0
 e_StdChar_nisUpper
@@ -1049,6 +1153,7 @@ e_StdChar_nisUpper
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea4
 	jsr_eval 0
 	pushC_a 0
@@ -1077,8 +1182,11 @@ else.18
 	pushB FALSE
 .d 0 1 b
 	rtn
+.pe
 .export e_StdChar_stoLower
 .descexp e_StdChar_dtoLower e_StdChar_ntoLower e_StdChar_ltoLower 1 0 "toLower"
+.pb "toLower"
+.pld
 .o 2 0
 e_StdChar_ltoLower
 	pop_a 1
@@ -1089,6 +1197,7 @@ e_StdChar_ltoLower
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdChar_dtoLower
 .o 1 0
 e_StdChar_ntoLower
@@ -1101,6 +1210,7 @@ e_StdChar_ntoLower
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea3
 	jsr_eval 0
 	pushC_a 0
@@ -1131,6 +1241,8 @@ s3
 else.19
 .d 0 1 c
 	rtn
+.pe
+.pb "set_lowercase_bit"
 .o 0 1 c
 s27
 .inline set_lowercase_bit
@@ -1140,8 +1252,11 @@ s27
 
 .d 0 1 c
 	rtn
+.pe
 .export e_StdChar_stoUpper
 .descexp e_StdChar_dtoUpper e_StdChar_ntoUpper e_StdChar_ltoUpper 1 0 "toUpper"
+.pb "toUpper"
+.pld
 .o 2 0
 e_StdChar_ltoUpper
 	pop_a 1
@@ -1152,6 +1267,7 @@ e_StdChar_ltoUpper
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdChar_dtoUpper
 .o 1 0
 e_StdChar_ntoUpper
@@ -1164,6 +1280,7 @@ e_StdChar_ntoUpper
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea2
 	jsr_eval 0
 	pushC_a 0
@@ -1194,13 +1311,17 @@ s2
 else.21
 .d 0 1 c
 	rtn
+.pe
 .export e_StdChar_s<;19
 .descexp e_StdChar_d<;19 e_StdChar_n<;19 e_StdChar_l<;19 2 0 "<;19"
+.pb "<;19"
+.pld
 .a 0 a20
 .o 2 0
 e_StdChar_l<;19
 	repl_args 1 1
 .o 2 0
+.pn
 a20
 .d 2 0
 	jsr ea20
@@ -1209,6 +1330,7 @@ a20
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdChar_d<;19
 .o 1 0
 e_StdChar_n<;19
@@ -1221,6 +1343,7 @@ e_StdChar_n<;19
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea20
 	jsr_eval 1
 	jsr_eval 0
@@ -1237,6 +1360,8 @@ s20
 
 .d 0 1 b
 	rtn
+.pe
+.pb "clear_lowercase_bit"
 .o 0 1 c
 s26
 .inline clear_lowercase_bit
@@ -1246,8 +1371,11 @@ s26
 
 .d 0 1 c
 	rtn
+.pe
 .export e_StdChar_sdigitToInt
 .descexp e_StdChar_ddigitToInt e_StdChar_ndigitToInt e_StdChar_ldigitToInt 1 0 "digitToInt"
+.pb "digitToInt"
+.pld
 .o 2 0
 e_StdChar_ldigitToInt
 	pop_a 1
@@ -1258,6 +1386,7 @@ e_StdChar_ldigitToInt
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdChar_ddigitToInt
 .o 1 0
 e_StdChar_ndigitToInt
@@ -1270,6 +1399,7 @@ e_StdChar_ndigitToInt
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea1
 	jsr_eval 0
 	pushC_a 0
@@ -1290,3 +1420,4 @@ s1
 	subI
 .d 0 1 i
 	rtn
+.pe

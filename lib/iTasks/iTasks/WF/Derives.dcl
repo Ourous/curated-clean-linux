@@ -21,7 +21,7 @@ from Text.HTML import :: SVGStrokeDashArray, :: SVGStrokeDashOffset, :: SVGStrok
 //Common library types
 derive JSONEncode		(), HtmlTag, HtmlAttr, Either, MaybeError, Timestamp
 derive JSONDecode		(), HtmlTag, HtmlAttr, Either, MaybeError, Timestamp
-derive gEq				(), HtmlTag, HtmlAttr, Either, MaybeError, Timestamp, JSONNode, (->), Dynamic, Maybe
+derive gEq				(), HtmlTag, HtmlAttr, Either, MaybeError, Timestamp, JSONNode, (->), Dynamic
 derive gDefault   HtmlAttr
 derive gEditor    HtmlAttr
 derive gText      HtmlAttr

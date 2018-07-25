@@ -26,6 +26,8 @@ mapStateT  :: ((m (a, s)) -> (m` (b, s))) .(StateT s m a) -> StateT s m` b
 withState  :: (s -> s) .(StateT s m c) -> StateT s m c
 withStateT :: (s -> s) .(StateT s m c) -> StateT s m c
 
+transformStateT :: (s2 -> s1) (a s1 -> (a, s2)) (StateT s1 m a) -> (StateT s2 m a) | Functor m
+
 instance Functor (StateT s m) | Monad m
 instance Applicative (StateT s m) | Monad m
 instance Alternative (StateT s m) | Alternative m

@@ -371,12 +371,19 @@ derive gEq EdgeStyle // PK++
   | HSV   Real Real Real
   | Color String          // X11 1.2 color names; see rgb.txt
 
+/** @type Color */
 CBlack   :== Color "black"
+/** @type Color */
 CWhite   :== Color "white"
+/** @type Color */
 CGray    :== Color "gray"
+/** @type Color */
 CRed     :== Color "red"
+/** @type Color */
 CGreen   :== Color "green"
+/** @type Color */
 CBlue    :== Color "blue"
+/** @type Color */
 CYellow  :== Color "yellow"
 
 instance toString Color

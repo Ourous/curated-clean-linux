@@ -28,7 +28,7 @@ withShared initial stask = Task eval
 where	
 	eval event evalOpts (TCInit taskId ts) iworld
         # (taskIda,iworld)  = getNextTaskId iworld
-        # (e,iworld)        = write (toJSON initial) (sdsFocus taskId localShare) iworld
+        # (e,iworld)        = write (initial) (sdsFocus taskId localShare) iworld
         | isError e
             = (ExceptionResult (fromError e),iworld)
         | otherwise

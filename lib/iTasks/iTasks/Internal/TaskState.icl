@@ -1,19 +1,33 @@
 implementation module iTasks.Internal.TaskState
 
-import Text.GenJSON, StdString
-import iTasks.UI.Definition
+import Text.GenJSON, StdString, Data.Func, Data.GenEq, Data.Maybe, Data.Functor
+import iTasks.UI.Definition, iTasks.UI.Layout
 import iTasks.WF.Definition
 from iTasks.WF.Combinators.Core import :: AttachmentStatus
 
 from iTasks.Internal.Task	import exception
 from iTasks.Internal.TaskEval import :: TaskTime, :: TaskEvalInfo(..), :: TonicOpts(..)
 from iTasks.Internal.Tonic.AbsSyn import :: ExprId (..)
-import iTasks.Internal.Serialization
+import iTasks.Internal.Serialization, iTasks.Internal.Generic.Visualization
 import Data.CircularStack
 import Data.Error, Data.Either
 
 derive JSONEncode TIMeta, TIValue, TIReduct, TaskTree, ParallelTaskState, ParallelTaskChange, TaskResult, TaskEvalInfo, TonicOpts, CircularStack
 derive JSONDecode TIMeta, TIValue, TIReduct, TaskTree, ParallelTaskState, ParallelTaskChange, TaskResult, TaskEvalInfo, TonicOpts, CircularStack
+
+derive JSONEncode LUI, LUIChanges, LUIEffects, LUIEffectStage, LUINo, Set
+derive JSONDecode LUI, LUIChanges, LUIEffects, LUIEffectStage, LUINo, Set
+
+
+instance toString DeferredJSON where
+    toString (DeferredJSON x)        = toString $ toJSON x
+    toString (DeferredJSONNode json) = toString json
+
+fromDeferredJSON :: !DeferredJSON -> Maybe a | TC, JSONDecode{|*|} a
+fromDeferredJSON (DeferredJSON x) = case dynamic x of
+    (x :: a^) -> Just x
+    _         -> Nothing
+fromDeferredJSON (DeferredJSONNode json)  = fromJSON json
 
 JSONEncode{|DeferredJSON|} _ (DeferredJSON a)
 	= JSONEncode{|*|} False a
@@ -27,11 +41,13 @@ JSONDecode{|DeferredJSON|} _ [x:xs]
 JSONDecode{|DeferredJSON|} _ l
 	= (Nothing, l)
 
+gEq{|DeferredJSON|} x y = toJSON x === toJSON y
+gText{|DeferredJSON|} f djson = gText{|*|} f $ toJSON <$> djson
+
 taskIdFromTaskTree :: TaskTree -> MaybeError TaskException TaskId
 taskIdFromTaskTree (TCInit                  taskId _)         = Ok taskId
 taskIdFromTaskTree (TCBasic                 taskId _ _ _)     = Ok taskId
 taskIdFromTaskTree (TCInteract              taskId _ _ _ _)   = Ok taskId
-taskIdFromTaskTree (TCProject               taskId _ _)       = Ok taskId
 taskIdFromTaskTree (TCStep                  taskId _ _)       = Ok taskId
 taskIdFromTaskTree (TCParallel              taskId _ _ _)     = Ok taskId
 taskIdFromTaskTree (TCShared                taskId _ _)       = Ok taskId

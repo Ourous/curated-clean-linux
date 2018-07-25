@@ -7,6 +7,7 @@ from Control.Monad import class Monad, class MonadPlus
 from Data.Monoid import class Semigroup, class Monoid
 from Data.Foldable import class Foldable
 from Data.Traversable import class Traversable
+from Data.GenEq import generic gEq
 
 /**
  * The Maybe type represents an optional value by providing a constructor 
@@ -31,6 +32,8 @@ instance Semigroup (Maybe a) | Semigroup a
 instance Monoid (Maybe a)
 instance Foldable Maybe
 instance Traversable Maybe
+
+derive gEq Maybe
 
 /**
  * Like {{`fmap`}}, but with less restrictive uniqueness constraints.

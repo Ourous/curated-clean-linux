@@ -34,7 +34,8 @@ setStatus :: DiffStatus Diff -> Diff
 generic gDiff a :: a a -> [Diff]
 derive gDiff UNIT, PAIR, EITHER, OBJECT, CONS of d, RECORD of d, FIELD of d
 derive gDiff Int, Char, Bool, Real, String
-derive gDiff [], (,), (,,), (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,)
+derive gDiff [], [!], [ !], [!!], {}, {!}
+derive gDiff (,), (,,), (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,)
 
 /**
  * A String representation of a {{`Diff`}} using ANSI escape codes.

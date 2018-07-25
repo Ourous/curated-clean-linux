@@ -6,19 +6,32 @@ from Data.Error import :: MaybeError
 from Data.Maybe import :: Maybe
 
 /**
+ * The state of an {{`OptParser`}}.
+ */
+:: OptParserState =
+	{ operands_state :: !ParsingOperandsState
+	}
+
+:: ParsingOperandsState
+	= NoOperandsSeenYet
+	| OnlyOperands
+	| OperandsIncludingHyphens
+
+/**
  * A parser for command line options.
  * The arguments are the list of command line arguments and the current
  * settings object. The result is:
  *  - `Nothing`, if the parser cannot be applied
  *  - `Just (Error es)`, if the parser finished with an error, where `es` is a
  *    list of errors/warning.
- *  - `Just (Ok (opts,args))`, if the parser succeeded, where `opts` is the
- *    new settings object and `args` the list of the rest of the arguments.
+ *  - `Just (Ok (opts,state,args))`, if the parser succeeded, where `opts` is
+ *    the new settings object, `state` the new {{`OptParserState`}} and `args`
+ *    the list of the rest of the arguments.
  *
  * @var The settings object type
  */
 :: OptParser opts
-	= OptParser ([String] opts -> Maybe (MaybeError [String] (opts, [String])))
+	= OptParser ([String] OptParserState opts -> Maybe (MaybeError [String] (opts, OptParserState, [String])))
 
 /**
  * An element in the help text of a command line application.
@@ -26,8 +39,8 @@ from Data.Maybe import :: Maybe
 :: HelpText
 	= OptionHelpText [String] [String] String [String]
 		//* Help text for an option: the option variants, the meta variables, a description, additional lines
-
-instance toString HelpText
+	| OperandHelpText String String [String]
+		//* Help text for an operand: the meta variable, a description, additional lines
 
 showHelpText :: [HelpText] -> String
 
@@ -68,6 +81,8 @@ parseOptions :: (t opts) [String] opts -> MaybeError [String] opts | OptionDescr
 		//* A flag is a command line option without arguments: flag, update function, help text
 	| Option String (String opts -> MaybeError [String] opts) String String
 		//* An option is a command line option with one argument: option, update function, meta variable, help text
+	| Operand Bool (String opts -> Maybe (MaybeError [String] opts)) String String
+		//* An operand follows all flags and options: accepts hyphens, update function, meta variable, help text
 	| E.t: Shorthand String String (t opts) & OptionDescription t
 		//* A shorthand translates a short option into a long one: short version, long version, child parser
 	| E.t: Options [t opts] & OptionDescription t

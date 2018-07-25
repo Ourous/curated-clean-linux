@@ -69,7 +69,7 @@ taskEvents              :: RWShared () (Queue (InstanceNo,Event)) (Queue (Instan
 // === Evaluation state of instances: ===
 taskInstanceReduct		:: RWShared InstanceNo TIReduct TIReduct
 taskInstanceValue       :: RWShared InstanceNo TIValue TIValue
-taskInstanceShares      :: RWShared InstanceNo (Map TaskId JSONNode) (Map TaskId JSONNode)
+taskInstanceShares      :: RWShared InstanceNo (Map TaskId DeferredJSON) (Map TaskId DeferredJSON)
 
 //Filtered views on evaluation state of instances:
 
@@ -77,6 +77,7 @@ taskInstanceShares      :: RWShared InstanceNo (Map TaskId JSONNode) (Map TaskId
 localShare              			:: RWShared TaskId a a | iTask a
 
 //Core parallel task list state structure
+taskInstanceParallelTaskLists       :: RWShared InstanceNo (Map TaskId [ParallelTaskState]) (Map TaskId [ParallelTaskState])
 taskInstanceParallelTaskList        :: RWShared (TaskId,TaskListFilter) [ParallelTaskState] [ParallelTaskState]
 
 //Private interface used during evaluation of parallel combinator

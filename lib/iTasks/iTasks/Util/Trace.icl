@@ -49,9 +49,11 @@ sideBySideTrace (leftTitle,left) (rightTitle,right)
 where
 	sideBySide left right 
 		| length left > length right
-			= [l +++ " | " +++ r \\ l <- map (\l -> rpad l maxLenLeft ' ') left & r <- (right ++ repeat "")]
+			= [showLine l r \\ l <- padded left & r <- padded (right ++ repeat "")]
 		| otherwise
-			= [l +++ " | " +++ r \\ l <- map (\l -> rpad l maxLenLeft ' ') (left ++ repeat "") & r <- right]
+			= [showLine l r \\ l <- padded (left ++ repeat "") & r <- padded right]
 	where
 		maxLenLeft = maximum (map textSize left)
+		padded = map (\l -> rpad l maxLenLeft ' ')
+		showLine l r = (if (l <> r) "! " "  ") +++ l +++ " | " +++ r
 

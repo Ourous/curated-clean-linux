@@ -19,3 +19,14 @@ appUnsafe :: !(*World -> *World) !.a -> .a
 */
 accUnsafe :: !*(*World -> *(.a, !*World)) -> .a
 
+/**
+ * Changes the type of the given argument.
+ * This is only safe if both types have the same internal representation, e.g.
+ * in case they differ only in phantom types or `a` is a newtype of `b` (or
+ * vice versa). The function can be used to prevent reconstructing objects with
+ * the same value, but different phantom type.
+ *
+ * @param The value to be converted
+ * @result The converted value
+ */
+unsafeCoerce :: !.a -> .b

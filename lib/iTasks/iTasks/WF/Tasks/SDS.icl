@@ -8,7 +8,8 @@ import iTasks.Internal.Task
 import iTasks.Internal.TaskState
 import iTasks.Internal.TaskEval
 import qualified iTasks.Internal.SDS as SDS
-import StdString
+import StdString, Data.Func, Data.Error
+import qualified Data.Set as DS
 
 instance toString SharedException
 where
@@ -57,10 +58,9 @@ where
 			Ok val		= ValueResult (Value val False) {TaskEvalInfo|lastEvent=ts,removedTasks=[],refreshSensitive=True} (rep event) (TCInit taskId ts)
 			Error e		= ExceptionResult e
 		= (res,iworld)
-	eval event repAs (TCDestroy _) iworld = (DestroyedResult,iworld)
+	eval event repAs ttree=:(TCDestroy _) iworld
+		# iworld = 'SDS'.clearTaskSDSRegistrations ('DS'.singleton $ fromOk $ taskIdFromTaskTree ttree) iworld
+		= (DestroyedResult,iworld)
 
 	rep ResetEvent  = ReplaceUI (ui UIEmpty) 
 	rep _ 			= NoChange
-
-
-

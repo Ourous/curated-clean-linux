@@ -4,6 +4,7 @@ from StdEnv import flip, id, o
 from StdMisc import abort
 import Control.Applicative
 import Control.Monad
+import Data.Monoid
 import Data.Functor
 import Data.Maybe
 import Data.Monoid
@@ -74,6 +75,23 @@ where
 	first f d = bifmap f id d
 	second g d = bifmap id g d
 
+instance Alternative (Either m) | Monoid m
+where
+	empty = Left mempty
+	(<|>) fa fb = either (\e->either (Left o mappend e) Right fb) Right fa
+
 either :: .(.a -> .c) .(.b -> .c) !(Either .a .b) -> .c
 either f _ (Left x)     =  f x
 either _ g (Right y)    =  g y
+
+lefts :: .[Either .a .b] -> .[.a]
+lefts l = [l\\(Left l)<-l]
+
+rights :: .[Either .a .b] -> .[.b]
+rights l = [l\\(Right l)<-l]
+
+fromLeft :: .a (Either .a .b) -> .a
+fromLeft a e = either id (const a) e
+
+fromRight :: .b (Either .a .b) -> .b
+fromRight a e = either (const a) id e

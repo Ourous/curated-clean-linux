@@ -1,4 +1,4 @@
-.comp 920 0101110110100
+.comp 920 0001100110100
 .start _nostart_
 .depend "StdInt"
 .depend "_SystemArray"
@@ -48,6 +48,7 @@
 .desc0 d60 0 "Files"
 .export e_StdFile_rFileSystem;
 .record e_StdFile_rFileSystem; aaaa 4 0 "FileSystem;"
+.pb "FileSystem;"
 .descexp e_StdFile_tFileSystem; e_StdFile_cFileSystem; _hnf 4 1 "FileSystem;"
 .n 4 e_StdFile_tFileSystem;
 .o 1 0
@@ -63,15 +64,18 @@ e_StdFile_cFileSystem;
 	pop_a 4
 .d 1 0
 	rtn
+.pe
 .export e_StdFile_dFileSystem;.fclose
 .export e_StdFile_nFileSystem;.fclose
 .export e_StdFile_eaFileSystem;.fclose
 .descs e_StdFile_dFileSystem;.fclose e_StdFile_nFileSystem;.fclose _ 1 0 "FileSystem;.fclose"
+.pb "fclose"
 .n -4 e_StdFile_dFileSystem;.fclose e_StdFile_eaFileSystem;.fclose
 .o 1 0
 e_StdFile_nFileSystem;.fclose
 	push_node _cycle_in_spine 1
 .o 2 0
+.pn
 e_StdFile_eaFileSystem;.fclose
 	jsr_eval 0
 	repl_r_args_a 4 0 1 1
@@ -79,15 +83,18 @@ e_StdFile_eaFileSystem;.fclose
 	pop_a 1
 .d 1 0
 	rtn
+.pe
 .export e_StdFile_dFileSystem;.fopen
 .export e_StdFile_nFileSystem;.fopen
 .export e_StdFile_eaFileSystem;.fopen
 .descs e_StdFile_dFileSystem;.fopen e_StdFile_nFileSystem;.fopen _ 3 0 "FileSystem;.fopen"
+.pb "fopen"
 .n -4 e_StdFile_dFileSystem;.fopen e_StdFile_eaFileSystem;.fopen
 .o 1 0
 e_StdFile_nFileSystem;.fopen
 	push_node _cycle_in_spine 1
 .o 2 0
+.pn
 e_StdFile_eaFileSystem;.fopen
 	jsr_eval 0
 	repl_r_args_a 4 0 2 1
@@ -95,15 +102,18 @@ e_StdFile_eaFileSystem;.fopen
 	pop_a 1
 .d 1 0
 	rtn
+.pe
 .export e_StdFile_dFileSystem;.sfopen
 .export e_StdFile_nFileSystem;.sfopen
 .export e_StdFile_eaFileSystem;.sfopen
 .descs e_StdFile_dFileSystem;.sfopen e_StdFile_nFileSystem;.sfopen _ 4 0 "FileSystem;.sfopen"
+.pb "sfopen"
 .n -4 e_StdFile_dFileSystem;.sfopen e_StdFile_eaFileSystem;.sfopen
 .o 1 0
 e_StdFile_nFileSystem;.sfopen
 	push_node _cycle_in_spine 1
 .o 2 0
+.pn
 e_StdFile_eaFileSystem;.sfopen
 	jsr_eval 0
 	repl_r_args_a 4 0 3 1
@@ -111,15 +121,18 @@ e_StdFile_eaFileSystem;.sfopen
 	pop_a 1
 .d 1 0
 	rtn
+.pe
 .export e_StdFile_dFileSystem;.stdio
 .export e_StdFile_nFileSystem;.stdio
 .export e_StdFile_eaFileSystem;.stdio
 .descs e_StdFile_dFileSystem;.stdio e_StdFile_nFileSystem;.stdio _ 5 0 "FileSystem;.stdio"
+.pb "stdio"
 .n -4 e_StdFile_dFileSystem;.stdio e_StdFile_eaFileSystem;.stdio
 .o 1 0
 e_StdFile_nFileSystem;.stdio
 	push_node _cycle_in_spine 1
 .o 2 0
+.pn
 e_StdFile_eaFileSystem;.stdio
 	jsr_eval 0
 	repl_r_args_a 4 0 4 1
@@ -127,8 +140,10 @@ e_StdFile_eaFileSystem;.stdio
 	pop_a 1
 .d 1 0
 	rtn
+.pe
 .export e_StdFile_rFileEnv;
 .record e_StdFile_rFileEnv; aa 2 0 "FileEnv;"
+.pb "FileEnv;"
 .descexp e_StdFile_tFileEnv; e_StdFile_cFileEnv; _hnf 2 1 "FileEnv;"
 .n 2 e_StdFile_tFileEnv;
 .o 1 0
@@ -141,15 +156,18 @@ e_StdFile_cFileEnv;
 	pop_a 2
 .d 1 0
 	rtn
+.pe
 .export e_StdFile_dFileEnv;.accFiles
 .export e_StdFile_nFileEnv;.accFiles
 .export e_StdFile_eaFileEnv;.accFiles
 .descs e_StdFile_dFileEnv;.accFiles e_StdFile_nFileEnv;.accFiles _ 1 0 "FileEnv;.accFiles"
+.pb "accFiles"
 .n -4 e_StdFile_dFileEnv;.accFiles e_StdFile_eaFileEnv;.accFiles
 .o 1 0
 e_StdFile_nFileEnv;.accFiles
 	push_node _cycle_in_spine 1
 .o 2 0
+.pn
 e_StdFile_eaFileEnv;.accFiles
 	jsr_eval 0
 	repl_r_args_a 2 0 1 1
@@ -157,15 +175,18 @@ e_StdFile_eaFileEnv;.accFiles
 	pop_a 1
 .d 1 0
 	rtn
+.pe
 .export e_StdFile_dFileEnv;.appFiles
 .export e_StdFile_nFileEnv;.appFiles
 .export e_StdFile_eaFileEnv;.appFiles
 .descs e_StdFile_dFileEnv;.appFiles e_StdFile_nFileEnv;.appFiles _ 2 0 "FileEnv;.appFiles"
+.pb "appFiles"
 .n -4 e_StdFile_dFileEnv;.appFiles e_StdFile_eaFileEnv;.appFiles
 .o 1 0
 e_StdFile_nFileEnv;.appFiles
 	push_node _cycle_in_spine 1
 .o 2 0
+.pn
 e_StdFile_eaFileEnv;.appFiles
 	jsr_eval 0
 	repl_r_args_a 2 0 2 1
@@ -173,8 +194,10 @@ e_StdFile_eaFileEnv;.appFiles
 	pop_a 1
 .d 1 0
 	rtn
+.pe
 .export e_StdFile_r<<<;
 .record e_StdFile_r<<<; a 1 0 "<<<;"
+.pb "<<<;"
 .descexp e_StdFile_t<<<; e_StdFile_c<<<; _hnf 1 1 "<<<;"
 .n 1 e_StdFile_t<<<;
 .o 1 0
@@ -186,15 +209,18 @@ e_StdFile_c<<<;
 	pop_a 1
 .d 1 0
 	rtn
+.pe
 .export e_StdFile_d<<<;.<<<
 .export e_StdFile_n<<<;.<<<
 .export e_StdFile_ea<<<;.<<<
 .descs e_StdFile_d<<<;.<<< e_StdFile_n<<<;.<<< _ 1 0 "<<<;.<<<"
+.pb "<<<"
 .n -4 e_StdFile_d<<<;.<<< e_StdFile_ea<<<;.<<<
 .o 1 0
 e_StdFile_n<<<;.<<<
 	push_node _cycle_in_spine 1
 .o 2 0
+.pn
 e_StdFile_ea<<<;.<<<
 	jsr_eval 0
 	repl_r_args_a 1 0 1 1
@@ -202,13 +228,17 @@ e_StdFile_ea<<<;.<<<
 	pop_a 1
 .d 1 0
 	rtn
+.pe
 .export e_StdFile_s<<<;39
 .descexp e_StdFile_d<<<;39 e_StdFile_n<<<;39 e_StdFile_l<<<;39 2 0 "<<<;39"
+.pb "<<<;39"
+.pld
 .a 0 a40
 .o 2 0
 e_StdFile_l<<<;39
 	repl_args 1 1
 .o 2 0
+.pn
 a40
 .d 2 0
 	jsr ea40
@@ -217,6 +247,7 @@ a40
 	pop_b 2
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdFile_d<<<;39
 .o 1 0
 e_StdFile_n<<<;39
@@ -229,6 +260,7 @@ e_StdFile_n<<<;39
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea40
 	jsr_eval 1
 	jsr_eval 0
@@ -252,13 +284,17 @@ s40
 
 .d 0 2 f
 	rtn
+.pe
 .export e_StdFile_s<<<;38
 .descexp e_StdFile_d<<<;38 e_StdFile_n<<<;38 e_StdFile_l<<<;38 2 0 "<<<;38"
+.pb "<<<;38"
+.pld
 .a 0 a39
 .o 2 0
 e_StdFile_l<<<;38
 	repl_args 1 1
 .o 2 0
+.pn
 a39
 .d 2 0
 	jsr ea39
@@ -267,6 +303,7 @@ a39
 	pop_b 2
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdFile_d<<<;38
 .o 1 0
 e_StdFile_n<<<;38
@@ -279,6 +316,7 @@ e_StdFile_n<<<;38
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea39
 	jsr_eval 1
 	jsr_eval 0
@@ -298,13 +336,17 @@ s39
 
 .d 0 2 f
 	rtn
+.pe
 .export e_StdFile_s<<<;37
 .descexp e_StdFile_d<<<;37 e_StdFile_n<<<;37 e_StdFile_l<<<;37 2 0 "<<<;37"
+.pb "<<<;37"
+.pld
 .a 0 a38
 .o 2 0
 e_StdFile_l<<<;37
 	repl_args 1 1
 .o 2 0
+.pn
 a38
 .d 2 0
 	jsr ea38
@@ -313,6 +355,7 @@ a38
 	pop_b 2
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdFile_d<<<;37
 .o 1 0
 e_StdFile_n<<<;37
@@ -325,6 +368,7 @@ e_StdFile_n<<<;37
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea38
 	jsr_eval 1
 	jsr_eval 0
@@ -348,13 +392,17 @@ s38
 
 .d 0 2 f
 	rtn
+.pe
 .export e_StdFile_s<<<;36
 .descexp e_StdFile_d<<<;36 e_StdFile_n<<<;36 e_StdFile_l<<<;36 2 0 "<<<;36"
+.pb "<<<;36"
+.pld
 .a 0 a37
 .o 2 0
 e_StdFile_l<<<;36
 	repl_args 1 1
 .o 2 0
+.pn
 a37
 .d 2 0
 	jsr ea37
@@ -363,6 +411,7 @@ a37
 	pop_b 2
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdFile_d<<<;36
 .o 1 0
 e_StdFile_n<<<;36
@@ -375,6 +424,7 @@ e_StdFile_n<<<;36
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea37
 	jsr_eval 1
 	jsr_eval 0
@@ -398,9 +448,12 @@ s37
 
 .d 0 2 f
 	rtn
+.pe
 .export e_StdFile_sappFiles;35
 .export e_StdFile_eaappFiles;35
 .descexp e_StdFile_dappFiles;35 e_StdFile_nappFiles;35 e_StdFile_lappFiles;35 2 0 "appFiles;35"
+.pb "appFiles;35"
+.pl
 .a 2 e_StdFile_eaappFiles;35
 .o 2 0
 e_StdFile_lappFiles;35
@@ -410,12 +463,14 @@ e_StdFile_lappFiles;35
 	update_a 0 3
 	pop_a 1
 .d 3 0
+.pn
 	jmp e_StdFile_eaappFiles;35
 .n 2 e_StdFile_dappFiles;35 e_StdFile_eaappFiles;35
 .o 1 0
 e_StdFile_nappFiles;35
 	push_node _cycle_in_spine 2
 .o 3 0
+.pn
 e_StdFile_eaappFiles;35
 	jsr_eval 1
 	jsr_eval 0
@@ -438,6 +493,8 @@ s36
 
 .d 1 0
 	rtn
+.pe
+.pb "do_files;45"
 .o 3 0
 s46
 .inline do_files;45
@@ -447,13 +504,17 @@ s46
 
 .d 1 0
 	rtn
+.pe
 .export e_StdFile_saccFiles;34
 .descexp e_StdFile_daccFiles;34 e_StdFile_naccFiles;34 e_StdFile_laccFiles;34 2 0 "accFiles;34"
+.pb "accFiles;34"
+.pld
 .a 0 a35
 .o 2 0
 e_StdFile_laccFiles;34
 	repl_args 1 1
 .o 2 0
+.pn
 a35
 .d 2 0
 	jsr ea35
@@ -464,6 +525,7 @@ a35
 	updatepop_a 0 2
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdFile_daccFiles;34
 .o 1 0
 e_StdFile_naccFiles;34
@@ -478,6 +540,7 @@ e_StdFile_naccFiles;34
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea35
 	jsr_eval 1
 	jsr_eval 0
@@ -506,6 +569,8 @@ s35
 	updatepop_a 0 2
 .d 3 0
 	jmp s45
+.pe
+.pb "do_files2;44"
 .o 3 0
 s45
 	push_a 2
@@ -514,8 +579,11 @@ s45
 	updatepop_a 0 3
 .d 2 0
 	rtn
+.pe
 .export e_StdFile_sstdio;33
 .descexp e_StdFile_dstdio;33 e_StdFile_nstdio;33 e_StdFile_lstdio;33 1 0 "stdio;33"
+.pb "stdio;33"
+.pld
 .o 2 0
 e_StdFile_lstdio;33
 	pop_a 1
@@ -529,6 +597,7 @@ e_StdFile_lstdio;33
 	pop_b 2
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdFile_dstdio;33
 .o 1 0
 e_StdFile_nstdio;33
@@ -544,6 +613,7 @@ e_StdFile_nstdio;33
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea34
 	jsr_eval 0
 .o 1 0
@@ -558,13 +628,17 @@ s34
 	updatepop_a 0 1
 .d 1 2 f
 	rtn
+.pe
 .export e_StdFile_ssfopen;32
 .descexp e_StdFile_dsfopen;32 e_StdFile_nsfopen;32 e_StdFile_lsfopen;32 3 0 "sfopen;32"
+.pb "sfopen;32"
+.pld
 .a 0 a33
 .o 2 0
 e_StdFile_lsfopen;32
 	repl_args 2 2
 .o 3 0
+.pn
 a33
 .d 3 0
 	jsr ea33
@@ -577,6 +651,7 @@ a33
 	pop_b 3
 .d 1 0
 	rtn
+.pd
 .n 3 e_StdFile_dsfopen;32
 .o 1 0
 e_StdFile_nsfopen;32
@@ -593,6 +668,7 @@ e_StdFile_nsfopen;32
 .d 1 0
 	rtn
 .o 3 0
+.pn
 ea33
 	jsr_eval 2
 	jsr_eval 1
@@ -623,13 +699,17 @@ s33
 	updatepop_b 0 3
 .d 1 3 bf
 	rtn
+.pe
 .export e_StdFile_sfopen;31
 .descexp e_StdFile_dfopen;31 e_StdFile_nfopen;31 e_StdFile_lfopen;31 3 0 "fopen;31"
+.pb "fopen;31"
+.pld
 .a 0 a32
 .o 2 0
 e_StdFile_lfopen;31
 	repl_args 2 2
 .o 3 0
+.pn
 a32
 .d 3 0
 	jsr ea32
@@ -642,6 +722,7 @@ a32
 	pop_b 3
 .d 1 0
 	rtn
+.pd
 .n 3 e_StdFile_dfopen;31
 .o 1 0
 e_StdFile_nfopen;31
@@ -658,6 +739,7 @@ e_StdFile_nfopen;31
 .d 1 0
 	rtn
 .o 3 0
+.pn
 ea32
 	jsr_eval 2
 	jsr_eval 1
@@ -688,13 +770,17 @@ s32
 	updatepop_b 0 3
 .d 1 3 bf
 	rtn
+.pe
 .export e_StdFile_sfclose;30
 .descexp e_StdFile_dfclose;30 e_StdFile_nfclose;30 e_StdFile_lfclose;30 2 0 "fclose;30"
+.pb "fclose;30"
+.pld
 .a 0 a31
 .o 2 0
 e_StdFile_lfclose;30
 	repl_args 1 1
 .o 2 0
+.pn
 a31
 .d 2 0
 	jsr ea31
@@ -706,6 +792,7 @@ a31
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdFile_dfclose;30
 .o 1 0
 e_StdFile_nfclose;30
@@ -721,6 +808,7 @@ e_StdFile_nfclose;30
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea31
 	jsr_eval 1
 	jsr_eval 0
@@ -742,8 +830,11 @@ s31
 	updatepop_a 0 1
 .d 1 1 b
 	rtn
+.pe
 .export e_StdFile_sstdio;29
 .descexp e_StdFile_dstdio;29 e_StdFile_nstdio;29 e_StdFile_lstdio;29 1 0 "stdio;29"
+.pb "stdio;29"
+.pld
 .o 2 0
 e_StdFile_lstdio;29
 	pop_a 1
@@ -757,6 +848,7 @@ e_StdFile_lstdio;29
 	pop_b 2
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdFile_dstdio;29
 .o 1 0
 e_StdFile_nstdio;29
@@ -772,6 +864,7 @@ e_StdFile_nstdio;29
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea30
 	jsr_eval 0
 .o 1 0
@@ -786,13 +879,17 @@ s30
 	updatepop_a 0 1
 .d 1 2 f
 	rtn
+.pe
 .export e_StdFile_ssfopen;28
 .descexp e_StdFile_dsfopen;28 e_StdFile_nsfopen;28 e_StdFile_lsfopen;28 3 0 "sfopen;28"
+.pb "sfopen;28"
+.pld
 .a 0 a29
 .o 2 0
 e_StdFile_lsfopen;28
 	repl_args 2 2
 .o 3 0
+.pn
 a29
 .d 3 0
 	jsr ea29
@@ -805,6 +902,7 @@ a29
 	pop_b 3
 .d 1 0
 	rtn
+.pd
 .n 3 e_StdFile_dsfopen;28
 .o 1 0
 e_StdFile_nsfopen;28
@@ -821,6 +919,7 @@ e_StdFile_nsfopen;28
 .d 1 0
 	rtn
 .o 3 0
+.pn
 ea29
 	jsr_eval 2
 	jsr_eval 1
@@ -851,13 +950,17 @@ s29
 	updatepop_b 0 3
 .d 1 3 bf
 	rtn
+.pe
 .export e_StdFile_sfopen;27
 .descexp e_StdFile_dfopen;27 e_StdFile_nfopen;27 e_StdFile_lfopen;27 3 0 "fopen;27"
+.pb "fopen;27"
+.pld
 .a 0 a28
 .o 2 0
 e_StdFile_lfopen;27
 	repl_args 2 2
 .o 3 0
+.pn
 a28
 .d 3 0
 	jsr ea28
@@ -870,6 +973,7 @@ a28
 	pop_b 3
 .d 1 0
 	rtn
+.pd
 .n 3 e_StdFile_dfopen;27
 .o 1 0
 e_StdFile_nfopen;27
@@ -886,6 +990,7 @@ e_StdFile_nfopen;27
 .d 1 0
 	rtn
 .o 3 0
+.pn
 ea28
 	jsr_eval 2
 	jsr_eval 1
@@ -916,13 +1021,17 @@ s28
 	updatepop_b 0 3
 .d 1 3 bf
 	rtn
+.pe
 .export e_StdFile_sfclose;26
 .descexp e_StdFile_dfclose;26 e_StdFile_nfclose;26 e_StdFile_lfclose;26 2 0 "fclose;26"
+.pb "fclose;26"
+.pld
 .a 0 a27
 .o 2 0
 e_StdFile_lfclose;26
 	repl_args 1 1
 .o 2 0
+.pn
 a27
 .d 2 0
 	jsr ea27
@@ -934,6 +1043,7 @@ a27
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdFile_dfclose;26
 .o 1 0
 e_StdFile_nfclose;26
@@ -949,6 +1059,7 @@ e_StdFile_nfclose;26
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea27
 	jsr_eval 1
 	jsr_eval 0
@@ -970,6 +1081,8 @@ s27
 	updatepop_a 0 1
 .d 1 1 b
 	rtn
+.pe
+.pb "sfopen_"
 .o 1 1 i
 s44
 .inline sfopen_
@@ -980,6 +1093,8 @@ s44
 
 .d 0 3 bf
 	rtn
+.pe
+.pb "stdio_"
 .o 0 0
 s43
 .inline stdio_
@@ -990,6 +1105,8 @@ s43
 
 .d 0 2 f
 	rtn
+.pe
+.pb "fclose_"
 .o 0 2 f
 s42
 .inline fclose_
@@ -1000,6 +1117,8 @@ s42
 
 .d 0 1 b
 	rtn
+.pe
+.pb "fopen_"
 .o 1 1 i
 s41
 .inline fopen_
@@ -1010,8 +1129,11 @@ s41
 
 .d 0 3 bf
 	rtn
+.pe
 .export e_StdFile_sfshare
 .descexp e_StdFile_dfshare e_StdFile_nfshare e_StdFile_lfshare 1 0 "fshare"
+.pb "fshare"
+.pld
 .o 2 0
 e_StdFile_lfshare
 	pop_a 1
@@ -1022,6 +1144,7 @@ e_StdFile_lfshare
 	pop_b 2
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdFile_dfshare
 .o 1 0
 e_StdFile_nfshare
@@ -1034,6 +1157,7 @@ e_StdFile_nfshare
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea26
 	jsr_eval 0
 	pushF_a 0
@@ -1050,8 +1174,11 @@ s26
 
 .d 0 2 f
 	rtn
+.pe
 .export e_StdFile_ssfposition
 .descexp e_StdFile_dsfposition e_StdFile_nsfposition e_StdFile_lsfposition 1 0 "sfposition"
+.pb "sfposition"
+.pld
 .o 2 0
 e_StdFile_lsfposition
 	pop_a 1
@@ -1062,6 +1189,7 @@ e_StdFile_lsfposition
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdFile_dsfposition
 .o 1 0
 e_StdFile_nsfposition
@@ -1074,6 +1202,7 @@ e_StdFile_nsfposition
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea25
 	jsr_eval 0
 	pushF_a 0
@@ -1090,8 +1219,11 @@ s25
 
 .d 0 1 i
 	rtn
+.pe
 .export e_StdFile_ssfend
 .descexp e_StdFile_dsfend e_StdFile_nsfend e_StdFile_lsfend 1 0 "sfend"
+.pb "sfend"
+.pld
 .o 2 0
 e_StdFile_lsfend
 	pop_a 1
@@ -1102,6 +1234,7 @@ e_StdFile_lsfend
 	pop_b 1
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdFile_dsfend
 .o 1 0
 e_StdFile_nsfend
@@ -1114,6 +1247,7 @@ e_StdFile_nsfend
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea24
 	jsr_eval 0
 	pushF_a 0
@@ -1130,13 +1264,17 @@ s24
 
 .d 0 1 b
 	rtn
+.pe
 .export e_StdFile_ssfseek
 .descexp e_StdFile_dsfseek e_StdFile_nsfseek e_StdFile_lsfseek 3 0 "sfseek"
+.pb "sfseek"
+.pld
 .a 0 a23
 .o 2 0
 e_StdFile_lsfseek
 	repl_args 2 2
 .o 3 0
+.pn
 a23
 .d 3 0
 	jsr ea23
@@ -1147,6 +1285,7 @@ a23
 	pop_b 3
 .d 1 0
 	rtn
+.pd
 .n 3 e_StdFile_dsfseek
 .o 1 0
 e_StdFile_nsfseek
@@ -1161,6 +1300,7 @@ e_StdFile_nsfseek
 .d 1 0
 	rtn
 .o 3 0
+.pn
 ea23
 	jsr_eval 2
 	jsr_eval 1
@@ -1181,8 +1321,11 @@ s23
 
 .d 0 3 bf
 	rtn
+.pe
 .export e_StdFile_ssfreadline
 .descexp e_StdFile_dsfreadline e_StdFile_nsfreadline e_StdFile_lsfreadline 1 0 "sfreadline"
+.pb "sfreadline"
+.pld
 .o 2 0
 e_StdFile_lsfreadline
 	pop_a 1
@@ -1197,6 +1340,7 @@ e_StdFile_lsfreadline
 	pop_b 2
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdFile_dsfreadline
 .o 1 0
 e_StdFile_nsfreadline
@@ -1213,6 +1357,7 @@ e_StdFile_nsfreadline
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea22
 	jsr_eval 0
 	pushF_a 0
@@ -1229,13 +1374,17 @@ s22
 
 .d 1 2 f
 	rtn
+.pe
 .export e_StdFile_ssfreads
 .descexp e_StdFile_dsfreads e_StdFile_nsfreads e_StdFile_lsfreads 2 0 "sfreads"
+.pb "sfreads"
+.pld
 .a 0 a21
 .o 2 0
 e_StdFile_lsfreads
 	repl_args 1 1
 .o 2 0
+.pn
 a21
 .d 2 0
 	jsr ea21
@@ -1248,6 +1397,7 @@ a21
 	pop_b 2
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdFile_dsfreads
 .o 1 0
 e_StdFile_nsfreads
@@ -1264,6 +1414,7 @@ e_StdFile_nsfreads
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea21
 	jsr_eval 1
 	jsr_eval 0
@@ -1282,8 +1433,11 @@ s21
 
 .d 1 2 f
 	rtn
+.pe
 .export e_StdFile_ssfreadr
 .descexp e_StdFile_dsfreadr e_StdFile_nsfreadr e_StdFile_lsfreadr 1 0 "sfreadr"
+.pb "sfreadr"
+.pld
 .o 2 0
 e_StdFile_lsfreadr
 	pop_a 1
@@ -1297,6 +1451,7 @@ e_StdFile_lsfreadr
 	pop_b 4
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdFile_dsfreadr
 .o 1 0
 e_StdFile_nsfreadr
@@ -1312,6 +1467,7 @@ e_StdFile_nsfreadr
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea20
 	jsr_eval 0
 	pushF_a 0
@@ -1328,8 +1484,11 @@ s20
 
 .d 0 4 brf
 	rtn
+.pe
 .export e_StdFile_ssfreadi
 .descexp e_StdFile_dsfreadi e_StdFile_nsfreadi e_StdFile_lsfreadi 1 0 "sfreadi"
+.pb "sfreadi"
+.pld
 .o 2 0
 e_StdFile_lsfreadi
 	pop_a 1
@@ -1343,6 +1502,7 @@ e_StdFile_lsfreadi
 	pop_b 4
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdFile_dsfreadi
 .o 1 0
 e_StdFile_nsfreadi
@@ -1358,6 +1518,7 @@ e_StdFile_nsfreadi
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea19
 	jsr_eval 0
 	pushF_a 0
@@ -1374,8 +1535,11 @@ s19
 
 .d 0 4 bif
 	rtn
+.pe
 .export e_StdFile_ssfreadc
 .descexp e_StdFile_dsfreadc e_StdFile_nsfreadc e_StdFile_lsfreadc 1 0 "sfreadc"
+.pb "sfreadc"
+.pld
 .o 2 0
 e_StdFile_lsfreadc
 	pop_a 1
@@ -1389,6 +1553,7 @@ e_StdFile_lsfreadc
 	pop_b 4
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdFile_dsfreadc
 .o 1 0
 e_StdFile_nsfreadc
@@ -1404,6 +1569,7 @@ e_StdFile_nsfreadc
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea18
 	jsr_eval 0
 	pushF_a 0
@@ -1420,11 +1586,14 @@ s18
 
 .d 0 4 bcf
 	rtn
+.pe
 .export e_StdFile_sstderr
 .descexp e_StdFile_dstderr e_StdFile_nstderr e_StdFile_lstderr 0 0 "stderr"
+.pb "stderr"
 .o 1 0
 e_StdFile_lstderr
 	halt
+.pd
 .n 0 e_StdFile_dstderr
 .o 1 0
 e_StdFile_nstderr
@@ -1437,6 +1606,7 @@ e_StdFile_nstderr
 .d 1 0
 	rtn
 .o 0 0
+.pn
 ea17
 .o 0 0
 e_StdFile_sstderr
@@ -1450,13 +1620,17 @@ s17
 
 .d 0 2 f
 	rtn
+.pe
 .export e_StdFile_sfseek
 .descexp e_StdFile_dfseek e_StdFile_nfseek e_StdFile_lfseek 3 0 "fseek"
+.pb "fseek"
+.pld
 .a 0 a16
 .o 2 0
 e_StdFile_lfseek
 	repl_args 2 2
 .o 3 0
+.pn
 a16
 .d 3 0
 	jsr ea16
@@ -1467,6 +1641,7 @@ a16
 	pop_b 3
 .d 1 0
 	rtn
+.pd
 .n 3 e_StdFile_dfseek
 .o 1 0
 e_StdFile_nfseek
@@ -1481,6 +1656,7 @@ e_StdFile_nfseek
 .d 1 0
 	rtn
 .o 3 0
+.pn
 ea16
 	jsr_eval 2
 	jsr_eval 1
@@ -1501,8 +1677,11 @@ s16
 
 .d 0 3 bf
 	rtn
+.pe
 .export e_StdFile_sfposition
 .descexp e_StdFile_dfposition e_StdFile_nfposition e_StdFile_lfposition 1 0 "fposition"
+.pb "fposition"
+.pld
 .o 2 0
 e_StdFile_lfposition
 	pop_a 1
@@ -1515,6 +1694,7 @@ e_StdFile_lfposition
 	pop_b 3
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdFile_dfposition
 .o 1 0
 e_StdFile_nfposition
@@ -1529,6 +1709,7 @@ e_StdFile_nfposition
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea15
 	jsr_eval 0
 	pushF_a 0
@@ -1545,8 +1726,11 @@ s15
 
 .d 0 3 if
 	rtn
+.pe
 .export e_StdFile_sferror
 .descexp e_StdFile_dferror e_StdFile_nferror e_StdFile_lferror 1 0 "ferror"
+.pb "ferror"
+.pld
 .o 2 0
 e_StdFile_lferror
 	pop_a 1
@@ -1559,6 +1743,7 @@ e_StdFile_lferror
 	pop_b 3
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdFile_dferror
 .o 1 0
 e_StdFile_nferror
@@ -1573,6 +1758,7 @@ e_StdFile_nferror
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea14
 	jsr_eval 0
 	pushF_a 0
@@ -1589,8 +1775,11 @@ s14
 
 .d 0 3 bf
 	rtn
+.pe
 .export e_StdFile_sfend
 .descexp e_StdFile_dfend e_StdFile_nfend e_StdFile_lfend 1 0 "fend"
+.pb "fend"
+.pld
 .o 2 0
 e_StdFile_lfend
 	pop_a 1
@@ -1603,6 +1792,7 @@ e_StdFile_lfend
 	pop_b 3
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdFile_dfend
 .o 1 0
 e_StdFile_nfend
@@ -1617,6 +1807,7 @@ e_StdFile_nfend
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea13
 	jsr_eval 0
 	pushF_a 0
@@ -1633,13 +1824,17 @@ s13
 
 .d 0 3 bf
 	rtn
+.pe
 .export e_StdFile_sfwritesubstring
 .descexp e_StdFile_dfwritesubstring e_StdFile_nfwritesubstring e_StdFile_lfwritesubstring 4 0 "fwritesubstring"
+.pb "fwritesubstring"
+.pld
 .a 0 a12
 .o 2 0
 e_StdFile_lfwritesubstring
 	repl_args 3 3
 .o 4 0
+.pn
 a12
 .d 4 0
 	jsr ea12
@@ -1648,6 +1843,7 @@ a12
 	pop_b 2
 .d 1 0
 	rtn
+.pd
 .n 4 e_StdFile_dfwritesubstring
 .o 1 0
 e_StdFile_nfwritesubstring
@@ -1660,6 +1856,7 @@ e_StdFile_nfwritesubstring
 .d 1 0
 	rtn
 .o 4 0
+.pn
 ea12
 	jsr_eval 3
 	jsr_eval 2
@@ -1683,13 +1880,17 @@ s12
 
 .d 0 2 f
 	rtn
+.pe
 .export e_StdFile_sfwrites
 .descexp e_StdFile_dfwrites e_StdFile_nfwrites e_StdFile_lfwrites 2 0 "fwrites"
+.pb "fwrites"
+.pld
 .a 0 a11
 .o 2 0
 e_StdFile_lfwrites
 	repl_args 1 1
 .o 2 0
+.pn
 a11
 .d 2 0
 	jsr ea11
@@ -1698,6 +1899,7 @@ a11
 	pop_b 2
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdFile_dfwrites
 .o 1 0
 e_StdFile_nfwrites
@@ -1710,6 +1912,7 @@ e_StdFile_nfwrites
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea11
 	jsr_eval 1
 	jsr_eval 0
@@ -1729,13 +1932,17 @@ s11
 
 .d 0 2 f
 	rtn
+.pe
 .export e_StdFile_sfwriter
 .descexp e_StdFile_dfwriter e_StdFile_nfwriter e_StdFile_lfwriter 2 0 "fwriter"
+.pb "fwriter"
+.pld
 .a 0 a10
 .o 2 0
 e_StdFile_lfwriter
 	repl_args 1 1
 .o 2 0
+.pn
 a10
 .d 2 0
 	jsr ea10
@@ -1744,6 +1951,7 @@ a10
 	pop_b 2
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdFile_dfwriter
 .o 1 0
 e_StdFile_nfwriter
@@ -1756,6 +1964,7 @@ e_StdFile_nfwriter
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea10
 	jsr_eval 1
 	jsr_eval 0
@@ -1774,13 +1983,17 @@ s10
 
 .d 0 2 f
 	rtn
+.pe
 .export e_StdFile_sfwritei
 .descexp e_StdFile_dfwritei e_StdFile_nfwritei e_StdFile_lfwritei 2 0 "fwritei"
+.pb "fwritei"
+.pld
 .a 0 a9
 .o 2 0
 e_StdFile_lfwritei
 	repl_args 1 1
 .o 2 0
+.pn
 a9
 .d 2 0
 	jsr ea9
@@ -1789,6 +2002,7 @@ a9
 	pop_b 2
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdFile_dfwritei
 .o 1 0
 e_StdFile_nfwritei
@@ -1801,6 +2015,7 @@ e_StdFile_nfwritei
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea9
 	jsr_eval 1
 	jsr_eval 0
@@ -1819,13 +2034,17 @@ s9
 
 .d 0 2 f
 	rtn
+.pe
 .export e_StdFile_sfwritec
 .descexp e_StdFile_dfwritec e_StdFile_nfwritec e_StdFile_lfwritec 2 0 "fwritec"
+.pb "fwritec"
+.pld
 .a 0 a8
 .o 2 0
 e_StdFile_lfwritec
 	repl_args 1 1
 .o 2 0
+.pn
 a8
 .d 2 0
 	jsr ea8
@@ -1834,6 +2053,7 @@ a8
 	pop_b 2
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdFile_dfwritec
 .o 1 0
 e_StdFile_nfwritec
@@ -1846,6 +2066,7 @@ e_StdFile_nfwritec
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea8
 	jsr_eval 1
 	jsr_eval 0
@@ -1864,8 +2085,11 @@ s8
 
 .d 0 2 f
 	rtn
+.pe
 .export e_StdFile_sfreadline
 .descexp e_StdFile_dfreadline e_StdFile_nfreadline e_StdFile_lfreadline 1 0 "freadline"
+.pb "freadline"
+.pld
 .o 2 0
 e_StdFile_lfreadline
 	pop_a 1
@@ -1880,6 +2104,7 @@ e_StdFile_lfreadline
 	pop_b 2
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdFile_dfreadline
 .o 1 0
 e_StdFile_nfreadline
@@ -1896,6 +2121,7 @@ e_StdFile_nfreadline
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea7
 	jsr_eval 0
 	pushF_a 0
@@ -1912,13 +2138,17 @@ s7
 
 .d 1 2 f
 	rtn
+.pe
 .export e_StdFile_sfreadsubstring
 .descexp e_StdFile_dfreadsubstring e_StdFile_nfreadsubstring e_StdFile_lfreadsubstring 4 0 "freadsubstring"
+.pb "freadsubstring"
+.pld
 .a 0 a6
 .o 2 0
 e_StdFile_lfreadsubstring
 	repl_args 3 3
 .o 4 0
+.pn
 a6
 .d 4 0
 	jsr ea6
@@ -1932,6 +2162,7 @@ a6
 	pop_b 3
 .d 1 0
 	rtn
+.pd
 .n 4 e_StdFile_dfreadsubstring
 .o 1 0
 e_StdFile_nfreadsubstring
@@ -1949,6 +2180,7 @@ e_StdFile_nfreadsubstring
 .d 1 0
 	rtn
 .o 4 0
+.pn
 ea6
 	jsr_eval 3
 	jsr_eval 2
@@ -1972,13 +2204,17 @@ s6
 
 .d 1 3 if
 	rtn
+.pe
 .export e_StdFile_sfreads
 .descexp e_StdFile_dfreads e_StdFile_nfreads e_StdFile_lfreads 2 0 "freads"
+.pb "freads"
+.pld
 .a 0 a5
 .o 2 0
 e_StdFile_lfreads
 	repl_args 1 1
 .o 2 0
+.pn
 a5
 .d 2 0
 	jsr ea5
@@ -1991,6 +2227,7 @@ a5
 	pop_b 2
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdFile_dfreads
 .o 1 0
 e_StdFile_nfreads
@@ -2007,6 +2244,7 @@ e_StdFile_nfreads
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea5
 	jsr_eval 1
 	jsr_eval 0
@@ -2025,8 +2263,11 @@ s5
 
 .d 1 2 f
 	rtn
+.pe
 .export e_StdFile_sfreadr
 .descexp e_StdFile_dfreadr e_StdFile_nfreadr e_StdFile_lfreadr 1 0 "freadr"
+.pb "freadr"
+.pld
 .o 2 0
 e_StdFile_lfreadr
 	pop_a 1
@@ -2040,6 +2281,7 @@ e_StdFile_lfreadr
 	pop_b 4
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdFile_dfreadr
 .o 1 0
 e_StdFile_nfreadr
@@ -2055,6 +2297,7 @@ e_StdFile_nfreadr
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea4
 	jsr_eval 0
 	pushF_a 0
@@ -2071,8 +2314,11 @@ s4
 
 .d 0 4 brf
 	rtn
+.pe
 .export e_StdFile_sfreadi
 .descexp e_StdFile_dfreadi e_StdFile_nfreadi e_StdFile_lfreadi 1 0 "freadi"
+.pb "freadi"
+.pld
 .o 2 0
 e_StdFile_lfreadi
 	pop_a 1
@@ -2086,6 +2332,7 @@ e_StdFile_lfreadi
 	pop_b 4
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdFile_dfreadi
 .o 1 0
 e_StdFile_nfreadi
@@ -2101,6 +2348,7 @@ e_StdFile_nfreadi
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea3
 	jsr_eval 0
 	pushF_a 0
@@ -2117,8 +2365,11 @@ s3
 
 .d 0 4 bif
 	rtn
+.pe
 .export e_StdFile_sfreadc
 .descexp e_StdFile_dfreadc e_StdFile_nfreadc e_StdFile_lfreadc 1 0 "freadc"
+.pb "freadc"
+.pld
 .o 2 0
 e_StdFile_lfreadc
 	pop_a 1
@@ -2132,6 +2383,7 @@ e_StdFile_lfreadc
 	pop_b 4
 .d 1 0
 	rtn
+.pd
 .n 1 e_StdFile_dfreadc
 .o 1 0
 e_StdFile_nfreadc
@@ -2147,6 +2399,7 @@ e_StdFile_nfreadc
 .d 1 0
 	rtn
 .o 1 0
+.pn
 ea2
 	jsr_eval 0
 	pushF_a 0
@@ -2163,13 +2416,17 @@ s2
 
 .d 0 4 bcf
 	rtn
+.pe
 .export e_StdFile_sfreopen
 .descexp e_StdFile_dfreopen e_StdFile_nfreopen e_StdFile_lfreopen 2 0 "freopen"
+.pb "freopen"
+.pld
 .a 0 a1
 .o 2 0
 e_StdFile_lfreopen
 	repl_args 1 1
 .o 2 0
+.pn
 a1
 .d 2 0
 	jsr ea1
@@ -2180,6 +2437,7 @@ a1
 	pop_b 3
 .d 1 0
 	rtn
+.pd
 .n 2 e_StdFile_dfreopen
 .o 1 0
 e_StdFile_nfreopen
@@ -2194,6 +2452,7 @@ e_StdFile_nfreopen
 .d 1 0
 	rtn
 .o 2 0
+.pn
 ea1
 	jsr_eval 1
 	jsr_eval 0
@@ -2212,3 +2471,4 @@ s1
 
 .d 0 3 bf
 	rtn
+.pe

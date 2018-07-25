@@ -3,6 +3,8 @@ implementation module iTasks.Internal.Util
 import StdBool, StdChar, StdList, StdFile, StdMisc, StdArray, StdString, StdTuple, StdFunc, StdGeneric, StdOrdList
 import Data.Maybe, Data.Tuple, Data.Func, System.Time, System.OS, Text, System.FilePath, System.Directory, Text.GenJSON, Data.Error, Data.GenEq
 import Data.Error, System.OSError, System.File
+import iTasks.Internal.IWorld
+import iTasks.WF.Definition
 from iTasks.Internal.IWorld 		import :: IWorld{current}, :: TaskEvalState
 from iTasks.Extensions.DateTime import :: Date{..}, :: Time{..}, :: DateTime(..)
 import qualified Control.Monad as M
@@ -68,3 +70,19 @@ where
 		| isError res = (False,world) //Can't create the directory
 		= create next rest world //Created the directory, continue
 
+(>-=) infixl 1 :: (*env -> *(MaybeError e a, *env)) (a -> *(*env -> (MaybeError e b, *env))) *env -> (MaybeError e b, *env)
+(>-=) a b w
+	# (mca, w) = a w
+	= case mca of
+		Error e = (Error e, w)
+		Ok a = (b a) w
+
+liftIWorld :: (*World -> *(.a, *World)) *IWorld -> *(.a, *IWorld)
+liftIWorld f iworld
+# (a, world) = f iworld.world
+= (a, {iworld & world=world})
+
+apIWTransformer :: *env (*env -> *(MaybeError TaskException (TaskResult a), *env)) -> *(TaskResult a, *env)
+apIWTransformer iw f = case f iw of
+	(Error e, iw) = (ExceptionResult e, iw)
+	(Ok tv, iw) = (tv, iw)

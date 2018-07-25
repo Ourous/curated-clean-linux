@@ -94,3 +94,10 @@ getFileInfo :: !String !*World -> (!MaybeOSError FileInfo, !*World)
 * @param Path to the new file
 */
 moveFile :: !String !String !*World -> (!MaybeOSError (), !*World)
+
+/**
+ * Any unwritten (buffered) data is written to the file.
+ * @param The file to flush
+ * @return operation succeeded
+ */
+fflush :: !*File -> (!Bool, !*File)

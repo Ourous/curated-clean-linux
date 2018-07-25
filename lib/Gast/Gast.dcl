@@ -11,3 +11,5 @@ definition module Gast
 
 import Math.Random, Data.GenEq
 import Gast.Gen, Gast.GenLibTest, Gast.Testable, Gast.StdProperty, Gast.ConfSM
+
+class Gast a | ggen{|*|}, genShow{|*|}, gPrint{|*|} a

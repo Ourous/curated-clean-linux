@@ -4,8 +4,6 @@ import StdFile, StdBool, StdInt, StdClass, StdList, StdMisc, StdArray, StdTuple,
 import Data.Maybe, Data.Functor, Data.Func, Data.Error, System.Time, Text, Data.Tuple
 from StdFunc import seq
 from Data.Map import :: Map (..)
-import qualified System.Process as Process
-from System.Process import :: ProcessIO (..), :: ReadPipe, :: WritePipe
 import System.CommandLine
 import qualified Data.List as DL
 import qualified Data.Map as DM
@@ -26,7 +24,6 @@ import iTasks.SDS.Combinators.Common
 :: *IOTaskInstanceDuringSelect
     = ListenerInstanceDS !ListenerInstanceOpts
     | ConnectionInstanceDS !ConnectionInstanceOpts !*TCP_SChannel
-    | ExternalProcessInstanceDS !ExternalProcessInstanceOpts !ProcessHandle !ProcessIO
     | BackgroundInstanceDS !BackgroundInstanceOpts !BackgroundTask
 
 serve :: ![TaskWrapper] ![(!Int,!ConnectionTask)] ![BackgroundTask] (*IWorld -> (!Maybe Timeout,!*IWorld)) *IWorld -> *IWorld
@@ -111,7 +108,6 @@ toSelectSet [i:is]
     = case i of
         ListenerInstance opts l = (False,[l:ls],rs,[ListenerInstanceDS opts:is])
         ConnectionInstance opts {rChannel,sChannel} = (False,ls,[rChannel:rs],[ConnectionInstanceDS opts sChannel:is])
-        ExternalProcessInstance opts pHandle pIO = (e, ls, rs, [ExternalProcessInstanceDS opts pHandle pIO : is])
         BackgroundInstance opts bt = (e,ls,rs,[BackgroundInstanceDS opts bt:is])
 
 /* Restore the list of main loop instances.
@@ -147,10 +143,6 @@ where
         | otherwise
             # (is,ch) = fromSelectSet` (i+1) numListeners numSeenListeners (numSeenReceivers+1) ls rs [(c,what):ch] is
             = ([ConnectionInstance opts {rChannel=rChannel,sChannel=sChannel}:is],ch)
-    //External process task
-    fromSelectSet` i numListeners numSeenListeners numSeenReceivers ls rs ch [ExternalProcessInstanceDS opts pHandle pIO : is]
-        # (is,ch) = fromSelectSet` (i+1) numListeners numSeenListeners numSeenReceivers ls rs ch is
-        = ([ExternalProcessInstance opts pHandle pIO:is],ch)
     //Background tasks
     fromSelectSet` i numListeners numSeenListeners numSeenReceivers ls rs ch [BackgroundInstanceDS opts bt:is]
         # (is,ch) = fromSelectSet` (i+1) numListeners numSeenListeners numSeenReceivers ls rs ch is
@@ -242,41 +234,6 @@ process i chList iworld=:{ioTasks={done, todo=[ConnectionInstance opts duplexCha
 where
     (ConnectionTask handlers sds) = opts.ConnectionInstanceOpts.connectionTask
 
-process i chList iworld=:{ioTasks={done, todo=[ExternalProcessInstance opts pHandle pIO:todo]}}
-    # iworld = {iworld & ioTasks = {done = done, todo = todo}} 
-    # iworld = processIOTask
-        i chList opts.ExternalProcessInstanceOpts.taskId opts.ExternalProcessInstanceOpts.connectionId
-        False sds externalProcessIOOps onClose onData onShareChange onTick
-        (\(pHandle, pIO) -> ExternalProcessInstance opts pHandle pIO) (pHandle, pIO) iworld
-    = process (i+1) chList iworld
-where
-    (ExternalProcessTask handlers sds) = opts.externalProcessTask
-
-    onData :: !((!ProcessOutChannel, !String)) !Dynamic !Dynamic !*IWorld
-           -> (!MaybeErrorString Dynamic, !Maybe Dynamic, ![String], !Bool, !*IWorld)
-    onData (channel, data) l r iworld
-        # handler = case channel of
-            StdOut = handlers.onOutData
-            StdErr = handlers.onErrData
-        # (mbl, mbw, out, close) = handler data l r
-        = (mbl, mbw, out, close, iworld)
-
-    onShareChange :: !Dynamic !Dynamic !*IWorld
-                  -> (!MaybeErrorString Dynamic, !Maybe Dynamic, ![String], !Bool, !*IWorld)
-    onShareChange l r iworld
-        # (mbl, mbw, out, close) = handlers.ExternalProcessHandlers.onShareChange l r
-        = (mbl, mbw, out, close, iworld)
-
-    // do nothing to external proc tasks
-    onTick :: !Dynamic !Dynamic !*IWorld
-           -> (!MaybeErrorString Dynamic, !Maybe Dynamic, ![String], !Bool, !*IWorld)
-    onTick l r iworld
-        = (Ok l, Nothing, [], False, iworld)
-
-    onClose :: !ExitCode !Dynamic !Dynamic !*IWorld -> (!MaybeErrorString Dynamic, !Maybe Dynamic, !*IWorld)
-    onClose exitCode l r iworld
-        # (mbl, mbw) = handlers.onExit exitCode l r
-        = (mbl, mbw, iworld)
 
 process i chList iworld=:{ioTasks={done,todo=[BackgroundInstance opts bt=:(BackgroundTask eval):todo]}}
     # (mbe,iworld=:{ioTasks={done,todo}}) = eval {iworld & ioTasks = {done=done,todo=todo}}
@@ -285,7 +242,7 @@ process i chList iworld=:{ioTasks={done,todo=[BackgroundInstance opts bt=:(Backg
 process i chList iworld=:{ioTasks={done,todo=[t:todo]}}
     = process (i+1) chList {iworld & ioTasks={done=[t:done],todo=todo}}
 
-// Definitions of IO tasks (tcp connections, external processes, ...)
+// Definitions of IO tasks (tcp connections)
 
 :: IOTaskOperations ioChannels readData closeInfo =
     { readData  :: !(Int [(Int, SelectResult)] *(!ioChannels, !*IWorld) -> *(!IOData readData closeInfo, !ioChannels, !*IWorld))
@@ -322,50 +279,6 @@ where
     closeIO ({rChannel, sChannel}, iworld=:{world})
         # world = closeRChannel rChannel world
         # world = closeChannel  sChannel world
-        = {iworld & world = world} 
-
-:: ProcessOutChannel = StdOut | StdErr
-
-externalProcessIOOps :: IOTaskOperations (!ProcessHandle, !ProcessIO) (!ProcessOutChannel, !String) ExitCode
-externalProcessIOOps = {readData = readData, writeData = writeData, closeIO = closeIO}
-where
-    readData :: !Int
-                ![(Int, SelectResult)]
-                !(!(!ProcessHandle, !ProcessIO), !*IWorld)
-             -> (!IOData (!ProcessOutChannel, !String) ExitCode, !(!ProcessHandle, !ProcessIO), !*IWorld)
-    readData _ _ ((pHandle, pIO), iworld)
-        // try to read StdOut
-        # (mbData, world) = 'Process'.readPipeNonBlocking pIO.stdOut iworld.world
-        = case mbData of
-            Error _ = abort "TODO: handle error"
-            Ok data
-                | data == ""
-                    // try to read StdErr
-                    # (mbData, world) = 'Process'.readPipeNonBlocking pIO.stdErr iworld.world
-                    = case mbData of
-                        Error _ = abort "TODO: handle error"
-                        Ok data
-                            | data == ""
-                                # (mbMbRetCode, world) = 'Process'.checkProcess pHandle world
-                                = case mbMbRetCode of
-                                    Error _ = abort "TODO: handle error"
-                                    Ok Nothing   = (IODNoData,               (pHandle, pIO), {iworld & world = world})
-                                    Ok (Just ec) = (IODClosed (ExitCode ec), (pHandle, pIO), {iworld & world = world})
-                            | otherwise = (IODData (StdErr, data), (pHandle, pIO), {iworld & world = world})
-                | otherwise = (IODData (StdOut, data), (pHandle, pIO), {iworld & world = world})
-
-    writeData :: !String !(!(!ProcessHandle, !ProcessIO), !*IWorld) -> (!(!ProcessHandle, !ProcessIO), !*IWorld)
-    writeData data ((pHandle, pIO), iworld)
-        # (mbErr, world) = 'Process'.writePipe data pIO.stdIn iworld.world
-        = case mbErr of
-            Error e = abort "TODO: handle error"
-            _       = ((pHandle, pIO), {iworld & world = world})
-
-    closeIO :: !(!(!ProcessHandle, !ProcessIO), !*IWorld) -> *IWorld
-    closeIO ((pHandle, pIO), iworld)
-        # (mbErr1, world) = 'Process'.terminateProcess pHandle iworld.world
-        # (mbErr2, world) = 'Process'.closeProcessIO pIO world
-        // TODO: handle errors
         = {iworld & world = world} 
 
 processIOTask :: !Int
@@ -550,29 +463,6 @@ where
         # opts = {ConnectionInstanceOpts|taskId = taskId, connectionId = 0, remoteHost = ip, connectionTask = connectionTask, removeOnClose = False}
         = ConnectionInstance opts channel
 
-addExternalProc :: !TaskId !FilePath ![String] !(Maybe FilePath) !ExternalProcessTask (Maybe 'Process'.ProcessPtyOptions) !IWorld -> (!MaybeError TaskException Dynamic, !*IWorld)
-addExternalProc taskId cmd args dir extProcTask=:(ExternalProcessTask handlers sds) mopts iworld
-    = addIOTask taskId sds init externalProcessIOOps onInitHandler mkIOTaskInstance iworld
-where
-    init :: !*IWorld -> (!MaybeErrorString (!(), (!ProcessHandle, !ProcessIO)), !*IWorld)
-    init iworld
-        # (mbRes, world) = case mopts of
-			Nothing   = 'Process'.runProcessIO cmd args dir iworld.world
-			Just opts = 'Process'.runProcessPty cmd args dir opts iworld.world
-        = case mbRes of
-            Error (_, e) = (Error e,       {iworld & world = world})
-            Ok proc      = (Ok ((), proc), {iworld & world = world})
- 
-    onInitHandler :: !() !Dynamic !*IWorld -> (!MaybeErrorString Dynamic, !Maybe Dynamic, ![String], !Bool, !*IWorld)
-    onInitHandler _ r iworld
-        # (mbl, mbw, out, close) = handlers.ExternalProcessHandlers.onStartup r
-        = (mbl, mbw, out, close, iworld)
-
-    mkIOTaskInstance :: !() !(!ProcessHandle, !ProcessIO) -> *IOTaskInstance
-    mkIOTaskInstance _ (pHandle, pIO)
-        # opts = {ExternalProcessInstanceOpts|taskId = taskId, connectionId = 0, externalProcessTask = extProcTask}
-        = ExternalProcessInstance opts pHandle pIO
-
 addIOTask :: !TaskId
              !(RWShared () Dynamic Dynamic)
              !(*IWorld -> (!MaybeErrorString (!initInfo, !.ioChannels), !*IWorld))
@@ -646,6 +536,3 @@ halt exitCode iworld=:{ioTasks={todo=[ConnectionInstance _ {rChannel,sChannel}:t
     = halt exitCode {iworld & ioTasks = {todo=todo,done=done}}
 halt exitCode iworld=:{ioTasks={todo=[BackgroundInstance _ _ :todo],done},world}
     = halt exitCode {iworld & ioTasks= {todo=todo,done=done}}
-halt exitCode iworld=:{ioTasks={todo=[ExternalProcessInstance _ _ _ :todo],done},world}
-    = halt exitCode {iworld & ioTasks= {todo=todo,done=done}}
-

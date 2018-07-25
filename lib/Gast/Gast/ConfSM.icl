@@ -182,7 +182,7 @@ genLongInput s n spec inputs [r,r2:x]
 genLongInputs :: s (Spec s i o) [i] Int ![Int] -> [[i]]
 genLongInputs s spec inputs n [r:x] = [genLongInput s n spec inputs (genRandInt r): genLongInputs s spec inputs n x]
 
-testConfSM :: [TestOption s i o] (Spec s i o) s (IUTstep .t i o) .t (.t->.t) *d -> (.t,*d)
+testConfSM :: [TestOption s i o] (Spec s i o) s (IUTstep .t i o) .t (.t->.t) *d -> ((.t,[i]),*d)
 			| FileSystem d & gEq{|*|}, gLess{|*|}, genShow{|*|} s & gEq{|*|}, genShow{|*|} o & ggen{|*|}, genShow{|*|} i //& genType{|*|} i
 //			| FileSystem d & ggen{|*|} i & gEq{|*|} s & gEq{|*|} o & genShow{|*|} s & genShow{|*|} i & genShow{|*|} o
 testConfSM opts spec s0 iut t reset world
@@ -191,13 +191,13 @@ testConfSM opts spec s0 iut t reset world
 	# (ok, file, world) = fopen filename FWriteText world
 	| not ok
 		# console = console <<< "Cannot open output file "<<< filename
-		= (t, snd (fclose console world))
+		= ((t, []), snd (fclose console world))
 	# //console	= console <<< ".\n"
 	  ts=:{fileName}		= initState file console
 	# (t,ts)	= handleTestResult (doTest ts iut t reset) iut reset
 	  {mesFile, errFile} = ts
 	#! world = snd (fclose mesFile (snd (fclose errFile world)))
-	= (t, world)
+	= ((t, reverse ts.h_in), world)
 where
 	initState file console
 	 =	handleOptions opts

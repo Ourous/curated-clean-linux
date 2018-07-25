@@ -17,3 +17,8 @@ newWorld
 
 world_to_true :: !*World -> Bool;
 world_to_true w = True
+
+unsafeCoerce :: !.a -> .b
+unsafeCoerce a = code {
+	no_op
+}

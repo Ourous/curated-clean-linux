@@ -11,7 +11,7 @@ derive JSONEncode TonicModule, TonicFunc, TExpr, TPriority, TAssoc, TLit
 
 derive JSONDecode TonicModule, TonicFunc, TExpr, TPriority, TAssoc, TLit
 
-derive gEq TonicModule, TonicFunc, TExpr, TPriority, TAssoc, TLit, Maybe
+derive gEq TonicModule, TonicFunc, TExpr, TPriority, TAssoc, TLit
 
 instance == TonicModule where
   (==) tm1 tm2 =  tm1.tm_name              == tm2.tm_name

@@ -15,14 +15,14 @@ import Gast.GenLibTest
 from Gast.StdProperty import ::Property // for instance of testable
 import Gast.Gen
 from Testing.TestEvents import :: CounterExample, :: FailedAssertion
-from Text.GenJSON import :: JSONNode, generic JSONEncode
+from Text.GenPrint import class PrintOutput, :: PrintState, generic gPrint
 
 //--- basics --//
 
 :: Admin =
 	{ labels                :: ![String]
 	, args                  :: ![String]
-	, argsJSON              :: ![JSONNode]
+	, argsRepresentation    :: ![String]
 	, namePath              :: ![String]
 	, res                   :: !Result
 	, failedAssertions      :: ![(!FailedAssertion, !String, !String)] //* Failed assertion & string representation of args
@@ -38,7 +38,7 @@ instance == Result
 
 prop :: a -> Property | Testable a
 
-class TestArg a | genShow{|*|} a & ggen{|*|} a & JSONEncode{|*|} a
+class TestArg a | genShow{|*|}, ggen{|*|}, gPrint{|*|} a
 class Testable a
 where
 	evaluate :: !a GenState !Admin -> [Admin]
@@ -102,13 +102,13 @@ generateAll :: !GenState -> [a] | ggen{|*|} a //& genType{|*|} a
  * A counter example.
  */
 :: CounterExampleRes =
-	{ maxTests         :: !Int                                    //* Maximal number of tests for run in which counter example is found
-	, nTests           :: !Int                                    //* maxTests MINUS number of test at which counter example is found
-	, nE               :: !Int                                    //* Number of counter example
-	, args             :: ![String]                               //* Arguments used for test (string representation)
-	, argsJSON         :: ![JSONNode]                             //* Arguments used for test (JSON encoding)
-	, name             :: !String                                 //* Name of property
-	, failedAssertions :: ![(!FailedAssertion, !String, !String)] //* Failed assertions leading to counter example & string representation of arguments
+	{ maxTests           :: !Int      //* Maximal number of tests for run in which counter example is found
+	, nTests             :: !Int      //* maxTests MINUS number of test at which counter example is found
+	, nE                 :: !Int      //* Number of counter example
+	, args               :: ![String] //* Arguments used for test (string representation)
+	, argsRepresentation :: ![String] //* Arguments used for test ({{`gPrint`}} encoding)
+	, name               :: !String   //* Name of property
+	, failedAssertions   :: ![(!FailedAssertion, !String, !String)] //* Failed assertions leading to counter example & string representation of arguments
 	}
 
 :: GastEvent

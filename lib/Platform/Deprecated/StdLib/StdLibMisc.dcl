@@ -9,9 +9,11 @@ from StdInt import class +(..), instance + Int, class ~(..), instance ~ Int,
 from StdArray	import class Array (size, usize, select)
 import StdInt
 
-/* a generic map function. Any instance of gMap should apply it's function argument
-   to every element contained in the second argument, e.g. for lists: gMap = map */
-
+/**
+ * A generic {{`map`}} function. Any instance of `gMap` should apply its
+ * function argument to every element contained in the second argument, e.g.
+ * for lists: `gMap = {{map}}`.
+ */
 class gMap c :: (a -> b) !(c a) -> (c b)
 
 instance gMap []
@@ -20,30 +22,37 @@ instance gMap {!}
 
 // some types
 
-::	Time
-	=	{	hours	:: !Int		// hours		(0-23)
-		,	minutes	:: !Int		// minutes		(0-59)
-		,	seconds	:: !Int		// seconds		(0-59)
-		}
-::	Date
-	=	{	year	:: !Int		// year
-		,	month	:: !Int		// month		(1-12)
-		,	day		:: !Int		// day			(1-31)
-		,	dayNr	:: !Int		// day of week
-								// convention:	(1-7, Sunday=1, Saturday=7)
-		}
+:: Time =
+	{ hours   :: !Int //* Hours (0-23)
+	, minutes :: !Int //* Minutes (0-59)
+	, seconds :: !Int //* Seconds (0-59)
+	}
+
+:: Date =
+	{ year  :: !Int //* Year
+	, month :: !Int //* Month (1-12)
+	, day   :: !Int //* Day (1-31)
+	, dayNr :: !Int //* Day of week; convention: (1-7, Sunday=1, Saturday=7)
+	}
 
 // extensions for StdReal
 
+/**
+ * Only not-a-number and the two infinite values are not finite.
+ */
 isFinite :: !Real -> Bool
-	// only not-a-number and the two infinite values are not finite
 
 // extensions for StdInt
 
+/**
+ * When `m==2^n`, this formula rounds `s` up to a multiple of `m`
+ * @type Int Int -> Int
+ */
 roundupToMultiple s m :== (s + (m-1)) bitand (~m)
-	// when m==2^n then this formula rounds s up to a multiple of m
 
 // extensions for StdFunc
 
+/**
+ * Same as {{`seq`}}, but strict.
+ */
 sseq :: ![.(.s -> .s)] !.s -> .s
-	// same as seq, but strict

@@ -10,13 +10,12 @@ import iTasks.Internal.Util
 
 from iTasks.WF.Combinators.Core import :: SharedTaskList
 from iTasks.WF.Combinators.Core import :: ParallelTaskType(..), :: ParallelTask(..)
-from Data.Map as DM				        import qualified newMap, fromList, toList, get, put, del 
+from Data.Map as DM				        import qualified newMap, fromList, toList, get, put, del
 from Data.Queue import :: Queue (..)
 from Data.Queue as DQ					import qualified newQueue, enqueue, dequeue, empty
 from iTasks.Internal.SDS as SDS       import qualified read, write, modify
 from iTasks.SDS.Combinators.Common      import sdsFocus, >+|, mapReadWrite, mapReadWriteError
 from StdFunc import const
-
 import qualified Data.CircularStack as DCS
 from Data.CircularStack import :: CircularStack
 from iTasks.Internal.Tonic.AbsSyn import :: ExprId (..)
@@ -61,14 +60,14 @@ processEvents max iworld
 		= case dequeueEvent iworld of 
 			(Nothing,iworld) = (Ok (),iworld)
 			(Just (instanceNo,event),iworld)
-				= case evalTaskInstance instanceNo event iworld of 
+				= case evalTaskInstance instanceNo event iworld of
 					(Ok taskValue,iworld)
 						= processEvents (max - 1) iworld
 					(Error msg,iworld=:{IWorld|world})
 						= (Ok (),{IWorld|iworld & world = world})
 
 //Evaluate a single task instance
-evalTaskInstance :: !InstanceNo !Event !*IWorld -> (!MaybeErrorString (TaskValue JSONNode),!*IWorld)
+evalTaskInstance :: !InstanceNo !Event !*IWorld -> (!MaybeErrorString (TaskValue DeferredJSON),!*IWorld)
 evalTaskInstance instanceNo event iworld
     # iworld            = mbResetUIState instanceNo event iworld
     # (res,iworld)      = evalTaskInstance` instanceNo event iworld

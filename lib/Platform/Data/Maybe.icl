@@ -10,6 +10,7 @@ from Data.Traversable import class Traversable(traverse)
 import qualified Data.Traversable as T
 import Control.Applicative
 import Control.Monad
+import Data.GenEq
 
 :: Maybe a = Nothing | Just a
 
@@ -95,6 +96,8 @@ where
 	sequenceA f = traverse id f
 	mapM f x = unwrapMonad (traverse (WrapMonad o f) x)
 	sequence x = 'T'.mapM id x
+
+derive gEq Maybe
 
 mapMaybe :: .(.x -> .y) !(Maybe .x) -> Maybe .y
 mapMaybe f (Just x) = Just (f x)

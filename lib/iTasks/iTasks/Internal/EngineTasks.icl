@@ -1,6 +1,10 @@
 implementation module iTasks.Internal.EngineTasks
 
 import StdBool, StdOverloaded, StdList, StdOrdList
+import qualified Data.Map as DM
+import qualified Data.Set as DS
+import Data.List
+import Data.Functor, Data.Func
 import iTasks.Engine
 import iTasks.Internal.IWorld
 import iTasks.WF.Definition
@@ -23,7 +27,7 @@ timeout mt iworld = case read taskEvents iworld of
 	//No events
 	(Ok (Queue [] []),iworld=:{sdsNotifyRequests,world})
 		# (ts, world) = nsTime world
-		= ( minListBy lesser [mt:map (getTimoutFromClock ts) sdsNotifyRequests]
+		= ( minListBy lesser [mt:flatten $ map (getTimeoutFromClock ts) $ 'DM'.elems sdsNotifyRequests]
 		  , {iworld & world = world})
 	(Ok _,iworld)               = (Just 0,iworld)   //There are still events, don't wait
 	(Error _,iworld)            = (Just 500,iworld) //Keep retrying, but not too fast
@@ -32,13 +36,16 @@ where
 	lesser (Just _) Nothing = True
 	lesser Nothing Nothing = False
 	
-	getTimoutFromClock :: Timespec SDSNotifyRequest -> Maybe Int
-	getTimoutFromClock now snr=:{cmpParam=(ts :: ClockParameter Timespec)}
-		| startsWith "$IWorld:timespec$" snr.reqSDSId
-			# fire = iworldTimespecNextFire now snr.reqTimespec ts
-			= Just (max 0 (toMs fire - toMs now))
-		= mt
-	getTimoutFromClock _ _ = mt
+	getTimeoutFromClock :: Timespec (Map SDSNotifyRequest Timespec) -> [Maybe Timeout]
+	getTimeoutFromClock now requests = getTimeoutFromClock` <$> 'DM'.toList requests
+	where
+		getTimeoutFromClock` :: (!SDSNotifyRequest, !Timespec) -> Maybe Timeout
+		getTimeoutFromClock` (snr=:{cmpParam=(ts :: ClockParameter Timespec)}, reqTimespec)
+			| startsWith "$IWorld:timespec$" snr.reqSDSId && ts.interval <> zero
+				# fire = iworldTimespecNextFire now reqTimespec ts
+				= Just (max 0 (toMs fire - toMs now))
+			= mt
+		getTimeoutFromClock` _ = mt
 
 	toMs x = x.tv_sec * 1000 + x.tv_nsec / 1000000
 
