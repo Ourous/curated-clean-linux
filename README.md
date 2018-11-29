@@ -5,7 +5,8 @@ Curated Clean is based off of the nightly Clean builds found at ftp://ftp.cs.ru.
 
 Currently, it is composed of:
 
-	-
+	12 May 2018:
+		lib/Generics
 
 All other contents are from:
 
@@ -13,7 +14,7 @@ All other contents are from:
 
 With these changes made to allow compilation:
 
-	-
+	Specializations for UNIT added to several modules in the Generics library
 
 Below follows Clean's official `README.md`:
 
