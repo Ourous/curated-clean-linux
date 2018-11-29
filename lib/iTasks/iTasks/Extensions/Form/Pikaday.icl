@@ -1,5 +1,5 @@
 implementation module iTasks.Extensions.Form.Pikaday
-import iTasks
+import iTasks, Data.Func
 import iTasks.UI.Definition, iTasks.UI.Editor, iTasks.UI.JS.Interface
 import iTasks.UI.Editor.Modifiers, iTasks.UI.Editor.Controls
 import iTasks.Extensions.DateTime
@@ -10,14 +10,13 @@ PIKADAY_CSS_URL :== "/pikaday/css/pikaday.css"
 MOMENT_JS_URL :== "/momentjs/moment.min.js"
 
 pikadayField :: Editor String
-pikadayField = {Editor|genUI = withClientSideInit initUI genUI, onEdit = onEdit, onRefresh = onRefresh}
+pikadayField = leafEditorToEditor {LeafEditor|genUI = withClientSideInit initUI genUI, onEdit = onEdit, onRefresh = onRefresh, valueFromState = valueFromState}
 where
-	genUI dp value vst=:{VSt|taskId,optional,mode}
-        # val = if (mode =: Enter) JSONNull (JSONString value) 
-		# valid = if (mode =: Enter) optional True //When entering data a value is initially only valid if it is optional
-		# mask = FieldMask {touched = False, valid = valid, state = val}
-        # attr = 'DM'.unions [optionalAttr optional, taskIdAttr taskId, editorIdAttr (editorId dp), valueAttr val]
-		= (Ok (uia UITextField attr, mask),vst)
+	genUI dp mode vst=:{VSt|taskId,optional}
+        # val = editModeValue mode
+		# valAttr = maybe JSONNull JSONString val
+        # attr = 'DM'.unions [optionalAttr optional, taskIdAttr taskId, editorIdAttr (editorId dp), valueAttr valAttr]
+		= (Ok (uia UITextField attr, val),vst)
 
 	initUI me world
 		//Load css
@@ -74,27 +73,24 @@ where
 		# (value,world)     = ((picker .# "toString") .$ "YYYY-MM-DD" ) world
 		# (taskId,world)  = .? (me .# "attributes.taskId") world
 		# (editorId,world)  = .? (me .# "attributes.editorId") world
-		# (_,world) = ((me .# "doEditEvent") .$ (taskId,editorId,value)) world
+		# (_,world) = ((me .# "doEditEvent") .$ (taskId,editorId,Just value)) world
 		= world
 
     onKeyup me world
         # (taskId,world)   = .? (me .# "attributes.taskId") world
 		# (editorId,world) = .? (me .# "attributes.editorId") world
         # (value,world)    = .? (me .# "domEl.value") world
-        # value            = if (jsValToString value == "") jsNull value
-        # (_,world)        = ((me .# "doEditEvent") .$ (taskId, editorId, value)) world
+        # value            = if (jsValToString value == "") Nothing (Just value)
+        # (_,world)        = ((me .# "doEditEvent") .$ (taskId, editorId,value)) world
 		= world
 
-	onEdit dp (tp,e) val mask vst=:{VSt|optional}
-		= case e of
-			JSONNull = (Ok (ChangeUI [SetAttribute "value" JSONNull] [],FieldMask {touched=True,valid=optional,state=JSONNull}),val,vst)
-			json = case fromJSON e of
-				Nothing  = (Ok (NoChange,FieldMask {touched=True,valid=False,state=e}),val,vst)
-				Just val = (Ok (ChangeUI [SetAttribute "value" (JSONString val)] [],FieldMask {touched=True,valid=True,state=JSONString val}),val,vst)
+	onEdit dp (tp,e) _ vst = (Ok (NoChange, e),vst)
 
-	onRefresh dp new old mask vst=:{VSt|mode,optional}
-		| old === new = (Ok (NoChange,mask),new,vst)
-		| otherwise   = (Ok (ChangeUI [SetAttribute "value" (JSONString new)] [],mask),new,vst)
+	onRefresh dp new st vst=:{VSt| optional}
+		| st === Just new = (Ok (NoChange, st), vst)
+		| otherwise       = (Ok (ChangeUI [SetAttribute "value" (JSONString new)] [], (Just new)), vst)
+
+	valueFromState s = s
 
 pikadayDateField :: Editor Date
 pikadayDateField = selectByMode

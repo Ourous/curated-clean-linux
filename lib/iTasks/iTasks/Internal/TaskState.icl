@@ -18,7 +18,6 @@ derive JSONDecode TIMeta, TIValue, TIReduct, TaskTree, ParallelTaskState, Parall
 derive JSONEncode LUI, LUIChanges, LUIEffects, LUIEffectStage, LUINo, Set
 derive JSONDecode LUI, LUIChanges, LUIEffects, LUIEffectStage, LUINo, Set
 
-
 instance toString DeferredJSON where
     toString (DeferredJSON x)        = toString $ toJSON x
     toString (DeferredJSONNode json) = toString json
@@ -45,16 +44,17 @@ gEq{|DeferredJSON|} x y = toJSON x === toJSON y
 gText{|DeferredJSON|} f djson = gText{|*|} f $ toJSON <$> djson
 
 taskIdFromTaskTree :: TaskTree -> MaybeError TaskException TaskId
-taskIdFromTaskTree (TCInit                  taskId _)         = Ok taskId
-taskIdFromTaskTree (TCBasic                 taskId _ _ _)     = Ok taskId
-taskIdFromTaskTree (TCInteract              taskId _ _ _ _)   = Ok taskId
-taskIdFromTaskTree (TCStep                  taskId _ _)       = Ok taskId
-taskIdFromTaskTree (TCParallel              taskId _ _ _)     = Ok taskId
-taskIdFromTaskTree (TCShared                taskId _ _)       = Ok taskId
-taskIdFromTaskTree (TCAttach                taskId _ _ _ _)   = Ok taskId
-taskIdFromTaskTree (TCExposedShared         taskId _ _ _)     = Ok taskId
-taskIdFromTaskTree (TCStable                taskId _ _)       = Ok taskId
-taskIdFromTaskTree (TCLayout                _ tt)             = taskIdFromTaskTree tt
-taskIdFromTaskTree (TCNop)                                    = Error (exception "Unable to obtain TaskId from TaskTree (TCNop)")
-taskIdFromTaskTree (TCDestroy               tt)               = taskIdFromTaskTree tt
+taskIdFromTaskTree (TCInit          taskId _)         = Ok taskId
+taskIdFromTaskTree (TCBasic         taskId _ _ _)     = Ok taskId
+taskIdFromTaskTree (TCInteract      taskId _ _ _ _ _) = Ok taskId
+taskIdFromTaskTree (TCStep          taskId _ _)       = Ok taskId
+taskIdFromTaskTree (TCParallel      taskId _ _ _)     = Ok taskId
+taskIdFromTaskTree (TCShared        taskId _ _)       = Ok taskId
+taskIdFromTaskTree (TCAttach        taskId _ _ _ _)   = Ok taskId
+taskIdFromTaskTree (TCExposedShared taskId _ _ _)     = Ok taskId
+taskIdFromTaskTree (TCStable        taskId _ _)       = Ok taskId
+taskIdFromTaskTree (TCLayout        _ tt)             = taskIdFromTaskTree tt
+taskIdFromTaskTree (TCAttribute     taskId _ _)       = Ok taskId
+taskIdFromTaskTree (TCNop)                            = Error (exception "Unable to obtain TaskId from TaskTree (TCNop)")
+taskIdFromTaskTree (TCDestroy       tt)               = taskIdFromTaskTree tt
 

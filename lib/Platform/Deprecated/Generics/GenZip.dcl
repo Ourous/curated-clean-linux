@@ -1,3 +1,3 @@
 definition module GenZip
 
-import Data.Generics.GenZip
+import Data.GenZip

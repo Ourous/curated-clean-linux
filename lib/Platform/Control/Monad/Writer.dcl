@@ -1,7 +1,7 @@
 definition module Control.Monad.Writer
 
 from Control.Monad import class Monad
-from Control.Applicative import class Applicative
+from Control.Applicative import class pure, class <*>, class Applicative
 from Data.Monoid import class Monoid, class Semigroup
 from Control.Monad.Trans import class MonadTrans
 from Data.Functor import class Functor
@@ -12,7 +12,8 @@ from Data.Functor.Identity import :: Identity
 :: Writer w a :== WriterT w Identity a
 
 instance Functor (WriterT w m) | Monad m & Monoid w
-instance Applicative (WriterT w m) | Monad m & Monoid w
+instance pure (WriterT w m) | pure m & Monoid w
+instance <*> (WriterT w m) | Monad m & Monoid w
 instance Monad (WriterT w m) | Monad m & Monoid w
 
 instance MonadTrans (WriterT w) | Monoid w

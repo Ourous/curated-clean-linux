@@ -30,6 +30,7 @@ class docMembers                d :: !d -> [Maybe ClassMemberDoc]
 class docFields                 d :: !d -> Maybe [Maybe Description]
 class docConstructors           d :: !d -> Maybe [Maybe ConstructorDoc]
 class docRepresentation         d :: !d -> Maybe (Maybe Description)
+
 class docPropertyBootstrap      d :: !d -> Maybe String
 class docPropertyTestWith       d :: !d -> [PropertyVarInstantiation]
 class docPropertyTestGenerators d :: !d -> [PropertyTestGenerator]
@@ -172,6 +173,7 @@ derive gDefault ClassDoc
 	, representation :: !Maybe (Maybe Description)    //* For synonym types
 	, fields         :: !Maybe [Maybe Description]    //* For records
 	, constructors   :: !Maybe [Maybe ConstructorDoc] //* For ADTs
+	, invariants     :: ![Property]                   //* For Gast test generation
 	}
 
 instance docDescription TypeDoc
@@ -251,7 +253,7 @@ parseDoc :: !String -> Either ParseError (!d, ![ParseWarning]) | docBlockToDoc{|
  */
 generic docBlockToDoc d :: !(Either [String] DocBlock) -> Either ParseError (!d, ![ParseWarning])
 
-derive docBlockToDoc UNIT, PAIR, EITHER, CONS, OBJECT, FIELD of d, RECORD
+derive docBlockToDoc UNIT, PAIR, EITHER, CONS, OBJECT, FIELD of {gfd_name}, RECORD
 derive docBlockToDoc String, [], Maybe, Type
 derive docBlockToDoc ModuleDoc, FunctionDoc, ClassMemberDoc, ClassDoc,
 	ConstructorDoc, TypeDoc

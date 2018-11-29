@@ -5,6 +5,7 @@ import iTasks.UI.Layout
 import iTasks.UI.Layout.Common
 import StdBool, StdString, StdArray, Data.List, Data.Maybe, Text.GenJSON
 import qualified Data.Map as DM
+from Data.Foldable import class Foldable (foldr1)
 
 basicFormsSessionLayout :: LayoutRule
 basicFormsSessionLayout = layoutCombinatorContainers

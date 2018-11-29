@@ -2,10 +2,9 @@ definition module iTasks.Internal.Tonic
 
 from iTasks.Internal.SDS import :: Shared, :: ReadWriteShared, :: RWShared
 from iTasks.Internal.IWorld import :: IWorld
-from iTasks.Engine import :: PublishedTask
 from iTasks.Internal.Task import :: TaskEvalOpts, :: TaskResult
 from iTasks.WF.Definition import :: Task, :: InstanceNo, class iTask
-from iTasks.UI.Tune import class tune
+from iTasks.WF.Combinators.Tune import class tune
 from iTasks.SDS.Definition import :: SDS
 
 import iTasks.Internal.Tonic.AbsSyn

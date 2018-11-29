@@ -20,11 +20,6 @@ tmToDateTime :: !Tm -> DateTime
 //Path conversion
 toCanonicalPath	:: !FilePath !*World -> (!FilePath,!*World)
 
-//Recursive delete of files
-recursiveDelete :: FilePath *World -> *(MaybeOSError (), *World)
-//Create a directory and its parent directories
-ensureDir :: FilePath *World -> (!Bool,*World)
-
 //Bind a possibly failing iworld function to another
 (>-=) infixl 1 :: (*env -> *(MaybeError e a, *env)) (a -> *(*env -> (MaybeError e b, *env))) *env -> (MaybeError e b, *env)
 

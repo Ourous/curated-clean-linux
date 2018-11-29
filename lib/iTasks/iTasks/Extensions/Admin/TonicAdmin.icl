@@ -34,7 +34,8 @@ derive gDefault Set
 derive JSONEncode Set
 derive JSONDecode Set
 
-derive JSEncode ActionState, TClickAction, ClickMeta, TonicImageState, BlueprintRef, TonicFunc, TExpr, TPriority, TLit, TAssoc, Maybe
+derive JSEncode ActionState, TClickAction, ClickMeta, TonicImageState, BlueprintRef, TonicFunc, TExpr, TPriority, TLit, TAssoc
+derive JSDecode ActionState, TClickAction, ClickMeta, TonicImageState, BlueprintRef, TonicFunc, TExpr, TPriority, TLit, TAssoc
 
 tonic :: Task ()
 tonic = tonicDashboard []

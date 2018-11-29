@@ -1,6 +1,7 @@
 implementation module TCPStringChannelsInternal
 
 import	StdEnv
+from StdFunc import seq
 import	TCPChannelClass, TCPDef, TCPChannels, TCPEvent
 
 //from tcp import ::Tick,class ChannelEnv (channel_env_get_current_tick)

@@ -1,6 +1,7 @@
 implementation module Data.Array
 
-import StdArray, StdInt, StdOverloaded, StdClass
+import StdArray, StdInt, StdOverloaded, StdClass, StdFunctions
+import Data.Functor, Control.Applicative, Control.Monad
 
 mapArrSt :: !(.a -> .(*st -> *(!.a, !*st))) !*(arr .a) !*st -> *(!*(arr .a), !*st) | Array arr a
 mapArrSt f arr st
@@ -113,3 +114,35 @@ appendArr l r
 
 instance +++ (arr a) | Array arr a where
   (+++) l r = appendArr l r
+
+instance Functor {} where fmap f arr = {f a\\a<-:arr}
+instance Functor {!} where fmap f arr = {f a\\a<-:arr}
+
+instance pure {}
+where
+	pure x = {x}
+
+instance <*> {}
+where
+	(<*>) fs xs = {f x\\f<-:fs, x<-:xs}
+
+instance pure {!}
+where
+	pure x = {!x}
+
+instance <*> {!}
+where
+	(<*>) fs xs = {!f x\\f<-:fs, x<-:xs}
+
+instance Monad {} where bind m k = foldrArr ((+++) o k) {} m
+instance Monad {!} where bind m k = foldrArr ((+++) o k) {} m
+
+reduceArray :: ((.a -> u:(b -> b)) -> .(b -> .(c -> .a))) (.a -> u:(b -> b)) b .(d c) -> b | Array d c
+reduceArray f op e xs 
+	= reduce f 0 (size xs) op e xs
+where
+		reduce f i n op e xs
+		| i == n 
+			= e
+		| otherwise
+			= op (f op e xs.[i]) (reduce f (inc i) n op e xs)

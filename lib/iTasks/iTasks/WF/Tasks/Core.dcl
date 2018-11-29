@@ -85,9 +85,9 @@ instance toString OSException
 * Core interaction task. All other interaction tasks are derived from this one.
 */
 :: InteractionHandlers l r w v = 
-    { onInit    :: !(r -> (l,v))
-    , onEdit    :: !(v l v -> (l, v, Maybe (r -> w)))
-    , onRefresh :: !(r l v -> (l, v, Maybe (r -> w)))
+    { onInit    :: !(r -> (!l, !EditMode v))
+    , onEdit    :: !(v l (Maybe v) -> (!l, !v, !Maybe (r -> w)))
+    , onRefresh :: !(r l (Maybe v) -> (!l, !v, !Maybe (r -> w)))
 	}
 
-interact :: !d !EditMode !(SDS () r w) (InteractionHandlers l r w v) (Editor v) -> Task (l,v) | toPrompt d & iTask l & iTask r & iTask v & TC w
+interact :: !d !(SDS () r w) (InteractionHandlers l r w v) (Editor v) -> Task (l,v) | toPrompt d & iTask l & iTask r & iTask v & TC w

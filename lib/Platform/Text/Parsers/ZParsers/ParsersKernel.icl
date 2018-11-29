@@ -96,9 +96,13 @@ where	(<) (At i)		sp	= case sp of
 instance Functor (Parser s t) where
   fmap f a = f @> a
 
-instance Applicative (Parser s t) where
-  pure a        = yield a
-  (<*>) fab fa  = fab <++> fa
+instance pure (Parser s t)
+where
+	pure a = yield a
+
+instance <*> (Parser s t)
+where
+	(<*>) fab fa  = fab <++> fa
 
 instance Alternative (Parser s t) where
   empty         = fail
@@ -155,11 +159,15 @@ fwdby1 (Bind fc c2gb2a)  gb = Bind fc (l c2gb2a gb)
 (<||>) infixl 4 :: !(Gram f (b -> a)) !(Gram f b) -> Gram f a | Functor f
 (<||>) fb2a fb = fb2a <<||> fb <|> flip ($) <$> fb <<||> fb2a
 
-instance Applicative (Gram f) | Functor f where
-   pure a = Gram [] (Just a)
-   (<*>) (Gram lb2a mb2a) gb =
-     let (Gram lb mb) = gb
-     in  Gram (map (\x -> fwdby2 x gb) lb2a ++ [b2a <$> fb \\ Just b2a <- [mb2a] & fb <- lb]) (mb2a <*> mb)
+instance pure (Gram f)
+where
+	pure a = Gram [] (Just a)
+
+instance <*> (Gram f) | Functor f
+where
+	(<*>) (Gram lb2a mb2a) gb =
+		let (Gram lb mb) = gb
+		in  Gram (map (\x -> fwdby2 x gb) lb2a ++ [b2a <$> fb \\ Just b2a <- [mb2a] & fb <- lb]) (mb2a <*> mb)
 
 fwdby2 (Seq fc2b2a gc)   gb = Seq (uncurry <$> fc2b2a) ((\x y -> (x, y)) <$> gc <*> gb)
 fwdby2 (Bind fc c2gb2a)  gb = Bind fc (l c2gb2a gb)
@@ -188,19 +196,20 @@ mkP (Gram l_a m_a) = foldr (<|>) (maybe empty pure m_a)
   where  mkP_Alt (Seq f_b2a g_b)   = f_b2a <*> mkP g_b
          mkP_Alt (Bind f_b b2g_a)  = f_b >>= (mkP o b2g_a)
 
-sepBy :: !(Gram f a) (f b) -> f a | Monad, Applicative, Alternative, *> f
+sepBy :: !(Gram f a) (f b) -> f a | Monad, *>, Alternative f
 sepBy g sep = mkP (insertSep sep g)
 
-insertSep :: (f b) !(Gram f a) -> Gram f a | Monad, Applicative, Alternative, *> f
+insertSep :: (f b) !(Gram f a) -> Gram f a | Monad, *>, Alternative f
 insertSep sep (Gram na ea) = Gram (map insertSepInAlt na) ea
    where insertSepInAlt (Seq fb2a gb)   = Seq fb2a (prefixSepInGram sep gb)
          insertSepInAlt (Bind fc c2ga)  = Bind fc (insertSep sep o c2ga)
 
-prefixSepInGram :: (f b) (Gram f a) -> Gram f a | Monad, Applicative, Alternative, *> f
+prefixSepInGram :: (f b) (Gram f a) -> Gram f a | Monad, *>, Alternative f
 prefixSepInGram sep (Gram na ne)   = Gram (map (prefixSepInAlt sep) na) ne
 
-prefixSepInAlt :: (f a) (PAlt f b) -> PAlt f b | Monad, Applicative, Alternative, *> f
+prefixSepInAlt :: (f a) (PAlt f b) -> PAlt f b | Monad, *>, Alternative f
 prefixSepInAlt sep (Seq fb2a gb)   = Seq (sep *> fb2a) (prefixSepInGram sep gb)
+prefixSepInAlt _   _               = abort "prefixSepInAlt called on non-Seq\n"
 
 gmList :: !(Gram f a) -> Gram f [a] | Functor f
 gmList p = let pm = ((\x xs -> [x:xs]) <$> p <<||> pm) <|> pure [] in pm
@@ -461,6 +470,7 @@ where	addPath :: (Rose a) [a] -> Rose a | == a
 		addPath rose				 []	   			 = [RoseLeaf:rose]
 		addPath [RoseTwig b bs:rest] [a:as] | a == b = [RoseTwig b (addPath bs as):rest]
 		addPath [e	 		  :rest] as				 = [e:addPath rest as]
+		addPath _ _ = abort "error in toRose\n"
 
 //parse` for internal use only
 

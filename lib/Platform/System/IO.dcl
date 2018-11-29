@@ -1,6 +1,6 @@
 definition module System.IO
 
-from Control.Applicative import class Applicative
+from Control.Applicative import class pure, class <*>, class Applicative
 from Data.Functor import class Functor
 from Control.Monad import class Monad
 from StdOverloaded import class toString
@@ -27,8 +27,9 @@ readFileM :: !String -> IO String
 
 writeFileM :: !String !String -> IO ()
 
-instance Applicative IO
 instance Functor IO
+instance pure IO
+instance <*> IO
 instance Monad IO
 
 unsafePerformIO :: !(*World -> *(.a, !*World)) -> .a

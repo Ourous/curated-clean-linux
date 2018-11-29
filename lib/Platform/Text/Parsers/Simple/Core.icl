@@ -1,12 +1,13 @@
 implementation module Text.Parsers.Simple.Core
 
+import StdEnv
+
 import Control.Applicative
 import Control.Monad
 import Data.Either
 import Data.Func
 import Data.Functor
 import Data.List
-from StdFunc import o, const
 
 :: PCont t a :== [t] -> ([(a, [t])], [Error])
 :: Parser t a = Parser (PCont t a)
@@ -14,9 +15,16 @@ from StdFunc import o, const
 instance Functor (Parser t) where
   fmap f p = pMap f p
 
-instance Applicative (Parser t) where
-  pure x    = pYield x
-  (<*>) l r = ap l r
+instance pure (Parser t)
+where
+	pure x    = pYield x
+
+instance <*> (Parser t)
+where
+	(<*>) l r = ap l r
+
+instance *> (Parser t)
+instance <* (Parser t)
 
 instance Alternative (Parser t) where
   empty     = pFail
@@ -58,6 +66,9 @@ pSatisfy pred = Parser pSatisfy`
   pSatisfy` [token : input]
     | pred token = ([(token, input)], [])
   pSatisfy` _ = ([], [])
+
+pPeek :: Parser t [t]
+pPeek = Parser \input -> ([(input, input)], [])
 
 pMap :: (a -> b) (Parser t a) -> Parser t b
 pMap f p = pure f <*> p

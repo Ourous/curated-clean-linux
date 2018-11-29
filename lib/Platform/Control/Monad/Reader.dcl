@@ -1,6 +1,6 @@
 definition module Control.Monad.Reader
 
-from Control.Applicative import class Applicative
+from Control.Applicative import class pure, class <*>, class Applicative
 from Control.Monad import class Monad
 from Control.Monad.Trans import class MonadTrans
 from Data.Functor import class Functor
@@ -23,7 +23,8 @@ local        :: u:((.a -> .b) -> v:(.(ReaderT .b .c .d) -> .(ReaderT .a .c .d)))
 asks         :: (a -> b) -> ReaderT a c b | Monad c
 
 instance Functor (ReaderT r m) | Monad m
-instance Applicative (ReaderT r m) | Monad m
+instance pure (ReaderT r m) | Monad m
+instance <*> (ReaderT r m) | Monad m
 instance Monad (ReaderT r m) | Monad m
 
 instance MonadTrans (ReaderT r)

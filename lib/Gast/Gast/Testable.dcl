@@ -77,6 +77,7 @@ generateAll :: !GenState -> [a] | ggen{|*|} a //& genType{|*|} a
 	| RandomSeed Int
 	| RandomList [Int]
 	| Skew       Int
+	| Bent
 	| MaxDepth   Int
 	| ArgTypes   [GenType]
 

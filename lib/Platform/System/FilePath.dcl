@@ -1,7 +1,29 @@
 definition module System.FilePath
+
 /**
-* Module for manipulation of file and directory paths
-*/
+ * Module for manipulation of file and directory paths
+ *
+ * @property-bootstrap
+ *   import StdEnv, Text
+ *
+ *   :: GFilePath :== [GFilePathPart]
+ *   :: GFilePathPart = PathSep | ExtSep | Name GName
+ *   :: GName = A | B | C | D
+ *
+ *   derive genShow GFilePathPart, GName
+ *   derive ggen GFilePathPart, GName
+ *   derive gPrint GFilePathPart, GName
+ *
+ * @property-test-generator GFilePath -> FilePath
+ *   gen gfp = concat (map toString gfp)
+ *   where
+ *     toString PathSep  = {pathSeparator}
+ *     toString ExtSep   = {extSeparator}
+ *     toString (Name A) = "a"
+ *     toString (Name B) = "ab"
+ *     toString (Name C) = "abc"
+ *     toString (Name D) = "abcd"
+ */
 
 from Data.Error import :: MaybeError
 from System.OSError import :: OSError, :: OSErrorCode, :: OSErrorMessage, :: MaybeOSError
@@ -29,8 +51,20 @@ extSeparator :: Char
 (</>) infixr 5 :: !FilePath !FilePath -> FilePath
 
 /**
-* Split a FilePath into filename and extension. The result does not include the extension separator (.).
-*/
+ * Split a FilePath into filename and extension. The result does not include the extension separator (.).
+ *
+ * @property no separators in extension: A.fp :: FilePath:
+ *   let
+ *       (fname,ext`) = splitExtension fp
+ *       ext = [c \\ c <-: ext`] in
+ *     not (isMember extSeparator  ext) /\
+ *     not (isMember pathSeparator ext)
+ *
+ * @property identity with addExtension: A.fp :: FilePath:
+ *   let (fname,ext) = splitExtension fp in
+ *     not (endsWith {extSeparator} fname) ==>
+ *       addExtension fname ext =.= fp
+ */
 splitExtension :: !FilePath -> (String, String)
 
 /**

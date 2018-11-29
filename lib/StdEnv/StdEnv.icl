@@ -1,7 +1,7 @@
 implementation	module	StdEnv
 
 // ****************************************************************************************
-//	Concurrent Clean Standard Library Module Version 2.0
-//	Copyright 1995 University of Nijmegen
+//	Concurrent Clean Standard Library Module Version 3.0
+//	Copyright 2018 Radboud University
 // ****************************************************************************************
 

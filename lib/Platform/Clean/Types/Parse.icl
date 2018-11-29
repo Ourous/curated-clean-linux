@@ -2,6 +2,7 @@ implementation module Clean.Types.Parse
 
 from StdFunc import o
 import StdList
+import StdMisc
 import StdString
 import StdTuple
 
@@ -11,21 +12,20 @@ import Data.Either
 import Data.GenEq
 import Data.Maybe
 from Data.Func import $
-from Data.List import instance Functor [], instance Applicative [], instance Alternative []
+from Data.List import instance Functor [], instance pure [], instance <*> [],
+	instance Alternative []
 from Text import class Text(concat), instance Text String
 import Data.Functor
 import Control.Applicative
 import Control.Monad
 from Text.Parsers.Simple.Core import :: Parser, :: Error,
-	instance Functor (Parser t), instance Applicative (Parser t),
-	instance Alternative (Parser t), instance Monad (Parser t),
-	parse, pToken, pSepBy, pList, pSatisfy
+	instance Functor (Parser t), instance pure (Parser t),
+	instance <*> (Parser t), instance Alternative (Parser t),
+	instance Monad (Parser t), parse, pToken, pSepBy, pSepBy1, pList, pSatisfy,
+	pPeek
 
 (|<<) infixl 1 :: !(m a) !(m b) -> m a | Monad m
 (|<<) ma mb = ma >>= \a -> mb >>= \_ -> pure a
-
-derive gEq Token
-instance == Token where == a b = a === b
 
 :: Token
 	= TIdent String            // UpperCaseId or FunnyId
@@ -47,8 +47,34 @@ instance == Token where == a b = a === b
 	| TBrackOpen | TBrackClose // [ ]
 	| TBraceOpen | TBraceClose // { }
 
-isTIdent (TIdent _) = True; isTIdent _ = False
-isTVar   (TVar   _) = True; isTVar   _ = False
+instance == Token
+where
+	== (TIdent a) b = case b of
+		TIdent b -> a == b
+		_        -> False
+	== (TVar a) b = case b of
+		TVar b   -> a == b
+		_        -> False
+	== TArrow      b          = b=:TArrow
+	== TComma      b          = b=:TComma
+	== TStar       b          = b=:TStar
+	== TAnonymous  b          = b=:TAnonymous
+	== TUnboxed    b          = b=:TUnboxed
+	== TStrict     b          = b=:TStrict
+	== TColon      b          = b=:TColon
+	== TUniversalQuantifier b = b=:TUniversalQuantifier
+	== TPipe       b          = b=:TPipe
+	== TAmpersand  b          = b=:TAmpersand
+	== TLtEq       b          = b=:TLtEq
+	== TParenOpen  b          = b=:TParenOpen
+	== TParenClose b          = b=:TParenClose
+	== TBrackOpen  b          = b=:TBrackOpen
+	== TBrackClose b          = b=:TBrackClose
+	== TBraceOpen  b          = b=:TBraceOpen
+	== TBraceClose b          = b=:TBraceClose
+
+isTIdent t = t=:(TIdent _)
+isTVar   t = t=:(TVar _)
 
 tokenize :: ([Char] -> Maybe [Token])
 tokenize = fmap reverse o tkz []
@@ -89,20 +115,21 @@ where
 	isFunny c = isMember c ['~@#$%^?!+-*<>\\/|&=:']
 
 type :: Parser Token Type
-type = liftM3 Func (some argtype) (pToken TArrow >>| type) optContext
-	<|> liftM2 Cons cons (some argtype)
-	<|> liftM2 Type ident (many argtype)
+type =
+	liftM3 Func (some argtype) (pToken TArrow >>| type) optContext
+	<|> addContextAsConstFunction (liftM2 Cons cons  $ some argtype)
+	<|> addContextAsConstFunction (liftM2 Type ident $ many argtype)
 	<|> liftM3 Forall
-		(pToken TUniversalQuantifier >>| some (Var <$> var) |<< pToken TColon)
+		(pToken TUniversalQuantifier >>| some (Var <$> var <|> Uniq <$> uniq (Var <$> var)) |<< pToken TColon)
 		type
 		optContext
-	<|> argtype
+	<|> addContextAsConstFunction argtype
 where
 	argtype :: Parser Token Type
 	argtype = (pList [pToken TParenOpen, pToken TParenClose] $> Type "_Unit" [])
 		<|> parenthised type
 		<|> liftM (\t -> Type t []) ident
-		<|> liftM Uniq uniq
+		<|> liftM Uniq (uniq argtype)
 		<|> liftM (\t -> Type "_#Array" [t]) (braced  (pToken TUnboxed >>| type))
 		<|> liftM (\t -> Type "_!Array" [t]) (braced  (pToken TStrict  >>| type))
 		<|> liftM (\t -> Type "_Array"  [t]) (braced  type)
@@ -113,25 +140,33 @@ where
 		<|> liftM (\t -> Type "_List!"  [t]) (bracked (type |<< pToken TStrict))
 		<|> liftM (\t -> Type "_List"   [t]) (bracked type)
 		<|> liftM (\ts -> Type ("_Tuple" +++ toString (length ts)) ts)
-			(parenthised (pSepBy type (pToken TComma)))
+			(parenthised (pSepBy1 type (pToken TComma)))
 		<|> (pToken TStrict >>| argtype)           // ! ignored for now
 		<|> (pToken TAnonymous >>| argtype)        // . ignored for now
 		<|> (unqvar >>| pToken TColon >>| argtype) // u: & friends ignored for now
 		<|> liftM Var var
 
 	ident :: Parser Token String
-	ident = (\(TIdent id)->id) <$> pSatisfy isTIdent
+	ident = (\tk -> case tk of TIdent id -> id; _ -> abort "error in type parser\n") <$> pSatisfy isTIdent
 
 	var :: Parser Token TypeVar
-	var = (\(TVar var)->var) <$> pSatisfy isTVar
+	var = (\tk -> case tk of TVar id -> id; _ -> abort "error in type parser\n") <$> pSatisfy isTVar
 	cons = var
 	unqvar = var
 
-	uniq :: Parser Token Type
-	uniq = pToken TStar >>| argtype
+	uniq :: (Parser Token Type) -> Parser Token Type
+	uniq parser = pToken TStar >>| parser
 
 	optContext :: Parser Token TypeContext
 	optContext = liftM2 (++) (context <|> pure []) (uniquenessEqualities <|> pure [])
+
+	addContextAsConstFunction :: (Parser Token Type) -> Parser Token Type
+	addContextAsConstFunction parser =
+		parser >>= \t -> pPeek >>= \tks -> case tks of
+			[TPipe:_] ->  (pure [] <|> optContext) >>= \c -> case c of
+				[] -> pure t
+				c  -> pure $ Func [] t c
+			_ -> pure t
 
 	context :: Parser Token TypeContext
 	context = pToken TPipe >>| flatten <$> pSepBy context` (pToken TAmpersand)

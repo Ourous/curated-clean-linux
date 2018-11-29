@@ -29,7 +29,7 @@ import Testing.Options
 derive class iTask InteractiveTest
 
 gText{|UnitTest|} _ _			            = []
-gEditor{|UnitTest|} = emptyEditor 
+gEditor{|UnitTest|} = emptyEditorWithErrorInEnterMode "A unit test cannot be entered."
 JSONEncode{|UnitTest|} _ c	   = [dynamicJSONEncode c]
 JSONDecode{|UnitTest|} _ [c:r] = (dynamicJSONDecode c,r)
 JSONDecode{|UnitTest|} _ r	   = (Nothing,r)
@@ -82,20 +82,20 @@ filterTestsByName :: String [UnitTest] -> [UnitTest]
 filterTestsByName pattern tests = filter (\{UnitTest|name} -> indexOf pattern name >= 0) tests
 
 //UTILITY TASKS
-testEditor :: (Editor a) a EditMode -> Task a | iTask a
-testEditor editor model mode
-	=   (interact "Editor test" mode unitShare {onInit = const ((),model), onEdit = \v l _ -> (l,v,Nothing), onRefresh = \_ l v -> (l,v,Nothing)} editor @ snd
+testEditor :: (Editor a) (EditMode a) -> Task a | iTask a
+testEditor editor mode
+	=   (interact "Editor test" unitShare {onInit = const ((),mode), onEdit = \v l _ -> (l,v,Nothing), onRefresh = \_ l (Just v) -> (l,v,Nothing)} editor @ snd
 	>&> viewSharedInformation "Editor value" [ViewAs (toString o toJSON)] @? tvFromMaybe
 	)  <<@ ApplyLayout (setUIAttributes (directionAttr Horizontal) )
 
-testEditorWithShare :: (Editor a) a EditMode -> Task a | iTask a
-testEditorWithShare editor model mode = (withShared model
+testEditorWithShare :: (Editor a) a Bool -> Task a | iTask a
+testEditorWithShare editor model viewMode = (withShared model
 	\smodel ->
 		updateSharedInformation "Edit the shared source" [] smodel 
 		||-
-	    interact "Editor under test" mode smodel {onInit = \r -> ((),r)
-												 ,onEdit = \v l _ -> (l,v,Just (\_ -> v))
-												 ,onRefresh = \r l v -> (l,r,Nothing)} editor @ snd
+	    interact "Editor under test" smodel {onInit = \r -> ((),if viewMode View Update $ r)
+	                                        ,onEdit = \v l _ -> (l,v,Just (\_ -> v))
+	                                        ,onRefresh = \r l v -> (l,r,Nothing)} editor @ snd
 	) <<@ ApplyLayout (setUIAttributes (directionAttr Horizontal)) 
 
 testCommonInteractions :: String -> Task a | iTask a
@@ -122,7 +122,7 @@ where
 		//Empty the store to make sure that we get a reliable task instance no 1
 		# iworld = emptyStore iworld
 		//Create an instance with autolayouting disabled at the top level
-		# (res,iworld) = createTaskInstance task iworld
+		# (res,iworld) = createTaskInstance task 'DM'.newMap iworld
 		= case res of
 			(Ok (instanceNo,instanceKey))
 				//Apply all events

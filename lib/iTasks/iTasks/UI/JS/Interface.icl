@@ -24,8 +24,9 @@ derive class iTask JSVal, JSObject, JSFunction, JSArray
 :: JSObject   a = JSObject
 :: JSEvent      = JSEvent
 
-instance Applicative JSIO where
+instance pure JSIO where
   pure x     = JSIO (\s -> (x, s))
+instance <*> JSIO where
   (<*>) f g  = liftA2 id f g
 
 instance Functor JSIO where

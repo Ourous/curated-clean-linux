@@ -3,7 +3,7 @@
 
 implementation module Data.Graph.Inductive.Query.BFS
 
-import StdBool, StdFunc
+import StdMisc,StdBool, StdFunc
 import Data.List
 import Data.Maybe
 import Data.Graph.Inductive.Graph
@@ -47,7 +47,7 @@ leveln _          g | isEmptyGraph g = []
 leveln [(v,j):vs] g = case match v g of
                         (Just c,g`)  -> [(v,j):leveln (vs++suci c (j+1)) g`]
                         (Nothing,g`) -> leveln vs g`
-
+leveln _ _ = abort "Shouldn't happen"
 
 // bfe (breadth first edges)
 // remembers predecessor information
@@ -90,16 +90,16 @@ bft :: Node (gr a b) -> RTree | Graph gr
 bft v g = bf (queuePut [v] mkQueue) g
 
 bf :: (Queue Path) (gr a b) -> RTree | Graph gr
-bf q g | queueEmpty q || isEmptyGraph g = []
-       | otherwise                      =
-       let (p=:[v:_],q`) = queueGet q in
-       case match v g of
-         (Just c, g`)  -> [p:bf (queuePutList (map (\x -> [x:p]) (suc` c)) q`) g`]
-         (Nothing, g`) -> bf q` g`
+bf q g
+| queueEmpty q || isEmptyGraph g = []
+= case queueGet q of
+	(p=:[v:_],q`) = case match v g of
+		(Just c, g`)  = [p:bf (queuePutList (map (\x -> [x:p]) (suc` c)) q`) g`]
+		(Nothing, g`) = bf q` g`
+	(_,_) = abort "shouldn't happen"
 
 esp :: Node Node (gr a b) -> Path | Graph gr
 esp s t g = (getPath t o bft s) g
-
 
 // lesp is a version of esp that returns labeled paths
 // Note that the label of the first node in a returned path is meaningless;
@@ -112,13 +112,14 @@ lbft v g = case out g v of
 
 
 lbf :: (Queue (LPath b)) (gr a b) -> LRTree b | Graph gr
-lbf q g | queueEmpty q || isEmptyGraph g = []
-        | otherwise                      =
-       let (LP (p=:[(v,_):_]),q`) = queueGet q in
-       case match v g of
-         (Just c, g`) ->
-             [LP p:lbf (queuePutList (map (\v` -> LP [v`:p]) (lsuc` c)) q`) g`]
-         (Nothing, g`) -> lbf q` g`
+lbf q g
+| queueEmpty q || isEmptyGraph g = []
+= case queueGet q of
+	(LP (p=:[(v,_):_]),q`) = case match v g of
+		(Just c, g`) =
+			[LP p:lbf (queuePutList (map (\v` -> LP [v`:p]) (lsuc` c)) q`) g`]
+		(Nothing, g`) = lbf q` g`
+	_ = abort "Shouldn't happen"
 
 lesp :: Node Node (gr a b) -> LPath b | Graph gr
 lesp s t g = (getLPath t o lbft s) g

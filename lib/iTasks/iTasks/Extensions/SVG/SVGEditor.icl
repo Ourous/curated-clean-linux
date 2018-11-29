@@ -4,12 +4,12 @@ import Graphics.Scalable.Internal.Image`
 import iTasks.UI.Definition, iTasks.UI.Editor, iTasks.UI.JS.Encoding
 import StdArray, StdBool, StdEnum, StdInt, StdMisc, StdReal, StdTuple
 from StdFunc import o
-from Data.GenEq import generic gEq
-import Data.List
+import Data.List, Data.GenEq, Data.Func
 import Data.Error
 import Data.MapCollection
+from Data.Foldable import class Foldable (foldr`)
 from Data.Map import :: Map, instance Functor (Map k)
-from Data.Set import :: Set, instance == (Set a), instance < (Set a)
+from Data.Set import :: Set, instance == (Set a), instance < (Set a), instance Foldable Set
 import qualified Data.Map as DM
 import qualified Data.Set as DS
 import Text
@@ -50,20 +50,22 @@ svgns =: "http://www.w3.org/2000/svg"
 
 derive gEq MousePos
 
-fromSVGEditor :: (SVGEditor s v) -> Editor s | iTask s & JSEncode{|*|} s
-fromSVGEditor svglet
-  = { Editor
-    | genUI     = withClientSideInit initUI genUI
-    , onEdit    = onEdit
-    , onRefresh = onRefresh
+fromSVGEditor :: (SVGEditor s v) -> Editor s
+               | gEq{|*|}, JSONEncode{|*|}, JSONDecode{|*|}, JSEncode{|*|}, JSDecode{|*|} s
+fromSVGEditor svglet = leafEditorToEditor
+    { LeafEditor
+    | genUI          = withClientSideInit initUI genUI
+    , onEdit         = onEdit
+    , onRefresh      = onRefresh
+	, valueFromState = valueFromState
     }
 where
 	initUI :: !(JSObj ()) !*JSWorld -> *JSWorld
 	initUI me world
-// Set attributes
-    # world                       = (me .# "clickCount" .= (toJSVal 0)) world
+	// Set attributes
+	# world                       = (me .# "clickCount" .= (toJSVal 0)) world
 	# world                       = jsPutCleanVal "dragState" initDragState me world
-// Set methods	
+	// Set methods
 	# (jsOnAttributeChange,world) = jsWrapFun (onAttributeChange me) world
 	# world                       = (me .# "onAttributeChange" .= jsOnAttributeChange) world
 	# (jsInitDOMEl,world)         = jsWrapFun (initDOMEl me) world
@@ -91,20 +93,22 @@ where
 			| otherwise
 				= (jsNull,jsTrace "Unknown attribute change" world)
 
-	genUI :: !DataPath !s !*VSt -> *(!MaybeErrorString (!UI,!EditMask), !*VSt) | iTask s & JSEncode{|*|} s
-	genUI dp val world
-		# attr = 'DM'.unions [sizeAttr FlexSize FlexSize, valueAttr (encodeOnServer val)]
-		= (Ok (uia UIComponent attr,newFieldMask), world)
+	genUI :: !DataPath !(EditMode s) !*VSt -> *(!MaybeErrorString (!UI, !s), !*VSt) | JSEncode{|*|} s
+	genUI dp mode vst = case editModeValue mode of
+		Nothing = (Error "SVG editors cannot be used in enter mode.", vst)
+		Just val
+			# attr = 'DM'.unions [sizeAttr FlexSize FlexSize, valueAttr $ encodeOnServer val]
+			= (Ok (uia UIComponent attr, val), vst)
 
-  	onEdit :: !DataPath !(!DataPath,!JSONNode) !s !EditMask !*VSt -> (!MaybeErrorString (!UIChange,!EditMask), !s, !*VSt) | iTask s & JSEncode{|*|} s
-  	onEdit _ (_,json) st m vst 
-		= case fromJSON json of 	
-			Just nst = (Ok (NoChange,m),nst,vst)
-			Nothing  = (Ok (NoChange,m),st, vst)
+	onEdit :: !DataPath !(!DataPath, !s) !s !*VSt -> (!MaybeErrorString (!UIChange, !s), !*VSt)
+	onEdit _ (_, st) _ vst  = (Ok (NoChange, st), vst)
 	
-  	onRefresh :: !DataPath !s !s !EditMask !*VSt -> (!MaybeErrorString (!UIChange,!EditMask), !s, !*VSt) | iTask s & JSEncode{|*|} s
-  	onRefresh _ new old mask vst 
-		= (Ok (if (gEq{|*|} old new) NoChange (ChangeUI [SetAttribute "stateChange" (encodeOnServer new)] []),mask),new,vst)
+	onRefresh :: !DataPath !s !s !*VSt -> (!MaybeErrorString (!UIChange, !s), !*VSt) | gEq{|*|}, JSEncode{|*|} s
+	onRefresh _ new old vst
+		= (Ok (if (old === new) NoChange (ChangeUI [SetAttribute "stateChange" $ encodeOnServer new] []), new), vst)
+
+	valueFromState :: !s -> *Maybe s
+	valueFromState s = Just s
 
 imgTagSource :: !String -> *TagSource
 imgTagSource cid
@@ -226,7 +230,7 @@ where
                        , ("x", "-10000")
                        , ("y", "-10000")
                        ]
-	  #! world       = strictFoldl (\world args -> snd ((elem `setAttribute` args) world)) world fontAttrs
+	  #! world       = foldl (\world args -> snd ((elem `setAttribute` args) world)) world fontAttrs
 	  #! (fd, world) = calcFontDescent elem fontdef.fontysize world
 	  = ('DM'.put fontdef fd font_spans, world)
 	
@@ -262,8 +266,8 @@ where
                        , ("x", "-10000")
                        , ("y", "-10000")
                        ]
-	  #! world       = strictFoldl (\world args -> snd ((elem `setAttribute` args) world)) world fontAttrs
-	  #! (ws, world) = 'DS'.fold (calcTextLength elem) ('DM'.newMap, world) strs
+	  #! world       = foldl (\world args -> snd ((elem `setAttribute` args) world)) world fontAttrs
+	  #! (ws, world) = foldr` (calcTextLength elem) ('DM'.newMap, world) strs
 	  = ('DM'.alter (merge ws) fontdef text_spans, world)
 	where
 		merge :: !(Map String TextSpan) !(Maybe (Map String TextSpan)) -> Maybe (Map String TextSpan)

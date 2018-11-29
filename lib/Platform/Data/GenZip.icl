@@ -34,8 +34,8 @@ gMaybeZip{|EITHER|} fl fr (LEFT x) (LEFT y) 	= mapMaybe LEFT (fl x y)
 gMaybeZip{|EITHER|} fl fr (RIGHT x) (RIGHT y)  	= mapMaybe RIGHT (fr x y)
 gMaybeZip{|EITHER|} fl fr _ _   				= Nothing
 gMaybeZip{|CONS|} f (CONS x) (CONS y) 			= mapMaybe CONS (f x y)
-gMaybeZip{|FIELD|} f (FIELD x) (FIELD y) 		= mapMaybe FIELD (f x y)
-gMaybeZip{|OBJECT|} f (OBJECT x) (OBJECT y) 	= mapMaybe OBJECT (f x y)
+gMaybeZip{|FIELD|} f (FIELD x) (FIELD y) 		= mapMaybe (\x -> FIELD x) (f x y)
+gMaybeZip{|OBJECT|} f (OBJECT x) (OBJECT y) 	= mapMaybe (\x -> OBJECT x) (f x y)
 derive gMaybeZip [], (,), (,,),  (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,)
 
 zipMaybe :: .(.a -> .(.b -> .c)) !(Maybe .a) (Maybe .b) -> (Maybe .c)

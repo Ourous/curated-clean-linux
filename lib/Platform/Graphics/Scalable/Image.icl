@@ -1,6 +1,7 @@
 implementation module Graphics.Scalable.Image
 
 from StdList      import repeat
+import StdMisc
 from Data.Maybe   import :: Maybe (..), instance Functor Maybe, maybeToList
 from Data.Functor import class Functor (..)
 import Graphics.Scalable.Internal.Image`
@@ -165,3 +166,4 @@ tag t image = Tag` t image
 tagWithSrc :: !*TagSource !(Image m) -> *(!(!Image m, !ImageTag), !*TagSource)
 tagWithSrc [(nut, t) : tsrc] image
   = ((Tag` t image, nut), tsrc)
+tagWithSrc _ _ = abort "empty TagSource in tagWithSrc\n"

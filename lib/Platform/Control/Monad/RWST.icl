@@ -14,9 +14,13 @@ import Control.Applicative
 instance Functor (RWST r w s m) | Monad m & Monoid w where
   fmap f m = liftM f m
 
-instance Applicative (RWST r w s m) | Monad m & Monoid w where
-  pure a = RWST (\_ s -> pure (a, s, mempty))
-  (<*>) mf mx = ap mf mx
+instance pure (RWST r w s m) | pure m & Monoid w
+where
+	pure a = RWST \_ s -> pure (a,s,mempty)
+
+instance <*> (RWST r w s m) | Monad m & Monoid w
+where
+	(<*>) mf mx = ap mf mx
 
 instance Monad (RWST r w s m) | Monad m & Monoid w where
   bind m k

@@ -3,77 +3,107 @@ implementation module iTasks.Engine
 import StdMisc, StdArray, StdList, StdOrdList, StdTuple, StdChar, StdFile, StdBool, StdEnum
 import iTasks.WF.Combinators.Common
 import iTasks.WF.Tasks.System
+
+import StdInt, StdChar, StdString
 from StdFunc import o, seqList, ::St, const, id
+
+import tcp
+import Internet.HTTP, System.GetOpt, Data.Func, Data.Functor
+
 from Data.Map import :: Map
 from Data.Queue import :: Queue(..)
+from Data.Set import :: Set, newSet
+
 import qualified Data.Map as DM
+from System.OS import IF_POSIX_OR_WINDOWS, OS_NEWLINE
+
 import Data.List, Data.Error, Data.Func, Data.Tuple, Math.Random, Text 
 import System.Time, System.CommandLine, System.Environment, System.OSError, System.File, System.FilePath, System.Directory
+
 import iTasks.Internal.Util, iTasks.Internal.HtmlUtil
 import iTasks.Internal.IWorld, iTasks.Internal.WebService, iTasks.Internal.SDSService
 import qualified iTasks.Internal.SDS as SDS
 import iTasks.UI.Layout, iTasks.UI.Layout.Default
 
+from iTasks.WF.Tasks.SDS import get
 from iTasks.WF.Combinators.Tune import class tune(..), instance tune ApplyLayout Task, :: ApplyLayout(..)
 from iTasks.SDS.Combinators.Common import sdsFocus
-
-import StdInt, StdChar, StdString
-import tcp
-import Internet.HTTP, System.Time, System.CommandLine, Data.Func
+from iTasks.SDS.Sources.System import applicationOptions
 
 import iTasks.Internal.IWorld, iTasks.Internal.TaskEval, iTasks.Internal.TaskStore
 import iTasks.Internal.Util
 import iTasks.Internal.TaskServer
 import iTasks.Internal.EngineTasks
 
-from iTasks.Extensions.DateTime import toDate, toTime, instance == Date, instance == Time
-
-from Data.Set import :: Set, newSet
 from Sapl.Linker.LazyLinker import generateLoaderState, :: LoaderStateExt
 from Sapl.Linker.SaplLinkerShared import :: SkipSet
 from Sapl.Target.Flavour import :: Flavour, toFlavour
 
-from System.OS import IF_POSIX_OR_WINDOWS
-import System.GetOpt
-import Data.Functor
-
 MAX_EVENTS 		        :== 5
 
-defaultEngineOptions :: !*World -> (!EngineOptions,!*World)
-defaultEngineOptions world
-	# (appPath,world)    = determineAppPath world	
-	# (appVersion,world) = determineAppVersion appPath world
-	# appDir             = takeDirectory appPath
-	# appName            = (dropExtension o dropDirectory) appPath
-	# options =	
-		{ appName			= appName
-		, appPath			= appPath
-        , appVersion        = appVersion
-		, serverPort		= IF_POSIX_OR_WINDOWS 8080 80
-        , serverUrl         = "http://localhost/"
-		, keepaliveTime     = {tv_sec=300,tv_nsec=0} // 5 minutes
-		, sessionTime       = {tv_sec=60,tv_nsec=0}  // 1 minute, (the client pings every 10 seconds by default)
-        , persistTasks      = False
-		, autoLayout        = True
-		, timeout			= Just 500
-		, webDirPath 		= appDir </> appName +++ "-www"
-		, storeDirPath      = appDir </> appName +++ "-data" </> "stores"
-		, tempDirPath       = appDir </> appName +++ "-data" </> "tmp"
-		, saplDirPath 	    = appDir </> appName +++ "-sapl"
-		}
-	= (options,world)
+derive class iTask EngineOptions
 
-defaultEngineCLIOptions :: [String] EngineOptions -> (!Maybe EngineOptions,![String])
+doTasks :: a !*World -> *World | Startable a
+doTasks startable world = doTasksWithOptions defaultEngineCLIOptions startable world
+
+doTasksWithOptions :: ([String] EngineOptions -> MaybeError [String] EngineOptions) a !*World -> *World | Startable a
+doTasksWithOptions initFun startable world
+	# (cli,world)			= getCommandLine world
+	# (options,world)       = defaultEngineOptions world
+	# mbOptions             = initFun cli options
+	| mbOptions =:(Error _) = show (fromError mbOptions) world
+	# options               = fromOk mbOptions
+	# iworld				= createIWorld options world
+	# (res,iworld) 			= initJSCompilerState iworld
+	| res =:(Error _) 		= show ["Fatal error: " +++ fromError res] (destroyIWorld iworld)
+	# iworld				= serve startupTasks (tcpTasks options.serverPort options.keepaliveTime)
+	                                engineTasks (timeout options.timeout) iworld
+	= destroyIWorld iworld
+where
+    webTasks = [t \\ WebTask t <- toStartable startable]
+	startupTasks = [t \\ StartupTask t <- toStartable startable]
+	hasWebTasks = not (webTasks =: [])
+
+	//Only run a webserver if there are tasks that are started through the web
+	tcpTasks serverPort keepaliveTime
+		| webTasks =: [] = []
+		| otherwise
+			= [(serverPort,httpServer serverPort keepaliveTime (engineWebService webTasks) taskOutput)]
+	
+	engineTasks =
+ 		[BackgroundTask updateClock
+		,BackgroundTask (processEvents MAX_EVENTS)
+		:if (webTasks =: [])
+			[BackgroundTask stopOnStable]
+			[BackgroundTask removeOutdatedSessions
+		 	,BackgroundTask flushWritesWhenIdle
+			]
+		]
+
+	// The iTasks engine consist of a set of HTTP Web services
+	engineWebService :: [WebTask] -> [WebService (Map InstanceNo TaskOutput) (Map InstanceNo TaskOutput)] 
+	engineWebService webtasks =
+		[taskUIService webtasks
+		,documentService
+		,sdsService
+		,staticResourceService [path \\ {WebTask|path} <- webtasks]
+		]
+
+	show :: ![String] !*World -> *World
+	show lines world
+		# (console,world)	= stdio world
+		# console			= seqSt (\s c -> fwrites (s +++ OS_NEWLINE) c) lines console
+		# (_,world)			= fclose console world
+		= world
+
+defaultEngineCLIOptions :: [String] EngineOptions -> MaybeError [String] EngineOptions 
 defaultEngineCLIOptions [argv0:argv] defaults
 	# (settings, positionals, errs) = getOpt Permute opts argv
-	| not (errs =: []) = (Nothing, errs)
-	| not (positionals =: []) = (Nothing, ["Positional arguments not allowed"])
+	| not (errs =: []) = Error errs
+	| not (positionals =: []) = Error ["Positional arguments not allowed"]
 	= case foldl (o) id settings (Just defaults) of
-		Nothing = (Nothing, [usageInfo ("Usage " +++ argv0 +++ "[OPTIONS]") opts])
-		Just settings = (Just settings,
-			["*** " +++ settings.appName +++ " HTTP server ***"
-			,""
-			,"Running at http://localhost" +++ if (settings.serverPort == 80) "/" (":" +++ toString settings.serverPort +++ "/")])
+		Nothing = (Error [usageInfo ("Usage " +++ argv0 +++ "[OPTIONS]") opts])
+		Just settings = Ok settings
 where
 	opts :: [OptDescr ((Maybe EngineOptions) -> Maybe EngineOptions)]
 	opts =
@@ -105,92 +135,84 @@ where
 			("Specify the folder containing the sapl files\ndefault: " +++ defaults.saplDirPath)
 		]
 
-startEngine :: a !*World -> *World | Publishable a
-startEngine publishable world = startEngineWithOptions defaultEngineCLIOptions publishable world
+onStartup :: (Task a) -> StartableTask | iTask a
+onStartup task = StartupTask {StartupTask|attributes = defaultValue, task = TaskWrapper task}
 
-startEngineWithOptions :: ([String] EngineOptions -> (!Maybe EngineOptions,![String])) a !*World -> *World | Publishable a
-startEngineWithOptions initFun publishable world
-	# (cli,world)			= getCommandLine world
-	# (options,world)       = defaultEngineOptions world
-	# (mbOptions,msg)       = initFun cli options
-	# world                 = show msg world
-	= case mbOptions of
-		Nothing = world
-		Just options
- 			# iworld				= createIWorld (fromJust mbOptions) world
- 			# (res,iworld) 			= initJSCompilerState iworld
-		 	| res =:(Error _) 		= show ["Fatal error: " +++ fromError res] (destroyIWorld iworld)
-			# iworld				= serve [] (tcpTasks options.serverPort options.keepaliveTime) engineTasks (timeout options.timeout) iworld
-			= destroyIWorld iworld
+onRequest :: String (Task a) -> StartableTask | iTask a
+onRequest path task = WebTask {WebTask|path = path, task = WebTaskWrapper (const task)}
+
+onStartupWithAttributes :: (Task a) TaskAttributes -> StartableTask | iTask a
+onStartupWithAttributes task attributes = StartupTask {StartupTask|attributes = attributes, task = TaskWrapper task}
+
+onRequestFromRequest :: String (HTTPRequest -> Task a) -> StartableTask | iTask a
+onRequestFromRequest path task = WebTask {WebTask|path = path, task = WebTaskWrapper task}
+
+class Startable a
 where
-	tcpTasks serverPort keepaliveTime = [(serverPort,httpServer serverPort keepaliveTime (engineWebService publishable) taskOutput)]
-	engineTasks =
- 		[BackgroundTask updateClock
-		,BackgroundTask (processEvents MAX_EVENTS)
-		,BackgroundTask removeOutdatedSessions
-		,BackgroundTask flushWritesWhenIdle]
+	toStartable :: !a -> [StartableTask]
 
-runTasks :: a !*World -> *World | Runnable a
-runTasks tasks world = runTasksWithOptions (\c o -> (Just o,[])) tasks world
-
-runTasksWithOptions :: ([String] EngineOptions -> (!Maybe EngineOptions,![String])) a !*World -> *World | Runnable a
-runTasksWithOptions initFun runnable world
-	# (cli,world)			= getCommandLine world
-	# (options,world)       = defaultEngineOptions world
-	# (mbOptions,msg)       = initFun cli options
-	# world                 = show msg world
-	| mbOptions =: Nothing  = world
-	# (Just options)		= mbOptions
- 	# iworld				= createIWorld options world
- 	# (res,iworld) 			= initJSCompilerState iworld
- 	| res =:(Error _) 		= show ["Fatal error: " +++ fromError res] (destroyIWorld iworld)
-	# iworld				= serve (toRunnable runnable) [] systemTasks (timeout options.timeout) iworld
-	= destroyIWorld iworld
+instance Startable (Task a) | iTask a //Default as web task
 where
-	systemTasks =
- 		[BackgroundTask updateClock
-		,BackgroundTask (processEvents MAX_EVENTS)
-		,BackgroundTask stopOnStable]
+	toStartable task =
+		[onStartup viewWebServerInstructions
+		,onRequest "/" task
+		]
 
-show :: ![String] !*World -> *World
-show lines world
-	# (console,world)	= stdio world
-	# console			= seqSt (\s c -> fwrites (s +++ "\n") c) lines console
-	# (_,world)			= fclose console world
-	= world
-
-// The iTasks engine consist of a set of HTTP WebService 
-engineWebService :: publish -> [WebService (Map InstanceNo TaskOutput) (Map InstanceNo TaskOutput)] | Publishable publish
-engineWebService publishable = [taskUIService published, documentService, sdsService, staticResourceService [url \\ {PublishedTask|url} <- published]]
+instance Startable (HTTPRequest -> Task a) | iTask a //As web task
 where
-	published = publishAll publishable 
+	toStartable task =
+		[onStartup viewWebServerInstructions
+		,onRequestFromRequest "/" task
+		]
 
-publish :: String (HTTPRequest -> Task a) -> PublishedTask | iTask a
-publish url task = {url = url, task = WebTaskWrapper task}
+instance Startable StartableTask
+where
+	toStartable task = [task]
 
-instance Publishable (Task a) | iTask a
+instance Startable [StartableTask]
 where
-	publishAll task = [publish "/" (const task)]
+	toStartable list = list
 
-instance Publishable (HTTPRequest -> Task a) | iTask a
+instance Startable (a,b) | Startable a & Startable b
 where
-	publishAll task = [publish "/" task]
-	
-instance Publishable [PublishedTask]
-where
-	publishAll list = list
+	toStartable (x,y) = toStartable x ++ toStartable y
 
-class Runnable a
-where
-	toRunnable :: !a -> [TaskWrapper] 
+viewWebServerInstructions :: Task String
+viewWebServerInstructions
+	=   get applicationOptions
+	>>- \{EngineOptions|appName,serverPort} ->
+			traceValue (join OS_NEWLINE
+				["*** " +++ appName +++ " HTTP server ***"
+				,""
+				,"Running at http://localhost" +++
+					if (serverPort == 80)
+						"/"
+						(":" +++ toString serverPort +++ "/")
+				])
 
-instance Runnable (Task a) | iTask a
-where
-	toRunnable task = [TaskWrapper task]
-
-instance Runnable [TaskWrapper]
-where
-	toRunnable list = list
+defaultEngineOptions :: !*World -> (!EngineOptions,!*World)
+defaultEngineOptions world
+	# (appPath,world)    = determineAppPath world	
+	# (appVersion,world) = determineAppVersion appPath world
+	# appDir             = takeDirectory appPath
+	# appName            = (dropExtension o dropDirectory) appPath
+	# options =	
+		{ appName			= appName
+		, appPath			= appPath
+        , appVersion        = appVersion
+		, serverPort		= IF_POSIX_OR_WINDOWS 8080 80
+        , serverUrl         = "http://localhost/"
+		, keepaliveTime     = {tv_sec=300,tv_nsec=0} // 5 minutes
+		, sessionTime       = {tv_sec=60,tv_nsec=0}  // 1 minute, (the client pings every 10 seconds by default)
+        , persistTasks      = False
+		, autoLayout        = True
+		, timeout			= Just 500
+		, webDirPath 		= appDir </> appName +++ "-www"
+		, storeDirPath      = appDir </> appName +++ "-data" </> "stores"
+		, tempDirPath       = appDir </> appName +++ "-data" </> "tmp"
+		, saplDirPath 	    = appDir </> appName +++ "-sapl"
+		}
+	= (options,world)
 
 // Determines the server executables path
 determineAppPath :: !*World -> (!FilePath, !*World)

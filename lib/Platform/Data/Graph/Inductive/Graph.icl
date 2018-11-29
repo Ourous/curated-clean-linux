@@ -4,9 +4,9 @@ implementation module Data.Graph.Inductive.Graph
 
 import Control.Arrow
 //import           Data.Function (on)
-import qualified Data.IntSet as IntSet
+import qualified Data.IntSet
 //import           Data.List     (delete, foldl, groupBy, sort, sortBy, (\\))
-import qualified Data.List as DL
+import qualified Data.List
 //import           Data.Maybe    (fromMaybe, isJust)
 //import Data.Monoid (mappend)
 import StdBool, StdTuple, StdFunc, StdMisc, StdEnum, StdString, StdOverloaded, StdClass
@@ -37,10 +37,10 @@ instance < (LPath a) | gLexOrd{|*|} a where
 // and the remaining 'Graph'.
 defMatchAny  :: (gr a b) -> GDecomp gr a b | Graph gr
 defMatchAny g = case labNodes g of
-                  []        -> abort "Match Exception, Empty Graph"
-                  [(v,_):_] -> (c,g`)
-                    where
-                      (Just c,g`) = match v g
+	[] = abort "Match Exception, Empty Graph"
+	[(v,_):_] = case match v g of
+		(Just c,g`) = (c, g`)
+		_ = abort "Shouldn't happen"
 
 // | The number of 'Node's in a 'Graph'.
 defNoNodes   :: (gr a b) -> Int | Graph gr
@@ -169,7 +169,7 @@ delEdge (v,w) g = case match v g of
 //   will only delete the /first/ such edge.  To delete all such
 //   edges, please use 'delAllLedge'.
 delLEdge :: (LEdge b) (gr a b) -> gr a b | DynGraph gr & Eq b
-delLEdge e g = delLEdgeBy 'DL'.delete e g
+delLEdge e g = delLEdgeBy 'Data.List'.delete e g
 
 // | Remove all edges equal to the one specified.
 delAllLEdge :: (LEdge b) (gr a b) -> gr a b | DynGraph gr & Eq b
@@ -232,8 +232,8 @@ labfilter f gr = labnfilter (f o snd) gr
 
 // | Returns the subgraph induced by the supplied nodes.
 subgraph :: [Node] (gr a b) -> gr a b | DynGraph gr
-subgraph vs gr = let vs` = 'IntSet'.fromList vs
-              in nfilter (\x -> 'IntSet'.member x vs`) gr
+subgraph vs gr = let vs` = 'Data.IntSet'.fromList vs
+              in nfilter (\x -> 'Data.IntSet'.member x vs`) gr
 
 // | Find the context for the given 'Node'.  Causes an error if the 'Node' is
 // not present in the 'Graph'.
@@ -348,19 +348,19 @@ deg` (p,_,_,s) = length p+length s
 
 // | Checks if there is a directed edge between two nodes.
 hasEdge :: (gr a b) Edge -> Bool | Graph gr
-hasEdge gr (v,w) = 'DL'.elem w (suc gr v)
+hasEdge gr (v,w) = 'Data.List'.elem w (suc gr v)
 
 // | Checks if there is an undirected edge between two nodes.
 hasNeighbor :: (gr a b) Node Node -> Bool | Graph gr
-hasNeighbor gr v w = 'DL'.elem w (neighbors gr v)
+hasNeighbor gr v w = 'Data.List'.elem w (neighbors gr v)
 
 // | Checks if there is a labelled edge between two nodes.
 hasLEdge :: (gr a b) (LEdge b) -> Bool | Graph gr & Eq b
-hasLEdge gr (v,w,l) = 'DL'.elem (w,l) (lsuc gr v)
+hasLEdge gr (v,w,l) = 'Data.List'.elem (w,l) (lsuc gr v)
 
 // | Checks if there is an undirected labelled edge between two nodes.
 hasNeighborAdj :: (gr a b) Node (b,Node) -> Bool | Graph gr & Eq b
-hasNeighborAdj gr v a = 'DL'.elem a (lneighbors gr v)
+hasNeighborAdj gr v a = 'Data.List'.elem a (lneighbors gr v)
 
 //--------------------------------------------------------------------
 // GRAPH EQUALITY

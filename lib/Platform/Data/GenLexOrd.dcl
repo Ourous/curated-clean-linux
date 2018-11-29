@@ -29,8 +29,6 @@ derive gLexOrd Char, Bool, Int, Real, String, [], {}, {!}
 // standard types
 derive gLexOrd (,), (,,),  (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,)
 
-/**
- * @type a a -> LexOrd | gLexOrd{|*|} a
- */
+//* @type a a -> LexOrd | gLexOrd{|*|} a
 (=?=) infix 4
 (=?=) x y :== gLexOrd{|*|} x y

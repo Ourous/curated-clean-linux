@@ -6,7 +6,7 @@ from StdFunc import flip, o
 import StdInt
 from StdList import filter, flatten, isMember, map, removeDup, span, take, ++,
 	instance length [], instance == [a], instance < [a],
-	instance fromString [Char], instance toString [Char]
+	instance fromString [Char], instance toString [Char], foldr
 import StdOrdList
 import StdString
 

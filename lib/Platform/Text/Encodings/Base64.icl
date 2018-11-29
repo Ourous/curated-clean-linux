@@ -50,6 +50,7 @@ encodeString s a
       #! oct = toInt c1 << 16
       = encodeLastOctet oct 3 2 dest
     | r == 0 = dest
+    | otherwise = abort "error in encodeString\n"
     where
     encodeLastOctet :: !Int !Offset !Padding !*{#Char} -> *{#Char}
     encodeLastOctet oct off p s

@@ -617,6 +617,7 @@ replace_descs_by_desc_numbers_and_build_desc_tree i s n_descs array_desc desc_tr
 		#! d = get_D_from_string s (i+IF_INT_64_OR_32 16 8);
 		| d==0
 			= replace_descs_by_desc_numbers_and_build_desc_tree (i+(IF_INT_64_OR_32 24 12)) s n_descs array_desc desc_tree;
+		# d = d+array_desc;
 		# (s,n_descs,desc_tree) = store_desc_n_and_add_desc d (i+IF_INT_64_OR_32 16 8) s n_descs desc_tree;
 		#! l = get_D_from_string s (i+IF_INT_64_OR_32 8 4);
         | is_Int_D d
@@ -754,7 +755,7 @@ replace_desc_numbers_by_descs i s symbol_a symbol_offset array_desc
 			= replace_desc_numbers_by_descs (i+(IF_INT_64_OR_32 24 12)) s symbol_a symbol_offset array_desc;
 		# d = symbol_a.[d-1];
 		# d = d+symbol_offset;
-		# s=store_int_in_string s (i+IF_INT_64_OR_32 16 8) array_desc;
+		# s=store_int_in_string s (i+IF_INT_64_OR_32 16 8) (d-array_desc);
 		#! l = get_D_from_string s (i+IF_INT_64_OR_32 8 4);
         | is_Int_D d
 			# l = l << IF_INT_64_OR_32 3 2;

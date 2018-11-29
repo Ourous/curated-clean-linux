@@ -2,17 +2,18 @@ implementation module Text.Terminal.VT100
 
 import _SystemArray
 from StdFunc import o, flip
+import StdMisc
 from Data.Func import $
 from Text import class Text(split,join,concat), instance Text String
 
-from Data.Map import :: Map
-import qualified Data.Map as DM
+from Data.Map import :: Map(..), newMap, unions, toList, get, fromList, toAscList, foldrWithKey
 
-import StdList, StdBool, StdOverloaded
+import StdList, StdBool, StdOverloaded, StdString
 import StdDebug
 
 import Data.List
 import Data.Tuple
+import Data.Maybe
 import Control.Applicative
 
 import Text.HTML
@@ -22,7 +23,7 @@ instance zero VT100Settings where
 		{ cols = 80
 		, rows = 24
 		, tabstop = 8
-		, cssmap = 'DM'.fromList
+		, cssmap = fromList
 			[(4, ("text-decoration", "underline"))
 			,(30, ("color", "black"))
 			,(31, ("color", "red"))
@@ -49,10 +50,10 @@ instance zero VT100Settings where
 :: *Screen :== *{*{Cell}}
 
 vt100render :: VT100Settings -> (String -> HtmlTag)
-vt100render s = TtTag [] o render o (\c->rvt {createArray (s.cols+1) ('DM'.newMap, ' ')\\_<-[0..s.rows+1]} 0 0 'DM'.newMap c) o fromString
+vt100render s = TtTag [] o render o (\c->rvt {createArray (s.cols+1) (newMap, ' ')\\_<-[0..s.rows+1]} 0 0 newMap c) o fromString
 where
 	shift :: !*{*{Cell}} -> *{*{Cell}}
-	shift arr = loop (s.rows-1) arr $ createArray (s.cols+1) ('DM'.newMap, ' ')
+	shift arr = loop (s.rows-1) arr $ createArray (s.cols+1) (newMap, ' ')
 	where
 		loop :: !Int !*{*{Cell}} !*{Cell} -> *{*{Cell}}
 		loop -1 arr _ = arr
@@ -83,15 +84,15 @@ where
 				['1':'K':cs] = trace_n "el1 not supported" $ rvt cells x y st cs
 				['2':'K':cs] = trace_n "e12 not supported" $ rvt cells x y st cs
 				cs = case uptom ['m','H','f','h'] cs of
-					('m', ['0'], cs) = rvt cells x y 'DM'.newMap cs
-					('m', codes, cs) = rvt cells x y ('DM'.unions [st:map (style o toInt) $ split ";" $ toString codes]) cs
+					('m', ['0'], cs) = rvt cells x y newMap cs
+					('m', codes, cs) = rvt cells x y (unions [st:map (style o toInt) $ split ";" $ toString codes]) cs
 					('H', codes, cs) = trace_n "Curser movement not supported" $ rvt cells x y st cs
 					('f', codes, cs) = trace_n "Curser movement not supported" $ rvt cells x y st cs
 					(c, _, cs) = trace_n ("Escape: " +++ toString c) $ rvt cells x y st cs
 			_ = trace_n "Unsupported escape" $ rvt cells x y st cs
 
 	render :: Screen -> [HtmlTag]
-	render cells = combine $ flatten $ intersperse [BrTag []] [[SpanTag [StyleAttr $ concat $ map (\(k,v)->k +++ ":" +++ v +++ ";") $ 'DM'.toList s] [Text $ toString c]
+	render cells = combine $ flatten $ intersperse [BrTag []] [[SpanTag [StyleAttr $ concat $ map (\(k,v)->k +++ ":" +++ v +++ ";") $ toList s] [Text $ toString c]
 				\\(s, c)<-:row]\\row<-:cells]
 
 	combine :: [HtmlTag] -> [HtmlTag]
@@ -110,6 +111,7 @@ where
 		| isMember c m = (c, [], cs)
 		| isDigit c || c == ';' = appSnd3 (\cc->[c:cc]) $ uptom m cs
 		= ('-', [], cs)
+	uptom _ [] = abort "error in vt100render\n"
 
 	style :: (Int -> Map String String)
-	style = 'DM'.fromList o maybeToList o flip 'DM'.get s.cssmap
+	style = fromList o maybeToList o flip get s.cssmap

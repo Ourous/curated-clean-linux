@@ -498,7 +498,7 @@ RemoveMemberM e l :== removeMember_ e l
 						= [|a:removeMember_ e as]
 		removeMember_ e [|] = [|]	
 
-RemoveMembers:: u:(l e) .(l e) -> u:(l e) | List l e & Eq e
+RemoveMembers :: !u:(l e) !.(l e) -> u:(l e) | List l e & Eq e
 	special
 		l=[],e=Int; l=[],e=Char; l=[],e=Real;
 		l=[!],e=Int; l=[!],e=Char; l=[!],e=Real;
@@ -526,7 +526,7 @@ RemoveDupM l :== removeDup_ l
 		removeDup_ [|x:xs] = [|x:removeDup_ (Filter ((<>) x) xs)]
 		removeDup_ _      = [|]
 
-RemoveIndex :: e !u:(l e) -> (Int,u:(l e)) | List l e & Eq e
+RemoveIndex :: !e !u:(l e) -> (Int,u:(l e)) | List l e & Eq e
 	special
 		l=[],e=Int; l=[],e=Char; l=[],e=Real;
 		l=[!],e=Int; l=[!],e=Char; l=[!],e=Real;

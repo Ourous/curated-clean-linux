@@ -192,6 +192,8 @@ where
                 = ([SQLVText val:row],cursor)
             | type == SQLITE_NULL
                 = ([SQLVNull:row],cursor)
+			| otherwise
+				= abort ("unknown type " +++ toString type +++ " in readField\n")
     fetchOne cursor
 	    = (Just (SQLProgrammingError 1 "You cannot fetch a row when there is no result set") ,Nothing, cursor)
 

@@ -4,7 +4,7 @@ definition module iTasks.Internal.WebService
 * It also provides access to upload/download of blob content.
 */
 from Internet.HTTP				import :: HTTPRequest, :: HTTPResponse
-from iTasks.Engine              import :: PublishedTask
+from iTasks.Engine              import :: WebTask
 from iTasks.Internal.IWorld		import :: IWorld
 from iTasks.Internal.Task 	    import :: Task, :: ConnectionTask
 from iTasks.Internal.TaskState 	import :: TIUIState
@@ -45,7 +45,7 @@ httpServer :: !Int !Timespec ![WebService r w] (RWShared () r w) -> ConnectionTa
 
 :: OutputQueues :== Map InstanceNo TaskOutput
 
-taskUIService         :: ![PublishedTask] -> WebService OutputQueues OutputQueues
+taskUIService         :: ![WebTask] -> WebService OutputQueues OutputQueues
 documentService       ::                     WebService r w
 staticResourceService :: [String]         -> WebService r w
 

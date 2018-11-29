@@ -1,18 +1,50 @@
 implementation module iTasks.UI.Editor.Common
 
-import StdBool, StdEnum, StdOrdList, StdList, Data.Maybe, StdList, StdString
+import StdBool, StdEnum, StdOrdList, StdList, Data.Maybe, StdList, StdString, StdFunc
 import Text.GenJSON, Data.GenEq, Data.List
 
 import iTasks.UI.Definition, iTasks.UI.Editor, iTasks.UI.Editor.Containers, iTasks.UI.Editor.Controls, iTasks.UI.Editor.Modifiers
-import Data.Tuple, Data.Error, Text, Text.GenJSON
+import Data.Tuple, Data.Error, Text, Text.GenJSON, Data.Func, Data.Functor
 import qualified Data.Map as DM
 
-emptyEditor :: Editor a
-emptyEditor = {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
+emptyEditor :: Editor a | JSONEncode{|*|}, JSONDecode{|*|} a
+emptyEditor = leafEditorToEditor {LeafEditor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh,valueFromState=valueFromState}
 where
-	genUI _ _ vst			    = (Ok (ui UIEmpty,newFieldMask),vst)
-	onEdit _ _ val mask vst 	= (Ok (NoChange,mask),val,vst)
-	onRefresh _ _ val mask vst  = (Ok (NoChange,mask),val,vst)
+	// store initial value in state
+	genUI _ mode vst           = (Ok (ui UIEmpty, editModeValue mode),vst)
+	onEdit _ (_, ()) mbVal vst = (Ok (NoChange, mbVal),vst)   // ignore edit events
+	onRefresh _ val _ vst      = (Ok (NoChange, Just val),vst)   // just use new value
+	valueFromState mbVal       = mbVal
+
+emptyEditorWithDefaultInEnterMode :: !a -> Editor a | JSONEncode{|*|}, JSONDecode{|*|} a
+emptyEditorWithDefaultInEnterMode defaultValue = emptyEditorWithDefaultInEnterMode_ JSONEncode{|*|} JSONDecode{|*|} defaultValue
+
+emptyEditorWithDefaultInEnterMode_ :: !(Bool a -> [JSONNode]) !(Bool [JSONNode] -> (!Maybe a, ![JSONNode])) !a -> Editor a
+emptyEditorWithDefaultInEnterMode_ jsonEncode jsonDecode defaultValue = leafEditorToEditor_
+	jsonEncode jsonDecode
+	{LeafEditor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh,valueFromState=valueFromState}
+where
+	// store initial value in state
+	genUI _ mode vst         = (Ok (ui UIEmpty, fromMaybe defaultValue $ editModeValue mode),vst)
+	onEdit _ (_, ()) val vst = (Ok (NoChange, val),vst)   // ignore edit events
+	onRefresh _ val _ vst    = (Ok (NoChange, val),vst)   // just use new value
+	valueFromState val       = Just val
+
+emptyEditorWithErrorInEnterMode :: !String -> Editor a | JSONEncode{|*|}, JSONDecode{|*|} a
+emptyEditorWithErrorInEnterMode error = emptyEditorWithErrorInEnterMode_ JSONEncode{|*|} JSONDecode{|*|} error
+
+emptyEditorWithErrorInEnterMode_ :: !(Bool a -> [JSONNode]) !(Bool [JSONNode] -> (!Maybe a, ![JSONNode])) !String
+                                 -> Editor a
+emptyEditorWithErrorInEnterMode_ jsonEncode jsonDecode error = leafEditorToEditor_ jsonEncode jsonDecode
+	{LeafEditor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh,valueFromState=valueFromState}
+where
+	// store initial value in state
+	genUI _ mode vst         = case editModeValue mode of
+        Nothing  = (Error error, vst)
+		Just val = (Ok (ui UIEmpty, val),vst)
+	onEdit _ (_, ()) val vst = (Ok (NoChange, val),vst)   // ignore edit events
+	onRefresh _ val _ vst    = (Ok (NoChange, val),vst)   // just use new value
+	valueFromState val       = Just val
 
 diffChildren :: ![a] ![a] !(a -> UI) -> [(!Int, !UIChildChange)] | gEq{|*|} a
 diffChildren old new toUI = diffChildren` 0 old new
@@ -42,35 +74,43 @@ where
     addNew          idx new = [(i, InsertChild (toUI x)) \\ i <- [idx..] & x <- new]
 
 chooseWithDropdown :: [String] -> Editor Int
-chooseWithDropdown labels = bijectEditorValue (\i -> (options,[i])) selection (dropdown <<@ multipleAttr False)
+chooseWithDropdown labels = bijectEditorValue (\i -> [i]) selection
+                            (withConstantChoices options dropdown <<@ multipleAttr False)
 where
-	selection (_,[x]) = x
-	selection _ = 0
+	selection [x] = x
+	selection _   = 0
 
 	options = [{ChoiceText|id=i,text=t} \\ t <- labels & i <- [0..]]
 
-listEditor :: (Maybe ([a] -> Maybe a)) Bool Bool (Maybe ([a] -> String)) (Editor a) -> Editor [a] | JSONEncode{|*|}, gDefault{|*|} a
-listEditor add remove reorder count itemEditor = listEditor_ JSONEncode{|*|} gDefault{|*|} add remove reorder count itemEditor
+listEditor :: (Maybe ([Maybe a] -> Maybe a)) Bool Bool (Maybe ([Maybe a] -> String)) (Editor a) -> Editor [a]
+            | JSONEncode{|*|} a
+listEditor add remove reorder count itemEditor = listEditor_ JSONEncode{|*|} add remove reorder count itemEditor
 
-listEditor_ :: (Bool a -> [JSONNode]) a (Maybe ([a] -> Maybe a)) Bool Bool (Maybe ([a] -> String)) (Editor a) -> Editor [a]
-listEditor_ jsonenc defVal add remove reorder count itemEditor
-	= {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
+listEditor_ :: (Bool a -> [JSONNode]) (Maybe ([Maybe a] -> Maybe a)) Bool Bool (Maybe ([Maybe a] -> String)) (Editor a)
+            -> Editor [a]
+listEditor_ jsonenc add remove reorder count itemEditor = compoundEditorToEditor
+	{CompoundEditor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh,valueFromState=valueFromState}
 where
-	genUI dp val vst=:{VSt|taskId,mode} = case genChildUIs dp 0 val [] vst of
-		(Ok (items,masks),vst)
+	genUI dp mode vst=:{VSt|taskId} = case genChildUIs dp 0 val [] vst of
+		(Ok (items, childSts),vst)
 			//Add list structure editing buttons
-			# items = if (not (mode =: View) && (remove || reorder)) [listItemUI taskId dp (length val) idx idx dx \\ dx <- items & idx <- [0..]] items
+			# items = if (not viewMode && (remove || reorder)) [listItemUI taskId dp (length val) idx idx dx \\ dx <- items & idx <- [0..]] items
 			//Add the add button
-			# items = if (not (mode =: View) && add =: Just _) (items ++ [addItemControl val]) items
-			= (Ok (uic UIList items,StateMask (CompoundMask masks) (toJSON (indexList val))), vst)
+			# items = if (not viewMode && add =: Just _) (items ++ [addItemControl val]) items
+			//All item UI's have a unique id that is used in the data-paths of that UI
+			= (Ok (uic UIList items, (viewMode, indexList val), childSts), vst)
 		(Error e,vst)  = (Error e,vst)
-	where			
+	where
+		viewMode = mode =: View _
+        val = fromMaybe [] $ editModeValue mode
+
 		genChildUIs dp _ [] us vst = (Ok (unzip (reverse us)), vst)
-		genChildUIs dp i [c:cs] us vst = case itemEditor.Editor.genUI (dp++[i]) c vst of
+		genChildUIs dp i [c:cs] us vst = case itemEditor.Editor.genUI (dp++[i]) (if viewMode View Update $ c) vst of
 			(Ok (u,m),vst) = genChildUIs dp (i+1) cs [(u,m):us] vst
 			(Error e,vst)  = (Error e,vst)
 
 		addItemControl val
+			# val       = Just <$> val
 			# counter  	= maybe [] (\f -> [uia UITextView ('DM'.unions [widthAttr FlexSize, valueAttr (JSONString (f val))])]) count
 			# button	= if (isJust add) [uia UIButton ('DM'.unions [iconClsAttr "icon-add",editAttrs taskId (editorId dp) (Just (JSONString "add"))])] []
 			# attr      = 'DM'.unions [halignAttr AlignRight,heightAttr WrapSize,directionAttr Horizontal]
@@ -89,54 +129,53 @@ where
 	where
 		flexWidth (UI type attr content) = UI type ('DM'.union (widthAttr FlexSize) attr) content
 
-			
 	//Structural edits on the list
-	onEdit dp ([],JSONString e) items (StateMask (CompoundMask masks) state) vst=:{VSt|taskId, mode}
-		# ids = fromMaybe [] (fromJSON state) //All item UI's have a unique id that is used in the data-paths of that UI
+	onEdit dp ([],JSONString e) (viewMode, ids) childSts vst=:{VSt|taskId}
 		# [op,id:_] = split "_" e
 		# id = toInt id 
 		# index = itemIndex id ids
-		# num = length items
+		# num = length childSts
 		| op == "mup" && reorder
-			| index < 1 || index >= num = (Error "List move-up out of bounds",items,vst)
+			| index < 1 || index >= num = (Error "List move-up out of bounds",vst)
 				# changes =  if (index == 1) [(index,toggle 1 False),(index - 1,toggle 1 True)] [] //Update 'move-up' buttons
 						  ++ if (index == num - 1) [(index,toggle 2 True),(index - 1,toggle 2 False)] [] //Update 'move-down' buttons
 						  ++ [(index,MoveChild (index - 1))] //Actually move the item
-				= (Ok (ChangeUI [] changes,StateMask (CompoundMask (swap masks index)) (toJSON (swap ids index))), (swap items index), vst)
+				= (Ok (ChangeUI [] changes, (viewMode, swap ids index), swap childSts index), vst)
 		| op == "mdn" && reorder
-			| index < 0 || index > (length items - 2) = (Error "List move-down out of bounds",items,vst)
+			| index < 0 || index > (num - 2) = (Error "List move-down out of bounds",vst)
 				# changes =  if (index == 0) [(index,toggle 1 True),(index + 1,toggle 1 False)] [] //Update 'move-up' buttons
                           ++ if (index == num - 2) [(index,toggle 2 False),(index + 1,toggle 2 True)] [] //Update 'move-down' buttons
                           ++ [(index,MoveChild (index + 1))]
-			    = (Ok (ChangeUI [] changes,StateMask (CompoundMask (swap masks (index + 1))) (toJSON (swap ids (index + 1)))), (swap items (index + 1)), vst)
+			    = (Ok (ChangeUI [] changes, (viewMode, swap ids (index + 1)), swap childSts (index + 1)), vst)
 		| op == "rem" && remove
-			| index < 0 || index >= num = (Error "List remove out of bounds",items,vst)
-				# nitems = (removeAt index items)
+			| index < 0 || index >= num = (Error "List remove out of bounds",vst)
+				# childSts   = removeAt index childSts
+				# internalSt = (viewMode, removeAt index ids)
+				# nitems = itemEditor.Editor.valueFromState <$> childSts
 				# counter = maybe [] (\f -> [(length nitems, ChangeChild (ChangeUI [] [(0,ChangeChild (ChangeUI [SetAttribute "value" (JSONString (f nitems))] []))]))]) count
 				# changes =  if (index == 0 && num > 1) [(index + 1, toggle 1 False)] []
 						  ++ if (index == num - 1 && index > 0) [(index - 1, toggle 2 False)] []
 						  ++ [(index,RemoveChild)] ++ counter
-			= (Ok (ChangeUI [] changes, StateMask (CompoundMask (removeAt index masks)) (toJSON (removeAt index ids))), nitems, vst)
+			= (Ok (ChangeUI [] changes, internalSt, childSts), vst)
 		| op == "add" && add =: (Just _)
 			# f = fromJust add
+			# items = itemEditor.Editor.valueFromState <$> childSts
 			# mbNx = f items
-            # nx = fromMaybe defVal mbNx
 			# ni = num 
 			# nid = nextId ids
             // use enter mode if no value for new item is given; otherwise use update mode
-            # vst = if (isJust mbNx) {vst & mode = Update} {vst & mode = Enter}
-			= case itemEditor.Editor.genUI (dp++[nid]) nx vst of
-				(Error e,vst) = (Error e,items, {vst & mode = mode})
+			= case itemEditor.Editor.genUI (dp++[nid]) (maybe Enter Update mbNx) vst of
+				(Error e,vst) = (Error e, vst)
 				(Ok (ui,nm),vst)
-					# nitems = items ++ [nx]
-					# nmasks = masks ++ [nm]
+					# nChildSts = childSts ++ [nm]
+					# nitems = itemEditor.Editor.valueFromState <$> childSts
 					# nids = ids ++ [nid]
 					# insert = [(ni,InsertChild (listItemUI taskId dp (ni + 1) ni nid ui))]
 					# counter = maybe [] (\f -> [(ni + 1, ChangeChild (ChangeUI [] [(0,ChangeChild (ChangeUI [SetAttribute "value" (JSONString (f nitems))] []))]))]) count
 					# prevdown = if (ni > 0) [(ni - 1,toggle 2 True)] []
 					# change = ChangeUI [] (insert ++ counter ++ prevdown)
-					= (Ok (change,StateMask (CompoundMask nmasks) (toJSON nids)),nitems, {vst & mode = mode})
-		= (Ok (NoChange,StateMask (CompoundMask masks) (toJSON ids)),items,vst)
+					= (Ok (change, (viewMode, nids), nChildSts), vst)
+		= (Ok (NoChange, (viewMode, ids), childSts), vst)
 	where
 		swap []	  _		= []
 		swap list index
@@ -148,28 +187,36 @@ where
 				= updateAt (index-1) l (updateAt index f list)
 		toggle idx value = ChangeChild (ChangeUI [] [(idx,ChangeChild (ChangeUI [SetAttribute "enabled" (JSONBool value)] []))])
 	//Edits inside the list
-	onEdit dp ([id:tp],e) items (StateMask (CompoundMask masks) state) vst
-		# ids = fromMaybe [] (fromJSON state)
+	onEdit dp ([id:tp],e) (viewMode, ids) childSts vst
 		# index = itemIndex id ids
-		| index < 0 || index >= length items = (Error ("List edit out of bounds (index:" +++ toString index +++", list length: "+++toString (length items)+++")"),items,vst)
+		| index < 0 || index >= length childSts = (Error ("List edit out of bounds (index:" +++ toString index +++", list length: "+++toString (length childSts)+++")"),vst)
 		| otherwise
-			= case itemEditor.Editor.onEdit (dp ++ [id]) (tp,e) (items !! index) (masks !! index) vst of
-				(Error e,nx,vst) 
-					= (Error e, items,vst)
-				(Ok (change,nm),nx,vst)
-					= (Ok (childChange index change,StateMask (CompoundMask (updateAt index nm masks)) state), (updateAt index nx items),vst)
+			= case itemEditor.Editor.onEdit (dp ++ [id]) (tp,e) (childSts !! index) vst of
+				(Error e,vst)
+					= (Error e, vst)
+				(Ok (change,nm),vst)
+					= (Ok (childChange index change, (viewMode, ids), updateAt index nm childSts), vst)
 	where
 		childChange i NoChange = NoChange
 		childChange i change = ChangeUI [] [(i,ChangeChild (ChangeUI [] [(0,ChangeChild change)]))]
 
 	//Very crude full replacement
-	onRefresh dp new old mask vst
-		| (JSONEncode{|*->*|} jsonenc) False new === (JSONEncode{|*->*|} jsonenc) False old
-			= (Ok (NoChange,mask),old,vst) //TODO: Determine small UI change
+	onRefresh dp new (viewMode, ids) childSts vst
+		| Just ((JSONEncode{|*->*|} jsonenc) False new) ===
+		       ((JSONEncode{|*->*|} jsonenc) False <$> valueFromState (viewMode, ids) childSts)
+			= (Ok (NoChange, (viewMode, ids), childSts), vst)
+		//TODO: Determine small UI change
 		| otherwise
-			= case genUI dp new vst of
-				(Ok (ui,mask),vst) = (Ok (ReplaceUI ui,mask),new,vst)
-				(Error e,vst) = (Error e,old,vst)
+			= case genUI dp (if viewMode View Update $ new) vst of
+				(Ok (ui, internalSt, childSts),vst) = (Ok (ReplaceUI ui, internalSt, childSts), vst)
+				(Error e,vst)                       = (Error e, vst)
+
+    valueFromState _ childSts = valuesFromState childSts []
+	where
+		valuesFromState [] acc = Just $ reverse acc
+		valuesFromState [st: sts] acc = case itemEditor.Editor.valueFromState st of
+			Just val = valuesFromState sts [val: acc]
+			_        = Nothing
 
 	nextId [] = 0
 	nextId ids = maxList ids + 1

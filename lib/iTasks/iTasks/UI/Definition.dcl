@@ -19,7 +19,7 @@ from iTasks.WF.Combinators.Core import :: Action
 from iTasks.WF.Definition import class iTask
 from iTasks.Internal.Generic.Visualization	import generic gText, :: TextFormat(..)
 from iTasks.Internal.Generic.Defaults			import generic gDefault
-from iTasks.UI.Editor import :: Editor, :: EditMask, :: Masked
+from iTasks.UI.Editor import :: Editor, :: EditState
 
 from iTasks.UI.Editor.Generic import generic gEditor
 from Text.GenJSON import generic JSONEncode, generic JSONDecode, :: JSONNode

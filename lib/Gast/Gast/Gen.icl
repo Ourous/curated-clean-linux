@@ -11,7 +11,7 @@ implementation module Gast.Gen
 	pieter@cs.ru.nl
 */
 
-import StdEnv, StdGeneric, Math.Random, Data.Maybe, Data.Functor
+import StdEnv, StdFunc, StdGeneric, Math.Random, Data.Maybe, Data.Functor, Data.List
 from Data.Set import :: Set
 import qualified Data.Set as Set
 from Data.Map import :: Map, instance Functor (Map k)
@@ -55,8 +55,9 @@ genState =
 	{ depth                 = 0
 	, maxDepth              = maxint
 	, path                  = []
-	, skewl                 = 1
-	, skewr                 = 3
+	, mode                  = SkewGeneration { skewl = 1
+	                                         , skewr = 3
+	                                         }
 	, recInfo               = 'Map'.newMap
 	, pairTree              = PTLeaf
 	, recFieldValueNrLimits = 'Map'.newMap
@@ -117,9 +118,10 @@ ggen{|Real|} s
 		= takeWhile (\r -> abs r <= toReal (s.maxDepth - s.depth)) l
 		= l
 where
-	l = [0.0
+	//       -nan    nan        inf     -inf
+	l = [0.0,0.0/0.0,~(0.0/0.0),1.0/0.0,-1.0/0.0
 		:interleave
-			[r \\ x <- diag s.skewl s.skewr [1:prims] [1:prims] (\n d.toReal n/toReal d), r <- [x,~ x]]
+			[r \\ x <- diag [1:prims] [1:prims] (\n d.toReal n/toReal d), r <- [x,~ x]]
 		(interleave
 			[r \\ x <- map sqrt [2.0..], r <- [x, ~x]]
 			(if (s.maxDepth == maxint)
@@ -135,11 +137,18 @@ where
 			= [r, 0.0 - r: largeReals (r/2.0)]
 	prims = sieve [2..]
 	sieve [p:xs] = [p: sieve [x \\ x <- xs | x rem p <> 0]]
+	diag ls rs f = case s.mode of
+		SkewGeneration p = diagSkew p.skewl p.skewr ls rs f
+		BentGeneration   = uncurry f <$> diagBent ls rs
 
 ggen{|UNIT|} s = [UNIT]
 ggen{|PAIR|} f g s
 	= case s.pairTree of
-		PTNode ptl sl sr ptr = diag (if sl s.skewr s.skewl) (if sr s.skewr s.skewl) (f {s & pairTree = ptl}) (g {s & pairTree = ptr}) PAIR
+		PTNode ptl sl sr ptr = case s.mode of
+			SkewGeneration p = diagSkew (if sl p.skewr p.skewl)  (if sr p.skewr p.skewl)
+                                        (f {s & pairTree = ptl}) (g {s & pairTree = ptr})
+                                        PAIR
+			BentGeneration   = uncurry PAIR <$> diagBent (f {s & pairTree = ptl}) (g {s & pairTree = ptr})
 		_ = abort "ggen{|PAIR|}: invalid pairTree: PTNode"
 
 ggen{|EITHER|} f g s
@@ -186,16 +195,22 @@ where
         Nothing    -> f s
         Just limit -> take limit $ f s
 
-ggen{|String|} s = ["hello world!","Gast": rndStrings 0 aStream]
+ggenString :: Int Real Int Int RandomStream -> [String]
+ggenString maxlen factor minchar maxchar stream = rndStrings stream
 where
-	rndStrings 0 rnd = ["": rndStrings 1 rnd]
-	rndStrings len [r,s:rnd] 
-		# (chars,rnd)	= seqList (repeatn ((abs r) rem len) genElem) rnd
+	rndStrings [len:rnd] 
+		# len = toInt ((randIntToReal len) ^ factor * (fromInt maxlen - 0.5))
+		# (chars,rnd)	= seqList (repeatn len genElem) rnd
 		  string		= {c \\ c<-chars}
-		= [string:rndStrings ((len rem StrLen)+1) rnd]
+		= [string:rndStrings rnd]
 	where
 		genElem :: RandomStream -> .(Char, RandomStream)
-		genElem [r:rnd] = (toChar (32+((abs r) rem 94)), rnd)
+		genElem [r:rnd] = (toChar (minchar+((abs r) rem (maxchar+1-minchar))), rnd)
+
+		randIntToReal :: Int -> Real
+		randIntToReal x = (toReal x + if (x >= 0) 0.0 4294967296.0) / 4294967295.0
+
+ggen{|String|} s = ["hello world!","Gast","":ggenString StrLen 4.0 32 126 aStream]
 
 derive ggen (,), (,,), (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,)
 derive ggen [], [!], [ !], [!!]
@@ -206,8 +221,8 @@ interleave :: [a] [a] -> [a]
 interleave [x:xs] ys = [x: interleave ys xs]
 interleave []     ys = ys
 
-diag :: !Int !Int [a] [b] (a b-> c) -> [c]
-diag skewl skewr as bs f = skew skewl [] [] [[f a b \\ a <- as] \\ b <- bs]
+diagSkew :: !Int !Int [a] [b] (a b-> c) -> [c]
+diagSkew skewl skewr as bs f = skew skewl [] [] [[f a b \\ a <- as] \\ b <- bs]
 where
 	skew :: Int [[a]] [[a]] [[a]] -> [a]
 	skew n [[a:as]:ass] bs cs     = [a: if (n>1) (skew (n-1) [as:ass] bs cs) (skew skewl ass [as:bs] cs)]
@@ -218,5 +233,26 @@ where
  	rev :: [a] [a] -> [a]
 	rev [a:as] bs = rev as [a:bs]
 	rev []     bs = bs
+
+diagBent :: ![a] ![b] -> [(a, b)]
+diagBent [] _  = []
+diagBent _  [] = []
+diagBent lss=:[l: ls] rss=:[r: rs] =
+	diagBent` [(lss, rss)] [] (interleave [(ls`, rss) \\ ls` <- sublists ls] [(lss, rs`) \\ rs` <- sublists rs])
+where
+    diagBent` :: ![([a], [b])] ![([a], [b])] ![([a], [b])] -> [(a, b)]
+    diagBent` [] []   []        = []
+    diagBent` [] done nextDiags = diagBent` todo [] nextDiags`
+    where
+        (todo, nextDiags`) = case nextDiags of
+            []                    = (done,             []       )
+            [nextDiag: nextDiags] = ([nextDiag: done], nextDiags)
+    diagBent` [([], _): todo]            done nextDiags = diagBent` todo [] nextDiags
+    diagBent` [(_, []): todo]            done nextDiags = diagBent` todo [] nextDiags
+    diagBent` [([l: ls], [r: rs]): todo] done nextDiags = [(l, r): diagBent` todo [(ls, rs): done] nextDiags]
+
+	sublists :: ![a] -> [[a]]
+    sublists [] = []
+    sublists l=:[_: l`] = [l: sublists l`]
 
 derive bimap []

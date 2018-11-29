@@ -59,6 +59,15 @@
 .icon-save {
 	background-image: url('#{$icon-path}document-save.png') !important;
 }
+.icon-document {
+	background-image: url('#{$icon-path}document.png') !important;
+}
+.icon-document-error {
+	background-image: url('#{$icon-path}document-error.png') !important;
+}
+.icon-folder {
+	background-image: url('#{$icon-path}folder.png') !important;
+}
 .icon-close {
 	background-image: url('#{$icon-path}cancel.png') !important;
 }

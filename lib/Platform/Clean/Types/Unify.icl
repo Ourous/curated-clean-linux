@@ -2,7 +2,7 @@ implementation module Clean.Types.Unify
 
 import StdArray
 import StdBool
-from StdFunc import o
+from StdFunctions import o, const
 import StdList
 import StdOrdList
 import StdTuple
@@ -66,20 +66,24 @@ prepare_unification isleft alwaysUnique db t
 # (syns, t) = resolve_synonyms db t
 # t = propagate_uniqueness alwaysUnique t
 # t = reduceArities t
-# t = renameVars t
+# t = renameAndRemoveStrictness t
 = (syns, t)
 where
 	prep = if isleft "l" "r"
-	renameVars :: !Type -> Type
-	renameVars (Var v) = Var (prep +++ v)
-	renameVars (Cons c ts) = Cons (prep +++ c) $ map renameVars ts
-	renameVars (Type t ts) = Type t $ map renameVars ts
-	renameVars (Func is r tc) = Func (map renameVars is) (renameVars r) tc
-	renameVars (Uniq t) = Uniq $ renameVars t
-	renameVars (Arrow t) = Arrow (renameVars <$> t)
-	renameVars (Forall vs t tc) = fromJust $
+	renameAndRemoveStrictness :: !Type -> Type
+	renameAndRemoveStrictness (Var v) = Var (prep +++ v)
+	renameAndRemoveStrictness (Cons c ts) = Cons (prep +++ c) $ map renameAndRemoveStrictness ts
+	renameAndRemoveStrictness (Type t ts) = Type t $ map renameAndRemoveStrictness ts
+	renameAndRemoveStrictness (Func is r tc) = Func (map renameAndRemoveStrictness is) (renameAndRemoveStrictness r) (map (inTC renameAndRemoveStrictness) tc)
+	renameAndRemoveStrictness (Uniq t) = Uniq $ renameAndRemoveStrictness t
+	renameAndRemoveStrictness (Arrow t) = Arrow (renameAndRemoveStrictness <$> t)
+	renameAndRemoveStrictness (Forall vs t tc) = fromJust $
 		assignAll [(prep+++v,Var ("_"+++prep+++v)) \\ v <- map fromVarLenient vs] $
-		renameVars t
+		renameAndRemoveStrictness t
+	renameAndRemoveStrictness (Strict t) = renameAndRemoveStrictness t
+
+	inTC f (Derivation g t) = Derivation g (f t)
+	inTC f (Instance c ts)  = Instance c (map f ts)
 
 finish_unification :: ![TypeDef] ![TVAssignment] -> Unifier
 finish_unification syns tvs
@@ -121,6 +125,8 @@ succeed :: UnifyM ()
 succeed = pure ()
 
 applyAssignment :: !TypeVar !Type -> UnifyM ()
+applyAssignment v (Var w) | v.[0] <> '_' && w.[0] == '_' =
+	applyAssignment w (Var v) // the below assumes a universal variable is always the TypeVar
 applyAssignment v t =
 	checkUniversalisedVariables v t >>= \t ->
 	checkCircularAssignment v t >>|
@@ -175,7 +181,7 @@ where
 
 uni :: !Type !Type -> UnifyM ()
 uni (Var v) t = if (t == Var v) succeed (applyAssignment v t)
-uni t (Var v) = if (t == Var v) succeed (applyAssignment v t)
+uni t (Var v) = applyAssignment v t
 uni (Type t tas) (Type u uas) = if (t==u) (addGoals tas uas) fail
 uni (Cons c cas) (Type t tas)
 | lc <= lt = addGoals cas end >>| applyAssignment c (Type t begin)

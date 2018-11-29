@@ -1,58 +1,60 @@
 implementation module iTasks.UI.Editor.Controls
 
+import StdEnv
 import iTasks.UI.Definition, iTasks.UI.Editor
-import StdFunc, StdBool, Data.GenEq, StdList
-import Data.Error, Text.GenJSON, Text.HTML
+import Data.GenEq, Data.Error, Text.GenJSON, Text.HTML, Data.Func, Data.Functor, Data.Tuple, Data.List, Data.Maybe
 import qualified Data.Map as DM
 
 import iTasks.UI.Definition
 import iTasks.UI.Editor.Modifiers
 
-disableOnView e = selectByMode (withAttributes (enabledAttr False) e) e e
+disableOnView e = selectByMode (e <<@ enabledAttr False) e e
 
 textField :: Editor String
-textField = fieldComponent UITextField
+textField = fieldComponent UITextField Nothing
 
 textArea :: Editor String
-textArea = fieldComponent UITextArea
+textArea = fieldComponent UITextArea Nothing
 
 passwordField :: Editor String
-passwordField = fieldComponent UIPasswordField
+passwordField = fieldComponent UIPasswordField Nothing
 
 integerField :: Editor Int
-integerField = fieldComponent UIIntegerField
+integerField = fieldComponent UIIntegerField Nothing
 
 decimalField :: Editor Real
-decimalField = fieldComponent UIDecimalField
+decimalField = fieldComponent UIDecimalField Nothing
 
 documentField :: Editor (!String,!String,!String,!String,!Int)
-documentField = fieldComponent UIDocumentField
+documentField = fieldComponent UIDocumentField Nothing
 
 checkBox :: Editor Bool
-checkBox = fieldComponent UICheckbox
+checkBox = fieldComponent UICheckbox $ Just False
 
 slider :: Editor Int
-slider = fieldComponent UISlider
+slider = fieldComponent UISlider Nothing
 
 button :: Editor Bool
-button = fieldComponent UIButton
+button = fieldComponent UIButton Nothing
 
 label :: Editor String
-label = viewComponent (\text -> (textAttr text)) UILabel
+label = viewComponent textAttr UILabel
 
 icon :: Editor (!String,!Maybe String)
-icon = viewComponent (\(iconCls,tooltip) -> 'DM'.unions [iconClsAttr iconCls,maybe 'DM'.newMap tooltipAttr tooltip]) UIIcon
+icon = viewComponent (\(iconCls,tooltip) -> 'DM'.unions [iconClsAttr iconCls,maybe 'DM'.newMap tooltipAttr tooltip])
+                     UIIcon
 
 textView :: Editor String
-textView = viewComponent (\text -> valueAttr (JSONString (escapeStr text))) UITextView
+textView = viewComponent (valueAttr o JSONString o escapeStr) UITextView
 
 htmlView :: Editor HtmlTag
-htmlView = viewComponent (\html -> valueAttr (JSONString (toString html))) UIHtmlView
+htmlView = viewComponent (valueAttr o JSONString o toString) UIHtmlView
 
 progressBar :: Editor (Maybe Int, Maybe String)
 progressBar = viewComponent combine UIProgressBar
 where
-	combine (amount,text) = 'DM'.unions ((maybe [] (\t -> [textAttr t]) text) ++ (maybe [] (\v -> [valueAttr (JSONInt v)]) amount))
+	combine (amount,text) =
+		'DM'.unions ((maybe [] (\t -> [textAttr t]) text) ++ (maybe [] (\v -> [valueAttr (JSONInt v)]) amount))
 						
 dropdown :: Editor ([ChoiceText], [Int])
 dropdown = choiceComponent (const 'DM'.newMap) id toOptionText checkBoundsText UIDropdown
@@ -66,11 +68,17 @@ choiceList = choiceComponent (const 'DM'.newMap) id toOptionText checkBoundsText
 toOptionText {ChoiceText|id,text}= JSONObject [("id",JSONInt id),("text",JSONString text)]
 checkBoundsText options idx = or [id == idx \\ {ChoiceText|id} <- options]
 
+derive JSONEncode ChoiceText
+derive JSONDecode ChoiceText
+
 grid :: Editor (ChoiceGrid, [Int])
 grid = choiceComponent (\{ChoiceGrid|header} -> columnsAttr header) (\{ChoiceGrid|rows} -> rows) toOption checkBounds UIGrid
 where
 	toOption {ChoiceRow|id,cells}= JSONObject [("id",JSONInt id),("cells",JSONArray (map (JSONString o toString) cells))]
 	checkBounds options idx = or [id == idx \\ {ChoiceRow|id} <- options]
+
+derive JSONEncode ChoiceGrid, ChoiceRow
+derive JSONDecode ChoiceGrid, ChoiceRow
 
 tree :: Editor ([ChoiceNode], [Int])
 tree = choiceComponent (const 'DM'.newMap) id toOption checkBounds UITree
@@ -89,73 +97,109 @@ where
 		| idx == id = True
 		| otherwise = or (map (checkNode idx) children)
 
+derive JSONEncode ChoiceNode
+derive JSONDecode ChoiceNode
+
+withConstantChoices :: !choices !(Editor (!choices, ![Int])) -> Editor [Int]
+withConstantChoices choices editor = bijectEditorValue (\sel -> (choices, sel)) snd
+                                     (withChangedEditMode editModeFor editor)
+where
+	// enter mode has to be changed to update mode to pass the choices to the editor
+	editModeFor Enter = Update (choices, [])
+	editModeFor other = other
+
 //Field like components for which simply knowing the UI type is sufficient
-fieldComponent :: UIType -> Editor a | JSONDecode{|*|}, JSONEncode{|*|}, gEq{|*|} a
-fieldComponent type = disableOnView {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
+fieldComponent :: !UIType !(Maybe a) -> Editor a | JSONDecode{|*|}, JSONEncode{|*|}, gEq{|*|} a & JSDecode{|*|} a
+fieldComponent type mbEditModeInitValue = disableOnView $ editorWithJSONEncode (leafEditorToEditor o leafEditor)
 where 
-	genUI dp val vst=:{VSt|taskId,mode,optional}
-		# val = if (mode =: Enter) JSONNull (toJSON val) 
-		# valid = if (mode =: Enter) optional True //When entering data a value is initially only valid if it is optional
-		# mask = FieldMask {touched = False, valid = valid, state = val}
-		# attr = 'DM'.unions [optionalAttr optional, taskIdAttr taskId, editorIdAttr (editorId dp), valueAttr val]
-		= (Ok (uia type attr,mask),vst)
+	leafEditor toJSON =
+		{LeafEditor|genUI=genUI toJSON,onEdit=onEdit,onRefresh=onRefresh toJSON,valueFromState=valueFromState}
 
-	onEdit dp (tp,e) val mask vst=:{VSt|optional}
-		= case e of
-			JSONNull = (Ok (ChangeUI [SetAttribute "value" JSONNull] [],FieldMask {touched=True,valid=optional,state=JSONNull}),val,vst)
-			json = case fromJSON e of
-				Nothing  = (Ok (NoChange,FieldMask {touched=True,valid=False,state=e}),val,vst)
-				Just val = (Ok (ChangeUI [SetAttribute "value" (toJSON val)] [],FieldMask {touched=True,valid=True,state=toJSON val}),val,vst)
+	genUI toJSON dp mode vst=:{VSt|taskId,optional}
+		# mbVal   = maybe mbEditModeInitValue Just $ editModeValue mode
+		# jsonVal = maybe JSONNull toJSON mbVal
+		# attr    = 'DM'.unions [ optionalAttr optional
+		                        , taskIdAttr taskId
+		                        , editorIdAttr $ editorId dp
+		                        , valueAttr jsonVal
+		                        ]
+		= (Ok (uia type attr, mbVal), vst)
 
-	onRefresh dp new old mask vst=:{VSt|mode,optional}
-		| old === new = (Ok (NoChange,mask),new,vst)
-		| otherwise   = (Ok (ChangeUI [SetAttribute "value" (toJSON new)] [],mask),new,vst)
+	onEdit _ (_, mbVal) _ vst = (Ok (NoChange, mbVal), vst)
+
+	onRefresh toJSON dp new mbOld vst
+		| mbOld === Just new = (Ok (NoChange, mbOld), vst)
+		| otherwise          = (Ok (ChangeUI [SetAttribute "value" (toJSON new)] [], Just new), vst)
+
+	valueFromState mbVal = mbVal
+
+	editorWithJSONEncode :: !((a -> JSONNode) -> Editor a) -> Editor a | JSONEncode{|*|} a
+	editorWithJSONEncode genFunc = genFunc toJSON
 
 //Components which cannot be edited 
-viewComponent toAttributes type = {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
+viewComponent :: !(a -> UIAttributes) !UIType -> Editor a | JSONEncode{|*|}, JSONDecode{|*|} a
+viewComponent toAttributes type = leafEditorToEditor leafEditor
 where
-	genUI dp val vst
-		= (Ok (uia type (toAttributes val), FieldMask {touched = False, valid = True, state = JSONNull}),vst)
+	leafEditor = {LeafEditor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh,valueFromState=valueFromState}
 
-	onEdit dp (tp,e) val mask vst
-		= (Error "Edit event for view component",val,vst)
+	genUI dp mode vst = case editModeValue mode of
+		Just val = (Ok (uia type (toAttributes val), val),                vst)
+		_        = (Error "View components cannot be used in enter mode", vst)
 
-	onRefresh dp new old mask vst
-		= case [SetAttribute nk nv \\ ((ok,ov),(nk,nv)) <- zip ('DM'.toList (toAttributes old),'DM'.toList (toAttributes new)) | ok == nk && ov =!= nv] of
-			[] 		= (Ok (NoChange,mask),new,vst)
-			changes = (Ok (ChangeUI changes [],mask),new,vst)
+	onEdit _ (_, ()) _ vst = (Error "Edit event for view component",vst)
+
+	onRefresh dp new val vst = (Ok (changes, new), vst)
+	where
+        changes = case setChanges ++ delChanges of
+			[]      = NoChange
+			changes = ChangeUI changes []
+
+		setChanges = [ SetAttribute key val
+		             \\ (key, val) <- 'DM'.toList $ toAttributes new
+		             | 'DM'.get key oldAttrs <> Just val
+		             ]
+		delChanges = [DelAttribute key \\ (key, _) <- 'DM'.toList $ 'DM'.difference oldAttrs newAttrs]
+
+		oldAttrs = toAttributes val
+		newAttrs = toAttributes new
+
+	valueFromState val = Just val
 
 //Choice components that have a set of options
-choiceComponent attr getOptions toOption checkBounds type = {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
+choiceComponent :: !(a -> UIAttributes) !(a -> [o]) !(o -> JSONNode) !([o] Int -> Bool) !UIType -> Editor (!a, ![Int])
+                 | JSONEncode{|*|}, JSONDecode{|*|} a
+choiceComponent attr getOptions toOption checkBounds type = disableOnView $
+	leafEditorToEditor {LeafEditor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh,valueFromState=valueFromState}
 where
-	genUI dp (val,sel) vst=:{VSt|taskId,mode,optional}
-		# valid = if (mode =: Enter) optional True //When entering data a value is initially only valid if it is optional
-		# mask = FieldMask {touched = False, valid = valid, state = JSONNull}
-		# sel = if (mode =: Enter) [] sel //When entering, the selection is initially empty
-		# attr = 'DM'.unions [attr val,choiceAttrs taskId (editorId dp) sel (map toOption (getOptions val))]
-		= (Ok (uia type attr,mask), vst)
+	genUI dp mode vst=:{VSt|taskId}
+		# (mbVal, sel) = maybe (Nothing, []) (appFst Just) $ editModeValue mode
+		# attr = 'DM'.unions [maybe 'DM'.newMap attr mbVal, choiceAttrs taskId (editorId dp) sel $ mbValToOptions mbVal]
+		= (Ok (uia type attr, (mbVal, sel)), vst)
 
-	onEdit dp (tp,e) (val,sel) mask vst=:{VSt|optional}
-		# options = getOptions val
-		= case e of
-			JSONNull
-				= (Ok (NoChange,FieldMask {touched=True,valid=optional,state=JSONNull}),(val,[]),vst)
-			(JSONArray ids)
-				# selection = [i \\ JSONInt i <- ids]
-				| all (checkBounds options) selection
-					# multiple = maybe False (\(JSONBool b) -> b) ('DM'.get "multiple" (attr val))
-					# valid = if (selection =: []) multiple True //The selection is only allowed to be empty when multiselect is enabled
-					= (Ok (NoChange,FieldMask {touched=True,valid=valid,state=JSONArray ids}),(val,selection),vst)
-				| otherwise
-					= (Error ("Choice event out of bounds: " +++ toString (JSONArray ids)),(val,sel),vst)
-			_ 
-				= (Error ("Invalid choice event: " +++ toString e), (val,sel),vst)
+	onEdit dp (tp, selection) (mbVal, sel) vst=:{VSt|optional}
+		# options = maybe [] getOptions mbVal
+		| all (checkBounds options) selection
+			= (Ok (NoChange, (mbVal, selection)),vst)
+		| otherwise
+			= (Error ("Choice event out of bounds: " +++ toString (toJSON selection)), vst)
 
-	onRefresh dp (new,nsel) (old,osel) mask vst
+	onRefresh dp (newVal, newSel) (mbOldVal, oldSel) vst
 		//Check options
-		# oOpts = map toOption (getOptions old)
-		# nOpts = map toOption (getOptions new)
-		# cOptions= if (nOpts =!= oOpts) (ChangeUI [SetAttribute "options" (JSONArray nOpts)] []) NoChange
-		# cSel = if (nsel =!= osel) (ChangeUI [SetAttribute "value" (toJSON nsel)] []) NoChange
+		# oldOpts            = mbValToOptions mbOldVal
+		# newOpts            = mbValToOptions $ Just newVal
+		# cOptions           = if (newOpts =!= oldOpts)
+		                          (ChangeUI [SetAttribute "options" (JSONArray newOpts)] [])
+		                          NoChange
 		//Check selection
-		= (Ok (mergeUIChanges cOptions cSel, mask),(new,nsel),vst)
+		# cSel               = if (newSel =!= oldSel) (ChangeUI [SetAttribute "value" (toJSON newSel)] []) NoChange
+		= (Ok (mergeUIChanges cOptions cSel, (Just newVal, newSel)),vst)
+
+	valueFromState (Just val, sel)
+		//The selection is only allowed to be empty when multiselect is enabled
+		| not multiple && isEmpty sel = Nothing
+		| otherwise                   = Just (val, sel)
+	where
+		multiple = maybe False (\(JSONBool b) -> b) ('DM'.get "multiple" $ attr val)
+	valueFromState _               = Nothing
+
+	mbValToOptions mbVal = toOption <$> maybe [] getOptions mbVal

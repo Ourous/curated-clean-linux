@@ -12,7 +12,7 @@ import StdString
 import StdTuple
 
 import Control.Applicative
-import Control.Monad => qualified join
+from Control.Monad import mapM, class Monad(..), >>=
 import Data.Either
 import Data.Error
 from Data.Func import $
@@ -28,7 +28,7 @@ import Text.Language
 import Text.Parsers.Simple.ParserCombinators
 
 from Clean.Types import :: Type, :: TypeRestriction
-import qualified Clean.Types.Parse as T
+from Clean.Types.Parse import parseType
 from Clean.Types.Util import instance toString Type
 
 gDefault{|Maybe|} _ = Nothing
@@ -114,14 +114,18 @@ parseDoc s = docBlockToDoc{|*|} (Left [s])
 generic docBlockToDoc d :: !(Either [String] DocBlock) -> Either ParseError (!d, ![ParseWarning])
 docBlockToDoc{|String|} (Left []) = Left InternalNoDataError
 docBlockToDoc{|String|} (Left ss) = Right (trim $ last ss, [])
+docBlockToDoc{|String|} _         = abort "error in docBlockToDoc{|String|}\n"
 docBlockToDoc{|[]|} fx (Left ss) = (\vws -> (map fst vws, flatten (map snd vws)) ) <$> mapM fx (map (Left o pure) ss)
-docBlockToDoc{|Maybe|} fx (Left []) = Right (Nothing, [])
+docBlockToDoc{|[]|} _  _         = abort "error in docBlockToDoc{|[]|}\n"
+docBlockToDoc{|Maybe|} fx (Left [])    = Right (Nothing, [])
 docBlockToDoc{|Maybe|} fx ss=:(Left _) = appFst Just <$> fx ss
+docBlockToDoc{|Maybe|} _  _            = abort "error in docBlockToDoc{|Maybe|}\n"
 docBlockToDoc{|UNIT|} _ = Right (UNIT, [])
 docBlockToDoc{|PAIR|} fx fy db=:(Right _) = liftA2 (\(x,ws) (y,ws`) -> (PAIR x y, ws ++ ws`)) (fx db) (fy db)
-docBlockToDoc{|FIELD of d|} fx (Right db) = case fx (Left [v \\ (k,v) <- db | k matches d.gfd_name]) of
+docBlockToDoc{|PAIR|} _  _  _             = abort "error in docBlockToDoc{|PAIR|}\n"
+docBlockToDoc{|FIELD of {gfd_name}|} fx (Right db) = case fx (Left [v \\ (k,v) <- db | k matches gfd_name]) of
 	Right (f, ws)            -> Right (FIELD f, ws)
-	Left InternalNoDataError -> Left (MissingField d.gfd_name)
+	Left InternalNoDataError -> Left (MissingField gfd_name)
 	Left e                   -> Left e
 where
 	(matches) infix 4 :: !String !String -> Bool
@@ -132,6 +136,7 @@ where
 		k` == "return" && name == "results"
 	where
 		k` = {if (c == '-') '_' c \\ c <-: k}
+docBlockToDoc{|FIELD of {gfd_name}|} _ _ = abort "error in docBlockToDoc{|FIELD|}\n"
 docBlockToDoc{|RECORD|} fx (Left [s]) = case parseDocBlock s of
 	Right (db, ws) -> case fx (Right db) of
 		Right (v, ws`) -> Right (RECORD v, ws ++ ws`)
@@ -144,9 +149,10 @@ docBlockToDoc{|EITHER|} fl fr doc = case fl doc of
 	Left e -> case fr doc of
 		Right (v, ws) -> Right (RIGHT v, ws)
 		Left _ -> Left e
-docBlockToDoc{|OBJECT|} fx doc = appFst OBJECT <$> fx doc
+docBlockToDoc{|OBJECT|} fx doc = appFst (\x -> OBJECT x) <$> fx doc
 
 docBlockToDoc{|MultiLineString|} (Left [s]) = Right (MultiLine $ trimMultiLine $ split "\n" s, [])
+docBlockToDoc{|MultiLineString|} _          = abort "error in docBlockToDoc{|MultiLineString|}\n"
 
 docBlockToDoc{|ParamDoc|} (Left [s]) = case findName (fromString s) of
 	Just (name,rest) -> Right (
@@ -162,11 +168,13 @@ where
 	| not (isEmpty name) && not (isEmpty cs) && hd cs == ':'
 		= Just (toString name, dropWhile isSpace (tl cs))
 		= Nothing
+docBlockToDoc{|ParamDoc|} _ = abort "error in docBlockToDoc{|ParamDoc|}\n"
 
 docBlockToDoc{|Type|} (Left []) = Left InternalNoDataError
-docBlockToDoc{|Type|} (Left ss) = case [v \\ Just v <- map ('T'.parseType o fromString) ss] of
+docBlockToDoc{|Type|} (Left ss) = case [v \\ Just v <- map (parseType o fromString) ss] of
 	[] -> Left (UnknownError "no parsable type")
 	vs -> Right (last vs, [])
+docBlockToDoc{|Type|} _ = abort "error in docBlockToDoc{|Type|}\n"
 
 docBlockToDoc{|Property|} (Left [s]) = let [signature:property] = split "\n" s in
 		parseSignature signature >>= \(sig,ws1) ->
@@ -193,24 +201,27 @@ where
 
 		skipSpaces = pMany (pSatisfy isSpace) *> pYield undef
 		pTypeWithColonOrSemicolon = (pMany (pSatisfy \c -> c <> ':' && c <> ';') <* pOneOf [':;'])
-			>>= \t -> case 'T'.parseType t of
+			>>= \t -> case parseType t of
 				Nothing -> pError "type could not be parsed"
 				Just t  -> pure t
 
 	parseProperty :: ![String] -> Either ParseError (!String, ![ParseWarning])
 	parseProperty ss = Right (trimMultiLine ss, [])
+docBlockToDoc{|Property|} _ = abort "error in docBlockToDoc{|Property|}\n"
 
 docBlockToDoc{|PropertyVarInstantiation|} (Left [s]) = case split "=" s of
-	[var:type:[]] -> case 'T'.parseType (fromString type) of
+	[var:type:[]] -> case parseType (fromString type) of
 		Just t -> Right (PropertyVarInstantiation (trim var, t), [])
 		Nothing -> Left (UnknownError "type could not be parsed")
 	_ -> Left (UnknownError "property var instantiation could not be parsed")
+docBlockToDoc{|PropertyVarInstantiation|} _ = abort "error in docBlockToDoc{|PropertyVarInstantiation|}\n"
 
-docBlockToDoc{|PropertyTestGenerator|} (Left [s]) = case 'T'.parseType (fromString sig) of
+docBlockToDoc{|PropertyTestGenerator|} (Left [s]) = case parseType (fromString sig) of
 	Just t -> Right (PropertyTestGenerator t (trimMultiLine imp), [])
 	Nothing -> Left (UnknownError "type could not be parsed")
 where
 	[sig:imp] = split "\n" s
+docBlockToDoc{|PropertyTestGenerator|} _ = abort "error in docBlockToDoc{|PropertyTestGenerator|}\n"
 
 derive docBlockToDoc ModuleDoc, FunctionDoc, ClassMemberDoc, ConstructorDoc,
 	ClassDoc, TypeDoc
@@ -225,31 +236,40 @@ printDoc d = join "\n * "
 	] +++
 	"\n */"
 where
-	(Right fields`) = docToDocBlock{|*|} False d
+	fields` = case docToDocBlock{|*|} False d of
+		Right fs -> fs
+		_        -> abort "error in printDoc\n"
 	fields = filter ((<>) "description" o fst) fields`
 	desc = lookup "description" fields`
 
 generic docToDocBlock a :: Bool a -> Either [String] DocBlock
 docToDocBlock{|String|} True s = Left [s]
+docToDocBlock{|String|} _    _ = abort "error in docToDocBlock{|String|}\n"
 docToDocBlock{|[]|} fx True xs = Left [x \\ Left xs` <- map (fx True) xs, x <- xs`]
+docToDocBlock{|[]|} _  _    _  = abort "error in docToDocBlock{|[]|}\n"
 docToDocBlock{|Maybe|} fx True mb = case mb of
 	Nothing -> Left []
 	Just x  -> fx True x
+docToDocBlock{|Maybe|} _  _    _  = abort "error in docToDocBlock{|Maybe|}\n"
 
-docToDocBlock{|PAIR|} fx fy False (PAIR x y) = Right (xs ++ ys)
+docToDocBlock{|PAIR|} fx fy False (PAIR x y) = case fx False x of
+	Right xs -> case fy False y of
+		Right ys -> Right (xs ++ ys)
+		_        -> abort "error in docToDocBlock{|PAIR|}\n"
+	_            -> abort "error in docToDocBlock{|PAIR|}\n"
+docToDocBlock{|PAIR|} _  _  _      _         = abort "error in docToDocBlock{|PAIR|}\n"
+docToDocBlock{|FIELD of d|} fx False (FIELD x) = case fx True x of
+	Left xs -> Right [(name,x) \\ x <- xs]
+	_       -> abort "error in docToDocBlock{|FIELD|}\n"
 where
-	(Right xs) = fx False x
-	(Right ys) = fy False y
-docToDocBlock{|FIELD of d|} fx False (FIELD x) = Right [(name,x) \\ x <- xs]
-where
-	(Left xs) = fx True x
-
 	name = {if (c=='_') '-' c \\ c <-: name`}
 	name`
 	| endsWith "ies" d.gfd_name = d.gfd_name % (0,size d.gfd_name-4) +++ "y"
 	| endsWith "s" d.gfd_name   = d.gfd_name % (0,size d.gfd_name-2)
 	| otherwise                 = d.gfd_name
+docToDocBlock{|FIELD|} _ _ _ = abort "error in docToDocBlock{|FIELD|}\n"
 docToDocBlock{|RECORD|} fx False (RECORD x) = fx False x
+docToDocBlock{|RECORD|} _  _     _          = abort "error in docToDocBlock{|RECORD|}\n"
 
 docToDocBlock{|ParamDoc|} True pd = case pd.ParamDoc.name of
 	Nothing -> case pd.ParamDoc.description of
@@ -258,12 +278,18 @@ docToDocBlock{|ParamDoc|} True pd = case pd.ParamDoc.name of
 	Just n -> case pd.ParamDoc.description of
 		Nothing -> Left [n]
 		Just d -> Left [n +++ ": " +++ d]
+docToDocBlock{|ParamDoc|} _ _ = abort "error in docToDocBlock{|ParamDoc|}\n"
 docToDocBlock{|MultiLineString|} True (MultiLine s) = Left [s]
+docToDocBlock{|MultiLineString|} _    _             = abort "error in docToDocBlock{|MultiLineString|}\n"
 docToDocBlock{|Type|} True t = Left [toString t]
+docToDocBlock{|Type|} _    _ = abort "error in docToDocBlock{|Type|}\n"
 docToDocBlock{|Property|} True (ForAll name args impl) = Left
 	[name +++ ": A." +++ join "; " [a +++ " :: " <+ t \\ (a,t) <- args] +++ ":\n" +++ impl]
+docToDocBlock{|Property|} _ _ = abort "error in docToDocBlock{|Property|}\n"
 docToDocBlock{|PropertyVarInstantiation|} True (PropertyVarInstantiation (a,t)) = Left [a +++ " = " <+ t]
+docToDocBlock{|PropertyVarInstantiation|} _    _                                = abort "error in docToDocBlock{|PropertyVarInstantiation|}\n"
 docToDocBlock{|PropertyTestGenerator|} True (PropertyTestGenerator t impl) = Left [t <+ "\n" +++ impl]
+docToDocBlock{|PropertyTestGenerator|} _    _                              = abort "error in docToDocBlock{|PropertyTestGenerator|}\n"
 
 derive docToDocBlock ModuleDoc, FunctionDoc, ClassMemberDoc, ClassDoc,
 	ConstructorDoc, TypeDoc
@@ -302,6 +328,8 @@ where
 
 		parseFs :: ![Char] ![Char] !DocBlock -> Either ParseError (!DocBlock, ![ParseWarning])
 		parseFs field val d = Right ([(toString field,toString (rtrim val)):d], [])
+	parseFields _
+		= abort "error in parseDocBlock\n"
 
 prepareString :: (String -> Either ParseError [[Char]])
 prepareString = checkAsterisks o map trim o break '\n' o fromString
@@ -340,6 +368,7 @@ where
 	toString (MissingAsterisk l) = "Doc error: missing leading asterisk in '" +++ l +++ "'"
 	toString (MissingField f)    = "Doc error: required field '" +++ f +++ "' was missing"
 	toString (UnknownError e)    = "Doc error: " +++ e
+	toString InternalNoDataError = "Doc error: internal parsing error"
 
 traceParseWarnings :: ![ParseWarning] !a -> a
 traceParseWarnings []     x = x

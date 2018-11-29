@@ -8,6 +8,7 @@ import iTasks.UI.JS.Interface
 import StdGeneric
 from Text.GenJSON import :: JSONNode (..)
 from StdList import !!
+from Data.Maybe import :: Maybe
 
 //Sending values server -> client
 encodeOnServer :: !a -> JSONNode | JSEncode{|*|} a //Don't specialize JSEncode, it will break decoding
@@ -15,12 +16,12 @@ decodeOnClient :: !(JSVal a) !*JSWorld -> *(!a, !*JSWorld)
 
 //Sending values client -> server
 encodeOnClient :: !a *JSWorld -> (!JSVal a, !*JSWorld)
-decodeOnServer :: !JSONNode -> (Maybe a) | JSDecode{|*|} a //Don't sepcialize JSDecode, it will break on the fixed encoding 
+decodeOnServer :: !JSONNode -> (Maybe a) | JSDecode{|*|} a //Don't specialize JSDecode, it will break on the fixed encoding
 
 generic JSEncode t :: !t -> [JSONNode]
 derive  JSEncode Int, Real, Char, Bool, String, UNIT, [],
-	(,), (,,), (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,), {}, {!}, (->),
-    EITHER, OBJECT
+	(), (,), (,,), (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,), {}, {!}, (->),
+    EITHER, OBJECT, Maybe, JSONNode
 
 JSEncode{|CONS of {gcd_name,gcd_index}|} fx (CONS x) = [JSONArray [JSONInt gcd_index, JSONString gcd_name : fx x]]
 JSEncode{|RECORD of {grd_name}|} fx (RECORD x) = [JSONArray [JSONInt 0, JSONString ("_" +++ grd_name) : fx x]]
@@ -34,7 +35,7 @@ where
     (++) nil        list    = list
 
 generic JSDecode t :: ![JSONNode] -> (!Maybe t,![JSONNode])
-derive  JSDecode Int, Real, Char, Bool, String, UNIT, EITHER, CONS of {gcd_name}, OBJECT, [], (,), (,,), (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,), {}, {!} 
+derive  JSDecode Int, Real, Char, Bool, String, UNIT, EITHER, CONS of {gcd_name}, OBJECT, [], (), (,), (,,), (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,), {}, {!}, Maybe, JSONNode
 
 JSDecode{|PAIR|} fx fy l = d1 fy (fx l) l
   where

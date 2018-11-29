@@ -39,7 +39,8 @@ where
 		# (error, file) = ferror file
 		| error
 			= (Error IOError, file)
-			= (Ok (), file) 
+			= (Ok (), file)
+	wrt (e, file) _ = (e, file)
 
 instance toString StringAppender			   
 where

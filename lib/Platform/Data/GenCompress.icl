@@ -1,17 +1,18 @@
 implementation module Data.GenCompress
 
-import StdGeneric, StdEnv, Data._Array
+import StdGeneric, StdEnv
 from Data.Maybe import :: Maybe(..)
+import Data._Array, Data.Func
 
 //--------------------------------------------------
 // uncompressor monad
 
 ret :: !.a !u:CompressSt -> (!Maybe .a,!u:CompressSt)
 ret a st = (Just a, st)
-(>>=) infixl 5 
+(>>=) infixl 5
 (>>=) pa pb = bind pa pb
 where
-	bind pa pb st 
+	bind pa pb st
 		#! (ma, st) = pa st
 		= case ma of
 			Nothing -> (Nothing, st)
@@ -35,7 +36,7 @@ compressBool bit {cs_pos = pos, cs_bits = bits}
 	#! int_pos = pos >> (IF_INT_64_OR_32 6 5)
 	#! bit_pos = pos bitand (IF_INT_64_OR_32 63 31)
 	| s == int_pos
-		= abort "reallocate" 
+		= abort "reallocate"
 		#! int = bits.[int_pos]
 		#! bit_mask = 1 << bit_pos
 		#! new_int = if bit (int bitor bit_mask) (int bitand (bitnot bit_mask))
@@ -47,7 +48,7 @@ uncompressBool cs=:{cs_pos = pos, cs_bits = bits}
 	#! int_pos = pos >> (IF_INT_64_OR_32 6 5)
 	#! bit_pos = pos bitand (IF_INT_64_OR_32 63 31)
 	| s == int_pos
-		= (Nothing, cs) 
+		= (Nothing, cs)
 		#! int = bits.[int_pos]
 		#! bit_mask = 1 << bit_pos
 		#! bit = (bit_mask bitand int) <> 0
@@ -61,7 +62,7 @@ where
 		| i == n
 			= id
 		| otherwise
-			= compress (inc i) n (int >> 1) 
+			= compress (inc i) n (int >> 1)
 			o compressBool ((int bitand 1) == 1)
 
 
@@ -77,14 +78,14 @@ where
 			= ret int
 		| otherwise
 			=   	uncompressBool
-			>>= 	\bit -> uncompress (inc i) n int 
+			>>= 	\bit -> uncompress (inc i) n int
 			>>= 	\x -> ret ((if bit 1 0) + (x << 1))
 
 uncompressInt :: (u:CompressSt -> (.(Maybe Int),v:CompressSt)), [u <= v]
 uncompressInt = uncompressIntB (IF_INT_64_OR_32 64 32)
 
 uncompressChar :: (u:CompressSt -> (.(Maybe Char),v:CompressSt)), [u <= v]
-uncompressChar = uncompressIntB 8 >>= ret o toChar 
+uncompressChar = uncompressIntB 8 >>= ret o toChar
 
 realToBinary32 :: !Real -> (!Int,!Int);
 realToBinary32 _ = code {
@@ -116,25 +117,25 @@ uncompressReal
 	= IF_INT_64_OR_32
 		(uncompressInt
 		>>= \i -> ret (binaryToReal64 i))
-		(uncompressInt 
-		>>= \i1 -> uncompressInt 
+		(uncompressInt
+		>>= \i1 -> uncompressInt
 		>>= \i2 -> ret (binaryToReal32 (i1,i2)))
 
 compressArray :: (a -> u:(v:CompressSt -> w:CompressSt)) !.(b a) -> x:(*CompressSt -> y:CompressSt) | Array b a, [x <= u,w <= v,w <= y]
-compressArray f xs 
+compressArray f xs
 	= foldSt f [x \\ x <-: xs] o compressInt (size xs)
 
 foldSt f [] = id
 foldSt f [x:xs] = foldSt f xs o f x
 
 uncompressArray :: (u:CompressSt -> ((Maybe v:a),w:CompressSt)) -> .(x:CompressSt -> ((Maybe y:(b v:a)),z:CompressSt)) | Array b a, [x w <= u,y <= v,x w <= z]
-uncompressArray f 
-	=	uncompressInt >>= \s -> uncompress_array 0 s (createArrayUnsafe s) 
-where 
+uncompressArray f
+	=	uncompressInt >>= \s -> uncompress_array 0 s (unsafeCreateArray s)
+where
 	uncompress_array i s arr
 		| i == s
 			= ret arr
-			= f >>= \x -> uncompress_array (inc i) s {arr & [i] = x} 
+			= f >>= \x -> uncompress_array (inc i) s {arr & [i] = x}
 
 compressList :: (a *CompressSt -> *CompressSt) ![a] -> *CompressSt -> *CompressSt
 compressList c xs = compressArray c (list_to_arr xs)
@@ -146,13 +147,13 @@ where
 uncompressList xs = uncompressArray xs >>= ret o arr_to_list
 where
 	arr_to_list :: {b} -> [b] | Array {} b
-	arr_to_list xs = [x \\ x <-: xs] 
- 
+	arr_to_list xs = [x \\ x <-: xs]
+
 //--------------------------------------------------------------------------------------
 
 generic gCompress a :: !a -> *CompressSt -> *CompressSt
-gCompress{|Int|} x = compressInt x 
-gCompress{|Real|} x = compressReal x 
+gCompress{|Int|} x = compressInt x
+gCompress{|Real|} x = compressReal x
 gCompress{|Char|} x = compressChar x
 gCompress{|Bool|} x = compressBool x
 gCompress{|UNIT|} x = id
@@ -180,9 +181,9 @@ gCompressedSize{|EITHER|} cl cr (RIGHT x) = 1 + cr x
 gCompressedSize{|CONS|} c (CONS x) = c x
 gCompressedSize{|FIELD|} c (FIELD x) = c x
 gCompressedSize{|OBJECT|} c (OBJECT x) = c x
-gCompressedSize{|[]|} c xs = foldSt (\x st -> c x + st) xs (IF_INT_64_OR_32 64 32) 
-gCompressedSize{|{}|} c xs = foldSt (\x st -> c x + st) [x\\x<-:xs] (IF_INT_64_OR_32 64 32) 
-gCompressedSize{|{!}|} c xs = foldSt (\x st -> c x + st) [x\\x<-:xs] (IF_INT_64_OR_32 64 32) 
+gCompressedSize{|[]|} c xs = foldSt (\x st -> c x + st) xs (IF_INT_64_OR_32 64 32)
+gCompressedSize{|{}|} c xs = foldSt (\x st -> c x + st) [x\\x<-:xs] (IF_INT_64_OR_32 64 32)
+gCompressedSize{|{!}|} c xs = foldSt (\x st -> c x + st) [x\\x<-:xs] (IF_INT_64_OR_32 64 32)
 gCompressedSize{|String|} xs = (IF_INT_64_OR_32 64 32) + size xs * 8
 
 generic gUncompress a :: (u:CompressSt -> ((Maybe a),u:CompressSt))
@@ -194,17 +195,17 @@ gUncompress{|UNIT|} = ret UNIT
 gUncompress{|PAIR|} fx fy = fx >>= \x -> fy >>= \y -> ret (PAIR x y)
 gUncompress{|EITHER|} fl fr = uncompressBool >>= either
 where
-	either is_right 
+	either is_right
 		| is_right
 			= fr >>= ret o RIGHT
 			= fl >>= ret o LEFT
 gUncompress{|CONS|} f = f >>= ret o CONS
-gUncompress{|FIELD|} f = f >>= ret o FIELD
-gUncompress{|OBJECT|} f = f >>= ret o OBJECT
-gUncompress{|[]|} f = uncompressList f 
-gUncompress{|{}|} f = uncompressArray f 
-gUncompress{|{!}|} f = uncompressArray f 
-gUncompress{|String|} = uncompressArray uncompressChar 
+gUncompress{|FIELD|} f = f >>= \x -> ret $ FIELD x
+gUncompress{|OBJECT|} f = f >>= \x -> ret $ OBJECT x
+gUncompress{|[]|} f = uncompressList f
+gUncompress{|{}|} f = uncompressArray f
+gUncompress{|{!}|} f = uncompressArray f
+gUncompress{|String|} = uncompressArray uncompressChar
 
 
 //-------------------------------------------------------------------------------------
@@ -213,12 +214,13 @@ uncompress :: (BitVector -> Maybe a) | gUncompress{|*|} a
 uncompress = fst o gUncompress{|*|} o mkCompressSt
 
 compress :: !a -> BitVector | gCompressedSize{|*|} a & gCompress{|*|} a
-compress x 
+compress x
 	#! compressed_size = gCompressedSize{|*|} x
 	#! arr_size = (compressed_size + (IF_INT_64_OR_32 63 31)) >> (IF_INT_64_OR_32 6 5)
 	#! bits = createArray arr_size 0
 	= (gCompress{|*|} x (mkCompressSt bits)).cs_bits
- 
+
+
 //-------------------------------------------------------------------------------------
 
 /*
@@ -229,11 +231,11 @@ derive bimap (,), (,,), Maybe
 derive gCompress Tree, Color
 derive gUncompress Tree, Color
 derive gCompressedSize Tree, Color
-		
+
 //Start :: Maybe (Tree Color Color)
 //Start = uncompress (compress (Bin Red (Bin Green (Tip Blue) (Tip Red)) (Tip Green)))
 //Start = gCompressedSize{|*|} (Bin Red (Bin Green (Tip Blue) (Tip Red)) (Tip Green))
 
-Start 
+Start
 	= gCompressedSize{|*|} xs
 */

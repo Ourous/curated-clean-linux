@@ -5,11 +5,11 @@ import StdList
 import StdTuple
 import StdString
 
-import Data.Error
+import Data.Error, Data.Func
 import Text
 import System.OS
 import System.OSError
-import qualified System._FilePath as _FilePath
+import qualified System._FilePath
 
 pathSeparator :: Char
 pathSeparator = OS_PATH_SEPARATOR
@@ -24,10 +24,20 @@ extSeparator = '.'
 (</>) x y = (addTrailingPathSeparator x) +++ y
 
 splitExtension :: !FilePath -> (String, String)
-splitExtension path = 
-	case lastIndexOf {extSeparator} path of
-		-1 -> (path, "")
-		i  -> (subString 0 i path, subString (i+1) (size path - i - 1) path)
+splitExtension path = split sz
+where
+	sz = size path - 1
+
+	split :: !Int -> (String, String)
+	split i
+	| i <= 0             = (path, "")
+	| c == pathSeparator = (path, "")
+	| c == extSeparator
+		| i == sz        = (path, "")
+		| otherwise      = (path % (0,i-1), path % (i+1, sz))
+	| otherwise          = split (i-1)
+	where
+		c = path.[i]
 
 takeExtension :: !FilePath -> String
 takeExtension path = snd (splitExtension path)
@@ -45,7 +55,7 @@ replaceExtension path ext = addExtension (dropExtension path) ext
 
 hasTrailingPathSeparator :: !FilePath -> Bool
 hasTrailingPathSeparator "" = False
-hasTrailingPathSeparator path = isMember (path.[size path - 1]) pathSeparators
+hasTrailingPathSeparator path = path.[size path - 1] == pathSeparator
 
 addTrailingPathSeparator :: !FilePath -> FilePath
 addTrailingPathSeparator path = if (hasTrailingPathSeparator path) path (path +++ {pathSeparator})
@@ -60,11 +70,12 @@ takeDirectory :: !FilePath -> FilePath
 takeDirectory path = fst (splitFileName path) 
 
 dropDirectory :: !FilePath -> String
-dropDirectory path =
-	case lastIndexOf {pathSeparator} path of
-		-1	-> path
-		i	-> (subString (i+1) (size path - i - 1) path)
-
+dropDirectory path = case lastIndexOf {pathSeparator} path of
+	-1                    = path
+	i | i == sizePath - 1 = dropDirectory $ subString 0 (sizePath - 1) path // drop file separator at end of path
+	  | otherwise         = subString (i+1) (sizePath - i - 1) path
+where
+    sizePath = size path
 
 takeFileName :: !FilePath -> FilePath
 takeFileName path = snd (splitFileName path) 
@@ -76,5 +87,4 @@ dropFileName :: !FilePath -> FilePath
 dropFileName path = takeDirectory path
 
 getFullPathName :: !FilePath !*World -> (!MaybeOSError FilePath, !*World)
-getFullPathName p w = '_FilePath'.getFullPathName p w
-
+getFullPathName p w = 'System._FilePath'.getFullPathName p w

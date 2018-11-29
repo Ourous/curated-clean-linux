@@ -4,6 +4,7 @@ definition module iTasks.WF.Combinators.Core
 */
 import iTasks.WF.Definition
 from iTasks.SDS.Definition import :: SDS
+from Data.Error import :: MaybeError(Ok)
 from Data.Maybe import :: Maybe
 
 //* Next task actions
@@ -78,16 +79,29 @@ ActionClose		:==	Action "Close"
 
 derive class iTask AttachException
 instance toString AttachException
+
 /**
 * Adds a result transformation function to a task.
 * The resulting task is still considered a single step in the workflow.
 *
-* @param Function: The transformation function. It works on maybe's to also map over instable tasks.
+* @param Function: The transformation function.
 * @param Task: The task to which the transformation function is added
 *
 * @return The transformed task
 */
-transform :: ((TaskValue a) -> TaskValue b) !(Task a) -> Task b
+transformError :: ((TaskValue a) -> MaybeError TaskException (TaskValue b)) !(Task a) -> Task b
+
+/**
+* Adds a result transformation function to a task.
+* The resulting task is still considered a single step in the workflow.
+*
+* @param Function: The transformation function.
+* @param Task: The task to which the transformation function is added
+*
+* @return The transformed task
+* @type ((TaskValue a) -> TaskValue b) !(Task a) -> Task b
+*/
+transform f :== transformError (\tv->Ok (f tv))
 
 /**
 * The generic sequential combinator.
@@ -159,3 +173,13 @@ focusTask   :: !TaskId                              !(SharedTaskList a) -> Task 
 * @return The state of the task to work on
 */
 attach :: !InstanceNo !Bool -> Task AttachmentStatus
+
+/**
+ * Adds a cleaup hook to a task that is executed on destruction of the task.
+ * The cleanup task is evaluated at some point in time after the task is destroyed.
+ * (This may also happen after the `withCleanupHook` task itself becomes stable.)
+ *
+ * @param The cleanup hook
+ * @param The task to hook in to
+ */
+withCleanupHook :: (Task a) (Task b) -> Task b | iTask a & iTask b

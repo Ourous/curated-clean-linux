@@ -18,10 +18,10 @@ instance Semigroup (Dual a) | Semigroup a where
 instance Monoid (Dual a) | Monoid a where
   mempty = Dual mempty
 
-instance Semigroup (Endo a) where
+instance Semigroup (Endo .a) where
   mappend (Endo f) (Endo g) = Endo (f o g)
 
-instance Monoid (Endo a) where
+instance Monoid (Endo .a) where
   mempty = Endo id
 
 instance Semigroup All where
@@ -62,10 +62,10 @@ instance Semigroup (Last a) where
 instance Monoid (Last a) where
   mempty = Last Nothing
 
-getDual :: !(Dual a) -> a
+getDual :: !(Dual .a) -> .a
 getDual (Dual x) = x
 
-appEndo :: !(Endo a) -> (a -> a)
+appEndo :: !(Endo .a) -> (.a -> .a)
 appEndo (Endo f) = f
 
 getAll :: !All -> Bool

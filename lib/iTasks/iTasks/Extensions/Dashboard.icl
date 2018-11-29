@@ -2,7 +2,7 @@ implementation module iTasks.Extensions.Dashboard
 import iTasks
 import iTasks.UI.Editor, iTasks.UI.Definition, iTasks.UI.JS.Interface
 import qualified Data.Map as DM, Data.Error
-import Text.HTML
+import Text.HTML, StdMisc, Data.Func
 
 derive JSONEncode ControlLight
 derive JSONDecode ControlLight
@@ -14,21 +14,25 @@ gEditor{|ControlLight|} = controlLightEditlet
 
 //SVG Based fake control light
 controlLightEditlet :: Editor ControlLight
-controlLightEditlet
-    = {Editor
+controlLightEditlet = leafEditorToEditor
+	{LeafEditor
       |genUI  = withClientSideInit initUI genUI
-      ,onEdit = \_ _ a m ust -> (Ok (NoChange,m),a,ust)
-      ,onRefresh = \_ b a m vst -> (Ok (if (a===b) NoChange (ChangeUI [SetAttribute "value" (JSONString (color b))] []),m),b,vst)
+      ,onEdit = \_ (_,()) m vst -> (Ok (NoChange,m),vst)
+      ,onRefresh = \_ val st vst -> (Ok (if (valueFromState st === Just val) NoChange (ChangeUI [SetAttribute "value" (JSONString (color val))] []),st),vst)
+	  ,valueFromState = valueFromState
       }
 where
-	genUI dp val world
+	genUI dp mode world
+		# val = fromMaybe LightOff (editModeValue mode)
 		# attr = 'DM'.unions [sizeAttr (ExactSize 20) (ExactSize 20),valueAttr (JSONString (toString (svgLight (color val))))]
-		= (Ok (uia UIHtmlView attr,newFieldMask), world)
+		= (Ok (uia UIHtmlView attr,val), world)
 
     initUI me world 
 		# (jsOnAttributeChange,world) = jsWrapFun (onAttributeChange me) world
 		# world = (me .# "onAttributeChange" .= jsOnAttributeChange) world
 		= world
+
+	valueFromState s = Just s
 
 	onAttributeChange me args world
 		| jsArgToString (args !! 0) == "diff"

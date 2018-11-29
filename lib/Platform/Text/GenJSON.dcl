@@ -14,6 +14,7 @@ from StdOverloaded import class fromString, class toString, class ==(..)
 from StdString import instance == {#Char}
 from Data.List import !?
 from Data.Maybe import :: Maybe(..)
+from Data.GenEq import generic gEq
 
 :: JSONNode	= JSONNull
 			| JSONBool !Bool
@@ -37,6 +38,8 @@ instance fromString JSONNode
 * Serialize a JSON structure and write to a File
 */
 instance <<< JSONNode
+
+derive gEq JSONNode
 
 /**
 * Encodes any value to JSON format.
@@ -89,7 +92,7 @@ jsonQuery :: !String !JSONNode -> Maybe a | JSONDecode{|*|} a
 * for each type you want to encode in JSON format.
 */
 generic JSONEncode t :: !Bool !t -> [JSONNode]
-derive  JSONEncode Int, Real, Char, Bool, String, [], (,), (,,), (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,), {}, {!}, Maybe, JSONNode
+derive  JSONEncode Int, Real, Char, Bool, String, [], (), (,), (,,), (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,), {}, {!}, Maybe, JSONNode
 
 JSONEncode{|UNIT|} _ (UNIT) = []
 JSONEncode{|PAIR|} fx fy _ (PAIR x y) = fx False x ++ fy False y
@@ -116,7 +119,7 @@ JSONEncode{|FIELD|} fx _ (FIELD x) = fx True x
 * for each type you want to parse from JSON format.
 */
 generic JSONDecode t :: !Bool ![JSONNode] -> (!Maybe t,![JSONNode])
-derive  JSONDecode Int, Real, Char, Bool, String, [], (,), (,,), (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,), {}, {!}, Maybe, JSONNode
+derive  JSONDecode Int, Real, Char, Bool, String, [], (), (,), (,,), (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,), {}, {!}, Maybe, JSONNode
 
 JSONDecode{|UNIT|} _ l					= (Just UNIT, l)
 JSONDecode{|EITHER|} fx fy _ l = case fx False l of

@@ -1,6 +1,6 @@
 implementation module iTasks.Internal.Generic.Visualization
 
-import StdGeneric, StdList, StdMisc, StdArray
+import StdEnv
 import Data.Maybe, Data.Either, Data.Functor
 from Data.Map import :: Map (..)
 import qualified Data.Map as DM

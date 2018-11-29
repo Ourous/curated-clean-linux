@@ -2,7 +2,7 @@ definition module iTasks.Internal.Generic.Defaults
 
 import Data.GenDefault
 
-derive gDefault (->), Bool, Char, Maybe, Either, MaybeError, Map, JSONNode, HtmlTag, Timestamp, Timespec
+derive gDefault Maybe, Either, MaybeError, Map, JSONNode, HtmlTag, Timestamp, Timespec
 
 from Text.GenJSON import :: JSONNode
 from Text.HTML import :: HtmlTag

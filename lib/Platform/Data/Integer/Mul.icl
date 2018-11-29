@@ -28,10 +28,11 @@ resize_int_array :: !Int !*{#Int} -> *{#Int};
 resize_int_array s a
 	| size a>=s
 		= unsafe_resize_int_array s a;
+		= abort "error in resize_int_array\n";
 
 unsafe_resize_int_array :: !Int !*{#Int} -> *{#Int};
 unsafe_resize_int_array s a = code {
-	fill1_r _ARAY_ 0 1 0 01
+	fill1_r _ARRAY_ 0 1 0 01
 }
 
 mul_integer_a :: !{#Int} !{#Int} -> *{#Int};

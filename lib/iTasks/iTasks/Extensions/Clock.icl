@@ -1,13 +1,13 @@
 implementation module iTasks.Extensions.Clock
 /**
-* This module provides a type for visualizing time as an an analog clock
+* This module provides a type for visualizing time as an analog clock
 */
 import iTasks
 import iTasks.UI.Definition, iTasks.UI.Editor
 import iTasks.UI.JS.Interface
 import iTasks.Extensions.DateTime
 import qualified Data.Map as DM, Data.Tuple, Data.Error
-import Text.HTML
+import Text.HTML, Data.Func
 
 derive JSONEncode AnalogClock
 derive JSONDecode AnalogClock
@@ -19,16 +19,18 @@ gEditor{|AnalogClock|} = analogClockEditor
 
 //SVG Based analog clock editlet
 analogClockEditor :: Editor AnalogClock
-analogClockEditor
-    = {Editor
-      |genUI    = withClientSideInit initUI genUI
-      ,onEdit   = onEdit 
-      ,onRefresh = onRefresh
-      }
+analogClockEditor = leafEditorToEditor
+	{LeafEditor
+	|genUI          = withClientSideInit initUI genUI
+	,onEdit         = onEdit
+	,onRefresh      = onRefresh
+	,valueFromState = valueFromState
+	}
 where
-	genUI dp (AnalogClock {Time|hour,min,sec}) world
+	genUI dp mode world
+		# time=:(AnalogClock {Time|hour,min,sec}) = fromMaybe (AnalogClock {Time|hour=0,min=0,sec=0}) $ editModeValue mode
 		# attr = 'DM'.unions [sizeAttr (ExactSize 100) (ExactSize 100),valueAttr (JSONString (toString (svgClock hour min sec)))]
-		= (Ok (uia UIHtmlView attr,newFieldMask), world)
+		= (Ok (uia UIHtmlView attr,time), world)
 	where
 		svgClock hour min sec 
 			= SvgTag [StyleAttr "flex: 1; align-self: stretch;"] [ViewBoxAttr "0" "0" "100" "100"]
@@ -72,17 +74,10 @@ where
 	degrees 1 v = 6 * v
 	degrees 2 v = 30 * v
 
-onRefresh _ new=:(AnalogClock t2) (AnalogClock t1) mask vst = case (  (if (t1.Time.sec == t2.Time.sec) [] [(0,t2.Time.sec)])
+	onRefresh _ new=:(AnalogClock t2) old=:(AnalogClock t1) vst = case ((if (t1.Time.sec == t2.Time.sec) [] [(0,t2.Time.sec)])
 						 ++ (if (t1.Time.min == t2.Time.min) [] [(1,t2.Time.min)])
 						 ++ (if (t1.Time.hour == t2.Time.hour) [] [(2,t2.Time.hour)])
-						 ) of [] = (Ok (NoChange,mask),new,vst) ; delta = (Ok (ChangeUI [SetAttribute "diff" (toJSON delta)] [],mask),new,vst)
+						 ) of [] = (Ok (NoChange,old),vst) ; delta = (Ok (ChangeUI [SetAttribute "diff" (toJSON delta)] [],new),vst)
 
-onEdit dp ([],diff) t m ust = case fromJSON diff of
-	Just diffs = (Ok (NoChange,FieldMask {touched=True,valid=True,state=JSONNull}),app diffs t,ust)
-	Nothing = (Ok (NoChange,m),t,ust)
-where
-	app [] t = t
-	app [(0,s):d] (AnalogClock t) = app d (AnalogClock {Time|t & sec = s})
-	app [(1,m):d] (AnalogClock t) = app d (AnalogClock {Time|t & min = m})
-	app [(2,h):d] (AnalogClock t) = app d (AnalogClock {Time|t & hour = h})
-onEdit _ _ t m ust = (Ok (NoChange,m),t,ust)
+	onEdit dp ([],()) s vst = (Ok (NoChange,s),vst)
+	valueFromState s = Just s

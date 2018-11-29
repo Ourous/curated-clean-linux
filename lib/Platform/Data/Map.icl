@@ -1,24 +1,20 @@
-
-
 implementation module Data.Map
 
 from StdBool import &&, ||
-from StdFunc import id, flip, o, const
+from StdFunc import id, flip, o, const, seq
 from StdTuple import snd
 from StdMisc import abort, undef
 import StdString, StdTuple
 from Data.GenEq import generic gEq
-import qualified StdList as SL
 import Data.Maybe, Text.GenJSON, Data.GenLexOrd
 from Data.Set import :: Set
-import qualified Data.Set as DS
 import Data.Monoid, Data.Functor, Control.Applicative
 import Data.List, Data.Either
 from Data.Foldable import class Foldable
 from Data.Traversable import class Traversable
-import qualified Data.Foldable as DF
-import qualified Data.Traversable as DT
 import Control.Monad
+
+import qualified Data.Set
 
 // Ported from Haskell`s Data.Map by Jurriën Stutterheim, 10-09-2014
 
@@ -683,6 +679,7 @@ hedgeUnion blo bhi (Bin _ kx x l r) t2
   #! bmi = Just kx
   = link kx x (hedgeUnion blo bmi l (trim blo bmi t2))
               (hedgeUnion bmi bhi r (trim bmi bhi t2))
+hedgeUnion _ _ _ _ = abort "error in hedgeUnion\n"
 
 //////////////////////////////////////////////////////////////////////
 //  Union with a combining function
@@ -721,6 +718,7 @@ hedgeDiff blo bhi (Bin _ kx x l r) Tip = link kx x (filterGt blo l) (filterLt bh
 hedgeDiff blo bhi t (Bin _ kx _ l r)
   #! bmi = Just kx
   = merge (hedgeDiff blo bmi (trim blo bmi t) l) (hedgeDiff bmi bhi (trim bmi bhi t) r)
+hedgeDiff _ _ _ _ = abort "error in hedgeDiff\n"
 
 // | /O(n+m)/. Difference with a combining function.
 // When two equal keys are
@@ -860,6 +858,7 @@ hedgeMerge f g1 g2 blo bhi (Bin _ kx x l r) t2
       Just x2 -> case f kx x x2 of
                    Nothing -> merge l` r`
                    Just x` -> link kx x` l` r`
+hedgeMerge _ _ _ _ _ _ _ = abort "error in hedgeMerge\n"
 
 //////////////////////////////////////////////////////////////////////
 //  Submap
@@ -900,6 +899,7 @@ submap` f (Bin _ kx x l r) t
       Just y  -> f x y && submap` f l lt && submap` f r gt
   where
     (lt,found,gt) = splitLookup kx t
+submap` _ _ _ = abort "error in submap`\n"
 
 // | /O(n+m)/. Is this a proper submap? (ie. a submap but not equal).
 // Defined as (@'isProperSubmapOf' = 'isProperSubmapOfBy` (==)@).
@@ -1225,7 +1225,7 @@ foldrWithKey` f z` (Bin _ kx x l r) = foldrWithKey` f (f kx x (foldrWithKey` f z
 //
 // > let f result k a = result ++ "(" ++ (show k) ++ ":" ++ a ++ ")"
 // > foldlWithKey f "Map: " (fromList [(5,"a"), (3,"b")]) == "Map: (3:b)(5:a)"
-foldlWithKey :: !(u:a k v -> u:a) !u:a !(Map k v) -> u:a
+foldlWithKey :: !(.a -> .(k -> .(v -> .a))) !.a !(Map k v) -> .a
 foldlWithKey f z` Tip              = z`
 foldlWithKey f z` (Bin _ kx x l r) = foldlWithKey f (f (foldlWithKey f z` l) kx x) r
 
@@ -1281,8 +1281,8 @@ assocs m = toAscList m
 // > keysSet newMap == Data.Set.newMap
 
 keysSet :: !(Map k a) -> Set k
-keysSet Tip = 'DS'.Tip
-keysSet (Bin sz kx _ l r) = 'DS'.Bin sz kx (keysSet l) (keysSet r)
+keysSet Tip = 'Data.Set'.Tip
+keysSet (Bin sz kx _ l r) = 'Data.Set'.Bin sz kx (keysSet l) (keysSet r)
 
 // | /O(n)/. Build a map from a set of keys and a function which for each key
 // computes its value.
@@ -1291,8 +1291,8 @@ keysSet (Bin sz kx _ l r) = 'DS'.Bin sz kx (keysSet l) (keysSet r)
 // > fromSet undefined Data.Set.newMap == newMap
 
 fromSet :: !(k -> a) !(Set k) -> Map k a
-fromSet _ 'DS'.Tip            = Tip
-fromSet f ('DS'.Bin sz x l r) = Bin sz x (f x) (fromSet f l) (fromSet f r)
+fromSet _ 'Data.Set'.Tip            = Tip
+fromSet f ('Data.Set'.Bin sz x l r) = Bin sz x (f x) (fromSet f l) (fromSet f r)
 
 //////////////////////////////////////////////////////////////////////
 //  Lists
@@ -1668,6 +1668,7 @@ link kx x l=:(Bin mapSizeL ky y ly ry) r=:(Bin mapSizeR kz z lz rz)
   | delta*mapSizeL < mapSizeR  = balanceL kz z (link kx x l lz) rz
   | delta*mapSizeR < mapSizeL  = balanceR ky y ly (link kx x ry r)
   | otherwise                  = bin kx x l r
+link _ _ _ _ = abort "error in link\n"
 
 
 // putMin and putMax don't perform potentially expensive comparisons.
@@ -1695,6 +1696,7 @@ merge l=:(Bin mapSizeL kx x lx rx) r=:(Bin mapSizeR ky y ly ry)
   | delta*mapSizeL < mapSizeR = balanceL ky y (merge l ly) ry
   | delta*mapSizeR < mapSizeL = balanceR kx x lx (merge rx r)
   | otherwise                 = glue l r
+merge _ _ = abort "error in merge\n"
 
 ////////////////////////////////////////////////////////////////////
 //  [glue l r]: glues two trees together.
@@ -1920,8 +1922,10 @@ instance < (Map k v) | Ord k & Ord v where
 ////////////////////////////////////////////////////////////////////
 //  Functor
 ////////////////////////////////////////////////////////////////////
-instance Functor (Map k) where
-  fmap f m  = map f m
+instance Functor (Map k)
+where
+	fmap :: !(a -> b) !(Map k a) -> Map k b
+	fmap f m  = map f m
 
 // TODO
 //instance Traversable (Map k) where

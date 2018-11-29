@@ -1,10 +1,10 @@
 implementation module iTasks.Extensions.Editors.Ace
 
 import iTasks
-import iTasks.UI.Editor, iTasks.UI.Editor.Modifiers, iTasks.UI.Definition 
-import iTasks.UI.JS.Interface
+import iTasks.UI.Editor, iTasks.UI.Editor.Modifiers, iTasks.UI.Definition
+import iTasks.UI.JS.Interface, iTasks.UI.JS.Encoding
 import qualified Data.Map as DM
-import Text
+import Text, Data.Func
 
 ACE_JS_URL :== "/ace/src-noconflict/ace.js"
 ACE_DEFAULT_THEME :== "ace/theme/chrome"
@@ -28,9 +28,16 @@ where
 	fromAce (_,{AceState|lines}) = join "\n" lines
 
 aceEditor :: Editor (!AceOptions,!AceState)
-aceEditor = {Editor|genUI = withClientSideInit initUI genUI, onEdit = onEdit, onRefresh = onRefresh}
+aceEditor = leafEditorToEditor
+    { LeafEditor
+    | genUI          = withClientSideInit initUI genUI
+    , onEdit         = onEdit
+    , onRefresh      = onRefresh
+    , valueFromState = valueFromState
+    }
 where
-	genUI dp (options,state) vst=:{VSt|taskId,optional}
+	genUI dp mode vst=:{VSt|taskId,optional}
+		# (options,state) = fromMaybe gDefault{|*|} $ editModeValue mode
 		//Set both state and options as attributes
 		# aceAttr = 'DM'.fromList
 			[("lines",JSONArray (map JSONString state.AceState.lines))
@@ -41,7 +48,7 @@ where
 			,("mode",JSONString options.AceOptions.mode)
 			]
     	# attr = 'DM'.unions [aceAttr, optionalAttr optional, taskIdAttr taskId, editorIdAttr (editorId dp)]
-		= (Ok (uia UIComponent attr, FieldMask {touched = True, valid = True, state = JSONNull}),vst)
+		= (Ok (uia UIComponent attr, (options, state)),vst)
 
 	initUI me world
 		//Setup UI component
@@ -153,20 +160,20 @@ where
 			# (_,world)      = ((me .# "doEditEvent") .$ (taskId,editorId,("selection",(srow,scol),(erow,ecol)))) world
 			= world
 
-	onEdit dp ([],JSONArray [JSONString "lines",JSONString text]) (o,s) m vst
-		= (Ok (NoChange,m),(o,{AceState|s & lines = split "\n" text}),vst)
-	onEdit dp ([],JSONArray [JSONString "cursor",JSONInt row,JSONInt col]) (o,s) m vst
-		= (Ok (NoChange,m),(o,{AceState|s & cursor = (row,col)}),vst)
-	onEdit dp ([],JSONArray [JSONString "selection",JSONNull]) (o,s) m vst
-		= (Ok (NoChange,m),(o,{AceState|s & selection = Nothing}),vst)
-	onEdit dp ([],JSONArray [JSONString "selection",JSONArray [JSONInt srow,JSONInt scol],JSONArray [JSONInt erow,JSONInt ecol]]) (o,s) m vst
+	onEdit dp ([], [JSONString "lines", JSONString text]) (o, s) vst
+		= (Ok (NoChange, (o,{AceState|s & lines = split "\n" text})), vst)
+	onEdit dp ([], [JSONString "cursor",JSONInt row,JSONInt col]) (o, s) vst
+		= (Ok (NoChange, (o,{AceState|s & cursor = (row,col)})),vst)
+	onEdit dp ([], [JSONString "selection",JSONArray [JSONString "JSONNull"]]) (o, s) vst
+		= (Ok (NoChange, (o,{AceState|s & selection = Nothing})), vst)
+	onEdit dp ([],[JSONString "selection",JSONArray [JSONInt srow,JSONInt scol],JSONArray [JSONInt erow,JSONInt ecol]]) (o,s) vst
 		# selection = {AceRange|start=(srow,scol),end=(erow,ecol)}
-		= (Ok (NoChange,m),(o,{AceState|s & selection = Just selection}),vst)
-	onEdit dp (tp,e) v m vst = (Ok (NoChange,m),v,vst)
+		= (Ok (NoChange, (o,{AceState|s & selection = Just selection})), vst)
+	onEdit _ (_, e) _ vst = (Error $ "Invalid event for Ace editor: " +++ toString (toJSON e), vst)
 
-	onRefresh dp r=:(_,rs) v=:(_,vs) m vst 
+	onRefresh dp r=:(_,rs) v=:(_,vs) vst
 		//Check if nothing changed
-		| r === v = (Ok (NoChange,m),v,vst)
+		| r === v = (Ok (NoChange, r),vst)
 		//Determine which parts changed
 		# lineChange = if (rs.AceState.lines === vs.AceState.lines)
 						[] [SetAttribute "lines" (JSONArray (map JSONString rs.AceState.lines))]
@@ -179,9 +186,10 @@ where
 		//Disabled change
 		# disabledChange = if (rs.AceState.disabled == vs.AceState.disabled) 
 						[] [SetAttribute "disabled" (JSONBool rs.AceState.disabled)]
-		= (Ok (ChangeUI (flatten [lineChange,cursorChange,selectionChange,disabledChange]) [] ,m),r,vst)
+		= (Ok (ChangeUI (flatten [lineChange,cursorChange,selectionChange,disabledChange]) [], r),vst)
 
 	encodeRange {AceRange|start=(srow,scol),end=(erow,ecol)}
 		= JSONObject [("start",JSONObject [("row",JSONInt srow),("column",JSONInt scol)])
 					 ,("end",JSONObject [("row",JSONInt erow),("column",JSONInt ecol)])]
 
+	valueFromState st = Just st

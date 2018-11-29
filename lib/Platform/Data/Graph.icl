@@ -4,7 +4,7 @@ import StdBool
 import StdFunc
 import StdInt
 from StdList import ++, filter, hd, isEmpty, isMember, map, reverse, tl,
-	instance length []
+	instance length [], foldr
 import StdOrdList
 import StdTuple
 

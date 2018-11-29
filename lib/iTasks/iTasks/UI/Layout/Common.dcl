@@ -7,9 +7,8 @@ definition module iTasks.UI.Layout.Common
 import iTasks.UI.Layout
 from iTasks.UI.Definition import :: UISide(..), :: UIDirection(..), :: UIWindowType(..), :: UIHAlign(..), :: UIVAlign(..)
 from iTasks.UI.Prompt import :: Title, :: Label, :: Icon
-from iTasks.UI.Tune import class tune
 from iTasks.WF.Definition import :: Task
-
+from iTasks.WF.Combinators.Tune import class tune
 
 /**
 * Create a tabset with all child items as separate tabs
@@ -57,12 +56,6 @@ arrangeHorizontal :: LayoutRule
 * Use this is if you don't want to use the entire viewport
 */
 frameCompact :: LayoutRule
-
-/**
-* Apply a layout only before a step has been made
-*/
-beforeStep :: LayoutRule -> LayoutRule
-
 
 /**
 * Add a tool bar and move selected actions to it

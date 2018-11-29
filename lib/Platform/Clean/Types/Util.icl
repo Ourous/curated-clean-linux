@@ -3,6 +3,7 @@ implementation module Clean.Types.Util
 import StdArray
 import StdBool
 from StdFunc import flip, id, o
+import StdMisc
 import StdOrdList
 import StdString
 import StdTuple
@@ -14,7 +15,7 @@ from Data.Func import $
 import Data.Functor
 import Data.GenEq
 import Data.List
-import qualified Data.Map as M
+from Data.Map import :: Map(..), get
 import Data.Maybe
 import Data.Tuple
 from Text import class Text (concat), instance Text String
@@ -80,6 +81,7 @@ where
 	print _ (Forall tvs t tc) = "(A." -- printersperse True " " tvs -- ": " -- t -- " | " -- tc -- ")"
 	print _ (Arrow Nothing)  = ["(->)"]
 	print _ (Arrow (Just t)) = "((->) " -+ t +- ")"
+	print ia (Strict t) = "!" -- print ia t
 
 instance toString Type where toString t = concat $ print False t
 
@@ -94,15 +96,9 @@ where
 
 instance print TypeDefRhs
 where
-	print _ (TDRCons ext cs)         = "\n\t= " -- makeADT ext cs
-	where
-		makeADT :: !Bool ![Constructor] -> String
-		makeADT exten [] = if exten " .." ""
-		makeADT False [c1:cs]
-			= concat (c1 -- "\n" --
-				concat [concat ("\t| " -- c -- "\n") \\ c <- cs])
-		makeADT True cs = concat (makeADT False cs -- "\t| ..")
-	print _ (TDRNewType c) = " =: " -- c
+	print _ (TDRCons ext cs)         = "\n\t= " -- printADT ext cs
+	print _ (TDRMoreConses cs)       = "\n\t| " -- printADT False cs
+	print _ (TDRNewType c)           = " =: " -- c
 	print _ (TDRRecord _ exi fields) = " =" --
 		if (isEmpty exi) [] (" E." -- printersperse False " " exi -- ":") --
 		"\n\t" -- makeRecord exi fields
@@ -122,6 +118,15 @@ where
 	print _ (TDRAbstract Nothing)    = []
 	print _ (TDRAbstract (Just rhs)) = " /*" -- rhs -- " */"
 	print _ (TDRAbstractSynonym t)   = " (:== " -- t -- ")"
+
+printADT :: !Bool ![Constructor] -> String
+printADT True cs = case cs of
+	[] -> ".."
+	cs -> concat (printADT False cs -- "\t| ..")
+printADT False cs = case cs of
+	[]      -> ""
+	[c1:cs] -> concat (c1 -- "\n" --
+		concat [concat ("\t| " -- c -- "\n") \\ c <- cs])
 
 typeConstructorName :: !Bool !Bool !String ![Type] -> [String]
 typeConstructorName isInfix isArg t as
@@ -181,31 +186,37 @@ propagate_uniqueness p (Cons v ts)
 	= if (any isUniq ts) Uniq id (Cons v ts)
 propagate_uniqueness p (Forall vs t tc)
 	= Forall vs (propagate_uniqueness p t) tc
+propagate_uniqueness p (Strict t)
+	= Strict $ propagate_uniqueness p t
 propagate_uniqueness p t
 	= t
 
-resolve_synonyms :: ('M'.Map String [TypeDef]) !Type -> ([TypeDef], Type)
+resolve_synonyms :: (Map String [TypeDef]) !Type -> ([TypeDef], Type)
 resolve_synonyms tds (Type t ts)
 	# (syns, ts) = appFst (removeDupTypedefs o flatten) $ unzip $ map (resolve_synonyms tds) ts
 	= case candidates of
-		[] = (syns, Type t ts)
+		[] -> (syns, Type t ts)
 		[syn=:{td_args, td_rhs=TDRSynonym synt}:_]
 			# newargs = map ((+++) "__" o fromVar) td_args
-			# (Just t)
-				= assignAll [(fromVar a, Var n) \\ a <- td_args & n <- newargs] synt
-				>>= assignAll [(a,r) \\ a <- newargs & r <- ts]
-			| length td_args <> length ts
-				# (Type r rs) = t
-				# t = Type r $ rs ++ drop (length td_args) ts
-				= appFst ((++) [syn:syns]) $ resolve_synonyms tds t
-			= appFst ((++) [syn:syns]) $ resolve_synonyms tds t
+			# t = case assignAll [(fromVar a, Var n) \\ a <- td_args & n <- newargs] synt
+					>>= assignAll [(a,r) \\ a <- newargs & r <- ts] of
+				Just t -> t
+				_      -> abort "error in resolve_synonyms_Type\n"
+			| length td_args <> length ts -> case t of
+				Type r rs
+					# t = Type r $ rs ++ drop (length td_args) ts
+					-> appFst ((++) [syn:syns]) $ resolve_synonyms tds t
+				_   -> abort "error in resolve_synonyms_Type\n"
+			-> appFst ((++) [syn:syns]) $ resolve_synonyms tds t
+		_ -> abort "error in resolve_synonyms_Type\n"
 where
-	candidates = [td \\ td=:{td_rhs=TDRSynonym syn} <- fromMaybe [] $ 'M'.get t tds
+	candidates = [td \\ td=:{td_rhs=TDRSynonym syn} <- fromMaybe [] $ get t tds
 		| length td.td_args <= tslen && (isType syn || length td.td_args == tslen)]
 	where tslen = length ts
 resolve_synonyms tds (Func is r tc)
-	# (syns, [r:is]) = appFst (removeDupTypedefs o flatten) $ unzip $ map (resolve_synonyms tds) [r:is]
-	= (syns, Func is r tc)
+	= case appFst (removeDupTypedefs o flatten) $ unzip $ map (resolve_synonyms tds) [r:is] of
+		(syns, [r:is]) -> (syns, Func is r tc)
+		_              -> abort "error in resolve_synonyms_Func\n"
 resolve_synonyms _ (Var v)
 	= ([], Var v)
 resolve_synonyms tds (Cons v ts)
@@ -220,6 +231,8 @@ resolve_synonyms tds (Arrow Nothing)
 	= ([], Arrow Nothing)
 resolve_synonyms tds (Uniq t)
 	= Uniq <$> resolve_synonyms tds t
+resolve_synonyms tds (Strict t)
+	= Strict <$> resolve_synonyms tds t
 
 // Apply a TVAssignment to a Type
 assign :: !TVAssignment !Type -> Maybe Type
@@ -247,6 +260,7 @@ assign va=:(v,_) (Forall tvs t tc)
 	| otherwise = flip (Forall tvs) tc <$> assign va t
 assign va (Arrow (Just t)) = Arrow o Just <$> assign va t
 assign va (Arrow Nothing) = Just $ Arrow Nothing
+assign va (Strict t) = Strict <$> assign va t
 
 reduceArities :: !Type -> Type
 reduceArities (Func [] r []) = r
@@ -260,8 +274,9 @@ reduceArities (Var v) = Var v
 reduceArities (Forall [] t []) = reduceArities t
 reduceArities (Forall tvs t tc) = Forall tvs (reduceArities t) tc
 reduceArities (Arrow mt) = Arrow (reduceArities <$> mt)
+reduceArities (Strict t) = Strict $ reduceArities t
 
-normalise_type :: (String -> Bool) !('M'.Map String [TypeDef]) !Type -> (!Type, ![TypeDef], ![TypeVar])
+normalise_type :: (String -> Bool) !(Map String [TypeDef]) !Type -> (!Type, ![TypeDef], ![TypeVar])
 normalise_type alwaysUnique tds t
 # t        = reduceArities t
 # (syns,t) = resolve_synonyms tds t
@@ -284,6 +299,7 @@ where
 		renameVars (Uniq t)         = Uniq $ renameVars t
 		renameVars (Forall vs t tc) = Forall (map renameVars vs) (renameVars t) $ map renameVarsInTC tc
 		renameVars (Arrow t)        = Arrow $ renameVars <$> t
+		renameVars (Strict t)       = Strict $ renameVars t
 
 		renameVarsInTC :: !TypeRestriction -> TypeRestriction
 		renameVarsInTC (Instance c ts)  = Instance c $ map renameVars ts
@@ -298,6 +314,7 @@ where
 		allVars (Forall vs t _)  = allVars` vs ++ allVars t
 		allVars (Arrow (Just t)) = allVars t
 		allVars (Arrow Nothing)  = []
+		allVars (Strict t)       = allVars t
 
 		allVars` :: ([Type] -> [TypeVar])
 		allVars` = concatMap allVars
@@ -311,6 +328,7 @@ where
 	optConses (Uniq t)         = Uniq $ optConses t
 	optConses (Forall vs t tc) = Forall (map optConses vs) (optConses t) $ map optConsesInTR tc
 	optConses (Arrow t)        = Arrow $ optConses <$> t
+	optConses (Strict t)       = Strict $ optConses t
 
 	optConsesInTR :: !TypeRestriction -> TypeRestriction
 	optConsesInTR (Instance c ts)  = Instance c $ map optConses ts

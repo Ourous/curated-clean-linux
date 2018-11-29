@@ -43,33 +43,6 @@ where
 	undot acc ["":ds]			= undot acc ds
 	undot acc [d:ds] 			= undot [d:acc] ds
 
-recursiveDelete :: FilePath *World -> *(MaybeOSError (), *World)
-recursiveDelete fp w
-	# (mfi, w) = getFileInfo fp w
-	| isError mfi = (liftError mfi, w)
-	| (fromOk mfi).directory
-		# (mdir, w) = readDirectory fp w
-		| isError mdir = (liftError mdir, w)
-		# (merr, w) = mapSt (\c->recursiveDelete (fp </> c))
-			(filter (\r->r <> "." && r <> "..") (fromOk mdir)) w
-		# merr = 'M'.sequence merr
-		| isError merr = (liftError merr, w)
-		= removeDirectory fp w
-	= deleteFile fp w
-
-ensureDir :: FilePath *World -> (!Bool,*World)
-ensureDir path world = let [b:p] = split {pathSeparator} path in create [b] p world
-where
-	create _ [] world = (True,world)
-	create base [dir:rest] world
-		# next = base ++ [dir]
-		# path = join {pathSeparator} next
-		# (exists,world) = fileExists path world
-		| exists = create next rest world //This part exists, continue
-		# (res, world) = createDirectory path world 
-		| isError res = (False,world) //Can't create the directory
-		= create next rest world //Created the directory, continue
-
 (>-=) infixl 1 :: (*env -> *(MaybeError e a, *env)) (a -> *(*env -> (MaybeError e b, *env))) *env -> (MaybeError e b, *env)
 (>-=) a b w
 	# (mca, w) = a w

@@ -1,6 +1,7 @@
 implementation module Control.GenMonad
 
 import StdGeneric, StdList, StdFunc
+from Data.Func import $
 from Data.Maybe import :: Maybe(..)
 
 generic gMapLM a b :: a:a -> m:(m b:b) | Monad m, [m <= b]
@@ -9,8 +10,8 @@ gMapLM{|UNIT|} _ = ret UNIT
 gMapLM{|PAIR|} fx fy (PAIR x y) 	= fx x >>= \x1 -> fy y >>= \y1 -> ret (PAIR x1 y1)  
 gMapLM{|EITHER|} fl fr x 			= mapMEITHER fl fr x 
 gMapLM{|CONS|} f (CONS x)			= f x >>= ret o CONS
-gMapLM{|FIELD|} f (FIELD x)			= f x >>= ret o FIELD
-gMapLM{|OBJECT|} f (OBJECT x)		= f x >>= ret o OBJECT
+gMapLM{|FIELD|} f (FIELD x)			= f x >>= \x -> ret $ FIELD x
+gMapLM{|OBJECT|} f (OBJECT x)		= f x >>= \x -> ret $ OBJECT x
  
 generic gMapRM a b :: a:a -> m:(m b:b) | Monad m, [m <= b]
 gMapRM{|c|} x 						= ret x
@@ -18,8 +19,8 @@ gMapRM{|UNIT|} _ = ret UNIT
 gMapRM{|PAIR|} fx fy (PAIR x y) 		= fy y >>= \y1 -> fx x >>= \x1 -> ret (PAIR x1 y1)  
 gMapRM{|EITHER|} fl fr x 			= mapMEITHER fl fr x 
 gMapRM{|CONS|} f (CONS x)			= f x >>= ret o CONS
-gMapRM{|FIELD|} f (FIELD x)			= f x >>= ret o FIELD
-gMapRM{|OBJECT|} f (OBJECT x)		= f x >>= ret o OBJECT
+gMapRM{|FIELD|} f (FIELD x)			= f x >>= \x -> ret $ FIELD x
+gMapRM{|OBJECT|} f (OBJECT x)		= f x >>= \x -> ret $ OBJECT x
 
 derive gMapLM [], Maybe, (,), (,,), (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,)
 derive gMapRM [], Maybe, (,), (,,), (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,)
@@ -37,6 +38,7 @@ instance Monad [] where
 	ret x = [x]
 	//(>>=) xs f = flatten (map f xs)	// uniqueness typing makes it a problem because f is shared
 	(>>=) [x:xs] f = f x
+	(>>=) []     _ = []
 
 //-----------------------
 // state monad 

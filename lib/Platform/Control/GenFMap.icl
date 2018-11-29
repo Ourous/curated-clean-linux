@@ -1,6 +1,6 @@
 implementation module Control.GenFMap 
 
-import StdGeneric, StdEnv, Data._Array, Control.GenMonad
+import StdGeneric, StdEnv, Control.GenMonad
 from Data.Maybe import :: Maybe(..)
 
 derive bimap (,), [] 
@@ -32,21 +32,24 @@ updateAssocList key value default_val [(k,v):xs]
 		= (old_val, [(k, v) : xs]) 
 	
 derive bimap FMap, Maybe
-bimap{|{}|} bma = {map_to = mapArray bma.map_to, map_from = mapArray bma.map_from}
 
 generic gLookupFMap key :: key (FMap value) -> FMap value
 gLookupFMap{|Char|} key (FMChar xs) = lookupAssocList key FMEmpty xs
 gLookupFMap{|Char|} key FMEmpty 	= FMEmpty
+gLookupFMap{|Char|} _   _           = abort "error in gLookupFMap{|Char|}\n"
 
 gLookupFMap{|Int|} key (FMInt xs) = lookupAssocList key FMEmpty xs
-gLookupFMap{|Int|} key FMEmpty 	= FMEmpty
+gLookupFMap{|Int|} key FMEmpty    = FMEmpty
+gLookupFMap{|Int|} _   _          = abort "error in gLookupFMap{|Int|}\n"
 
 gLookupFMap{|Real|} key (FMReal xs) = lookupAssocList key FMEmpty xs
-gLookupFMap{|Real|} key FMEmpty 	= FMEmpty
+gLookupFMap{|Real|} key FMEmpty     = FMEmpty
+gLookupFMap{|Real|} _   _           = abort "error in gLookupFMap{|Real|}\n"
 
-gLookupFMap{|Bool|} False (FMEither ls rs) 	= ls
-gLookupFMap{|Bool|} True  (FMEither ls rs) 	= rs
-gLookupFMap{|Bool|} key FMEmpty 			= FMEmpty
+gLookupFMap{|Bool|} False (FMEither ls rs) = ls
+gLookupFMap{|Bool|} True  (FMEither ls rs) = rs
+gLookupFMap{|Bool|} key   FMEmpty          = FMEmpty
+gLookupFMap{|Bool|} _     _                = abort "error in gLookupFMap{|Bool|}\n"
 
 //gLookupFMap{|UNIT|} key (FMValue v)	= (FMValue v)
 //gLookupFMap{|UNIT|} key FMEmpty		= FMEmpty
@@ -54,9 +57,10 @@ gLookupFMap{|UNIT|} key fm		= fm
 
 gLookupFMap{|PAIR|} fx fy (PAIR kx ky) fm = fy ky (fx kx fm)
 
-gLookupFMap{|EITHER|} fl fr (LEFT key) (FMEither ls rs) = fl key ls
+gLookupFMap{|EITHER|} fl fr (LEFT key)  (FMEither ls rs) = fl key ls
 gLookupFMap{|EITHER|} fl fr (RIGHT key) (FMEither ls rs) = fr key rs
-gLookupFMap{|EITHER|} fl fr key FMEmpty 	= FMEmpty 
+gLookupFMap{|EITHER|} fl fr key         FMEmpty          = FMEmpty
+gLookupFMap{|EITHER|} _  _  _           _                = abort "error in gLookupFMap{|EITHER|}\n"
 
 gLookupFMap{|CONS|} f (CONS key) fm = f key fm
 gLookupFMap{|FIELD|} f (FIELD key) fm = f key fm
@@ -86,23 +90,27 @@ gInsertFMap{|Char|} key (new_val, FMChar xs)
 	= (old_val, FMChar xs)
 gInsertFMap{|Char|} key (new_val, FMEmpty) 	
 	= (FMEmpty, FMChar [(key, new_val)])
+gInsertFMap{|Char|} _ _ = abort "error in gInsertFMap{|Char|}\n"
 
 gInsertFMap{|Int|} key (new_val, FMInt xs) 
 	# (old_val, xs) = updateAssocList key new_val FMEmpty xs
 	= (old_val, FMInt xs)
 gInsertFMap{|Int|} key (new_val, FMEmpty) 	
 	= (FMEmpty, FMInt [(key, new_val)])
+gInsertFMap{|Int|} _ _ = abort "error in gInsertFMap{|Int|}\n"
 
 gInsertFMap{|Real|} key (new_val, FMReal xs) 
 	# (old_val, xs) = updateAssocList key new_val FMEmpty xs
 	= (old_val, FMReal xs)
 gInsertFMap{|Real|} key (new_val, FMEmpty) 	
 	= (FMEmpty, FMReal [(key, new_val)])
+gInsertFMap{|Real|} _ _ = abort "error in gInsertFMap{|Real|}\n"
 
-gInsertFMap{|Bool|} False (v, FMEither ls rs)	= (ls, FMEither v rs)
-gInsertFMap{|Bool|} False (v, FMEmpty) 			= (FMEmpty, FMEither v FMEmpty)
-gInsertFMap{|Bool|} True  (v, FMEither ls rs)	= (rs, FMEither ls v)
-gInsertFMap{|Bool|} True  (v, FMEmpty)			= (FMEmpty, FMEither FMEmpty v)
+gInsertFMap{|Bool|} False (v, FMEither ls rs) = (ls, FMEither v rs)
+gInsertFMap{|Bool|} False (v, FMEmpty)        = (FMEmpty, FMEither v FMEmpty)
+gInsertFMap{|Bool|} True  (v, FMEither ls rs) = (rs, FMEither ls v)
+gInsertFMap{|Bool|} True  (v, FMEmpty)        = (FMEmpty, FMEither FMEmpty v)
+gInsertFMap{|Bool|} _     _                   = abort "error in gInsertFMap{|Bool|}\n"
 	
 gInsertFMap{|UNIT|} key (x, y) 		= (y, x)
 
@@ -124,6 +132,7 @@ gInsertFMap{|EITHER|} fl fr (RIGHT key) (v, FMEither ls rs)
 gInsertFMap{|EITHER|} fl fr (RIGHT key) (v, FMEmpty)
 	# (old_val, new_rs) = fr key (v,FMEmpty)
 	= (FMEmpty, FMEither FMEmpty new_rs)
+gInsertFMap{|EITHER|} _ _ _ _ = abort "error in gInsertFMap{|EITHER|}\n"
 	
 gInsertFMap{|CONS|} f (CONS key) x = f key x
 gInsertFMap{|FIELD|} f (FIELD key) x = f key x

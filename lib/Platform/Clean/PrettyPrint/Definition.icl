@@ -12,8 +12,10 @@ instance print ParsedDefinition
 where
 	print st (PD_Import ips)
 		= join st "\n" ips
+	print st (PD_Class cd [pd=:PD_TypeSpec _ mem _ _ _]) | cd.class_ident.id_name == mem.id_name
+		= print st ("class " :+: pd)
 	print st (PD_Class cd mems)
-		= print st ("class " :+: cd.class_ident :+: args :+: context :+: if (isEmpty mems) "" " where" :+: join_start st` ("\n" :+: st`) mems)
+		= print st ("class " :+: cd.class_ident :+: args :+: context :+: if (isEmpty mems) "" "\nwhere" :+: join_start st` ("\n" :+: st`) mems)
 	where
 		st` = { st & cpp_indent = st.cpp_indent + 1 }
 		context = if (isEmpty cd.class_context) "" (" | " +++ join st " & " cd.class_context)
@@ -54,9 +56,12 @@ where
 		= print st (":: " :+: td_attribute :+: td_ident :+: join_start st " " td_args :+: equals :+: td_rhs)
 	where
 		equals = case td_rhs of
-			(TypeSpec _) = " :== "
-			(EmptyRhs _) = ""
-			_            = " = "
+			TypeSpec _         -> " :== "
+			EmptyRhs _         -> ""
+			NewTypeCons _      -> " =: "
+			ConsList _         -> "\n\t= "
+			ExtensibleConses _ -> "\n\t= "
+			_                  -> " = "
 	print st (PD_GenericCase {gc_type,gc_gcf=GCF id {gcf_body=GCB_ParsedBody [desc:args] rhs}} _)
 		= print st (id :+: "{|" :+: gc_type :+: desc` :+: "|} " :+: args :+: " = " :+: rhs)
 	where
@@ -229,25 +234,47 @@ where
 instance print RhsDefsOfType
 where
 	print st (ConsList conses)
-		= join st " | " conses
+		= join st "\n\t| " conses
+	print st (ExtensibleConses conses)
+		= join st "\n\t| " conses +++ "\n\t| .."
 	print st (SelectorList _ exivars _ fields)
-		= print st (exivars` :+: "{" :+: join st ", " fields :+: "}")
+		= print st (exivars` :+: "\n\t{ " :+: join st "\n\t, " (map print_ps fields) :+: "\n\t}")
 	where
 		exivars` = if (isEmpty exivars) PrintNil ("E." :+: join st " " exivars :+: ": ")
+
+		print_ps ps = print st
+			(ps.ps_selector_ident :+:
+			{#c \\ c <- repeatn (maxfieldlen - size ps.ps_selector_ident.id_name) ' '} :+:
+			" :: " :+: ps.ps_field_annotation :+: ps.ps_field_type)
+		maxfieldlen = maxList [size ps.ps_selector_ident.id_name \\ ps <- fields]
 	print st (TypeSpec type)
 		= print st type
 	print st (EmptyRhs _)
 		= ""
+	print st (AbstractTypeSpec _ at)
+		= print st at
+	print st (NewTypeCons pc)
+		= print st pc
 	print _ _
 		= abort "UNKNOWN_RHSDEFSOFTYPE"
 
 instance print ParsedSelector
 where
-	print st ps = print st (ps.ps_selector_ident :+: " :: " :+: ps.ps_field_type)
+	print st ps = print st (ps.ps_selector_ident :+: " :: " :+: ps.ps_field_annotation :+: ps.ps_field_type)
 
 instance print ParsedConstructor
 where
-	print st cons = print st (cons.pc_cons_ident :+: " " :+: cons.pc_arg_types)
+	print st cons=:{pc_arg_types=[]} = print st cons.pc_cons_ident
+	print st cons = print st
+		(cons.pc_cons_ident :+: " " :+:
+			[if s "!" "" :+: print {st & cpp_parens=True} t
+				\\ t <- cons.pc_arg_types
+				 & s <- strictnessListToBools cons.pc_args_strictness])
+
+instance print Annotation
+where
+	print st AN_Strict = "!"
+	print st AN_None   = ""
 
 // Classes
 instance print TCClass

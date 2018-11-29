@@ -9,20 +9,22 @@ import StdString
 from StdTuple import fst, snd
 import Data.List
 import Data.GenEq
-from Data.Set import :: Set, instance == (Set a), instance < (Set a), fold, fromList, toList, toAscList
+from Data.Set import :: Set, instance == (Set a), instance < (Set a), instance Foldable Set, fromList, toList, toAscList
 from Data.Map import :: Map, findKeyWith
 from Data.Maybe import :: Maybe (..), fromJust, maybeToList, instance Functor Maybe, instance == (Maybe a)
 import Data.Error
 from Data.Functor        import class Functor (..)
-from Control.Applicative import class Applicative (..)
+from Data.Foldable       import class Foldable (foldl1, foldr`)
+from Control.Applicative import class Applicative
 import Control.Monad
 import Data.MapCollection
-import qualified Data.Set as DS
-import qualified Data.Map as DM
 from Text.HTML import :: SVGColor (..)
 import Math.Geometry
 import Graphics.Scalable.Types
 import Graphics.Scalable.Internal.Types
+
+import qualified Data.Set
+import qualified Data.Map
 
 :: Image` m
   = Empty`    !Span !Span
@@ -143,7 +145,7 @@ import Graphics.Scalable.Internal.Types
   | FlipYImg
   | MaskImg   !ImgTagNo                                        // the id-img pair is stored in the ImgMasks table
 
-derive gEq ImgTransform, Span, LookupSpan, BasicImg, FontDef, BasicImgAttr, SVGColor, Angle, ImageTag
+derive gEq ImgTransform, Span, LookupSpan, BasicImg, FontDef, BasicImgAttr, Angle, ImageTag
 instance == ImgTransform where == a b = a === b
 
 equivImg :: !Img !Img -> Bool
@@ -187,7 +189,7 @@ toImgs images font_spans text_spans imgTables
 
 defaultFilledImgAttributes :: Set BasicImgAttr
 defaultFilledImgAttributes
-	= 'DS'.fromList [ BasicImgStrokeAttr      (toSVGColor "black")
+	= 'Data.Set'.fromList [ BasicImgStrokeAttr      (toSVGColor "black")
                     , BasicImgStrokeWidthAttr (PxSpan 1.0)
                     , BasicImgFillAttr        (toSVGColor "black")
                     , BasicImgFillOpacityAttr 1.0
@@ -195,7 +197,7 @@ defaultFilledImgAttributes
 
 defaultOutlineImgAttributes :: Set BasicImgAttr
 defaultOutlineImgAttributes
-	= 'DS'.fromList [ BasicImgFillAttr        (toSVGColor "none")
+	= 'Data.Set'.fromList [ BasicImgFillAttr        (toSVGColor "none")
                     , BasicImgStrokeAttr      (toSVGColor "black")
                     , BasicImgStrokeWidthAttr (PxSpan 1.0)
                     ]
@@ -295,9 +297,9 @@ empty` xspan yspan font_spans text_spans imgTables=:{ImgTables | imgNewTexts = t
   #! (yspan`,txts) = spanImgTexts text_spans yspan txts
   #! dx            = positive_span xspan`
   #! dy            = positive_span yspan`
-  = ( mkBasicHostImg no EmptyImg 'DS'.newSet
+  = ( mkBasicHostImg no EmptyImg 'Data.Set'.newSet
 	, {ImgTables | imgTables & imgNewTexts = txts
-	                         , imgSpans    = 'DM'.put no (dx,dy) curSpans
+	                         , imgSpans    = 'Data.Map'.put no (dx,dy) curSpans
 	                         , imgUniqIds  = no-1
 	  }
 	)
@@ -305,11 +307,11 @@ empty` xspan yspan font_spans text_spans imgTables=:{ImgTables | imgNewTexts = t
 text` :: !FontDef !String !FontSpans !TextSpans !(ImgTables m) -> (!Img,!ImgTables m)
 text` font str font_spans text_spans imgTables=:{ImgTables | imgNewFonts = curFonts, imgNewTexts = txts, imgSpans = curSpans, imgUniqIds = no}
   #! (w,txts) = spanImgTexts text_spans (LookupSpan (TextXSpan font` str)) txts
-  #! curFonts = if ('DM'.member font` font_spans) curFonts ('DS'.insert font` curFonts)
-  = ( mkBasicHostImg no (TextImg font` str) 'DS'.newSet
+  #! curFonts = if ('Data.Map'.member font` font_spans) curFonts ('Data.Set'.insert font` curFonts)
+  = ( mkBasicHostImg no (TextImg font` str) 'Data.Set'.newSet
     , {ImgTables | imgTables & imgNewFonts = curFonts
                              , imgNewTexts = txts
-                             , imgSpans    = 'DM'.put no (w,PxSpan h`) curSpans
+                             , imgSpans    = 'Data.Map'.put no (w,PxSpan h`) curSpans
                              , imgUniqIds  = no-1
       }
     )
@@ -323,7 +325,7 @@ circle` diameter font_spans text_spans imgTables=:{ImgTables | imgNewTexts = txt
   #! d                = positive_span diameter`
   = ( mkBasicHostImg no CircleImg defaultFilledImgAttributes
     , {ImgTables | imgTables & imgNewTexts = txts
-                             , imgSpans    = 'DM'.put no (d,perhaps_look_up_span d no ImageXSpan) curSpans
+                             , imgSpans    = 'Data.Map'.put no (d,perhaps_look_up_span d no ImageXSpan) curSpans
                              , imgUniqIds  = no-1
       }
     )
@@ -336,7 +338,7 @@ ellipse` diax diay font_spans text_spans imgTables=:{ImgTables | imgNewTexts = t
   #! dy           = positive_span diay`
   = ( mkBasicHostImg no EllipseImg defaultFilledImgAttributes
     , {ImgTables | imgTables & imgNewTexts = txts
-                             , imgSpans    = 'DM'.put no (dx,dy) curSpans
+                             , imgSpans    = 'Data.Map'.put no (dx,dy) curSpans
                              , imgUniqIds  = no-1
       }
     )
@@ -347,7 +349,7 @@ square` edge font_spans text_spans imgTables=:{ImgTables | imgNewTexts = txts, i
   #! dx           = positive_span edge`
   = ( mkBasicHostImg no RectImg defaultFilledImgAttributes
     , {ImgTables | imgTables & imgNewTexts = txts
-                             , imgSpans    = 'DM'.put no (dx,perhaps_look_up_span dx no ImageXSpan) curSpans
+                             , imgSpans    = 'Data.Map'.put no (dx,perhaps_look_up_span dx no ImageXSpan) curSpans
                              , imgUniqIds  = no-1
       }
     )
@@ -360,7 +362,7 @@ rect` xspan yspan font_spans text_spans imgTables=:{ImgTables | imgNewTexts = tx
   #! dy            = positive_span yspan`
   = ( mkBasicHostImg no RectImg defaultFilledImgAttributes
     , {ImgTables | imgTables & imgNewTexts = txts
-                             , imgSpans    = 'DM'.put no (dx,dy) curSpans
+                             , imgSpans    = 'Data.Map'.put no (dx,dy) curSpans
                              , imgUniqIds  = no-1
       }
     )
@@ -378,7 +380,7 @@ raw` xspan yspan svgStr font_spans text_spans imgTables=:{ImgTables | imgNewText
            , offsets   = []
       }
     , {ImgTables | imgTables & imgNewTexts = txts
-                             , imgSpans    = 'DM'.put no (dx,dy) curSpans
+                             , imgSpans    = 'Data.Map'.put no (dx,dy) curSpans
                              , imgUniqIds  = no-1
       }
     )
@@ -391,8 +393,8 @@ polyline` offsets font_spans text_spans imgTables=:{ImgTables | imgNewTexts = tx
   #! dx                   = maxSpan (strictTRMap fst offsets``)
   #! dy                   = maxSpan (strictTRMap snd offsets``)
   = ( mkBasicHostImg no PolylineImg defaultOutlineImgAttributes
-    , {ImgTables | imgTables & imgPaths    = 'DM'.put no {ImgPath | pathPoints = offsets``, pathSpan = (dx,dy)} curPaths
-                             , imgSpans    = 'DM'.put no (perhaps_look_up_span dx no PathXSpan,perhaps_look_up_span dy no PathYSpan) curSpans
+    , {ImgTables | imgTables & imgPaths    = 'Data.Map'.put no {ImgPath | pathPoints = offsets``, pathSpan = (dx,dy)} curPaths
+                             , imgSpans    = 'Data.Map'.put no (perhaps_look_up_span dx no PathXSpan,perhaps_look_up_span dy no PathYSpan) curSpans
                              , imgNewTexts = txts
                              , imgUniqIds  = no-1
       }
@@ -408,8 +410,8 @@ polygon` offsets font_spans text_spans imgTables=:{ImgTables | imgNewTexts = txt
   #! dx                   = maxSpan (strictTRMap fst offsets``)
   #! dy                   = maxSpan (strictTRMap snd offsets``)
   = ( mkBasicHostImg no PolygonImg defaultFilledImgAttributes
-    , {ImgTables | imgTables & imgPaths    = 'DM'.put no {ImgPath | pathPoints = offsets``, pathSpan = (dx,dy)} curPaths
-                             , imgSpans    = 'DM'.put no (perhaps_look_up_span dx no PathXSpan,perhaps_look_up_span dy no PathYSpan) curSpans
+    , {ImgTables | imgTables & imgPaths    = 'Data.Map'.put no {ImgPath | pathPoints = offsets``, pathSpan = (dx,dy)} curPaths
+                             , imgSpans    = 'Data.Map'.put no (perhaps_look_up_span dx no PathXSpan,perhaps_look_up_span dy no PathYSpan) curSpans
                              , imgNewTexts = txts
                              , imgUniqIds  = no-1
       }
@@ -421,21 +423,21 @@ rotate` :: !Angle !(Image` m) !FontSpans !TextSpans !(ImgTables m) -> (!Img,!Img
 rotate` a image font_spans text_spans imgTables=:{ImgTables | imgUniqIds = no}
   #! (img,imgTables`=:{ImgTables | imgSpans = curSpans}) = toImg image font_spans text_spans {ImgTables | imgTables & imgUniqIds = no-1}
   = ( mkTransformImg no img (RotateImg (normalize a))
-    , {ImgTables | imgTables` & imgSpans = 'DM'.put no ('DM'.find img.Img.uniqId curSpans) curSpans}    // span of (rotate img) = span of img
+    , {ImgTables | imgTables` & imgSpans = 'Data.Map'.put no ('Data.Map'.find img.Img.uniqId curSpans) curSpans}    // span of (rotate img) = span of img
     )
 
 flipx` :: !(Image` m) !FontSpans !TextSpans !(ImgTables m) -> (!Img,!ImgTables m)
 flipx` image font_spans text_spans imgTables=:{ImgTables | imgUniqIds = no}
   #! (img,imgTables=:{ImgTables | imgSpans = curSpans}) = toImg image font_spans text_spans {ImgTables | imgTables & imgUniqIds = no-1}
   = ( mkTransformImg no img FlipXImg
-    , {ImgTables | imgTables & imgSpans = 'DM'.put no ('DM'.find img.Img.uniqId curSpans) curSpans}    // span of (flipx img) = span of img
+    , {ImgTables | imgTables & imgSpans = 'Data.Map'.put no ('Data.Map'.find img.Img.uniqId curSpans) curSpans}    // span of (flipx img) = span of img
     )
 
 flipy` :: !(Image` m) !FontSpans !TextSpans !(ImgTables m) -> (!Img,!ImgTables m)
 flipy` image font_spans text_spans imgTables=:{ImgTables | imgUniqIds = no}
   #! (img,imgTables=:{ImgTables | imgSpans = curSpans}) = toImg image font_spans text_spans {ImgTables | imgTables & imgUniqIds = no-1}
   = ( mkTransformImg no img FlipYImg
-    , {ImgTables | imgTables & imgSpans = 'DM'.put no ('DM'.find img.Img.uniqId curSpans) curSpans}    // span of (flipy img) = span of img
+    , {ImgTables | imgTables & imgSpans = 'Data.Map'.put no ('Data.Map'.find img.Img.uniqId curSpans) curSpans}    // span of (flipy img) = span of img
     )
 
 fit` :: !Span !Span !(Image` m) !FontSpans !TextSpans !(ImgTables m) -> (!Img,!ImgTables m)
@@ -445,7 +447,7 @@ fit` xspan yspan image font_spans text_spans imgTables=:{ImgTables | imgNewTexts
   #! dx              = positive_span xspan`
   #! dy              = positive_span yspan`
   #! (img,imgTables) = toImg image font_spans text_spans {ImgTables | imgTables & imgNewTexts = txts
-                                                                                , imgSpans    = 'DM'.put no (dx,dy) curSpans
+                                                                                , imgSpans    = 'Data.Map'.put no (dx,dy) curSpans
                                                                                 , imgUniqIds  = no-1
                                                          }
   = ( mkTransformImg no img (FitImg dx dy), imgTables )
@@ -455,9 +457,9 @@ fitx` xspan image font_spans text_spans imgTables=:{ImgTables | imgNewTexts = tx
   #! (xspan`,txts)   = spanImgTexts text_spans xspan txts
   #! dx              = positive_span xspan`
   #! (img,imgTables=:{ImgTables | imgSpans = curSpans}) = toImg image font_spans text_spans {ImgTables | imgTables & imgNewTexts = txts, imgUniqIds = no-1}
-  #! (oldx,oldy) = 'DM'.find img.Img.uniqId curSpans
+  #! (oldx,oldy) = 'Data.Map'.find img.Img.uniqId curSpans
   = ( mkTransformImg no img (FitXImg dx)
-    , {ImgTables | imgTables & imgSpans = 'DM'.put no (dx,oldy * (dx / oldx)) curSpans}
+    , {ImgTables | imgTables & imgSpans = 'Data.Map'.put no (dx,oldy * (dx / oldx)) curSpans}
     )
 
 fity` :: !Span !(Image` m) !FontSpans !TextSpans !(ImgTables m) -> (!Img,!ImgTables m)
@@ -465,17 +467,17 @@ fity` yspan image font_spans text_spans imgTables=:{ImgTables | imgNewTexts = tx
   #! (yspan`,txts)   = spanImgTexts text_spans yspan txts
   #! dy              = positive_span yspan`
   #! (img,imgTables=:{ImgTables | imgSpans = curSpans}) = toImg image font_spans text_spans {ImgTables | imgTables & imgNewTexts = txts, imgUniqIds = no-1}
-  #! (oldx,oldy) = 'DM'.find img.Img.uniqId curSpans
+  #! (oldx,oldy) = 'Data.Map'.find img.Img.uniqId curSpans
   = ( mkTransformImg no img (FitYImg dy)
-    , {ImgTables | imgTables & imgSpans = 'DM'.put no (oldx * (dy / oldy),dy) curSpans}
+    , {ImgTables | imgTables & imgSpans = 'Data.Map'.put no (oldx * (dy / oldy),dy) curSpans}
     )
 
 scale` :: !Real !Real !(Image` m) !FontSpans !TextSpans !(ImgTables m) -> (!Img,!ImgTables m)
 scale` fx fy image font_spans text_spans imgTables=:{ImgTables | imgNewTexts = curTexts, imgUniqIds = no}
   #! (img,imgTables=:{ImgTables | imgSpans = curSpans}) = toImg image font_spans text_spans {ImgTables | imgTables & imgUniqIds = no-1}
-  #! (dx,dy) = 'DM'.find img.Img.uniqId curSpans
+  #! (dx,dy) = 'Data.Map'.find img.Img.uniqId curSpans
   = ( mkTransformImg no img (ScaleImg fx` fy`)
-    , {ImgTables | imgTables & imgSpans = 'DM'.put no (dx *. fx`, dy *. fy`) curSpans}
+    , {ImgTables | imgTables & imgSpans = 'Data.Map'.put no (dx *. fx`, dy *. fy`) curSpans}
     )
 where
 	fx` = max zero fx
@@ -485,31 +487,33 @@ skewx` :: !Angle !(Image` m) !FontSpans !TextSpans !(ImgTables m) -> (!Img,!ImgT
 skewx` a image font_spans text_spans imgTables=:{ImgTables | imgNewTexts = curTexts, imgUniqIds = no}
   #! (img,imgTables=:{ImgTables | imgSpans = curSpans}) = toImg image font_spans text_spans {ImgTables | imgTables & imgUniqIds = no-1}
   = ( mkTransformImg no img (SkewXImg (normalize a))
-    , {ImgTables | imgTables & imgSpans = 'DM'.put no ('DM'.find img.Img.uniqId curSpans) curSpans}
+    , {ImgTables | imgTables & imgSpans = 'Data.Map'.put no ('Data.Map'.find img.Img.uniqId curSpans) curSpans}
     )
 
 skewy` :: !Angle !(Image` m) !FontSpans !TextSpans !(ImgTables m) -> (!Img,!ImgTables m)
 skewy` a image font_spans text_spans imgTables=:{ImgTables | imgNewTexts = curTexts, imgUniqIds = no}
   #! (img,imgTables=:{ImgTables | imgSpans = curSpans}) = toImg image font_spans text_spans {ImgTables | imgTables & imgUniqIds = no-1}
   = ( mkTransformImg no img (SkewYImg (normalize a))
-    , {ImgTables | imgTables & imgSpans = 'DM'.put no ('DM'.find img.Img.uniqId curSpans) curSpans}
+    , {ImgTables | imgTables & imgSpans = 'Data.Map'.put no ('Data.Map'.find img.Img.uniqId curSpans) curSpans}
     )
 
 margin` :: !Margins` !(Image` m) !FontSpans !TextSpans !(ImgTables m) -> (!Img,!ImgTables m)
 margin` {Margins` | n,e,s,w} image font_spans text_spans imgTables=:{ImgTables | imgNewTexts = txts, imgUniqIds = no}
   #! (nesw,txts)      = strictTRMapSt (spanImgTexts text_spans) [n,e,s,w] txts
-  #! [n,e,s,w : _]    = nesw
-  #! (img,imgTables=:{ImgTables | imgSpans = curSpans}) = toImg image font_spans text_spans {ImgTables | imgTables & imgNewTexts = txts,imgUniqIds = no-1}
-  #! (img_w,img_h)    = 'DM'.find img.Img.uniqId curSpans
-  #! span_host        = (w + img_w + e, n + img_h + s)
-  = ({Img | uniqId    = no
-          , host      = BasicHostImg EmptyImg 'DS'.newSet
-          , transform = Nothing
-          , overlays  = [img]
-          , offsets   = [(w,n)]
-     }
-    ,{ImgTables | imgTables & imgSpans = 'DM'.put no span_host curSpans}
-    )
+  = case nesw of
+    [n,e,s,w:_]
+      #! (img,imgTables=:{ImgTables | imgSpans = curSpans}) = toImg image font_spans text_spans {ImgTables | imgTables & imgNewTexts = txts,imgUniqIds = no-1}
+      #! (img_w,img_h)    = 'Data.Map'.find img.Img.uniqId curSpans
+      #! span_host        = (w + img_w + e, n + img_h + s)
+      = ({Img | uniqId    = no
+              , host      = BasicHostImg EmptyImg 'Data.Set'.newSet
+              , transform = Nothing
+              , overlays  = [img]
+              , offsets   = [(w,n)]
+         }
+        ,{ImgTables | imgTables & imgSpans = 'Data.Map'.put no span_host curSpans}
+        )
+    _ = abort "error in margin`\n"
 
 overlay` :: ![XYAlign] ![ImageOffset] ![Image` m] !(Host` m) !FontSpans !TextSpans !(ImgTables m) -> (!Img,!ImgTables m)
 overlay` aligns offsets images host font_spans text_spans imgTables
@@ -523,25 +527,25 @@ where
 	  #! (offsets,txts)   = offsetsImgTexts text_spans offsets txts
 	  #! (imgs,imgTables=:{ImgTables | imgSpans = curSpans})
 	                      = toImgs images font_spans text_spans {ImgTables | imgTables & imgNewTexts = txts, imgUniqIds = no-1}
-	  #! span_imgs        = [(uniqId,'DM'.find uniqId curSpans) \\ {Img | uniqId} <- imgs]
+	  #! span_imgs        = [(uniqId,'Data.Map'.find uniqId curSpans) \\ {Img | uniqId} <- imgs]
 	  #! span_host        = bounding_box_of_spans span_imgs
 	  = ({Img | uniqId    = no
-	          , host      = BasicHostImg EmptyImg 'DS'.newSet
+	          , host      = BasicHostImg EmptyImg 'Data.Set'.newSet
 	          , transform = Nothing
 	          , overlays  = imgs
 	          , offsets   = [ offset_within_host span_img align offset span_host
 	                        \\ span_img <- span_imgs & align <- aligns & offset <- offsets
 	                        ]
 	     }
-	    ,{ImgTables | imgTables & imgSpans = 'DM'.put no span_host curSpans}
+	    ,{ImgTables | imgTables & imgSpans = 'Data.Map'.put no span_host curSpans}
 	    )
 	overlay aligns offsets images (Host` image) font_spans text_spans imgTables=:{ImgTables | imgNewTexts = txts, imgUniqIds = no}
 	  #! (offsets,txts)   = offsetsImgTexts text_spans offsets txts
 	  #! (imgs,imgTables) = toImgs images font_spans text_spans {ImgTables | imgTables & imgNewTexts = txts, imgUniqIds = no-1}
 	  #! (host,imgTables=:{ImgTables | imgSpans = curSpans})
 	                      = toImg image font_spans text_spans imgTables
-	  #! span_imgs        = [(uniqId,'DM'.find uniqId curSpans) \\ {Img | uniqId} <- imgs]
-	  #! span_host        = 'DM'.find host.Img.uniqId curSpans
+	  #! span_imgs        = [(uniqId,'Data.Map'.find uniqId curSpans) \\ {Img | uniqId} <- imgs]
+	  #! span_host        = 'Data.Map'.find host.Img.uniqId curSpans
 	  = ({Img | uniqId    = no
 	          , host      = CompositeImg host
 	          , transform = Nothing
@@ -550,7 +554,7 @@ where
 	                        \\ span_img <- span_imgs & align <- aligns & offset <- offsets
 	                        ]
 	     }
-	    ,{ImgTables | imgTables & imgSpans = 'DM'.put no span_host curSpans}
+	    ,{ImgTables | imgTables & imgSpans = 'Data.Map'.put no span_host curSpans}
 	    )
 	
 	offset_within_host :: !(!ImgTagNo,!ImageSpan) !XYAlign !ImageOffset !ImageSpan -> ImageOffset
@@ -586,7 +590,7 @@ where
 	  #! (row_heights,  txts)          = strictTRMapSt (spanImgTexts text_spans) row_heights   txts
 	  #! (imgs,imgTables=:{ImgTables | imgSpans = curSpans})
 	                                   = toImgs images font_spans text_spans {ImgTables | imgTables & imgNewTexts = txts, imgUniqIds = no-1}
-	  #! imgid_span_align_offsets      = [(uniqId,'DM'.find uniqId curSpans,align,offset) \\ {Img | uniqId} <- imgs & align <- aligns & offset <- offsets]
+	  #! imgid_span_align_offsets      = [(uniqId,'Data.Map'.find uniqId curSpans,align,offset) \\ {Img | uniqId} <- imgs & align <- aligns & offset <- offsets]
 	  #! imgid_span_align_offsets_grid = grid_layout (no_of_cols,no_of_rows) layout imgid_span_align_offsets
 	  #! cell_spans                    = [[span \\ (_,span,_,_) <- row] \\ row <- imgid_span_align_offsets_grid]
 	  #! grid_widths                   = constrain column_widths (cols_widths  cell_spans)
@@ -598,7 +602,7 @@ where
 	                                       Host` image = toImg image font_spans text_spans imgTables
 	                                       no_host     = empty` grid_width grid_height font_spans text_spans imgTables
 	  #! span_host                     = case h of
-	                                       Host` _     = 'DM'.find host.Img.uniqId newSpans
+	                                       Host` _     = 'Data.Map'.find host.Img.uniqId newSpans
 	                                       no_host     = (grid_width,grid_height)
 	  #! imgid_offsets                 = offsets_within_grid grid_widths grid_heights imgid_span_align_offsets_grid
 	  #! offsets                       = associate_offset_with_img imgid_offsets imgs
@@ -608,8 +612,8 @@ where
 	          , overlays  = imgs
 	          , offsets   = offsets
 	     }
-	    ,{ImgTables | imgTables & imgSpans = 'DM'.put no span_host newSpans
-	                            , imgGrids = 'DM'.put no grid_info newGrids
+	    ,{ImgTables | imgTables & imgSpans = 'Data.Map'.put no span_host newSpans
+	                            , imgGrids = 'Data.Map'.put no grid_info newGrids
 	     }
 	    )
 	
@@ -657,12 +661,12 @@ attr` (BasicImageAttr` attr) image font_spans text_spans imgTables
   = (img`,{ImgTables | imgTables & imgNewTexts = txts})
 where	
 	add_basic_attribute :: !BasicImgAttr !HostImg -> HostImg
-	add_basic_attribute attr (BasicHostImg img attrs) = BasicHostImg img ('DS'.insert attr attrs)
+	add_basic_attribute attr (BasicHostImg img attrs) = BasicHostImg img ('Data.Set'.insert attr attrs)
 	add_basic_attribute _    host = host
 attr` (LineMarkerAttr` {LineMarkerAttr | markerImg,markerPos}) image font_spans text_spans imgTables
   #! (mark,imgTables)                             = toImg markerImg font_spans text_spans imgTables
   #! (img, imgTables=:{imgLineMarkers = markers}) = toImg image     font_spans text_spans imgTables
-  | isPathHostImg img.Img.host                    = (img,{ImgTables | imgTables & imgLineMarkers = 'DM'.alter (add_line_marker mark markerPos) img.Img.uniqId markers})
+  | isPathHostImg img.Img.host                    = (img,{ImgTables | imgTables & imgLineMarkers = 'Data.Map'.alter (add_line_marker mark markerPos) img.Img.uniqId markers})
   | otherwise                                     = (img,imgTables)
 where
 	add_line_marker :: !Img !LineMarkerPos !(Maybe LineMarkers) -> Maybe LineMarkers
@@ -673,15 +677,15 @@ attr` (MaskAttr` mask) image font_spans text_spans imgTables=:{ImgTables | imgUn
   #! (m`, imgTables=:{ImgTables | imgMasks = curMasks, imgSpans = curSpans}) = toImg mask font_spans text_spans imgTables
   #! (mask_key,masks) = case findKeyWith (equivImg m`) curMasks of
                            Just k  = (k, curMasks)                                                  // similar mask already present, so use it's identification
-                           nothing = (m`.Img.uniqId, 'DM'.put m`.Img.uniqId m` curMasks)            // similar mask not yet present, so add it to mask collection
+                           nothing = (m`.Img.uniqId, 'Data.Map'.put m`.Img.uniqId m` curMasks)            // similar mask not yet present, so add it to mask collection
   = ( mkTransformImg no img (MaskImg mask_key)                                                      // this *must* be the id of the mask image, because for that an svg-definition is generated
     , {ImgTables | imgTables & imgMasks = masks
-                             , imgSpans = 'DM'.put no ('DM'.find img.Img.uniqId curSpans) curSpans  // span of (mask m img) = span of img
+                             , imgSpans = 'Data.Map'.put no ('Data.Map'.find img.Img.uniqId curSpans) curSpans  // span of (mask m img) = span of img
       }
     )
 attr` (HandlerAttr` attr) image font_spans text_spans imgTables
   #! (img,imgTables=:{imgEventhandlers = es}) = toImg image font_spans text_spans imgTables
-  = (img,{ImgTables | imgTables & imgEventhandlers = 'DM'.alter (add_new_eventhandler attr) img.Img.uniqId es})
+  = (img,{ImgTables | imgTables & imgEventhandlers = 'Data.Map'.alter (add_new_eventhandler attr) img.Img.uniqId es})
 where
 	add_new_eventhandler :: !(ImgEventhandler m) !(Maybe [ImgEventhandler m]) -> Maybe [ImgEventhandler m]
 	add_new_eventhandler h Nothing  = Just [h]
@@ -735,7 +739,7 @@ instance == BasicImgAttr where == a b = ImgAttrConsName a == ImgAttrConsName b
 tag` :: !ImageTag !(Image` m) !FontSpans !TextSpans !(ImgTables m) -> (!Img,!ImgTables m)
 tag` t=:(ImageTagUser no label) image font_spans txt_spans imgTables
   #! (img,imgTables=:{ImgTables | imgTags = curTags}) = toImg image font_spans txt_spans imgTables
-  =  (img,{ImgTables | imgTables & imgTags = 'DM'.put t img.Img.uniqId curTags})
+  =  (img,{ImgTables | imgTables & imgTags = 'Data.Map'.put t img.Img.uniqId curTags})
 tag` (ImageTagSystem no) _ _ _ _
   = abort "Graphics.Scalable.Image: tag applied to unexpected ImageTag"
 
@@ -790,8 +794,8 @@ imgAttrTexts _          attr                           txts = (attr,txts)
 
 lookupTextSpan :: !FontDef !String !TextSpans -> Maybe Real
 lookupTextSpan font str text_spans
-	= case 'DM'.get font text_spans of
-	    Just ws = 'DM'.get str ws
+	= case 'Data.Map'.get font text_spans of
+	    Just ws = 'Data.Map'.get str ws
 	    nothing = Nothing
 
 
@@ -843,7 +847,7 @@ resolveImgPaths user_tags font_spans text_spans (paths,imgs_spans,grids_spans)
 where
 	unresolved_path_spans = flatten [  if (isPxSpan w) [] [LookupSpan (PathXSpan (ImageTagSystem no))] ++
 	                                   if (isPxSpan h) [] [LookupSpan (PathYSpan (ImageTagSystem no))]
-	                                \\ (no,{ImgPath | pathSpan=(w,h)}) <- 'DM'.toList paths 
+	                                \\ (no,{ImgPath | pathSpan=(w,h)}) <- 'Data.Map'.toList paths 
 	                                ]
 
 resolveImgSpans :: !ImgTags !FontSpans !TextSpans !*(!ImgPaths,!ImgSpans,!GridSpans) -> (!Maybe SpanResolveError,!*(!ImgPaths,!ImgSpans,!GridSpans))
@@ -855,7 +859,7 @@ resolveImgSpans user_tags font_spans text_spans (paths,imgs_spans,grids_spans)
 where
 	unresolved_img_spans = flatten [ if (isPxSpan w) [] [imagexspan (ImageTagSystem no)] ++
 	                                 if (isPxSpan h) [] [imageyspan (ImageTagSystem no)]
-	                               \\ (no,(w,h)) <- 'DM'.toList imgs_spans
+	                               \\ (no,(w,h)) <- 'Data.Map'.toList imgs_spans
 	                               ]
 
 resolveGridSpans :: !ImgTags !FontSpans !TextSpans !*(!ImgPaths,!ImgSpans,!GridSpans) -> (!Maybe SpanResolveError,!*(!ImgPaths,!ImgSpans,!GridSpans))
@@ -867,7 +871,7 @@ resolveGridSpans user_tags font_spans text_spans (paths,imgs_spans,grids_spans)
 where
 	unresolved_grid_spans = flatten [ flatten [if (isPxSpan w) [] [columnspan (ImageTagSystem no) col] \\ w <- col_spans & col <- [0..]] ++
 	                                  flatten [if (isPxSpan h) [] [rowspan    (ImageTagSystem no) row] \\ h <- row_spans & row <- [0..]]
-	                                \\ (no,{GridSpan | col_spans,row_spans}) <- 'DM'.toList grids_spans
+	                                \\ (no,{GridSpan | col_spans,row_spans}) <- 'Data.Map'.toList grids_spans
 	                                ]
 
 resolveImageOffset :: !ImgTags !FontSpans !TextSpans !ImageOffset !*(!ImgPaths,!ImgSpans,!GridSpans) -> (!MaybeError SpanResolveError ImageOffset,!*(!ImgPaths,!ImgSpans,!GridSpans))
@@ -883,18 +887,18 @@ resolveImgMasks user_tags font_spans text_spans masks spans
   #! (m_imgs`,spans) = strictTRMapSt (resolveImg user_tags font_spans text_spans) imgs spans
   = case [e \\ Error e <- m_imgs`] of
       [e : _]      = (Error e,spans)
-      no_error     = (Ok ('DM'.fromList (zip2 img_nos (map fromOk m_imgs`))),spans)
+      no_error     = (Ok ('Data.Map'.fromList (zip2 img_nos (map fromOk m_imgs`))),spans)
 where
-	(img_nos,imgs) = unzip ('DM'.toList masks)
+	(img_nos,imgs) = unzip ('Data.Map'.toList masks)
 
 resolveImgLineMarkers :: !ImgTags !FontSpans !TextSpans !ImgLineMarkers !*(!ImgPaths,!ImgSpans,!GridSpans) -> (!MaybeError SpanResolveError ImgLineMarkers,!*(!ImgPaths,!ImgSpans,!GridSpans))
 resolveImgLineMarkers user_tags font_spans text_spans markers spans
   #! (m_line_markers`,spans) = strictTRMapSt (resolveLineMarkers user_tags font_spans text_spans) line_markers spans
   = case [e \\ Error e <- m_line_markers`] of
       [e : _]      = (Error e, spans)
-      no_error     = (Ok ('DM'.fromList (zip2 m_nos (map fromOk m_line_markers`))),spans)
+      no_error     = (Ok ('Data.Map'.fromList (zip2 m_nos (map fromOk m_line_markers`))),spans)
 where
-	(m_nos,line_markers) = unzip ('DM'.toList markers)
+	(m_nos,line_markers) = unzip ('Data.Map'.toList markers)
 		
 	resolveLineMarkers :: !ImgTags !FontSpans !TextSpans !LineMarkers !*(!ImgPaths,!ImgSpans,!GridSpans) -> (!MaybeError SpanResolveError LineMarkers,!*(!ImgPaths,!ImgSpans,!GridSpans))
 	resolveLineMarkers user_tags font_spans text_spans {LineMarkers | lineStart, lineMid, lineEnd} spans
@@ -948,7 +952,7 @@ where
 	
 	resolveImgAttrs :: !ImgTags !FontSpans !TextSpans !(Set BasicImgAttr) !*(!ImgPaths,!ImgSpans,!GridSpans) -> (!MaybeError SpanResolveError (Set BasicImgAttr),!*(!ImgPaths,!ImgSpans,!GridSpans))
 	resolveImgAttrs user_tags font_spans text_spans attrs spans
-	  #! (m_attrs`,spans) = strictTRMapSt (resolveImgAttr user_tags font_spans text_spans) (fold (\a as -> [a:as]) [] attrs) spans // USING (toList attrs) INSTEAD OF (fold (\a as -> [a:as]) [] attrs) CRASHES THE COMPILER: Run Time Error: index out of range
+	  #! (m_attrs`,spans) = strictTRMapSt (resolveImgAttr user_tags font_spans text_spans) (foldr` (\a as -> [a:as]) [] attrs) spans // USING (toList attrs) INSTEAD OF (fold (\a as -> [a:as]) [] attrs) CRASHES THE COMPILER: Run Time Error: index out of range
 	  = case [e \\ Error e <- m_attrs`] of
 	      [e : _] = (Error e,spans)
 	      _       = (Ok (fromList (map fromOk m_attrs`)),spans)
@@ -996,7 +1000,7 @@ where
 //	span resolve algorithm memoizes path, image-span, and grid-span dimensions
 resolve_span :: !ImgTags !FontSpans !TextSpans !Span !*(!ImgPaths,!ImgSpans,!GridSpans) -> (!MaybeError SpanResolveError Real,!*(!ImgPaths,!ImgSpans,!GridSpans))
 resolve_span user_tags font_spans text_spans span (paths,imgs_spans,grids_spans)
-	= resolve_span` 'DS'.newSet user_tags font_spans text_spans span (paths,imgs_spans,grids_spans)
+	= resolve_span` 'Data.Set'.newSet user_tags font_spans text_spans span (paths,imgs_spans,grids_spans)
 where
 	resolve_span` :: !(Set ImgTagNo) !ImgTags !FontSpans !TextSpans !Span !*(!ImgPaths,!ImgSpans,!GridSpans) -> (!MaybeError SpanResolveError Real,!*(!ImgPaths,!ImgSpans,!GridSpans))
 	resolve_span` visited user_tags font_spans text_spans (PxSpan r) spans
@@ -1005,32 +1009,32 @@ where
 		= case l of
 		    ColumnXSpan tag column_no
 		      = case tag of
-			      ImageTagUser no label = case 'DM'.get (ImageTagUser no label) user_tags of
+			      ImageTagUser no label = case 'Data.Map'.get (ImageTagUser no label) user_tags of
 	                                        Nothing  = (user_error "columnspan" "unassigned ImageTag",spans)
 	                                        Just no` = resolve_from_grid_span "column" "ImageTag" get_col_spans set_col_spans column_no (user_error "columnspan") no` visited user_tags font_spans text_spans spans
 	              ImageTagSystem no`    = resolve_from_grid_span "column" "system tag" get_col_spans set_col_spans column_no (sys_error "columnspan") no` visited user_tags font_spans text_spans spans
 		    RowYSpan tag row_no
 		      = case tag of
-	              ImageTagUser no label = case 'DM'.get (ImageTagUser no label) user_tags of
+	              ImageTagUser no label = case 'Data.Map'.get (ImageTagUser no label) user_tags of
 	                                        Nothing  = (user_error "rowspan" "unassigned ImageTag",spans)
 	                                        Just no` = resolve_from_grid_span "row" "ImageTag" get_row_spans set_row_spans row_no (user_error "rowspan") no` visited user_tags font_spans text_spans spans
 	              ImageTagSystem no`    = resolve_from_grid_span "row" "system tag" get_row_spans set_row_spans row_no (sys_error "rowspan") no` visited user_tags font_spans text_spans spans
 		    ImageXSpan tag
 		      = case tag of
-	              ImageTagUser no label = case 'DM'.get (ImageTagUser no label) user_tags of
+	              ImageTagUser no label = case 'Data.Map'.get (ImageTagUser no label) user_tags of
 	                                        Nothing  = (user_error "imagexspan" "unassigned ImageTag",spans)
 	                                        Just no` = resolve_from_image_span "x" "ImageTag" fst upd_fst (user_error "imagexspan") no` visited user_tags font_spans text_spans spans
 		          ImageTagSystem no     = resolve_from_image_span "x" "system tag" fst upd_fst (sys_error "imagexspan") no visited user_tags font_spans text_spans spans
 		    ImageYSpan tag
 		      = case tag of
-	              ImageTagUser no label = case 'DM'.get (ImageTagUser no label) user_tags of
+	              ImageTagUser no label = case 'Data.Map'.get (ImageTagUser no label) user_tags of
 	                                        Nothing  = (user_error "imageyspan" "unassigned ImageTag",spans)
 	                                        Just no` = resolve_from_image_span "y" "ImageTag" snd upd_snd (user_error "imageyspan") no` visited user_tags font_spans text_spans spans
 	              ImageTagSystem no`    = resolve_from_image_span "y" "system tag" snd upd_snd (sys_error "imageyspan") no` visited user_tags font_spans text_spans spans
 		    TextXSpan font txt
-		      = case 'DM'.get font text_spans of
+		      = case 'Data.Map'.get font text_spans of
 	              Nothing               = (sys_error "textxspan" ("missing FontDef entry (" +++ toString font +++ ")"),spans)
-	              Just ws               = case 'DM'.get txt ws of
+	              Just ws               = case 'Data.Map'.get txt ws of
 	                                        Nothing = (sys_error "textxspan" ("missing text entry \"" +++ txt +++ "\""),spans)
 	                                        Just w  = (Ok w,spans)
 	        PathXSpan tag
@@ -1044,15 +1048,27 @@ where
 
 
 	resolve_span` visited user_tags font_spans text_spans (AddSpan a b) spans
-	  = resolve_span_exprs [a,b] combine visited user_tags font_spans text_spans spans where combine [a,b] = Ok (a+b)
+	  = resolve_span_exprs [a,b] combine visited user_tags font_spans text_spans spans
+	where
+	  combine [a,b] = Ok (a+b)
+	  combine _     = abort "error in resolve_span\n"
 	resolve_span` visited user_tags font_spans text_spans (SubSpan a b) spans
-	  = resolve_span_exprs [a,b] combine visited user_tags font_spans text_spans spans where combine [a,b] = Ok (a-b)
+	  = resolve_span_exprs [a,b] combine visited user_tags font_spans text_spans spans
+	where
+	  combine [a,b] = Ok (a-b)
+	  combine _     = abort "error in resolve_span\n"
 	resolve_span` visited user_tags font_spans text_spans (MulSpan a b) spans
-	  = resolve_span_exprs [a,b] combine visited user_tags font_spans text_spans spans where combine [a,b] = Ok (a*b)
+	  = resolve_span_exprs [a,b] combine visited user_tags font_spans text_spans spans
+	where
+	  combine [a,b] = Ok (a*b)
+	  combine _     = abort "error in resolve_span\n"
 	resolve_span` visited user_tags font_spans text_spans (DivSpan a b) spans
-	  = resolve_span_exprs [a,b] combine visited user_tags font_spans text_spans spans where combine [a,b]
-	                                                                                         | b == 0.0  = user_error "(/.)" "division by zero"
-	                                                                                         | otherwise = Ok (a/b)
+	  = resolve_span_exprs [a,b] combine visited user_tags font_spans text_spans spans
+	where
+	  combine [a,b]
+	  | b == 0.0  = user_error "(/.)" "division by zero"
+	  | otherwise = Ok (a/b)
+	  combine _   = abort "error in resolve_span\n"
 	resolve_span` visited user_tags font_spans text_spans (MinSpan as) spans
 	  = resolve_span_exprs as combine visited user_tags font_spans text_spans spans    where combine rs = Ok (minList rs)
 	resolve_span` visited user_tags font_spans text_spans (MaxSpan as) spans
@@ -1080,20 +1096,20 @@ where
 	resolve_from_grid_span :: !String !String !(GridSpan -> [Span]) !([Span] GridSpan -> GridSpan) !Int !(String -> MaybeError SpanResolveError Real) !Int 
 	                          !(Set ImgTagNo) !ImgTags !FontSpans !TextSpans !*(!ImgPaths,!ImgSpans,!GridSpans) -> (!MaybeError SpanResolveError Real,!*(!ImgPaths,!ImgSpans,!GridSpans))
 	resolve_from_grid_span dim tag_type select replace elem_no error no visited user_tags font_spans text_spans spans=:(paths,imgs_spans,grids_spans)
-		= case 'DM'.get no grids_spans of
+		= case 'Data.Map'.get no grids_spans of
             Nothing   = (error (tag_type +++ " does not refer to grid"),spans)
             Just grid = let dim_spans = select grid
                          in if (elem_no < 0 || elem_no >= length dim_spans)
                                (error ("incorrect number (" +++ toString elem_no +++ ")"),spans)
-                               (if ('DS'.member no visited)
+                               (if ('Data.Set'.member no visited)
                                    (error "cyclic dependency of system tags",spans)
                                    (case dim_spans !! elem_no of
                                       PxSpan r
                                          = (Ok r,spans)
                                       unresolved
-                                         = case resolve_span` ('DS'.insert no visited) user_tags font_spans text_spans unresolved spans of
+                                         = case resolve_span` ('Data.Set'.insert no visited) user_tags font_spans text_spans unresolved spans of
                                              (Ok r,(paths,imgs_spans,grids_spans))
-                                                              = (Ok r,(paths,imgs_spans,'DM'.put no (replace (updateAt elem_no (PxSpan r) dim_spans) grid) grids_spans))
+                                                              = (Ok r,(paths,imgs_spans,'Data.Map'.put no (replace (updateAt elem_no (PxSpan r) dim_spans) grid) grids_spans))
                                              unresolved_error = unresolved_error
                                    )
                                )
@@ -1101,26 +1117,26 @@ where
 	resolve_from_image_span :: !String !String !(ImageSpan -> Span) !(Span ImageSpan -> ImageSpan) !(String -> MaybeError SpanResolveError Real) !Int 
 	                           !(Set ImgTagNo) !ImgTags !FontSpans !TextSpans !*(!ImgPaths,!ImgSpans,!GridSpans) -> (!MaybeError SpanResolveError Real,!*(!ImgPaths,!ImgSpans,!GridSpans))
 	resolve_from_image_span dim tag_type select replace error no visited user_tags font_spans text_spans spans=:(paths,imgs_spans,grids_spans)
-        = case 'DM'.get no imgs_spans of
+        = case 'Data.Map'.get no imgs_spans of
             Nothing    = (error (tag_type +++ " is not associated with an image"),spans)
-            Just span  = if ('DS'.member no visited)
+            Just span  = if ('Data.Set'.member no visited)
                             (error ("cyclic dependency of " +++ tag_type +++ "s"),spans)
                             (case select span of
                                PxSpan r
                                   = (Ok r,spans)
                                unresolved
-                                  = case resolve_span` ('DS'.insert no visited) user_tags font_spans text_spans unresolved spans of
+                                  = case resolve_span` ('Data.Set'.insert no visited) user_tags font_spans text_spans unresolved spans of
                                       (Ok r,(paths,imgs_spans,grids_spans))
-                                                       = (Ok r,(paths,'DM'.put no (replace (PxSpan r) span) imgs_spans,grids_spans))
+                                                       = (Ok r,(paths,'Data.Map'.put no (replace (PxSpan r) span) imgs_spans,grids_spans))
                                       unresolved_error = unresolved_error
                             )
 	
 	resolve_from_path :: !String !String !(ImageSpan -> Span) !(Span ImageSpan -> ImageSpan) !(String -> MaybeError SpanResolveError Real) !Int
 	                     !(Set ImgTagNo) !ImgTags !FontSpans !TextSpans !*(!ImgPaths,!ImgSpans,!GridSpans) -> (!MaybeError SpanResolveError Real,!*(!ImgPaths,!ImgSpans,!GridSpans))
 	resolve_from_path dim span_type select replace error no visited user_tags font_spans text_spans spans=:(paths,imgs_spans,grids_spans)
-		= case 'DM'.get no paths of
+		= case 'Data.Map'.get no paths of
 		    Nothing    = (sys_error "resolve_span" ("unassigned system tag for " +++ span_type),spans)
-		    Just path  = if ('DS'.member no visited)
+		    Just path  = if ('Data.Set'.member no visited)
 		                    (error ("cyclic dependency of " +++ span_type +++ "s"),spans)
 		                    (case select path.ImgPath.pathSpan of
 		                       PxSpan r
@@ -1129,9 +1145,9 @@ where
 		                         #! (path,spans) = strictTRMapSt (resolveImageOffset user_tags font_spans text_spans) path.ImgPath.pathPoints spans
 		                         = case [e \\ Error e <- path] of
 		                             [e : _] = (Error e,spans)
-		                             _       = case resolve_span` ('DS'.insert no visited) user_tags font_spans text_spans unresolved spans of
+		                             _       = case resolve_span` ('Data.Set'.insert no visited) user_tags font_spans text_spans unresolved spans of
 		                                         (Ok r,(paths,imgs_spans,grids_spans))
-		                                                          = (Ok r,('DM'.alter (replace_in_path (map fromOk path) r replace) no paths,'DM'.alter (replace_in_span r replace) no imgs_spans,grids_spans))
+		                                                          = (Ok r,('Data.Map'.alter (replace_in_path (map fromOk path) r replace) no paths,'Data.Map'.alter (replace_in_span r replace) no imgs_spans,grids_spans))
 		                                         unresolved_error = unresolved_error
 		                    )
 	where

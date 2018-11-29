@@ -23,17 +23,13 @@ gEq{|PAIR|} fx fy (PAIR x1 y1) (PAIR x2 y2) = fx x1 x2 'StdBool'. && fy y1 y2
 derive gEq Int, Char, Bool, Real, String, {}, {!} 
 
 // standard types
-derive gEq [], (,), (,,), (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,)
+derive gEq [], (), (,), (,,), (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,)
 
 
-/**
- * @type a a -> Bool | gEq{|*|} a
- */
+//* @type a a -> Bool | gEq{|*|} a
 (===) infix 4
 (===) x y :== gEq{|*|} x y
 
-/**
- * @type a a -> Bool | gEq{|*|} a
- */
+//* @type a a -> Bool | gEq{|*|} a
 (=!=) infix 4
 (=!=) x y :== 'StdBool'.not (x === y)

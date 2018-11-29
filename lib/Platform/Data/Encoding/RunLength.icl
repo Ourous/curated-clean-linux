@@ -1,6 +1,8 @@
 implementation module Data.Encoding.RunLength
 
-import StdOverloaded, StdList
+import StdList
+import StdMisc
+import StdOverloaded
 
 encodeInt :: ![Int] -> [Int]
 encodeInt xs = reverse (rleInt` xs [])
@@ -11,6 +13,7 @@ encodeInt xs = reverse (rleInt` xs [])
   rleInt` [x:xs] [y : n : ys]
     | x == y    = rleInt` xs [y : n + 1 : ys]
     | otherwise = rleInt` xs [x : 1 : y : n : ys]
+  rleInt` _ _ = abort "error in encodeInt\n"
 
 decodeInt :: ![Int] -> [Int]
 decodeInt xs = reverse (rldInt` xs [])
@@ -19,6 +22,7 @@ decodeInt xs = reverse (rldInt` xs [])
   rldInt` []           acc = acc
   rldInt` [0 : x : xs] acc = rldInt` xs acc
   rldInt` [n : x : xs] acc = rldInt` [n - 1 : x : xs] [x : acc]
+  rldInt` _ _ = abort "error in encodeInt\n"
 
 encode :: ![a] -> [(Int, a)] | == a
 encode xs = reverse (rle` xs [])

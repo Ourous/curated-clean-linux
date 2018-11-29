@@ -2,7 +2,7 @@ definition module Control.Arrow
 
 import Control.Category
 from Control.Monad import class Monad
-from Control.Applicative import class Applicative, class Alternative
+from Control.Applicative import class pure, class <*>, class Applicative, class Alternative
 from Data.Functor import class Functor
 from Data.Either import :: Either
 
@@ -180,7 +180,8 @@ instance ArrowApply (Kleisli m) | Monad m
 
 instance Functor (ArrowMonad a) | Arrow a
 
-instance Applicative (ArrowMonad a) | Arrow a
+instance pure (ArrowMonad a) | Arrow a
+instance <*> (ArrowMonad a) | Arrow a
 
 instance Monad (ArrowMonad a) | ArrowApply a
 

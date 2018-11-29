@@ -293,9 +293,10 @@ where
 	handleOption c (RandomList r) = {c & randoms = r}
 	handleOption c (MaxDepth i)   = {c & genState = {c.genState & maxDepth = i}}
 	handleOption c (Skew s)
-	| s > 0     = {c & genState = {c.genState & skewl = 1, skewr = s}}
-	| s < 0     = {c & genState = {c.genState & skewl = ~s, skewr = 1}}
-	| otherwise = {c & genState = {c.genState & skewl = 1, skewr = 1}}
+	| s > 0     = {c & genState = {c.genState & mode = SkewGeneration {skewl = 1, skewr = s}}}
+	| s < 0     = {c & genState = {c.genState & mode = SkewGeneration {skewl = ~s, skewr = 1}}}
+	| otherwise = {c & genState = {c.genState & mode = SkewGeneration {skewl = 1, skewr = 1}}}
+	handleOption c Bent = {c & genState = {c.genState & mode = BentGeneration}}
 	handleOption _ o = abort ("Test: unknown option \"" +++ show1 o +++ "\"\n")
 
 TestList :: ![Testoption] ![p] -> [GastEvent] | Testable p

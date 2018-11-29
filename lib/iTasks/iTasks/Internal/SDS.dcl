@@ -8,7 +8,6 @@ from iTasks.Internal.Generic.Visualization import :: TextFormat
 
 from iTasks.WF.Definition import class iTask
 from iTasks.WF.Definition import :: TaskException, :: TaskId, :: InstanceNo
-from iTasks.UI.Editor import :: Editor, :: EditMask, :: Masked
 import iTasks.SDS.Definition
 
 //Notification requests are stored in the IWorld

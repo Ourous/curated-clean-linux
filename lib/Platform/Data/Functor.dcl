@@ -1,7 +1,5 @@
 definition module Data.Functor
 
-from StdFunc import const
-
 class Functor f
 where
     fmap :: (a -> b) !(f a) -> f b
@@ -10,7 +8,7 @@ where
     (<$>) f fa :== fmap f fa
 
     (<$) infixl 4 :: a !(f b) -> f a | Functor f
-    (<$) x fa :== fmap (const x) fa
+    (<$) x fa :== fmap (\_ -> x) fa
 
     ($>) infixl 4 :: !(f b) a -> f a | Functor f
     ($>) fa x :== x <$ fa

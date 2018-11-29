@@ -5,6 +5,7 @@ import iTasks.UI.Definition, iTasks.UI.Prompt
 import iTasks.WF.Combinators.Tune
 import iTasks.WF.Combinators.Overloaded
 import Data.List, Text.GenJSON, Data.Maybe, StdString, Data.GenEq
+from Data.Foldable import class Foldable (foldl1)
 import qualified Data.Map as DM
 import StdBool, _SystemArray
 from Data.Func import $
@@ -174,11 +175,6 @@ frameCompact = sequenceLayouts
 	,wrapUI UIContainer
 	,setUIAttributes (halignAttr AlignCenter)
 	]
-
-beforeStep :: LayoutRule -> LayoutRule
-beforeStep layout = layoutSubUIs (SelectAND (SelectByPath []) SelectNotStepped) layout
-where
-	SelectNotStepped = SelectByAttribute "stepped" (\a -> a === (JSONBool False))
 
 toWindow :: UIWindowType UIVAlign UIHAlign -> LayoutRule
 toWindow windowType vpos hpos = sequenceLayouts

@@ -3,6 +3,7 @@ implementation module Text.Show
 import StdArray, StdBool, StdFunc, StdOverloaded, StdClass, StdList
 import StdString
 import Data.Maybe, Data.List
+from Data.Foldable import class Foldable(foldr1)
 import Text
 
 // | The @shows@ functions return a function that prepends the

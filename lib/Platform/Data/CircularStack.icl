@@ -3,7 +3,7 @@ implementation module Data.CircularStack
 //import StdInt, StdOverloaded, StdArray, StdMisc, StdList
 import StdInt, StdList, StdMisc
 from Data.IntMap.Strict import :: IntMap
-import qualified Data.IntMap.Strict as DIS
+import qualified Data.IntMap.Strict
 from Data.Maybe import :: Maybe (..)
 
 newStack :: !Int -> CircularStack a
@@ -11,13 +11,13 @@ newStack n = { CircularStack
              | maxSize    = n
              , actualSize = 0
              , nextIdx    = 0
-             , stackData  = 'DIS'.newMap
+             , stackData  = 'Data.IntMap.Strict'.newMap
              }
 
 push :: !a !(CircularStack a) -> CircularStack a
 push x stack
   = { stack
-    & stackData  = 'DIS'.put stack.nextIdx x stack.stackData
+    & stackData  = 'Data.IntMap.Strict'.put stack.nextIdx x stack.stackData
     , actualSize = if (stack.actualSize == stack.maxSize)
                      stack.actualSize
                      (stack.actualSize + 1)
@@ -29,7 +29,7 @@ pop stack
   | emptyStack stack = (Nothing, stack)
   | otherwise
       # topIdx = topElemIdx stack
-      = ( 'DIS'.get topIdx stack.stackData
+      = ( 'Data.IntMap.Strict'.get topIdx stack.stackData
         , { stack
           & nextIdx = topIdx
           , actualSize = stack.actualSize - 1})
@@ -37,7 +37,7 @@ pop stack
 peek :: !(CircularStack a) -> Maybe a
 peek stack
   | emptyStack stack = Nothing
-  | otherwise        = 'DIS'.get (topElemIdx stack) stack.stackData
+  | otherwise        = 'Data.IntMap.Strict'.get (topElemIdx stack) stack.stackData
 
 topElemIdx :: !(CircularStack a) -> Int
 topElemIdx stack

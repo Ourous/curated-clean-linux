@@ -4,7 +4,7 @@ from StdOverloaded import class < (..)
 import StdClass
 from Data.Maybe import :: Maybe
 from StdFunc import o
-import qualified Data.List as L
+import qualified Data.List
 from Data.Monoid import class Monoid, class Semigroup
 
 /**
@@ -35,24 +35,16 @@ null :: (Heap a) -> Bool
 
 size :: (Heap a) -> Int
 
-/**
- * @type Heap a
- */
+//* @type Heap a
 empty :== Empty
 
-/**
- * @type a -> Heap a | Ord a
- */
+//* @type a -> Heap a | Ord a
 singleton x :== singletonWith (<=) x
 
-/**
- * @type (a a -> Bool) a -> Heap a
- */
+//* @type (a a -> Bool) a -> Heap a
 singletonWith f a :== Heap 1 f (Node 0 a Nil)
 
-/**
- * @type a (Heap a) -> (Heap a) | Ord a
- */
+//* @type a (Heap a) -> (Heap a) | Ord a
 insert :== insertWith (<=)
 
 insertWith :: (a a -> Bool) a (Heap a) -> Heap a
@@ -63,9 +55,7 @@ replicate :: a Int -> Heap a | Ord a
 
 uncons :: (Heap a) -> Maybe (a, Heap a) | Ord a
 
-/**
- * @type (Heap a) -> Maybe (a, Heap a) | Ord a
- */
+//* @type (Heap a) -> Maybe (a, Heap a) | Ord a
 viewMin :== uncons
 
 minimum :: (Heap a) -> a
@@ -84,40 +74,26 @@ partition :: (a -> Bool) (Heap a) -> (Heap a, Heap a)
 
 split :: a (Heap a) -> (Heap a, Heap a, Heap a)
 
-/**
- * @type Int (Heap a) -> Heap a
- */
-take :== withList o 'L'.take
+//* @type Int (Heap a) -> Heap a
+take :== withList o 'Data.List'.take
 
-/**
- * @type Int (Heap a) -> Heap a
- */
-drop :== withList o 'L'.drop
+//* @type Int (Heap a) -> Heap a
+drop :== withList o 'Data.List'.drop
 
-/**
- * @type Int (Heap a) -> (Heap a, Heap a)
- */
-splitAt :== splitWithList o 'L'.splitAt
+//* @type Int (Heap a) -> (Heap a, Heap a)
+splitAt :== splitWithList o 'Data.List'.splitAt
 
-/**
- * @type (a -> Bool) (Heap a) -> (Heap a, Heap a)
- */
-break :== splitWithList o 'L'.break
+//* @type (a -> Bool) (Heap a) -> (Heap a, Heap a)
+break :== splitWithList o 'Data.List'.break
 
-/**
- * @type (a -> Bool) (Heap a) -> (Heap a, Heap a)
- */
-span :== splitWithList o 'L'.span
+//* @type (a -> Bool) (Heap a) -> (Heap a, Heap a)
+span :== splitWithList o 'Data.List'.span
 
-/**
- * @type (a -> Bool) (Heap a) -> Heap a
- */
-takeWhile :== withList o 'L'.takeWhile
+//* @type (a -> Bool) (Heap a) -> Heap a
+takeWhile :== withList o 'Data.List'.takeWhile
 
-/**
- * @type (a -> Bool) (Heap a) -> Heap a
- */
-dropWhile :== withList o 'L'.dropWhile
+//* @type (a -> Bool) (Heap a) -> Heap a
+dropWhile :== withList o 'Data.List'.dropWhile
 
 nub :: (Heap a) -> Heap a
 

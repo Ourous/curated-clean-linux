@@ -9,6 +9,7 @@ import StdEnum
 
 from Data.Map as DM import qualified newMap, put, get, del, toList, fromList, delList, alter, union, keys, unions, singleton, member, null
 from Data.Set as DS import qualified newSet, insert, delete, toList, fromList, null
+from Data.Set import instance Foldable Set
 from Data.Tuple import appSnd
 from Data.Map import instance Functor (Map k)
 

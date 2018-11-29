@@ -1,29 +1,14 @@
 implementation module Data.IntMap.Base
 
-from StdFunc import o, const, id
-from StdTuple import fst, snd
-from StdInt import bitand, bitxor, bitor, >>, bitnot, class + (..), instance + Int, class - (..), instance - Int, instance < Int, instance == Int
-from StdOverloaded import class < (..)
-from StdMisc import abort
-from StdList import instance < [a]
-import qualified StdList as SL
-from StdTuple import instance < (a,b)
-import StdClass
-from Control.Monad import class Monad (..)
-from Data.Functor import class Functor (..)
-from StdBool import class == (..), ||, &&
-from Control.Applicative import class Applicative(..)
-from Control.Monad import liftM
-import qualified Data.Foldable as Foldable
-from Data.Maybe import :: Maybe (..), fromMaybe, maybe, instance Functor Maybe, instance Applicative Maybe, instance Monad Maybe
-from Data.Either import :: Either (..)
-from Data.Monoid import class Monoid(..), class Semigroup (..)
-from Data.Functor import <$>
-//from Data.Traversable import class Traversable(..)
+import StdEnv
 
-//import Data.IntSet.Base (Key)
-//import qualified Data.IntSet.Base as IntSet
-
+import Control.Applicative
+import Control.Monad
+import Data.Either
+import Data.Functor
+import Data.Functor
+import Data.Maybe
+import Data.Monoid
 
 // Types
 instance Semigroup (IntMap a) where

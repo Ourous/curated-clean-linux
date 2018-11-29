@@ -26,11 +26,11 @@ import iTasks.SDS.Combinators.Common
     | ConnectionInstanceDS !ConnectionInstanceOpts !*TCP_SChannel
     | BackgroundInstanceDS !BackgroundInstanceOpts !BackgroundTask
 
-serve :: ![TaskWrapper] ![(!Int,!ConnectionTask)] ![BackgroundTask] (*IWorld -> (!Maybe Timeout,!*IWorld)) *IWorld -> *IWorld
+serve :: ![StartupTask] ![(!Int,!ConnectionTask)] ![BackgroundTask] (*IWorld -> (!Maybe Timeout,!*IWorld)) *IWorld -> *IWorld
 serve its cts bts determineTimeout iworld
     = loop determineTimeout (init its cts bts iworld)
 
-init :: ![TaskWrapper] ![(!Int,!ConnectionTask)] ![BackgroundTask] !*IWorld -> *IWorld
+init :: ![StartupTask] ![(!Int,!ConnectionTask)] ![BackgroundTask] !*IWorld -> *IWorld
 init its cts bts iworld
 	// Check if the initial tasks have been added already
 	# iworld = createInitialInstances its iworld	
@@ -40,16 +40,16 @@ init its cts bts iworld
     # ioStates = 'DM'.fromList [(TaskId 0 0, IOActive 'DM'.newMap)]
     = {iworld & ioTasks = {done=[],todo=listeners ++ map (BackgroundInstance {bgInstId=0}) bts}, ioStates = ioStates,  world = world}
 where
-	createInitialInstances :: [TaskWrapper] !*IWorld -> *IWorld
+	createInitialInstances :: [StartupTask] !*IWorld -> *IWorld
 	createInitialInstances its iworld
 		# (mbNextNo,iworld) = read nextInstanceNo iworld
 		| (mbNextNo =: (Ok 1)) = createAll its iworld //This way we check if it is the initial run of the program
                                = iworld
 
-	createAll :: [TaskWrapper] !*IWorld -> *IWorld
+	createAll :: [StartupTask] !*IWorld -> *IWorld
 	createAll [] iworld = iworld
-	createAll [TaskWrapper task:ts] iworld
-		= case createTaskInstance task iworld of
+	createAll [{StartupTask|task=TaskWrapper task,attributes}:ts] iworld
+		= case createTaskInstance task attributes iworld of 
 			(Ok _,iworld) = createAll ts iworld
 			(Error (_,e),iworld) = abort e
 

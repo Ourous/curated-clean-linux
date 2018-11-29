@@ -1,212 +1,201 @@
 implementation module iTasks.UI.Editor.Modifiers
 
-from StdFunc import o, const, flip
+from StdFunc import o, const, flip, id
 import StdBool, StdString, StdList
-import iTasks.UI.Editor, iTasks.UI.Definition, iTasks.UI.Tune
-import Data.Error, Text.GenJSON
-import Data.GenEq
+import iTasks.UI.Editor, iTasks.UI.Definition, iTasks.WF.Combinators.Tune
+import Data.Error, Text.GenJSON, Data.Tuple, Data.Functor, Data.Maybe
+import Data.GenEq, Data.Func
 import qualified Data.Map as DM
-
-withPreseededValue :: a !(Editor a) -> Editor a
-withPreseededValue def editor=:{Editor | genUI=genUI}
-	= withEditMode Update {Editor|editor & genUI = const o flip genUI def}
-
-withAttributes :: !UIAttributes !(Editor a) -> Editor a
-withAttributes extra editor=:{genUI=editorGenUI}
-	= {Editor|editor & genUI = genUI}
-where
-	genUI dp val vst=:{VSt|taskId,optional}
-		= case editorGenUI dp val vst of
-			(Ok (UI type attr items,mask),vst) = (Ok (UI type ('DM'.union attr extra) items,mask),vst) 
-			(e,vst) = (e,vst)
 
 instance tune UIAttributes Editor
 where
-	tune attr editor = withAttributes attr editor
-
-withLabelAttr :: !String !(Editor a) -> Editor a
-withLabelAttr label editor = withAttributes (labelAttr label) editor
+	tune extra editor=:{Editor|genUI=editorGenUI} = {Editor|editor & genUI = genUI}
+	where
+		genUI dp mode vst=:{VSt|taskId,optional} = case editorGenUI dp (mapEditMode id mode) vst of
+			(Ok (UI type attr items, st),vst) = (Ok (UI type ('DM'.union attr extra) items, st),vst)
+			(e,vst)                           = (e,vst)
 
 withEditModeAttr :: !(Editor a) -> Editor a
-withEditModeAttr editor=:{genUI=editorGenUI}
-	= {Editor|editor & genUI = genUI}
+withEditModeAttr editor=:{Editor|genUI=editorGenUI} = {Editor|editor & genUI = genUI}
 where
-	genUI dp val vst=:{VSt|taskId,mode}
-		= case editorGenUI dp val vst of
-			(Ok (UI type attr items,mask),vst) = (Ok (UI type ('DM'.put "mode" (JSONString (toString mode)) attr) items, mask),vst) 
-			(e,vst) = (e,vst)
+	genUI dp mode vst=:{VSt|taskId} = case editorGenUI dp (mapEditMode id mode) vst of
+		(Ok (UI type attr items,mask),vst) = (Ok (UI type ('DM'.put "mode" (JSONString (modeString mode)) attr) items, mask),vst)
+		(e,vst) = (e,vst)
+	where
+		modeString Enter      = "enter"
+		modeString (Update _) = "update"
+		modeString (View _)   = "view"
 
 withDynamicHintAttributes :: !String !(Editor a) -> Editor a
-withDynamicHintAttributes typeDesc {genUI=editorGenUI,onEdit=editorOnEdit,onRefresh=editorOnRefresh}
-	= {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
+withDynamicHintAttributes typeDesc editor=:{Editor|genUI=editorGenUI,onEdit=editorOnEdit,onRefresh=editorOnRefresh, valueFromState}
+	= {Editor| editor & genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
 where
-	genUI dp val vst=:{VSt|taskId,optional}
-		= case editorGenUI dp val vst of
-			(Ok (UI type attr items,mask),vst) 
-				//Add hint attributes
-				# attr = 'DM'.union (stdAttributes typeDesc optional mask) attr
-				= (Ok (UI type attr items,mask),vst) 
-			(e,vst) = (e,vst)
+	genUI dp mode vst=:{VSt|taskId,optional} = case editorGenUI dp (mapEditMode id mode) vst of
+		(Ok (UI type attr items,mask),vst)
+			//Add hint attributes
+			# attr = 'DM'.union (stdAttributes typeDesc (isJust $ valueFromState mask) optional mask) attr
+			= (Ok (UI type attr items,mask),vst)
+		(e,vst) = (e,vst)
 
-	onEdit dp e oval omask vst=:{VSt|optional}
-		= addHintAttrChanges omask (editorOnEdit dp e oval omask vst)
-	onRefresh dp e oval omask vst=:{VSt|optional}
-		= addHintAttrChanges omask (editorOnRefresh dp e oval omask vst)
+	onEdit dp e omask vst=:{VSt|optional} = addHintAttrChanges omask (editorOnEdit dp e omask vst)
+	onRefresh dp e omask vst=:{VSt|optional} = addHintAttrChanges omask (editorOnRefresh dp e omask vst)
 
-	addHintAttrChanges omask (Ok (change,nmask),nval,vst=:{VSt|optional})
-		# attrChange = case stdAttributeChanges typeDesc optional omask nmask of
+	addHintAttrChanges omask (Ok (change,nmask),vst=:{VSt|optional})
+		# attrChange = case stdAttributeChanges typeDesc optional omask (isJust $ valueFromState nmask) nmask of
 			[] = NoChange
 			cs = ChangeUI cs []
 		# change = mergeUIChanges change attrChange
-		= (Ok (change,nmask),nval,vst)
-	addHintAttrChanges omask (e,val,vst) = (e,val,vst)
+		= (Ok (change,nmask),vst)
+	addHintAttrChanges omask (e,vst) = (e,vst)
 
 /**
 * Set basic hint and error information based on the verification
 */
-stdAttributes :: !String !Bool !EditMask -> UIAttributes
-stdAttributes typename optional (CompoundMask _) = 'DM'.newMap
-stdAttributes typename optional mask
-	# (touched,valid,state) = case mask of
-		(FieldMask {FieldMask|touched,valid,state}) = (touched,valid,state)
-		mask = (isTouched mask,True,JSONNull)
-	| state =:JSONNull && not touched
-		= 'DM'.fromList [(HINT_TYPE_ATTRIBUTE,JSONString HINT_TYPE_INFO)
-                        ,(HINT_ATTRIBUTE,JSONString ("Please enter a " +++ typename +++ if optional "" " (this value is required)"))]
-	| state =: JSONNull 
-		= 'DM'.fromList [(HINT_TYPE_ATTRIBUTE,JSONString HINT_TYPE_INVALID)
-						,(HINT_ATTRIBUTE,JSONString ("You need to enter a "+++ typename +++ " (this value is required)"))]
+stdAttributes :: !String !Bool !Bool !EditState -> UIAttributes
+stdAttributes typename valid optional mask
 	| valid
-		= 'DM'.fromList [(HINT_TYPE_ATTRIBUTE,JSONString HINT_TYPE_VALID)
-						,(HINT_ATTRIBUTE,JSONString ("You have correctly entered a " +++ typename))]
+		= 'DM'.fromList [(HINT_TYPE_ATTRIBUTE, JSONString HINT_TYPE_VALID)
+						,(HINT_ATTRIBUTE, JSONString ("You have correctly entered a " +++ typename))]
 	| otherwise
-		= 'DM'.fromList [(HINT_TYPE_ATTRIBUTE,JSONString HINT_TYPE_INVALID)
-						,(HINT_ATTRIBUTE,JSONString ("This value not in the required format of a " +++ typename))]
+		| not $ isTouched mask = 'DM'.fromList
+			[ (HINT_TYPE_ATTRIBUTE, JSONString HINT_TYPE_INFO)
+			, ( HINT_ATTRIBUTE
+			  , JSONString ("Please enter a " +++ typename +++ if optional "" " (this value is required)")
+			  )
+			]
+		| isCompound mask = 'DM'.fromList
+			[ (HINT_TYPE_ATTRIBUTE, JSONString HINT_TYPE_INVALID)
+			, (HINT_ATTRIBUTE, JSONString ("You need to enter a "+++ typename +++ " (this value is required)"))
+			]
+		| otherwise = 'DM'.fromList
+			[ (HINT_TYPE_ATTRIBUTE, JSONString HINT_TYPE_INVALID)
+			, (HINT_ATTRIBUTE, JSONString ("This value not in the required format of a " +++ typename))
+			]
 
-stdAttributeChanges :: !String !Bool !EditMask !EditMask -> [UIAttributeChange]
-stdAttributeChanges typename optional om nm 
+stdAttributeChanges :: !String !Bool !EditState !Bool !EditState -> [UIAttributeChange]
+stdAttributeChanges typename optional om nvalid nm
 	| om === nm = [] //Nothing to change
-	| otherwise = [SetAttribute k v \\ (k,v) <- 'DM'.toList (stdAttributes typename optional nm)]
+	| otherwise = [SetAttribute k v \\ (k,v) <- 'DM'.toList (stdAttributes typename nvalid optional nm)]
+
+:: StoredMode = StoredEnter | StoredUpdate | StoredView
+
+derive JSONEncode StoredMode
+derive JSONDecode StoredMode
 
 selectByMode :: !(Editor a) !(Editor a) !(Editor a) -> Editor a
 selectByMode
-		viewEditor  =:{genUI=viewGenUI,  onEdit=viewOnEdit,  onRefresh=viewOnRefresh}
-		enterEditor =:{genUI=enterGenUI, onEdit=enterOnEdit, onRefresh=enterOnRefresh}
-		updateEditor=:{genUI=updateGenUI,onEdit=updateOnEdit,onRefresh=updateOnRefresh}
-	= {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
+		viewEditor  =:{Editor|genUI=viewGenUI,  onEdit=viewOnEdit,  onRefresh=viewOnRefresh,   valueFromState=viewValueFromState}
+		enterEditor =:{Editor|genUI=enterGenUI, onEdit=enterOnEdit, onRefresh=enterOnRefresh,  valueFromState=enterValueFromState}
+		updateEditor=:{Editor|genUI=updateGenUI,onEdit=updateOnEdit,onRefresh=updateOnRefresh, valueFromState=updateValueFromState}
+	= editorModifierWithStateToEditor
+		{EditorModifierWithState|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh,valueFromState=valueFromState}
 where
-	genUI dp val vst=:{VSt|mode} = case mode of
-		View   = viewGenUI dp val vst
-		Enter  = enterGenUI dp val vst
-		Update = updateGenUI dp val vst
+	genUI dp mode vst = attachMode storedMode $ case mode of
+		View _   = viewGenUI   dp mode` vst
+		Enter    = enterGenUI  dp mode` vst
+		Update _ = updateGenUI dp mode` vst
+	where
+		mode` = mapEditMode id mode
 
-	onEdit dp e val mask vst=:{VSt|mode} = case mode of
-		View   = viewOnEdit dp e val mask vst
-		Enter  = enterOnEdit dp e val mask vst
-		Update = updateOnEdit dp e val mask vst
+		storedMode = case mode of
+			Enter    = StoredEnter
+			Update _ = StoredUpdate
+			View _   = StoredView
 
-	onRefresh dp new old mask vst=:{VSt|mode} = case mode of
-		View   = viewOnRefresh dp new old mask vst
-		Enter  = enterOnRefresh dp new old mask vst
-		Update = updateOnRefresh dp new old mask vst
+	onEdit dp e mode st vst = attachMode mode $ case mode of
+		StoredView   = viewOnEdit dp e st vst
+		StoredEnter  = enterOnEdit dp e st vst
+		StoredUpdate = updateOnEdit dp e st vst
 
-withEditMode :: !EditMode !(Editor a) -> Editor a
-withEditMode newMode {genUI=editorGenUI,onEdit=editorOnEdit,onRefresh=editorOnRefresh}
-	= {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
+	onRefresh dp new mode st vst = attachMode mode $ case mode of
+		StoredView   = viewOnRefresh dp new st vst
+		StoredEnter  = enterOnRefresh dp new st vst
+		StoredUpdate = updateOnRefresh dp new st vst
+
+	valueFromState mode st = case mode of
+		StoredView   = viewValueFromState st
+		StoredEnter  = enterValueFromState st
+		StoredUpdate = updateValueFromState st
+
+	attachMode mode (res, vst) = ((\(x, st) -> (x, mode, st)) <$> res, vst)
+
+withChangedEditMode :: !((EditMode a) -> EditMode a) !(Editor a) -> Editor a
+withChangedEditMode toNewMode editor=:{Editor| genUI=editorGenUI} = {Editor| editor & genUI = genUI}
 where
-	genUI dp val vst=:{VSt|mode}
-		# (res,vst) = editorGenUI dp val {VSt|vst & mode = newMode}
-		= (res,{VSt|vst & mode=mode})
+	genUI dp mode vst = editorGenUI dp (mapEditMode id $ toNewMode mode) vst
 
-	onEdit dp e val mask vst=:{VSt|mode}
-		# (mask,val,vst) = editorOnEdit dp e val mask {VSt|vst & mode = newMode}
-		= (mask,val,{VSt|vst & mode=mode})
-
-	onRefresh dp new old mask vst=:{VSt|mode} 
-		# (change,val,vst) = editorOnRefresh dp new old mask {VSt|vst & mode = newMode}
-		= (change,val,{VSt|vst & mode=mode})
+viewConstantValue :: !a !(Editor a) -> Editor ()
+viewConstantValue val e = bijectEditorValue (const val) (const ()) $ withChangedEditMode (const $ View val) e
 
 bijectEditorValue :: !(a -> b) !(b -> a) !(Editor b) -> Editor a
-bijectEditorValue tof fromf {genUI=editorGenUI,onEdit=editorOnEdit,onRefresh=editorOnRefresh}
-	= {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
+bijectEditorValue tof fromf editor=:{Editor|genUI=editorGenUI,onRefresh=editorOnRefresh,valueFromState=editorValueFromState}
+	= {Editor| editor & genUI=genUI,onRefresh=onRefresh,valueFromState=valueFromState}
 where
-	genUI dp val vst
-		= editorGenUI dp (tof val) vst
-	onEdit dp e val mask vst
-		# (mask,val,vst) = editorOnEdit dp e (tof val) mask vst 
-		= (mask,fromf val,vst)
-	onRefresh dp new old mask vst
-		# (change,val,vst) = editorOnRefresh dp (tof new) (tof old) mask vst
-		= (change,fromf val,vst)
+	genUI dp mode vst       = editorGenUI dp (mapEditMode tof mode) vst
+	onRefresh dp new st vst = editorOnRefresh dp (tof new) st vst
 
-injectEditorValue :: !(a -> b) !(b -> MaybeErrorString a) !(Editor b) -> Editor a | JSONEncode{|*|} b & JSONDecode{|*|} b
-injectEditorValue tof fromf {genUI=editorGenUI,onEdit=editorOnEdit,onRefresh=editorOnRefresh}
-	= {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
+	valueFromState st = case editorValueFromState st of
+		Just val = Just $ fromf val
+		_        = Nothing
+
+injectEditorValue :: !(a -> b) !(b -> MaybeErrorString a) !(Editor b) -> Editor a
+injectEditorValue tof fromf {Editor|genUI=editorGenUI,onEdit=editorOnEdit,onRefresh=editorOnRefresh,valueFromState=editorValueFromState}
+	= {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh,valueFromState=valueFromState}
 where
-	genUI dp val vst = case editorGenUI dp (tof val) vst of
-		(Error e,vst) = (Error e,vst)
-		(Ok (ui,mask),vst) = (Ok (ui,StateMask mask (toJSON (tof val))), vst) //Track state of the 'inner' editor
+	genUI dp mode vst        = editorGenUI dp (mapEditMode tof mode) vst
+	onEdit dp e st vst       = mbMapFromF $ editorOnEdit dp e st vst
+	onRefresh dp newa st vst = mbMapFromF $ editorOnRefresh dp (tof newa) st vst
 
-	onEdit dp e aval (StateMask mask encval) vst
-		# (Just bval) = fromJSON encval
-		= case editorOnEdit dp e bval mask vst of
-			(Error e, _, vst) = (Error e, aval, vst)
-			(Ok (change,mask), bval, vst) = case fromf bval of
-				(Ok aval)  = (Ok (change,StateMask mask (toJSON bval)),aval,vst) //TODO: What about clearing the errors? track state...
-				(Error e)
-					# (change,mask) = case mask of //Only set the hint attributes on fields
-						(FieldMask fmask)
-							# attrChange = ChangeUI [SetAttribute HINT_TYPE_ATTRIBUTE (JSONString HINT_TYPE_INVALID) 
-								,SetAttribute HINT_ATTRIBUTE (JSONString e)] []
-							= (mergeUIChanges change attrChange, FieldMask {FieldMask|fmask & valid = False})
-						_
-							= (change,mask)
-					= (Ok (change,StateMask mask (toJSON bval)), aval, vst)
+	valueFromState st = case editorValueFromState st of
+		Just valb = case fromf valb of
+			Ok vala = Just vala
+			_       = Nothing
+		_ = Nothing
 
-	onRefresh dp newa olda (StateMask mask encval) vst
-		# (Just oldb) = fromJSON encval
-		= case editorOnRefresh dp (tof newa) oldb mask vst of
-			(Error e, _, vst) = (Error e, olda, vst)
-			(Ok (change,mask), newb, vst) = case fromf newb of
-				(Ok newa) = (Ok (change,StateMask mask (toJSON newb)), newa, vst)
-				(Error e)
-					# (change,mask) = case mask of //Only set the hint attributes on fields
-						(FieldMask fmask)
-							# attrChange = ChangeUI [SetAttribute HINT_TYPE_ATTRIBUTE (JSONString HINT_TYPE_INVALID) 
-								,SetAttribute HINT_ATTRIBUTE (JSONString e)] []
-							= (mergeUIChanges change attrChange, FieldMask {FieldMask|fmask & valid = False})
-						_
-							= (change,mask)
-					= (Ok (change,StateMask mask (toJSON newb)), olda, vst)
+	// TODO: store and clear error
+    mbMapFromF (Error e, vst) = (Error e, vst)
+	mbMapFromF (Ok (change, st), vst) = case editorValueFromState st of
+		Just newb = case fromf newb of
+			Ok _ = (Ok (change, st), vst)
+			Error e
+				# attrChange = ChangeUI [SetAttribute HINT_TYPE_ATTRIBUTE (JSONString HINT_TYPE_INVALID)
+					,SetAttribute HINT_ATTRIBUTE (JSONString e)] []
+				= (Ok (mergeUIChanges change attrChange, st), vst)
+		_ = (Ok (change, st), vst)
 
-surjectEditorValue :: !(a -> b) !(b a -> a) !(Editor b) -> Editor a | JSONEncode{|*|} b & JSONDecode{|*|} b
-surjectEditorValue tof fromf {genUI=editorGenUI,onEdit=editorOnEdit,onRefresh=editorOnRefresh}
-	= {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
+surjectEditorValue :: !(a -> b) !(b (Maybe a) -> a) !(Editor b) -> Editor a | JSONEncode{|*|}, JSONDecode{|*|} a
+surjectEditorValue tof fromf {Editor|genUI=editorGenUI,onEdit=editorOnEdit,onRefresh=editorOnRefresh,valueFromState=editorValueFromState} = editorModifierWithStateToEditor
+	{EditorModifierWithState|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh,valueFromState=valueFromState}
 where
-	genUI dp val vst = case editorGenUI dp (tof val) vst of
-		(Error e,vst) = (Error e,vst)
-		(Ok (ui,mask),vst) = (Ok (ui,StateMask mask (toJSON (tof val))), vst) //Track state of the 'inner' editor
+	genUI dp mode vst = case editorGenUI dp (mapEditMode tof mode) vst of
+		(Error e,vst)     = (Error e,vst)
+		//Track value of the 'outer' editor
+		(Ok (ui, st),vst) = (Ok (ui, editModeValue mode, st), vst)
 
-	onEdit dp e aval (StateMask mask encval) vst
-		# (Just bval) = fromJSON encval
-		= case editorOnEdit dp e bval mask vst of 
-			(Error e,_ ,vst) = (Error e, aval, vst)
-			(Ok (change,mask),bval,vst) = (Ok (change,StateMask mask (toJSON bval)), fromf bval aval, vst)
+	onEdit dp e mbOldA st vst = case editorOnEdit dp e st vst of
+		(Error e,        vst) = (Error e, vst)
+		(Ok (change, st),vst) = (Ok (change, updatedState mbOldA st, st), vst)
 
-	onRefresh dp newa olda (StateMask mask encval) vst
-		# (Just oldb) = fromJSON encval
-		= case editorOnRefresh dp (tof newa) oldb mask vst of
-			(Error e, _, vst) = (Error e, olda, vst)
-			(Ok (change,mask), newb, vst) = (Ok (change,StateMask mask (toJSON newb)), fromf newb olda, vst)
+	onRefresh dp newA _ st vst = case editorOnRefresh dp (tof newA) st vst of
+		(Error e,         vst) = (Error e, vst)
+		(Ok (change, st), vst) = (Ok (change, updatedState (Just newA) st, st), vst)
 
-comapEditorValue :: !(b -> a) !(Editor a) -> Editor b
-comapEditorValue tof {genUI=editorGenUI,onRefresh=editorOnRefresh}
-	= {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
+	// only give value if inner editor is in valid state
+	valueFromState val innerSt | isJust $ editorValueFromState innerSt = val
+	valueFromState _   _                                               = Nothing
+
+	updatedState mbOldA innerSt = maybe mbOldA (\newB -> Just $ fromf newB mbOldA) mbNewB
+	where
+		mbNewB = editorValueFromState innerSt
+
+comapEditorValue :: !(b -> a) !(Editor a) -> Editor b | JSONEncode{|*|}, JSONDecode{|*|} b
+comapEditorValue tof {Editor|genUI=editorGenUI,onRefresh=editorOnRefresh,valueFromState=editorValueFromState}
+	= editorModifierWithStateToEditor
+		{EditorModifierWithState|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh,valueFromState=valueFromState}
 where
-	genUI dp val vst = editorGenUI dp (tof val) vst
-
-	onEdit dp _ val mask vst = (Ok (NoChange,mask),val,vst) //Ignore edits
-
-	onRefresh dp new old mask vst 
-		# (change,val,vst) = editorOnRefresh dp (tof new) (tof old) mask vst
-		= (change, if (change =: Error _) old new,vst)
+	genUI dp mode vst          = appFst (fmap (\(ui, st) -> (ui, editModeValue mode, st))) $
+	                             editorGenUI dp (mapEditMode tof mode) vst
+	onEdit dp _ mbB st vst     = (Ok (NoChange, mbB, st), vst) //Ignore edits
+	onRefresh dp newB _ st vst = appFst (fmap (\(ui, st) -> (ui, Just newB, st))) $
+	                             editorOnRefresh dp (tof newB) st vst
+	valueFromState mbB _       = mbB

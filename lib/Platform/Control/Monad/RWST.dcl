@@ -1,6 +1,6 @@
 definition module Control.Monad.RWST
 
-from Control.Applicative import class Applicative
+from Control.Applicative import class pure, class <*>, class Applicative
 from Control.Monad import class Monad
 from Control.Monad.Trans import class MonadTrans
 from Data.Functor import class Functor
@@ -14,7 +14,8 @@ from Data.Monoid import class Monoid, class Semigroup
 :: RWST r w s m a = RWST (r s -> m (a, s, w))
 
 instance Functor (RWST r w s m) | Monad m & Monoid w
-instance Applicative (RWST r w s m) | Monad m & Monoid w
+instance pure (RWST r w s m) | pure m & Monoid w
+instance <*> (RWST r w s m) | Monad m & Monoid w
 instance Monad (RWST r w s m) | Monad m & Monoid w
 instance MonadTrans (RWST r w s) | Monoid w
 

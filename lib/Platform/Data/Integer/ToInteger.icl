@@ -271,6 +271,7 @@ stoi_next_part_no_shift i_s s i_a_f i_a_e shift r a
 			= a;
 			# (i_a,a) = shift_left 0 r shift i_a_e a;
 			= a;
+	= abort "error in stoi_next_part_no_shift\n";
 where {
 	insert_at_begin :: !Int !Int !*{#Int} -> (!Int,!*{#Int});
 	insert_at_begin n i_a_f a

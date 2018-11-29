@@ -141,15 +141,15 @@ createClientTaskInstance task sessionId instanceNo iworld=:{options={appVersion}
   `b` \iworld -> 'SDS'.write (TIValue NoValue) (sdsFocus instanceNo taskInstanceValue) iworld
   `b` \iworld -> (Ok (TaskId instanceNo 0), iworld)
 
-createTaskInstance :: !(Task a) !*IWorld -> (!MaybeError TaskException (!InstanceNo,InstanceKey),!*IWorld) | iTask a
-createTaskInstance task iworld=:{options={appVersion,autoLayout},current={taskTime},clock}
+createTaskInstance :: !(Task a) !TaskAttributes !*IWorld -> (!MaybeError TaskException (!InstanceNo,InstanceKey),!*IWorld) | iTask a
+createTaskInstance task attributes iworld=:{options={appVersion,autoLayout},current={taskTime},clock}
 	# task = if autoLayout (applyLayout defaultSessionLayout task) task
     # (mbInstanceNo,iworld) = newInstanceNo iworld
     # instanceNo            = fromOk mbInstanceNo
     # (instanceKey,iworld)  = newInstanceKey iworld
     # progress              = {InstanceProgress|value=Unstable,instanceKey=instanceKey,attachedTo=[],firstEvent=Nothing,lastEvent=Nothing}
     # constants             = {InstanceConstants|session=True,listId=TaskId 0 0,build=appVersion,issuedAt=clock}
-    =            'SDS'.write (instanceNo, Just constants,Just progress,Just defaultValue) (sdsFocus instanceNo taskInstance) iworld
+    =            'SDS'.write (instanceNo, Just constants,Just progress,Just attributes) (sdsFocus instanceNo taskInstance) iworld
   `b` \iworld -> 'SDS'.write (createReduct defaultTonicOpts instanceNo task taskTime) (sdsFocus instanceNo taskInstanceReduct) iworld
   `b` \iworld -> 'SDS'.write (TIValue NoValue) (sdsFocus instanceNo taskInstanceValue) iworld
   `b` \iworld -> (Ok (instanceNo,instanceKey), iworld)

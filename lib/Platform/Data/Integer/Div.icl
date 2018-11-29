@@ -124,11 +124,12 @@ create_unintialized_int_array size = code {
 resize_int_array :: !Int !*{#Int} -> *{#Int}
 resize_int_array s a
     | size a>=s
-    = unsafe_resize_int_array s a
+        = unsafe_resize_int_array s a
+        = abort "error in resize_int_array\n";
 
 unsafe_resize_int_array :: !Int !*{#Int} -> *{#Int}
 unsafe_resize_int_array s a = code {
-    fill1_r _ARAY_ 0 1 0 01
+    fill1_r _ARRAY_ 0 1 0 01
 }
 
 (+<) infix 4
@@ -255,6 +256,7 @@ div_integer_a a1 a2
     # (r,q) = div_rem_integer_unsigned_int a1 a2.[0]
     = q
     = abort "div_integer_a 2"
+    = abort "error in div_integer_a\n"
   where
     div_integer_1_extra_int :: !{#Int} !{#Int} -> *{#Int}
     div_integer_1_extra_int a1 a2
@@ -1041,6 +1043,7 @@ make_integer_s_a s a
     | n==MAX_NEG_INT && s<0
     = {integer_s=n,integer_a={}}
     = {integer_s=s,integer_a=a}
+    = abort "error in div_integer_s_a\n"
 
 floordiv_integer :: !Integer !Integer -> *Integer
 floordiv_integer a b

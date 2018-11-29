@@ -1,12 +1,6 @@
 implementation module Data.GenDiff
 
-import StdArray
-import StdBool
-from StdFunc import flip, o
-import StdGeneric
-import StdInt
-import StdList
-import StdString
+import StdEnv
 
 import Control.Applicative
 import Control.Monad
@@ -15,7 +9,7 @@ import Control.Monad.State
 import Data.Functor
 import Text.GenPrint
 import Data.List
-import qualified Data.Map as M
+from Data.Map import :: Map, findWithDefault, fromList
 import Data.Maybe
 from Text import class Text(concat), instance Text String, <+
 
@@ -122,10 +116,10 @@ where
 				modify (\st -> {st & inlist=d.value == "_Cons"}) >>|
 				sequence [indent (display c) \\ c <- reverse d.children] >>|
 				modify (\st -> {st & inlist=inlist}) >>|
-				print ('M'.findWithDefault d.value d.value constructors) >>|
+				print (findWithDefault d.value d.value constructors) >>|
 				newline d.status
 	where
-		constructors = 'M'.fromList
+		constructors = fromList
 			[ ("_Nil", "[]")
 			, ("_Cons", "[]")
 			: [("_Tuple" <+ i, "(" <+ repeatn (i-1) ',' <+ ")") \\ i <- [2..32]]

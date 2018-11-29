@@ -5,126 +5,133 @@ from StdList import map
 from Clean.Types import class toType, class toTypeVar, class toTypeDef,
 	class toTypeDefRhs, class toConstructor, class toRecordField,
 	::TypeRestriction
-import qualified Clean.Types as T
+import qualified Clean.Types
 import Control.Applicative
 import Control.Monad
 import Control.Monad.State
 import Data.Functor
 from Data.Maybe import :: Maybe (..), instance Functor Maybe,
-	instance Applicative Maybe, instance Monad Maybe
+	instance pure Maybe, instance <*> Maybe, instance Monad Maybe
 import qualified Data.Map as M
 
 import syntax
 import qualified syntax
 
-instance 'T'.toTypeContext ['syntax'.TypeContext]
+instance 'Clean.Types'.toTypeContext ['syntax'.TypeContext]
 where
 	toTypeContext context
-		= ['T'.Instance gds.glob_object.ds_ident.id_name (map 'T'.toType tc_types)
+		= ['Clean.Types'.Instance gds.glob_object.ds_ident.id_name (map 'Clean.Types'.toType tc_types)
 		     \\ {tc_class=(TCClass gds),tc_types} <- context] ++
-		  ['T'.Derivation gtc_generic.glob_object.ds_ident.id_name ('T'.toType t)
+		  ['Clean.Types'.Derivation gtc_generic.glob_object.ds_ident.id_name ('Clean.Types'.toType t)
 		     \\ {tc_class=(TCGeneric {gtc_generic}),tc_types=[t]} <- context]
 
-instance 'T'.toTypeContext 'syntax'.TypeContext where toTypeContext tc = 'T'.toTypeContext [tc]
+instance 'Clean.Types'.toTypeContext 'syntax'.TypeContext where toTypeContext tc = 'Clean.Types'.toTypeContext [tc]
 
 instance toType 'syntax'.ATypeVar
 where
 	toType {atv_attribute=TA_Unique,atv_variable}
-		= 'T'.Uniq ('T'.Var ('T'.toTypeVar atv_variable))
-	toType {atv_variable} = 'T'.Var ('T'.toTypeVar atv_variable)
+		= 'Clean.Types'.Uniq ('Clean.Types'.Var ('Clean.Types'.toTypeVar atv_variable))
+	toType {atv_variable} = 'Clean.Types'.Var ('Clean.Types'.toTypeVar atv_variable)
 
 instance toType 'syntax'.AType
 where
 	toType {at_type,at_attribute}
-		| at_attribute == TA_Unique = 'T'.Uniq ('T'.toType at_type)
-		| otherwise = 'T'.toType at_type
+		| at_attribute == TA_Unique = 'Clean.Types'.Uniq ('Clean.Types'.toType at_type)
+		| otherwise = 'Clean.Types'.toType at_type
 
 instance toType 'syntax'.Type
 where
 	toType (TA tsi ats) = case tsi.type_ident.id_name of
-		"_String" = 'T'.Type "String" []
-		type_name = 'T'.Type tsi.type_ident.id_name (map 'T'.toType ats)
-	toType (TAS tsi ats _) = 'T'.Type tsi.type_ident.id_name (map 'T'.toType ats)
-	toType (TB bt) = 'T'.Type (toString bt) []
-	toType (TV tv) = 'T'.Var tv.tv_ident.id_name
-	toType (GTV tv) = 'T'.Var tv.tv_ident.id_name
-	toType (t1 --> t2) = 'T'.Func ['T'.toType t1] ('T'.toType t2) []
-	toType ((CV cv) :@: ats) = 'T'.Cons cv.tv_ident.id_name (map 'T'.toType ats)
-	toType (TFAC tvas t tc) = 'T'.Forall (map 'T'.toType tvas) ('T'.toType t) ('T'.toTypeContext tc)
-	toType TArrow = 'T'.Arrow Nothing
-	toType (TArrow1 t) = 'T'.Arrow (Just ('T'.toType t))
-	toType (TQualifiedIdent _ s ts) = 'T'.Type s (map 'T'.toType ts)
+		"_String" = 'Clean.Types'.Type "String" []
+		type_name = 'Clean.Types'.Type tsi.type_ident.id_name (map 'Clean.Types'.toType ats)
+	toType (TAS tsi ats ss) = 'Clean.Types'.Type tsi.type_ident.id_name
+		[if s 'Clean.Types'.Strict id ('Clean.Types'.toType t) \\ t <- ats & s <- strictnessListToBools ss]
+	toType (TB bt) = 'Clean.Types'.Type (toString bt) []
+	toType (TV tv) = 'Clean.Types'.Var tv.tv_ident.id_name
+	toType (GTV tv) = 'Clean.Types'.Var tv.tv_ident.id_name
+	toType (t1 --> t2) = 'Clean.Types'.Func ['Clean.Types'.toType t1] ('Clean.Types'.toType t2) []
+	toType ((CV cv) :@: ats) = 'Clean.Types'.Cons cv.tv_ident.id_name (map 'Clean.Types'.toType ats)
+	toType (TFAC tvas t tc) = 'Clean.Types'.Forall (map 'Clean.Types'.toType tvas) ('Clean.Types'.toType t) ('Clean.Types'.toTypeContext tc)
+	toType TArrow = 'Clean.Types'.Arrow Nothing
+	toType (TArrow1 t) = 'Clean.Types'.Arrow (Just ('Clean.Types'.toType t))
+	toType (TQualifiedIdent _ s ts) = 'Clean.Types'.Type s (map 'Clean.Types'.toType ts)
 	toType _ = abort "CoclUtils: unimplemented Type\n"
 
 instance toType 'syntax'.SymbolType
 where
-	toType {st_args,st_result,st_context}
-		= 'T'.Func (map 'T'.toType st_args) ('T'.toType st_result) ('T'.toTypeContext st_context)
+	toType {st_args,st_result,st_context,st_args_strictness}
+		= 'Clean.Types'.Func [if s 'Clean.Types'.Strict id ('Clean.Types'.toType t) \\ t <- st_args & s <- strictnessListToBools st_args_strictness]
+			('Clean.Types'.toType st_result) ('Clean.Types'.toTypeContext st_context)
 
 instance toTypeVar 'syntax'.TypeVar where toTypeVar {tv_ident} = tv_ident.id_name
 
 instance toTypeDef 'syntax'.ParsedTypeDef
 where
 	toTypeDef {td_ident,td_attribute,td_args,td_rhs}
-		= 'T'.typedef td_ident.id_name
+		= 'Clean.Types'.typedef td_ident.id_name
 			(td_attribute == TA_Unique)
-			(map 'T'.toType td_args)
-			('T'.toTypeDefRhs td_rhs)
+			(map 'Clean.Types'.toType td_args)
+			('Clean.Types'.toTypeDefRhs td_rhs)
 
 instance toTypeDefRhs 'syntax'.RhsDefsOfType
 where
 	toTypeDefRhs (ConsList pcs)
-		= 'T'.TDRCons False (map 'T'.toConstructor pcs)
+		= 'Clean.Types'.TDRCons False (map 'Clean.Types'.toConstructor pcs)
 	toTypeDefRhs (SelectorList id exi_vars _ pss)
-		= 'T'.TDRRecord id.id_name
-			(map (\t -> 'T'.toTypeVar t.atv_variable) exi_vars)
-			(map 'T'.toRecordField pss)
+		= 'Clean.Types'.TDRRecord id.id_name
+			(map (\t -> 'Clean.Types'.toTypeVar t.atv_variable) exi_vars)
+			(map 'Clean.Types'.toRecordField pss)
 	toTypeDefRhs (TypeSpec atype)
-		= 'T'.TDRSynonym ('T'.toType atype)
+		= 'Clean.Types'.TDRSynonym ('Clean.Types'.toType atype)
 	toTypeDefRhs (NewTypeCons cons)
-		= 'T'.TDRNewType ('T'.toConstructor cons)
+		= 'Clean.Types'.TDRNewType ('Clean.Types'.toConstructor cons)
 	toTypeDefRhs (EmptyRhs _)
-		= 'T'.TDRAbstract Nothing
+		= 'Clean.Types'.TDRAbstract Nothing
 	toTypeDefRhs (AbstractTypeSpec _ atype)
-		= 'T'.TDRAbstractSynonym ('T'.toType atype)
+		= 'Clean.Types'.TDRAbstractSynonym ('Clean.Types'.toType atype)
 	toTypeDefRhs (ExtensibleConses pcs)
-		= 'T'.TDRCons True (map 'T'.toConstructor pcs)
+		= 'Clean.Types'.TDRCons True (map 'Clean.Types'.toConstructor pcs)
 	toTypeDefRhs (MoreConses id pcs)
-		= 'T'.TDRMoreConses (map 'T'.toConstructor pcs)
+		= 'Clean.Types'.TDRMoreConses (map 'Clean.Types'.toConstructor pcs)
 
 instance toConstructor 'syntax'.ParsedConstructor
 where
-	toConstructor {pc_cons_ident,pc_arg_types,pc_exi_vars,pc_context,pc_cons_prio}
-		= 'T'.constructor pc_cons_ident.id_name
-			(map 'T'.toType pc_arg_types)
-			(map (\t -> 'T'.toTypeVar t.atv_variable) pc_exi_vars)
-			('T'.toTypeContext pc_context)
-			('T'.toMaybePriority pc_cons_prio)
+	toConstructor {pc_cons_ident,pc_arg_types,pc_args_strictness,pc_exi_vars,pc_context,pc_cons_prio}
+		= 'Clean.Types'.constructor pc_cons_ident.id_name
+			[if s 'Clean.Types'.Strict id ('Clean.Types'.toType t) \\ t <- pc_arg_types & s <- strictnessListToBools pc_args_strictness]
+			(map (\t -> 'Clean.Types'.toTypeVar t.atv_variable) pc_exi_vars)
+			('Clean.Types'.toTypeContext pc_context)
+			('Clean.Types'.toMaybePriority pc_cons_prio)
 
-instance 'T'.toMaybePriority 'syntax'.Priority
+instance 'Clean.Types'.toMaybePriority 'syntax'.Priority
 where
 	toMaybePriority NoPrio              = Nothing
-	toMaybePriority (Prio LeftAssoc i)  = Just ('T'.LeftAssoc i)
-	toMaybePriority (Prio RightAssoc i) = Just ('T'.RightAssoc i)
-	toMaybePriority (Prio NoAssoc i)    = Just ('T'.NoAssoc i)
+	toMaybePriority (Prio LeftAssoc i)  = Just ('Clean.Types'.LeftAssoc i)
+	toMaybePriority (Prio RightAssoc i) = Just ('Clean.Types'.RightAssoc i)
+	toMaybePriority (Prio NoAssoc i)    = Just ('Clean.Types'.NoAssoc i)
 
 instance toRecordField 'syntax'.ParsedSelector
 where
-	toRecordField {ps_selector_ident,ps_field_type}
-		= 'T'.recordfield ps_selector_ident.id_name ('T'.toType ps_field_type)
+	toRecordField {ps_selector_ident,ps_field_type,ps_field_annotation}
+		= 'Clean.Types'.recordfield ps_selector_ident.id_name (if ps_field_annotation=:AN_Strict 'Clean.Types'.Strict id ('Clean.Types'.toType ps_field_type))
+
+strictnessListToBools :: !StrictnessList -> [Bool]
+strictnessListToBools NotStrict        = repeat False
+strictnessListToBools (Strict i)       = [i bitand (1 << e) <> 0 \\ e <- [0..31]]
+strictnessListToBools (StrictList i l) = strictnessListToBools (Strict i) ++ strictnessListToBools l
 
 :: TypeDerivState =
 	{ tds_var_index         :: Int
 	, tds_allows_new_idents :: Bool
-	, tds_map               :: 'M'.Map String 'T'.Type
+	, tds_map               :: 'M'.Map String 'Clean.Types'.Type
 	}
 tds_var_index         tds = tds.tds_var_index
 tds_allows_new_idents tds = tds.tds_allows_new_idents
 tds_map               tds = tds.tds_map
 
-class coclType a :: !a -> StateT TypeDerivState Maybe 'T'.Type
+class coclType a :: !a -> StateT TypeDerivState Maybe 'Clean.Types'.Type
 
-store :: !String !'T'.Type -> StateT TypeDerivState Maybe 'T'.Type
+store :: !String !'Clean.Types'.Type -> StateT TypeDerivState Maybe 'Clean.Types'.Type
 store id t = modify (\tds -> {tds & tds_map='M'.put id t tds.tds_map}) $> t
 
 allowNewIdents :: !Bool -> StateT TypeDerivState Maybe ()
@@ -133,7 +140,7 @@ allowNewIdents b = modify \tds -> {tds & tds_allows_new_idents=b}
 fail :: StateT a Maybe b
 fail = StateT \_ -> Nothing
 
-pdType :: !'syntax'.ParsedDefinition -> Maybe 'T'.Type
+pdType :: !'syntax'.ParsedDefinition -> Maybe 'Clean.Types'.Type
 pdType pd = evalStateT (coclType pd)
 	{ tds_var_index         = 0
 	, tds_allows_new_idents = True
@@ -147,7 +154,7 @@ where
 			mapM coclType args >>= \argts ->
 			allowNewIdents False >>|
 			coclType ewl_expr >>= \rt ->
-			store id ('T'.Func argts rt [])
+			store id ('Clean.Types'.Func argts rt [])
 	coclType _
 		= fail
 
@@ -162,16 +169,16 @@ where
 			fail
 		Just t  -> pure t
 	where
-		var :: Int -> 'T'.Type
-		var n = 'T'.Var (if (n < 26) {toChar n + 'a'} ("v" +++ toString n))
+		var :: Int -> 'Clean.Types'.Type
+		var n = 'Clean.Types'.Var (if (n < 26) {toChar n + 'a'} ("v" +++ toString n))
 
 	coclType _ = fail
 
 instance coclType 'syntax'.BasicValue
 where
-	coclType (BVI _)   = pure ('T'.Type "Int" [])
-	coclType (BVInt _) = pure ('T'.Type "Int" [])
-	coclType (BVC _)   = pure ('T'.Type "Char" [])
-	coclType (BVB _)   = pure ('T'.Type "Bool" [])
-	coclType (BVR _)   = pure ('T'.Type "Real" [])
-	coclType (BVS _)   = pure ('T'.Type "String" [])
+	coclType (BVI _)   = pure ('Clean.Types'.Type "Int" [])
+	coclType (BVInt _) = pure ('Clean.Types'.Type "Int" [])
+	coclType (BVC _)   = pure ('Clean.Types'.Type "Char" [])
+	coclType (BVB _)   = pure ('Clean.Types'.Type "Bool" [])
+	coclType (BVR _)   = pure ('Clean.Types'.Type "Real" [])
+	coclType (BVS _)   = pure ('Clean.Types'.Type "String" [])

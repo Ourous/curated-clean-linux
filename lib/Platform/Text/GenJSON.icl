@@ -1,7 +1,7 @@
 implementation module Text.GenJSON
 
 import StdGeneric, Data.Maybe, StdList, StdOrdList, StdString, _SystemArray, StdTuple, StdBool, StdFunc, StdOverloadedList, StdFile
-import Data.List, Text, Text.PPrint, Text.GenJSON
+import Data.List, Text, Text.PPrint, Text.GenJSON, Data.GenEq
 
 //Basic JSON serialization
 instance toString JSONNode
@@ -42,10 +42,13 @@ where
 			#! c = s.[i]
 			| c == '"' || c == '/' || c == '\b' || c == '\f' || c == '\n' || c == '\r' || c == '\t' || c == '\\'
 				= count (i + 1) s (n + 1) //We'll add a '\' to escape
-			| isControl c
+			| needsUniEscape c
 				= count (i + 1) s (n + 5) //We'll replace the character by '\uXXXX'
 			= count(i + 1) s n
 		= n
+
+needsUniEscape :: Char -> Bool
+needsUniEscape c = c < ' ' || c >= '\x7f'
 
 //Copy structure to a string
 copyNode :: !Int !JSONNode !*{#Char} -> *(!Int, !*{#Char})
@@ -120,7 +123,7 @@ copyAndEscapeChars soffset doffset num src dst
 			#! dst & [doffset] = '\\'
 			#! dst & [doffset + 1] = charOf c
 			= copyAndEscapeChars (soffset + 1) (doffset + 2) (num - 1) src dst	
-		| isControl c
+		| needsUniEscape c
             #! cint = toInt c
 			#! dst & [doffset] = '\\'
 			#! dst & [doffset + 1] = 'u'
@@ -143,6 +146,7 @@ where
 	charOf '\r' = 'r'
 	charOf '\t' = 't'
 	charOf '\\' = '\\'
+	charOf _   = abort "error in copyAndEscapeChars\n"
 	
 	toHexDigit c
 		| c < 10 = toChar (c + 48)
@@ -174,6 +178,7 @@ where
 		printNodes [(k,v)]    f = f <<< '"' <<< jsonEscape k <<< "\":" <<< v
 		printNodes [(k,v):ns] f = printNodes ns (f <<< '"' <<< jsonEscape k <<< "\":" <<< v <<< ",")
 	(<<<) f (JSONRaw s)         = f <<< s
+	(<<<) f JSONError           = abort "<<< called on JSONError\n"
 
 //Basic JSON deserialization (just structure)
 instance fromString JSONNode
@@ -424,6 +429,7 @@ where
 	charOf 'r' = '\r'
 	charOf 't' = '\t'
 	charOf '\\' = '\\'
+	charOf _   = abort "error in copyAndUnescapeChars\n"
 	
 	fromHexDigit :: Char -> Int
 	fromHexDigit c
@@ -479,7 +485,7 @@ where
 	isNotNull _ = True
 JSONEncode{|FIELD|} fx _ (FIELD x) = fx True x
 JSONEncode{|[]|} fx _ x = [JSONArray (flatten (map (fx False) x))]
-//JSONEncode{|[]|} fx _ x = [JSONArray (flatten [fx False e \\ e <- x])]
+JSONEncode{|()|} _ () = [JSONNull]
 JSONEncode{|(,)|} fx fy _ (x,y) = [JSONArray (fx False x ++ fy False y)]
 JSONEncode{|(,,)|} fx fy fz _ (x,y,z) = [JSONArray (fx False x ++ fy False y ++ fz False z)]
 JSONEncode{|(,,,)|} fx fy fz fi _ (x,y,z,i) = [JSONArray (fx False x ++ fy False y ++ fz False z ++ fi False i)]
@@ -586,6 +592,10 @@ JSONDecode{|[]|} fx _ l =:[JSONArray items:xs]
 		(Just x)		= (Just x, xs)
 		_				= (Nothing, l)
 JSONDecode{|[]|} fx _ l = (Nothing, l)
+
+JSONDecode{|()|} _ [JSONNull:c]     = (Just (), c)
+JSONDecode{|()|} _ [JSONObject []:c]= (Just (), c)
+JSONDecode{|()|} _ c                = (Nothing, c)
 
 JSONDecode{|(,)|} fx fy _ l =:[JSONArray [xo,yo]:xs]
 	= case fx False [xo] of
@@ -765,6 +775,8 @@ instance == JSONNode where
   (==) (JSONRaw x)     (JSONRaw y)     = x == y
   (==) JSONError       JSONError       = True
   (==) _               _               = False
+
+gEq{|JSONNode|} x y = x == y
 
 jsonPrettyPrint :: !JSONNode -> String
 jsonPrettyPrint json = display (renderPretty 0.0 400 (pretty json))

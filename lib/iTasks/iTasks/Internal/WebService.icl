@@ -254,8 +254,8 @@ where
 
 :: ChangeQueues :== Map InstanceNo (Queue UIChange)
 
-taskUIService :: ![PublishedTask] -> WebService OutputQueues OutputQueues
-taskUIService taskUrls = { urlMatchPred    = matchFun [url \\ {PublishedTask|url} <-taskUrls]
+taskUIService :: ![WebTask] -> WebService OutputQueues OutputQueues
+taskUIService taskUrls = { urlMatchPred    = matchFun [path \\ {WebTask|path} <-taskUrls]
                          , completeRequest = True
                          , onNewReq        = reqFun taskUrls
                          , onData          = dataFun
@@ -393,8 +393,8 @@ where
 	disconnectFun _ _ (clientname,state,instances) iworld = (Nothing, snd (updateInstanceDisconnect (map fst instances) iworld))
 	disconnectFun _ _ _ iworld                            = (Nothing, iworld)
 
-	createTaskInstance` req [{PublishedTask|url,task=WebTaskWrapper task}:taskUrls] iworld
-		| req.HTTPRequest.req_path == uiUrl url = createTaskInstance (task req) iworld
+	createTaskInstance` req [{WebTask|path,task=WebTaskWrapper task}:taskUrls] iworld
+		| req.HTTPRequest.req_path == uiUrl path = createTaskInstance (task req) 'DM'.newMap iworld
 		| otherwise = createTaskInstance` req taskUrls iworld
 
 	uiUrl matchUrl = (if (endsWith "/" matchUrl) matchUrl (matchUrl +++ "/")) +++ "gui-wsock"

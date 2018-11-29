@@ -11,8 +11,9 @@ definition module Text.HTML
 *  http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd
 */
 
-import StdString, Data.Maybe
-
+from StdOverloaded import class toString
+from Data.Maybe import :: Maybe
+from Data.GenEq import generic gEq
 
 /**
 * This type provides an enumeration of all html tags.
@@ -73,10 +74,10 @@ import StdString, Data.Maybe
 			| LabelTag			![HtmlAttr] ![HtmlTag]
 			| LegendTag			![HtmlAttr] ![HtmlTag]
 			| LiTag				![HtmlAttr] ![HtmlTag]
-			| LinkTag			![HtmlAttr] ![HtmlTag]
+			| LinkTag			![HtmlAttr]
 			| MapTag			![HtmlAttr] ![HtmlTag]
 			| MenuTag			![HtmlAttr] ![HtmlTag]
-			| MetaTag			![HtmlAttr] ![HtmlTag]
+			| MetaTag			![HtmlAttr]
 			| NoframesTag		![HtmlAttr] ![HtmlTag]
 			| NoscriptTag		![HtmlAttr] ![HtmlTag]
 			| ObjectTag			![HtmlAttr] ![HtmlTag]
@@ -205,6 +206,7 @@ import StdString, Data.Maybe
 			| OnselectAttr		!String
 			| OnsubmitAttr		!String
 			| OnunloadAttr		!String
+			| PlaceholderAttr	!String
 			| ProfileAttr		!String
 			| PromptAttr		!String
 			| ReadonlyAttr
@@ -409,6 +411,9 @@ instance toString SVGStrokeDashOffset
 instance toString SVGStrokeWidth
 instance toString SVGTransform
 instance toString SVGZoomAndPan
+
+derive gEq HtmlTag, HtmlAttr
+derive gEq SVGElt, SVGAttr, SVGAlign, SVGColor, SVGDefer, SVGFillOpacity, SVGFuncIRI, SVGLengthAdjust, SVGLengthUnit, SVGLineCap, SVGFillRule, SVGLineJoin, SVGMeetOrSlice, SVGStrokeMiterLimit, SVGPaint, SVGStrokeDashArray, SVGStrokeDashOffset, SVGStrokeWidth, SVGTransform, SVGZoomAndPan
 
 /*
 * This html class makes it possible to use either strings, or html as description/message/instruction

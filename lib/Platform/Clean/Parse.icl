@@ -3,8 +3,7 @@ implementation module Clean.Parse
 // NOTE: be VERY restrictive with adding imports here, because this may break
 // the module when the compiler changes.
 
-import StdFile
-
+import Clean.Parse.ModuleName
 import Data.Error
 import Data.Maybe
 import System.File
@@ -19,10 +18,9 @@ import syntax
 
 readModule :: !FilePath !*World -> *(!MaybeError String (ParsedModule, HashTable), !*World)
 readModule filename w
-# (s,w) = readFile filename w
-| isError s = (Error (toString (fromError s)), w)
-# modname = getModuleName (fromString (fromOk s))
-# modname = fromMaybe (takeFileName (dropExtension filename)) modname
+# (modname,w) = guessModuleName filename w
+| isError modname = (Error (toString (fromError modname)), w)
+# modname = fromMaybe (takeFileName (dropExtension filename)) (fromOk modname)
 # ht = newHashTable newHeap
 # ht = set_hte_mark (if icl 1 0) ht
 # (ok,f,w) = fopen filename FReadText w
@@ -40,35 +38,3 @@ where
 	wantModule` f s b1 i p b2 ht io fs
 	# (b1,b2,pm,ht,f,fs) = wantModule f s b1 i p b2 ht io fs
 	= ((b1,b2,pm,ht,f),fs)
-
-// A reasonably accurate simple scanner to get the module name from the file
-
-getModuleName :: ![Char] -> Maybe String
-getModuleName ['definition':c:cs]     | isSpace c = justModule cs
-getModuleName ['implementation':c:cs] | isSpace c = justModule cs
-getModuleName ['system':c:cs]         | isSpace c = justModule cs
-getModuleName [c:cs]                  | isSpace c = getModuleName cs
-getModuleName ['//':cs]                           = getModuleName (dropWhile ((<>) '\n') cs)
-getModuleName ['/*':cs]                           = getModuleName (skipMultiLineComment cs)
-getModuleName cs                                  = justModule cs
-
-justModule :: ![Char] -> Maybe String
-justModule ['module':c:cs] | isSpace c = justModuleName cs
-justModule [c:cs]          | isSpace c = justModule cs
-justModule ['//':cs]                   = justModule (dropWhile ((<>) '\n') cs)
-justModule ['/*':cs]                   = justModule (skipMultiLineComment cs)
-justModule _                           = Nothing
-
-justModuleName :: ![Char] -> Maybe String
-justModuleName cs
-# (_,cs) = span isSpace cs
-# (name,_) = span (\c -> c <> '/' && c <> ';' && not (isSpace c)) cs
-= case name of
-	[] -> Nothing
-	_  -> Just (toString name)
-
-skipMultiLineComment :: ![Char] -> [Char]
-skipMultiLineComment ['*/':cs] = cs
-skipMultiLineComment ['/*':cs] = skipMultiLineComment (skipMultiLineComment cs)
-skipMultiLineComment [c:cs] = skipMultiLineComment cs
-skipMultiLineComment [] = []

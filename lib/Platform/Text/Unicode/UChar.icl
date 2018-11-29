@@ -1,6 +1,6 @@
 implementation module Text.Unicode.UChar
 
-import StdEnum, StdClass, StdBool, StdFunc
+import StdEnum, StdClass, StdBool, StdFunc, StdMisc
 
 import code from "bsearch."
 import code from "WCsubst."
@@ -126,6 +126,7 @@ where
 	fromInt 27 = Surrogate             // ^ Cs: Other, Surrogate
 	fromInt 28 = PrivateUse            // ^ Co: Other, Private Use
 	fromInt 29 = NotAssigned           // ^ Cn: Other, Not Assigned
+	fromInt _  = abort "error in fromInt_GeneralCategory\n"
 
 generalCategory c = fromInt (wgencat (toInt c))
 

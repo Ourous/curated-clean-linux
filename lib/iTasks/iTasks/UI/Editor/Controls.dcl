@@ -5,6 +5,7 @@ definition module iTasks.UI.Editor.Controls
 */
 from iTasks.UI.Editor import :: Editor
 from iTasks.UI.Definition import :: UIAttributes, :: UIType
+from iTasks.UI.JS.Encoding import generic JSDecode
 from Data.Maybe import :: Maybe
 from Data.Map import :: Map
 from Text.HTML import :: HtmlTag
@@ -118,8 +119,12 @@ grid          :: Editor (ChoiceGrid,   [Int])
 * Supported attributes:
 */
 tree          :: Editor ([ChoiceNode], [Int])
+/**
+ * Modifies the above editors for making choices such that they use a constant set of choices.
+ */
+withConstantChoices :: !choices !(Editor (!choices, ![Int])) -> Editor [Int]
 
-fieldComponent :: UIType -> Editor a | JSONDecode{|*|}, JSONEncode{|*|}, gEq{|*|} a
+fieldComponent :: !UIType !(Maybe a) -> Editor a | JSONDecode{|*|}, JSONEncode{|*|}, gEq{|*|} a & JSDecode{|*|} a
 
 //Convenient types for describing the values of grids and trees
 :: ChoiceText =

@@ -72,4 +72,4 @@ typeTreeToGraphviz tree = Digraph
 		\\ (n,cs) <- nodes & i <- [0..]]
 	Nothing
 where
-	nodes = [(t,cs) \\ (t,vs,cs) <- allTypes tree | length vs > 1 || length cs > 0]
+	nodes = [(t,cs) \\ (t,vs,cs) <- allTypes tree | not (isEmpty vs) || not (isEmpty cs)]

@@ -93,7 +93,7 @@ where
 		# iworld = clearTaskSDSRegistrations ('DS'.singleton $ fromOk $ taskIdFromTaskTree tree) iworld
 		= (DestroyedResult, iworld)
 
-	info ts = {TaskEvalInfo|lastEvent=ts,removedTasks=[],refreshSensitive=True}
+	info ts = {TaskEvalInfo|lastEvent=ts,attributes='DM'.newMap,removedTasks=[]}
 
 	rep ResetEvent = ReplaceUI (stringDisplay ("External process: " <+++ cmd))
 	rep _ = NoChange
@@ -108,7 +108,7 @@ where
             (Error e,iworld)
                 = (ExceptionResult (exception ("Error: port "+++ toString port +++ " already in use.")), iworld)
             (Ok _,iworld)
-                = (ValueResult (Value [] False) {TaskEvalInfo|lastEvent=ts,removedTasks=[],refreshSensitive=True} (rep port)
+                = (ValueResult (Value [] False) {TaskEvalInfo|lastEvent=ts,attributes='DM'.newMap,removedTasks=[]} (rep port)
                                                     (TCBasic taskId ts (DeferredJSONNode JSONNull) False),iworld)
 
     eval event evalOpts tree=:(TCBasic taskId ts _ _) iworld=:{ioStates} 
@@ -117,9 +117,9 @@ where
                 = (ExceptionResult (exception e), iworld)
             Just (IOActive values)
                 # value = Value [l \\ (_,(l :: l^,_)) <- 'DM'.toList values] False
-                = (ValueResult value {TaskEvalInfo|lastEvent=ts,removedTasks=[],refreshSensitive=True} (rep port) (TCBasic taskId ts (DeferredJSONNode JSONNull) False),iworld)
+                = (ValueResult value {TaskEvalInfo|lastEvent=ts,attributes='DM'.newMap,removedTasks=[]} (rep port) (TCBasic taskId ts (DeferredJSONNode JSONNull) False),iworld)
             Nothing
-                = (ValueResult (Value [] False) {TaskEvalInfo|lastEvent=ts,removedTasks=[],refreshSensitive=True} (rep port) (TCBasic taskId ts (DeferredJSONNode JSONNull) False), iworld)
+                = (ValueResult (Value [] False) {TaskEvalInfo|lastEvent=ts,attributes='DM'.newMap,removedTasks=[]} (rep port) (TCBasic taskId ts (DeferredJSONNode JSONNull) False), iworld)
 
     eval event evalOpts tree=:(TCDestroy (TCBasic taskId ts _ _)) iworld=:{ioStates}
         # ioStates = case 'DM'.get taskId ioStates of
@@ -137,16 +137,16 @@ where
             (Error e,iworld)
                 = (ExceptionResult e, iworld)
             (Ok _,iworld)
-                = (ValueResult NoValue {TaskEvalInfo|lastEvent=ts,removedTasks=[],refreshSensitive=True} rep (TCBasic taskId ts (DeferredJSONNode JSONNull) False),iworld)
+                = (ValueResult NoValue {TaskEvalInfo|lastEvent=ts,attributes='DM'.newMap,removedTasks=[]} rep (TCBasic taskId ts (DeferredJSONNode JSONNull) False),iworld)
 
     eval event evalOpts tree=:(TCBasic taskId ts _ _) iworld=:{ioStates}
         = case 'DM'.get taskId ioStates of
             Nothing
-                = (ValueResult NoValue {TaskEvalInfo|lastEvent=ts,removedTasks=[],refreshSensitive=True} rep tree, iworld)
+                = (ValueResult NoValue {TaskEvalInfo|lastEvent=ts,attributes='DM'.newMap,removedTasks=[]} rep tree, iworld)
             Just (IOActive values)
                 = case 'DM'.get 0 values of 
                     Just (l :: l^, s)
-                        = (ValueResult (Value l s) {TaskEvalInfo|lastEvent=ts,removedTasks=[],refreshSensitive=True} rep tree, iworld)
+                        = (ValueResult (Value l s) {TaskEvalInfo|lastEvent=ts,attributes='DM'.newMap,removedTasks=[]} rep tree, iworld)
                     _
                         = (ExceptionResult (exception "Corrupt IO task result"),iworld)
             Just (IOException e)

@@ -106,8 +106,8 @@ where
 	eval event evalOpts (TCInit taskId ts) iworld=:{options={appVersion,tempDirPath}}
 		# tmpDir 			= tempDirPath </> (appVersion +++ "-" +++ toString taskId +++ "-tmpdir")
 		# (taskIda,iworld=:{world})	= getNextTaskId iworld
-		# (ok ,world)		= ensureDir tmpDir world
-		| ok 
+		# (ok ,world)		= ensureDirectoryExists tmpDir world
+		| isOk ok
 			= eval event evalOpts (TCShared taskId ts (TCInit taskIda ts)) {iworld & world = world}
 		| otherwise
 			= (ExceptionResult (exception ("Could not create temporary directory: " +++ tmpDir)) , {iworld & world = world})

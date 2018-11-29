@@ -8,7 +8,6 @@ import Data.GenDefault
 import Data.Maybe
 import System.Options
 
-gDefault{|Bool|} = False
 derive gDefault TestOptions, TestRun
 
 testOptionDescription :: Option TestOptions

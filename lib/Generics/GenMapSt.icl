@@ -6,7 +6,6 @@ derive bimap (,)
 
 generic gMapLSt a b :: .a .st -> (.b, .st)
 gMapLSt{|c|} x st 				= (x, st)
-gMapLSt{|UNIT|} _ st 				= (UNIT, st)
 gMapLSt{|PAIR|} fx fy (PAIR x y) st
 	# (x, st) = fx x st	
 	# (y, st) = fy y st	
@@ -22,7 +21,6 @@ derive gMapLSt [], (,), (,,),  (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,)
 
 generic gMapRSt a b :: .a .st -> (.b, .st)
 gMapRSt{|c|} x st = (x, st)
-gMapRSt{|UNIT|} _ st 				= (UNIT, st)
 gMapRSt{|PAIR|} fx fy (PAIR x y) st 	
 	# (y, st) = fy y st	
 	# (x, st) = fx x st	

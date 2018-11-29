@@ -8,7 +8,6 @@ definition module Database.Native
 
 from StdOverloaded import class ==, class <
 
-from Data.Map import :: Map
 from Data.Maybe import :: Maybe
 from Text.GenJSON import generic JSONEncode, generic JSONDecode, :: JSONNode
 
@@ -23,14 +22,14 @@ from Text.GenJSON import generic JSONEncode, generic JSONDecode, :: JSONNode
  * @var The key type of annotations.
  * @var The type of annotations.
  */
-:: *NativeDB v ak a
+:: *NativeDB v a
 
 :: Index =: Index Int
 
-:: Entry v ak a =
+:: Entry v a =
 	{ value       :: !v
 	, included    :: !Bool
-	, annotations :: !Map ak a
+	, annotations :: ![a]
 	}
 
 instance == Index
@@ -46,84 +45,84 @@ instance < Index
 /**
  * Create a new database from a list of entries.
  */
-newDB :: ![v] -> *NativeDB v ak a
+newDB :: ![v] -> *NativeDB v a
 
 /**
  * Save the database to a file.
  */
-saveDB :: !*(NativeDB v ak a) !*File -> *(!*NativeDB v ak a, !*File) | JSONEncode{|*|} v
+saveDB :: !*(NativeDB v a) !*File -> *(!*NativeDB v a, !*File) | JSONEncode{|*|} v
 
 /**
  * Open a database from a file.
  */
-openDB :: !*File -> *(!Maybe (*NativeDB v ak a), !*File) | JSONDecode{|*|} v
+openDB :: !*File -> *(!Maybe (*NativeDB v a), !*File) | JSONDecode{|*|} v
 
 /**
  * Reset all entries to included.
  */
-resetDB :: !*(NativeDB v ak a) -> *NativeDB v ak a
+resetDB :: !*(NativeDB v a) -> *NativeDB v a
 
 /**
  * Return all entries (whether they have been excluded or not).
  */
-allEntries :: !*(NativeDB v ak a) -> *(![v], !*NativeDB v ak a)
+allEntries :: !*(NativeDB v a) -> *(![v], !*NativeDB v a)
 
 /**
  * Get all entries that are still included, and their annotations.
  */
-getEntries :: !*(NativeDB v ak a) -> *(![(v, Map ak a)], !*NativeDB v ak a)
+getEntries :: !*(NativeDB v a) -> *(![(v, [a])], !*NativeDB v a)
 
 /**
  * Like {{`getEntries`}}, but also returns the indices of the entries.
  */
-getEntriesWithIndices :: !*(NativeDB v ak a) -> *(![(Index, v, Map ak a)], !*NativeDB v ak a)
+getEntriesWithIndices :: !*(NativeDB v a) -> *(![(Index, v, [a])], !*NativeDB v a)
 
 /**
  * An in-place map over all entries (also the excluded ones).
  */
-mapInPlace :: !(Int v -> v) !*(NativeDB v ak a) -> *(NativeDB v ak a)
+mapInPlace :: !(Int v -> v) !*(NativeDB v a) -> *(NativeDB v a)
 
 /**
  * Linear search for entries. The search function returns whether the entry
  * should be included and which annotations should be added (if any). Excluded
  * entries are ignored.
  */
-search :: !SearchMode !(v -> (Bool, [(ak, a)])) !*(NativeDB v ak a) -> *NativeDB v ak a | ==, < ak
+search :: !SearchMode !(v -> (Bool, [a])) !*(NativeDB v a) -> *NativeDB v a
 
 /**
  * Like {{`search`}}, but search for one particular index. The {{`SearchMode`}}
  * is assumed to be {{`AddExcluded`}}.
  */
-searchIndex :: !Index ![(!ak, !a)] !*(NativeDB v ak a) -> *NativeDB v ak a | ==, < ak
+searchIndex :: !Index ![a] !*(NativeDB v a) -> *NativeDB v a
 
 /**
  * Exclude an index from the result set.
  */
-unsearchIndex :: !Index !*(NativeDB v ak a) -> *NativeDB v ak a
+unsearchIndex :: !Index !*(NativeDB v a) -> *NativeDB v a
 
 /**
  * Like {{`search`}}, but search for specific indices.
  */
-searchIndices :: !SearchMode ![(!Index, ![(!ak, !a)])] !*(NativeDB v ak a) -> *NativeDB v ak a | ==, < ak
+searchIndices :: !SearchMode ![(!Index, ![a])] !*(NativeDB v a) -> *NativeDB v a
 
 /**
  * Exclude a list of indices.
  */
-unsearchIndices :: ![Index] !*(NativeDB v ak a) -> *NativeDB v ak a
+unsearchIndices :: ![Index] !*(NativeDB v a) -> *NativeDB v a
 
 /**
  * Like {{`searchIndices`}}, but also check on some property.
  * This search always uses the {{`AddExcluded`}} {{`SearchMode`}}.
  */
-searchWithIndices :: !(v -> (Bool, ![(!ak, !a)])) ![Index] !*(NativeDB v ak a) -> *NativeDB v ak a | ==, < ak
+searchWithIndices :: !(v -> (Bool, ![a])) ![Index] !*(NativeDB v a) -> *NativeDB v a
 
 /**
  * Get an entry and its annotations.
  * Also see {{`getIndices`}}.
  */
-getIndex :: !Index !*(NativeDB v ak a) -> *(!Entry v ak a, !*(NativeDB v ak a))
+getIndex :: !Index !*(NativeDB v a) -> *(!Entry v a, !*(NativeDB v a))
 
 /**
  * Like {{`getIndex`}}, but for a list of indices.
  */
-getIndices :: ![Index] !*(NativeDB v ak a) -> *(![Entry v ak a], !*(NativeDB v ak a))
+getIndices :: ![Index] !*(NativeDB v a) -> *(![Entry v a], !*(NativeDB v a))

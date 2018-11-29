@@ -1,23 +1,20 @@
 # Curated Clean
 
-The intention of the Curated Clean project is to provide a current and stable version of the Clean programming language.
-Curated Clean is based off of the nightly Clean builds found at ftp://ftp.cs.ru.nl/pub/Clean/builds/
+The intention of the Curated Clean project is to provide a version of the Clean programming language more current than the infrequent full releases and more stable than the nightly builds, intended primarily for consumption by online IDE/compiler services.
+Curated Clean is based off of the nightly Clean builds found at ftp://ftp.cs.ru.nl/pub/Clean/builds/ with minimal changes. 
 
 Currently, it is composed of:
 
-	12 May 2018:
-		lib/Generics
-	
+	-
+
 All other contents are from:
-	
-	27 July 2018
-	
+
+	29 November 2018
+
 With these changes made to allow compilation:
-	
-	Specializations for UNIT added to several modules in the Generics library
-	Dependencies on the old Data.Generics modules have been re-pointed to their new locations
-	Data.Graph.Inductive.Graph has had an import for the toString class from StdOverloaded added
-	
+
+	-
+
 Below follows Clean's official `README.md`:
 
 # Using Clean

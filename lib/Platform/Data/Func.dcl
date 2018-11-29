@@ -1,12 +1,13 @@
 definition module Data.Func
 
 from Data.Functor import class Functor
-from Control.Applicative import class Applicative
+from Control.Applicative import class pure, class <*>, class Applicative
 from Control.Monad import class Monad
 from Data.Monoid import class Semigroup, class Monoid
 
 instance Functor ((->) r)
-instance Applicative ((->) r)
+instance pure ((->) r) where pure :: !a -> b -> a
+instance <*> ((->) r)
 instance Monad ((->) r)
 
 instance Semigroup (a -> b) | Semigroup b
@@ -51,7 +52,7 @@ seqSt        :: !(a .st -> .st)       ![a] !.st -> .st
  * @param The initial state.
  * @result The value results and the final state.
  */
-mapSt        :: !(a .st -> (!b,!.st)) ![a] !.st -> (![b],!.st)
+mapSt        :: !(a .st -> (!b,!.st)) ![a] !.st -> (![b],.st)
 /**
  * The fixed point combinator, reducing `fix f` to `f (fix f)`.
  */

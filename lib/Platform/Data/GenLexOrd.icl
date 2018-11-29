@@ -48,7 +48,7 @@ gLexOrd{|RECORD|} f (RECORD x) (RECORD y) = f x y
 // We want ordering Nil < Cons
 gLexOrd{|[]|} f [] [] = EQ
 gLexOrd{|[]|} f [] _  = LT
-gLexOrd{|[]|} f _ []  = GT
+gLexOrd{|[]|} f [_:_]  [] = GT
 gLexOrd{|[]|} f [x:xs] [y:ys]
 	= case f x y of
 		 	EQ -> gLexOrd{|*->*|} f xs ys

@@ -4,7 +4,7 @@ definition module Data.Tree
 from StdOverloaded import class ==
 
 from Data.Functor import class Functor
-from Control.Applicative import class Applicative
+from Control.Applicative import class pure, class <*>, class Applicative
 from Control.Monad import class Monad
 from Data.Monoid import class Monoid, class Semigroup
 
@@ -24,7 +24,8 @@ instance Functor RTree
 
 fmapRTree :: (a -> b) (RTree a) -> RTree b
 
-instance Applicative RTree
+instance pure RTree
+instance <*> RTree
 
 instance Monad RTree
 

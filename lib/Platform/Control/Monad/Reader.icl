@@ -13,9 +13,13 @@ import Control.Monad.Trans
 instance Functor (ReaderT r m) | Monad m where
   fmap f m = liftM f m
 
-instance Applicative (ReaderT r m) | Monad m where
-  pure x = (liftT o pure) x
-  <*> mf mx = ap mf mx
+instance pure (ReaderT r m) | Monad m
+where
+	pure x = (liftT o pure) x
+
+instance <*> (ReaderT r m) | Monad m
+where
+	<*> mf mx = ap mf mx
 
 instance Monad (ReaderT r m) | Monad m where
   bind m k = ReaderT (\r -> runReaderT m r >>= \a -> runReaderT (k a) r)

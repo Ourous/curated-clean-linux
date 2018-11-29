@@ -112,7 +112,7 @@ taskInstanceOutput	:: RWShared InstanceNo TaskOutput TaskOutput
 createClientTaskInstance :: !(Task a) !String !InstanceNo !*IWorld -> *(!MaybeError TaskException TaskId, !*IWorld) |  iTask a
 
 //Create a task instance
-createTaskInstance :: !(Task a) !*IWorld -> (!MaybeError TaskException (!InstanceNo,InstanceKey),!*IWorld) | iTask a
+createTaskInstance :: !(Task a) !TaskAttributes !*IWorld -> (!MaybeError TaskException (!InstanceNo,InstanceKey),!*IWorld) | iTask a
 
 /**
 * Create a stored task instance in the task store (lazily without evaluating it)

@@ -5,14 +5,41 @@ definition module iTasks.UI.Editor.Common
 from iTasks.UI.Editor import :: Editor
 from iTasks.UI.Definition import :: UI, :: UIChildChange
 from Data.Maybe import :: Maybe
-from Text.GenJSON import generic JSONEncode, :: JSONNode
+from Text.GenJSON import generic JSONEncode, :: JSONNode, generic JSONDecode
 import iTasks.Internal.Generic.Defaults
 from Data.GenEq import generic gEq
 
 /**
-* Editor that does nothing
+* Editor that does nothing.
+*
+* @result the empty editor
 */
-emptyEditor :: Editor a
+emptyEditor :: Editor a | JSONEncode{|*|}, JSONDecode{|*|} a
+
+/**
+* Editor that does nothing and gives a default value in enter mode.
+*
+* @param default value used when editor is generated in edit mode
+* @result the empty editor
+*/
+emptyEditorWithDefaultInEnterMode :: !a -> Editor a | JSONEncode{|*|}, JSONDecode{|*|} a
+
+//Version without overloading, for use in generic case
+//The first two argument should be JSONEncode{|*|} and JSONDecode{|*|} which cannot be used by overloading within generic functions
+emptyEditorWithDefaultInEnterMode_ :: !(Bool a -> [JSONNode]) !(Bool [JSONNode] -> (!Maybe a, ![JSONNode])) !a -> Editor a
+
+/**
+* Editor that does nothing and gives an error in enter mode.
+*
+* @param the error messsage used when the editor is used in enter mode
+* @result the empty editor
+*/
+emptyEditorWithErrorInEnterMode :: !String -> Editor a | JSONEncode{|*|}, JSONDecode{|*|} a
+
+//Version without overloading, for use in generic case
+//The first two argument should be JSONEncode{|*|} and JSONDecode{|*|} which cannot be used by overloading within generic functions
+emptyEditorWithErrorInEnterMode_ :: !(Bool a -> [JSONNode]) !(Bool [JSONNode] -> (!Maybe a, ![JSONNode])) !String
+                                 -> Editor a
 
 /**
 * Determines the diff between an old and a new list of children,
@@ -49,9 +76,10 @@ chooseWithDropdown :: [String] -> Editor Int
 *
 * @return					The list editor
 */
-listEditor :: (Maybe ([a] -> Maybe a)) Bool Bool (Maybe ([a] -> String)) (Editor a) -> Editor [a] | JSONEncode{|*|}, gDefault{|*|} a
+listEditor :: (Maybe ([Maybe a] -> Maybe a)) Bool Bool (Maybe ([Maybe a] -> String)) (Editor a) -> Editor [a]
+            | JSONEncode{|*|} a
 
 //Version without overloading, for use in generic case
-//The first two argument should be JSONEncode{|*|} and gDefault{|*|} which cannot be used by overloading within generic functions
-listEditor_ :: (Bool a -> [JSONNode]) a (Maybe ([a] -> Maybe a)) Bool Bool (Maybe ([a] -> String)) (Editor a) -> Editor [a]
-
+//The first argument should be JSONEncode{|*|} which cannot be used by overloading within generic functions
+listEditor_ :: (Bool a -> [JSONNode]) (Maybe ([Maybe a] -> Maybe a)) Bool Bool (Maybe ([Maybe a] -> String)) (Editor a)
+            -> Editor [a]

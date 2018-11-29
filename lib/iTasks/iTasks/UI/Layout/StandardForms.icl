@@ -68,7 +68,7 @@ where
 	HasActions = SelectByContains (SelectAND SelectChildren (SelectByType UIAction))
 
 	layoutWithoutActions = setUIType UIContainer
-	layoutWithActions = sequenceLayouts [setUIType UIPanel, addButtonBar]
+	layoutWithActions = sequenceLayouts [setUIType UIPanel, addToolBar]
 
 layoutInteract = sequenceLayouts
 	[setTitle
@@ -148,6 +148,12 @@ layoutAsButton = sequenceLayouts
 where
 	toButtonAttributes attr 
 		= maybe attr (\(JSONString a) -> 'DM'.unions [valueAttr (JSONString a),textAttr a]) ('DM'.get "actionId" attr)
+
+addToolBar = sequenceLayouts
+	[insertChildUI 0 (ui UIToolBar)
+	,moveSubUIs (SelectAND SelectChildren (SelectByType UIAction)) [0] 0 //Move all actions to the buttonbar
+	,layoutSubUIs (SelectByPath [0]) (layoutSubUIs SelectChildren layoutAsButton) //Transform actions to buttons
+	]
 
 addButtonBar = sequenceLayouts
 	[insertChildUI 1 (ui UIButtonBar) //Create a buttonbar

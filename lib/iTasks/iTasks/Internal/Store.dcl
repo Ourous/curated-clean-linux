@@ -16,7 +16,7 @@ from System.FilePath import :: FilePath
 from iTasks.SDS.Definition import :: SDS, :: Shared, :: ReadWriteShared, :: RWShared
 from iTasks.Internal.IWorld import :: IWorld
 from iTasks.WF.Definition import class iTask
-from iTasks.UI.Editor import :: Editor, :: EditMask, :: Masked, :: VSt
+from iTasks.UI.Editor import :: Editor, :: EditState, :: VSt
 from iTasks.UI.Editor.Generic import generic gEditor
 from iTasks.Internal.Generic.Visualization	import generic gText, :: TextFormat(..), toMultiLineText
 from iTasks.Internal.Generic.Defaults		import generic gDefault

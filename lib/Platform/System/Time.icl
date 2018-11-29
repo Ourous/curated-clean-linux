@@ -1,12 +1,15 @@
 implementation module System.Time
 
 import StdString, StdArray, StdClass, StdOverloaded, StdInt, StdMisc, StdBool
+import Data.GenEq
 import System.OS
 import System._Pointer, System._Posix
 import Text
 
 //String buffer size
 MAXBUF :== 256
+
+derive gEq Timestamp
 
 instance == Timestamp
 where

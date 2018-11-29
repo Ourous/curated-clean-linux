@@ -52,8 +52,9 @@ JSEncode{|FIELD|} fx (FIELD x) = fx x
 JSEncode{|{}|} fx x = [JSONArray (flatten [fx e \\ e <-: x])]
 JSEncode{|{!}|} fx x = [JSONArray (flatten [fx e \\ e <-: x])]
 JSEncode{|(->)|} fx fy x = [JSONString "error"]
+JSEncode{|JSONNode|} node = [node]
 
-derive JSEncode [],(,),(,,),(,,,),(,,,,),(,,,,,),(,,,,,,),(,,,,,,,)
+derive JSEncode [],(),(,),(,,),(,,,),(,,,,),(,,,,,),(,,,,,,),(,,,,,,,), Maybe
 
 encodeOnClient :: !a *JSWorld -> (!JSVal a, !*JSWorld)
 encodeOnClient val world = undef //Implemented in iTasks/Sapl FFI
@@ -258,6 +259,11 @@ JSDecode{|{!}|} fx l =:[JSONArray items:xs]
 		(Just x)		= (Just {e \\ e <- x}, xs)
 		_				= (Nothing, l)
 JSDecode{|{!}|} fx l = (Nothing, l)
+
+JSDecode{|JSONNode|} [node:xs] = (Just node, xs)
+JSDecode{|JSONNode|} l         = (Nothing, l)
+
+derive JSDecode Maybe, ()
 
 decodeItems :: !([JSONNode] -> (!Maybe a, ![JSONNode])) ![JSONNode] -> Maybe [a]
 decodeItems fx [] 		= Just []

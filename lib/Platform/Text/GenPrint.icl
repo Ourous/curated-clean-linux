@@ -117,6 +117,7 @@ needParenthesis (CtxInfix _ _ _ _) CtxNonfix = True // False // PK
 needParenthesis (CtxInfix _ this_assoc this_prio _) (CtxInfix _ outer_assoc outer_prio branch) 
 	= 	outer_prio > this_prio 
 	||  (outer_prio == this_prio && not (this_assoc == outer_assoc && this_assoc == branch))
+needParenthesis _ _ = abort "error in needParenthesis\n"
 
 //derive bimap PrintState
 
@@ -227,8 +228,6 @@ gPrint{|CONS of d|} print_arg (CONS x) st=:{ps_context}
 	| otherwise
 		= { print print_arg ctx st & ps_context = ps_context }
 where
-	print print_arg CtxNone 			
-		= abort "gOutput{|CONS|}: CtxNone\n"
 	print print_arg CtxNullary  		
 		= printStringLiteral d.gcd_name 
 	print print_arg CtxTuple
@@ -239,6 +238,8 @@ where
 		$ print_arg x 
 	print print_arg (CtxInfix _ _ _ _)  		
 		= print_arg x
+	print print_arg ctx
+		= abort "error in gOutput{|CONS|}\n"
 
 gPrint{|RECORD of {grd_name}|} print_arg (RECORD x) st=:{ps_context}
 	#! st = {st & ps_context = CtxRecord}

@@ -4,7 +4,7 @@ import StdList, StdFunc, StdTuple, StdBool
 import Sapl.SaplStruct
 
 from Data.Set import qualified newSet, fromList, toList, member, difference, insert, filter, delete, null
-from Data.Set import :: Set
+from Data.Set import :: Set, instance Foldable Set
 from Data.Map import qualified fromList, get
 
 instance == SaplVar
@@ -52,5 +52,3 @@ where
 			| 'Data.Set'.null ('Data.Set'.filter (\e = snd e == m) edges)
 				= (edges, [m:out])
 				= (edges, out)
-				
-				

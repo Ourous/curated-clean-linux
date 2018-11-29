@@ -1,6 +1,6 @@
 implementation module Control.GenReduce
 
-import StdGeneric, Data._Array
+import StdGeneric, StdEnv, Data.Array, Data._Array
 
 // or crush
 generic gReduce t :: (a a -> a) a  t -> a
@@ -42,3 +42,29 @@ derive gReduceLSt [], (,), (,,),  (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,)
 
 reduceEITHER fl fr (LEFT x) st 			= fl x st
 reduceEITHER fl fr (RIGHT x) st 		= fr x st
+
+reduceArrayLSt :: (u:a -> .(.b -> .b)) v:(c u:a) .b -> .b | Array c a, [v <= u]
+reduceArrayLSt f xs st
+	#! (size_xs, xs) = usize xs
+	#! (xs, st) = reduce f 0 size_xs xs st
+	= st
+where
+		reduce f i n xs st
+		| i == n	
+			= (xs, st)
+		| otherwise
+			#! (x, xs) = unsafeUselect xs i
+			= reduce f (inc i) n xs (f x st)
+
+reduceArrayRSt :: (u:a -> .(.b -> .b)) v:(c u:a) .b -> .b | Array c a, [v <= u]
+reduceArrayRSt f xs st
+	#! (size_xs, xs) = usize xs
+	#! (xs, st) = reduce f (dec size_xs) xs st
+	= st
+where
+		reduce f i xs st
+		| i < 0
+			= (xs, st)
+		| otherwise
+			#! (x, xs) = unsafeUselect xs i
+			= reduce f (dec i) xs (f x st)

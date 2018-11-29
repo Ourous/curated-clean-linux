@@ -5,7 +5,6 @@ import StdGeneric, _Array
 // or crush
 generic gReduce t :: (a a -> a) a  t -> a
 gReduce{|c|} op e x 					= e
-gReduce{|UNIT|} op e x 					= e
 gReduce{|PAIR|} fx fy op e (PAIR x y) 	= op (fx op e x) (fy op e y)
 gReduce{|EITHER|} fl fr op e (LEFT x) 	= fl op e x
 gReduce{|EITHER|} fl fr op e (RIGHT x) 	= fr op e x
@@ -18,7 +17,6 @@ derive gReduce [], (,), (,,),  (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,)
 
 generic gReduceRSt t :: .t .st -> .st
 gReduceRSt{|c|} x st 					= st
-gReduceRSt{|UNIT|} t st = st
 gReduceRSt{|PAIR|} fx fy (PAIR x y) st 	= fx x (fy y st)
 gReduceRSt{|EITHER|} fl fr x st 		= reduceEITHER fl fr x st
 gReduceRSt{|CONS|} f (CONS x) st 		= f x st
@@ -30,7 +28,6 @@ derive gReduceRSt [], (,), (,,),  (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,)
 
 generic gReduceLSt t :: .t .st -> .st
 gReduceLSt{|c|} x st 						= st
-gReduceLSt{|UNIT|} t st = st
 gReduceLSt{|PAIR|} fx fy (PAIR x y) st 	= fy y (fx x st)
 gReduceLSt{|EITHER|} fl fr x st 		= reduceEITHER fl fr x st
 gReduceLSt{|CONS|} f (CONS x) st 		= f x st
@@ -42,3 +39,5 @@ derive gReduceLSt [], (,), (,,),  (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,)
 
 reduceEITHER fl fr (LEFT x) st 			= fl x st
 reduceEITHER fl fr (RIGHT x) st 		= fr x st
+
+		  

@@ -1,6 +1,6 @@
 definition module Data.Traversable
 
-from Control.Applicative import class Applicative
+from Control.Applicative import class pure, class <*>, class Applicative
 from Control.Monad import class Monad
 from Data.Functor import class Functor
 from Data.Foldable import class Foldable
@@ -108,9 +108,9 @@ class Traversable t | Functor t & Foldable t where
     // and collect the results.
     sequence :: !(t (m a)) -> m (t a) | Monad m
 
-for :: (t a) (a -> f b) -> f (t b) | Traversable t & Applicative f
-forM :: (t a) (a -> m b) -> m (t b) | Traversable t & Monad m
-mapAccumL :: (b -> (*s -> *(c, *s))) (t b) *s -> *(t c, *s) | Traversable t
-mapAccumR :: (b -> (*s -> *(c, *s))) (t b) *s -> *(t c, *s) | Traversable t
-fmapDefault :: (a -> b) (t a) -> t b | Traversable t
-foldMapDefault :: (a -> m) (t a) -> m | Traversable t & Monoid m
+for :: !(t a) (a -> f b) -> f (t b) | Traversable t & Applicative f
+forM :: !(t a) (a -> m b) -> m (t b) | Traversable t & Monad m
+mapAccumL :: (b -> (*s -> *(c, *s))) !(t b) *s -> *(t c, *s) | Traversable t
+mapAccumR :: (b -> (*s -> *(c, *s))) !(t b) *s -> *(t c, *s) | Traversable t
+fmapDefault :: (a -> b) !(t a) -> t b | Traversable t
+foldMapDefault :: (a -> m) !(t a) -> m | Traversable t & Monoid m

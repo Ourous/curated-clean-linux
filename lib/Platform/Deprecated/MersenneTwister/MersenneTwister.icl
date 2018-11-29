@@ -1,9 +1,9 @@
 implementation module MersenneTwister
 
-import qualified Math.Random as R
+import qualified Math.Random
 
 genRandReal :: Int -> [Real]
-genRandReal n = 'R'.genRandReal n
+genRandReal n = 'Math.Random'.genRandReal n
 
 genRandInt :: Int -> [Int]
-genRandInt n = 'R'.genRandInt n
+genRandInt n = 'Math.Random'.genRandInt n

@@ -9,7 +9,7 @@ import StdList, StdOrdList
 removeMembersSortedList :: ![a] ![a] -> [a] | Eq, Ord a
 removeMembersSortedList [] ys
 	= []
-removeMembersSortedList xs []
+removeMembersSortedList xs=:[_:_] []
 	= xs
 removeMembersSortedList [x:xs] [y:ys]
 | x  < y    = [x : removeMembersSortedList xs [y:ys]]

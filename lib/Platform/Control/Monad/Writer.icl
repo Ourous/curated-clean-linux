@@ -15,9 +15,13 @@ from StdTuple import fst, snd
 instance Functor (WriterT w m) | Monad m & Monoid w where
   fmap f m = liftM f m
 
-instance Applicative (WriterT w m) | Monad m & Monoid w where
-  pure x = WriterT (pure (x, mempty))
-  <*> mf mx = ap mf mx
+instance pure (WriterT w m) | pure m & Monoid w
+where
+	pure x = WriterT (pure (x, mempty))
+
+instance <*> (WriterT w m) | Monad m & Monoid w
+where
+	<*> mf mx = ap mf mx
 
 instance Monad (WriterT w m) | Monad m & Monoid w where
   bind m k = WriterT (runWriterT m >>= \(a, w) ->

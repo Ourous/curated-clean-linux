@@ -3,7 +3,7 @@ definition module iTasks.UI.JS.Interface
 import StdString, StdGeneric, Data.Maybe
 import iTasks.WF.Definition
 
-from Control.Applicative import class Applicative
+from Control.Applicative import class pure, class <*>
 import Data.Functor
 from Control.Monad       import class Monad
 
@@ -18,7 +18,8 @@ derive class iTask JSVal, JSObject, JSFunction, JSArray
 
 :: JSIO a = JSIO (*JSWorld -> *(a, *JSWorld))
 
-instance Applicative JSIO
+instance pure JSIO
+instance <*> JSIO
 instance Functor JSIO
 instance Monad JSIO
 

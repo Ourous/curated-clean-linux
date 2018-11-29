@@ -1,8 +1,8 @@
 definition module StdEnv
 
 // ****************************************************************************************
-//	Concurrent Clean Standard Library Module Version 2.0
-//	Copyright 1998 University of Nijmegen
+//	Concurrent Clean Standard Library Module Version 3.0
+//	Copyright 2018 Radboud University
 // ****************************************************************************************
 
 import 
@@ -20,7 +20,9 @@ import
 	StdOrdList,
 	StdTuple,
 	StdCharList,
-	StdFunc,
+	StdFunctions,
 	StdMisc,
 
-	StdEnum
+	StdEnum,
+	StdStrictLists
+

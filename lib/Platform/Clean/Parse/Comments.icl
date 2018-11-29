@@ -4,7 +4,7 @@ import StdArray
 import StdBool
 import StdChar
 import StdClass
-import StdFunc
+import StdFunctions
 import StdInt
 import StdList
 import StdString
@@ -13,8 +13,7 @@ import StdTuple
 import Control.Monad
 import Data.Error
 import Data.Functor
-from Data.Map import :: Map
-import qualified Data.Map as M
+from Data.Map import :: Map(..), newMap, put, get
 import Data.Maybe
 import System.File
 import System.FilePath
@@ -30,16 +29,18 @@ from syntax import
 	:: CheckedTypeDef,
 	:: ClassDef{class_ident,class_pos},
 	:: ClassInstance,
+	:: ClassInstanceR,
 	:: CollectedDefinitions,
 	:: ComponentNrAndIndex,
 	:: ConsDef,
+	:: DclInstanceMemberTypeAndFunction,
 	:: Declaration,
 	:: FileName,
 	:: FunctionOrMacroIndex,
 	:: FunctName,
 	:: FunKind,
 	:: FunSpecials,
-	:: GenericDef{gen_pos},
+	:: GenericDef{gen_ident,gen_pos},
 	:: GenericCaseDef{gc_pos},
 	:: Global,
 	:: Ident{id_info,id_name},
@@ -56,7 +57,7 @@ from syntax import
 	:: ParsedInstance{pi_pos},
 	:: ParsedInstanceAndMembers{pim_pi},
 	:: ParsedModule,
-	:: ParsedSelector{ps_field_pos,ps_selector_ident},
+	:: ParsedSelector{ps_field_pos,ps_field_ident},
 	:: ParsedTypeDef,
 	:: Position(..),
 	:: Priority,
@@ -158,9 +159,9 @@ scan ss=:{idx}
 		}
 	# (before,after) = span (\c -> isJust c.level && fromJust c.level < level) cmnts
 	= (before ++ [cmnt:after],ss)
-| c1 == '['
+| c1 == '[' && ss.comment_level == 0
 	= scan (skip_list_literal (advance ss))
-| c1 == '"'
+| c1 == '"' && ss.comment_level == 0
 	= scan (skip_string_literal '"' (advance ss))
 | otherwise
 	= scan (advance ss)
@@ -184,7 +185,7 @@ skip_string_literal :: !Char !ScanState -> ScanState
 skip_string_literal term ss
 | ss.idx >= size ss.input = ss
 # c = ss.input.[ss.idx]
-| c == term = ss
+| c == term = advance ss
 | c == '\\' = skip_escape_sequence (advance ss)
 | otherwise = skip_string_literal term (advance ss)
 where
@@ -207,86 +208,55 @@ where
 			| otherwise -> advance ss
 		_ -> twice advance ss
 
-:: CollectedComments :== Map (!Int, !String) CleanComment
+:: CollectedComments :== Map CommentIndex CleanComment
 
-getCC :== 'M'.get o toCCIndex
-putCC k v coll :== case index k of
-	Nothing -> coll
-	Just k  -> 'M'.put (toCCIndex k) v coll
+:: CommentIndex = CI String Position String
 
-toCCIndex :: !(!STE_Kind,!String) -> (!Int, !String)
-toCCIndex (stek,name) = (toint stek, name)
+instance < Position
 where
-	toint :: !STE_Kind -> Int
-	toint kind = case kind of
-		STE_FunctionOrMacro _ -> 0
-		STE_DclMacroOrLocalMacroFunction _ -> 1
-		STE_Type -> 2
-		STE_Constructor -> 3
-		STE_Selector _ -> 4
-		STE_Field _ -> 5
-		STE_Class -> 6
-		STE_Member -> 7
-		STE_Generic _ -> 8
-		STE_GenericCase -> 9
-		STE_GenericDeriveClass -> 10
-		STE_Instance -> 11
-		STE_Variable _ -> 12
-		STE_TypeVariable _ -> 13
-		STE_FunDepTypeVariable _ -> 14
-		STE_TypeAttribute _ -> 15
-		STE_BoundTypeVariable _ -> 16
-		STE_Imported _ _ -> 17
-		STE_DclFunction -> 18
-		STE_Module _ -> 19
-		STE_ClosedModule -> 20
-		STE_ModuleQualifiedImports _ -> 21
-		STE_Empty -> 22
-		STE_DictType _ -> 23
-		STE_DictCons _ -> 24
-		STE_DictField _ -> 25
-		STE_Called _ -> 26
-		STE_ExplImpSymbol _ -> 27
-		STE_ExplImpComponentNrs _ -> 28
-		STE_BelongingSymbol _ -> 29
-		STE_ExplImpSymbolNotImported _ _ -> 30
-		STE_ImportedQualified _ _ -> 31
-		STE_Hidden _ _ -> 32
-		STE_UsedType _ _ -> 33
-		STE_UsedQualifiedType _ _ _ -> 34
-		STE_BelongingSymbolExported -> 35
-		STE_BelongingSymbolForExportedSymbol -> 36
-		STE_TypeExtension -> 37
+	< a b = index a < index b
+	where
+		index (FunPos f l n) = (f,   l, n)
+		index (LinePos f l)  = (f,   l, "")
+		index (PreDefPos id) = ("", -1, id.id_name)
+		index NoPos          = ("", -2, "")
+
+instance < CommentIndex where < (CI a b c) (CI d e f) = (a,b,c) < (d,e,f)
+
+putCC k v coll :== case commentIndex k of
+	Nothing -> coll
+	Just k  -> put k v coll
 
 emptyCollectedComments :: CollectedComments
-emptyCollectedComments = 'M'.newMap
+emptyCollectedComments = newMap
 
-getComment :: !Ident !CollectedComments -> Maybe String
-getComment {id_name,id_info={pointer=Ptr {ste_kind} _}} coll =
-	(\cc -> cc.content) <$> getCC (ste_kind,id_name) coll
+getComment :: !a !CollectedComments -> Maybe String | commentIndex a
+getComment elem coll = (\cc -> cc.content) <$> (flip get coll =<< commentIndex elem)
 
 collectComments :: ![CleanComment] !ParsedModule -> CollectedComments
 collectComments comments pm
-# coll = 'M'.newMap
+# coll = newMap
 # (comments,coll) = case comments of
 	[] -> ([], coll)
 	[c:cs]
-		| c.line <= 3 -> (cs, putCC pm.mod_ident c coll)
-		| otherwise   -> (comments, coll)
+		| c.line <= 3 && startsWith "*" c.content -> (cs, putCC pm c coll)
+		| otherwise -> (comments, coll)
 # (_,_,coll) = collect comments Nothing pm.mod_defs coll
 = coll
 
-collect :: ![CleanComment] !(Maybe CleanComment) ![a] !CollectedComments -> (![CleanComment], !Maybe CleanComment, !CollectedComments) | pos, index, children a
+collect :: ![CleanComment] !(Maybe CleanComment) ![a] !CollectedComments -> (![CleanComment], !Maybe CleanComment, !CollectedComments) | pos, commentIndex, children a
 collect cc prev [] coll = (cc, prev, coll)
 collect [] (Just prev) [pd:pds] coll = ([], Nothing, putCC pd prev coll)
 collect [] Nothing _ coll = ([], Nothing, coll)
-collect [{column,multiline=True}:cs] prev pds coll | column > 0 = collect cs prev pds coll
 collect [{content}:cs] prev pds coll | not (startsWith "*" content) = collect cs prev pds coll
 collect allcmnts=:[c:cs] prev allpds=:[pd:pds] coll = case c canBelongTo pd of
 	Nothing -> collect allcmnts prev pds coll
 	Just True -> collect cs (Just c) allpds coll
-	Just False -> case prev of
-		Nothing -> collect allcmnts Nothing pds coll
+	Just False
+		-> case prev of
+		Nothing
+			# (allcmnts,prev,coll) = recurse allcmnts Nothing (children pd) coll
+			-> collect allcmnts Nothing pds coll
 		Just cmnt
 			# coll = putCC pd cmnt coll
 			# (allcmnts,prev,coll) = recurse allcmnts Nothing (children pd) coll
@@ -296,7 +266,7 @@ where
 	recurse :: ![CleanComment] !(Maybe CleanComment) !Children !CollectedComments -> (![CleanComment], !Maybe CleanComment, !CollectedComments)
 	recurse cs prev (Children xs) coll = collect cs prev xs coll
 
-:: Children = E.t: Children ![t] & pos, index, children t
+:: Children = E.t: Children ![t] & pos, commentIndex, children t
 
 class children a :: !a -> Children
 
@@ -344,20 +314,23 @@ where
 instance pos ParsedSelector where pos ps = Just ps.ps_field_pos
 instance pos ParsedConstructor where pos pc = Just pc.pc_cons_pos
 
-class index a :: !a -> Maybe (!STE_Kind,!String)
+class commentIndex a :: !a -> Maybe CommentIndex
 
-instance index Ident
+instance commentIndex (Module a)
 where
-	index {id_name,id_info={pointer=Ptr {ste_kind} _}} = Just (ste_kind,id_name)
+	commentIndex {mod_ident} = Just (CI "Module" NoPos mod_ident.id_name)
 
-instance index ParsedDefinition
+instance commentIndex ParsedDefinition
 where
-	index pd = case pd of
-		PD_Function pos id is_infix args rhs kind -> index id
-		PD_TypeSpec pos id prio type specials -> index id
-		PD_Class cd pds -> index cd.class_ident
-		PD_Type ptd -> index ptd.td_ident
+	commentIndex pd = case pd of
+		PD_Function pos id is_infix args rhs kind -> Just (CI "PD_Function" pos id.id_name)
+		PD_TypeSpec pos id prio type specials -> Just (CI "PD_TypeSpec" pos id.id_name)
+		PD_Class cd pds -> Just (CI "PD_Class" cd.class_pos cd.class_ident.id_name)
+		PD_Type ptd -> Just (CI "PD_Type" ptd.td_pos ptd.td_ident.id_name)
+		PD_Generic gd -> Just (CI "PD_Generic" gd.gen_pos gd.gen_ident.id_name)
 		_ -> Nothing
 
-instance index ParsedSelector where index ps = index ps.ps_selector_ident
-instance index ParsedConstructor where index pc = index pc.pc_cons_ident
+instance commentIndex ParsedSelector
+where commentIndex ps = Just (CI "ParsedSelector" ps.ps_field_pos ps.ps_field_ident.id_name)
+instance commentIndex ParsedConstructor
+where commentIndex pc = Just (CI "ParsedConstructor" pc.pc_cons_pos pc.pc_cons_ident.id_name)

@@ -7,6 +7,7 @@ import iTasks.UI.Definition
 import iTasks.UI.Layout
 import StdString, Data.List, Data.Maybe, Text.GenJSON
 import qualified Data.Map as DM
+from Data.Foldable import class Foldable (foldr1)
 
 minimalSessionLayout :: LayoutRule
 minimalSessionLayout = layoutAny

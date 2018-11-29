@@ -7,7 +7,7 @@ from iTasks.WF.Definition import :: TaskException, :: TaskValue, :: TaskId, :: T
 from iTasks.WF.Definition import generic gEditor, generic gEq, generic gDefault, generic gText, generic JSONEncode, generic JSONDecode
 from iTasks.WF.Combinators.Core import :: TaskList, :: TaskListFilter, :: TaskListItem, :: SharedTaskList
 from iTasks.Internal.Generic.Visualization import :: TextFormat
-from iTasks.UI.Editor import :: Editor, :: EditMask, :: Masked
+from iTasks.UI.Editor import :: Editor
 
 from Data.Maybe import :: Maybe
 from Data.Either import :: Either

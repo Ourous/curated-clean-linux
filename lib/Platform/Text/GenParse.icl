@@ -78,6 +78,9 @@ instance toString Expr where
 	toString (ExprList xs) = "[" +++ join ", " (map toString xs) +++ "]"
 	toString (ExprArray xs) = "{" +++ join ", " (map toString xs) +++ "}"
 	toString (ExprError err) = "<error: " +++ err +++ ">"
+	toString ExprUnit = abort "toString on auxiliary ExprUnit\n"
+	toString (ExprAppInInfix _ _ _ _) = abort "toString on auxiliary ExprAppInInfix\n"
+	toString (ExprPair _ _) = abort "toString on auxiliary ExprPair\n"
 
 instance == Expr where
     == x y = x === y
@@ -495,7 +498,9 @@ where
 								TokenIdent "=" 
 									#! (expr, s) = parse_expr PERecord s
 									-> parse_record rec_name [ExprField field_name expr:fields] s
-				_ -> (ExprError ("parse record failed on token " +++ toString token), s)			
+								_ -> (ExprError ("parse record failed on token " +++ toString token), s)
+						_ -> (ExprError ("parse record failed on token " +++ toString token), s)
+				_ -> (ExprError ("parse record failed on token " +++ toString token), s)
 
 		parse_array exprs s
 			#! (token, s) = lexGetToken s
@@ -505,7 +510,7 @@ where
 				TokenComma
 					#! (expr, s) = parse_expr PERecord s
 					-> parse_array [expr:exprs] s
-				_ -> (ExprError ("parse array failed on token " +++ toString token), s)			
+				_ -> (ExprError ("parse array failed on token " +++ toString token), s)
 
 
 //----------------------------------------------------------------------------------		
@@ -669,16 +674,17 @@ mkprod exprs
 	
 gParse{|FIELD of {gfd_name}|} parse_arg (ExprField name value) 
 	| gfd_name == name
-		= mapMaybe FIELD (parse_arg value)
+		= mapMaybe (\x -> FIELD x) (parse_arg value)
 		= Nothing
+gParse{|FIELD of {gfd_name}|} _ _ = Nothing
 gParse{|OBJECT of {gtd_num_conses,gtd_conses}|} parse_arg expr
 	| gtd_num_conses == 0 = case expr of
 		ExprApp ap
 			| size ap == 2 && is_ident (hd gtd_conses).gcd_name ap.[0]
-				= mapMaybe OBJECT (parse_arg ap.[1])
+				= mapMaybe (\x -> OBJECT x) (parse_arg ap.[1])
 			= Nothing
 		_ = Nothing
-	= mapMaybe OBJECT (parse_arg expr)
+	= mapMaybe (\x -> OBJECT x) (parse_arg expr)
 
 gParse{|[]|} parse_arg (ExprList exprs) 
 	= maybeAll [parse_arg e \\e<-exprs]

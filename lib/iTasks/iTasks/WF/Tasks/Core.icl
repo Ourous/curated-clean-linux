@@ -12,8 +12,9 @@ import qualified iTasks.Internal.SDS as SDS
 
 import Data.Error, Data.Maybe, Data.Func
 import Text.GenJSON
-import StdString, StdBool
+import StdString, StdBool, StdMisc
 import qualified Data.Set as DS
+import qualified Data.Map as DM
 
 treturn :: !a -> (Task a) | iTask a
 treturn a  = mkInstantTask (\taskId iworld-> (Ok a, iworld))
@@ -53,8 +54,8 @@ instance toString OSException
 where
 	toString (OSException (_,err)) = "Error performing OS operation: " +++ err
 
-interact :: !d !EditMode !(SDS () r w) (InteractionHandlers l r w v) (Editor v) -> Task (l,v) | toPrompt d & iTask l & iTask r & iTask v & TC w
-interact prompt mode shared {onInit,onEdit,onRefresh} editor = Task eval
+interact :: !d !(SDS () r w) (InteractionHandlers l r w v) (Editor v) -> Task (l,v) | toPrompt d & iTask l & iTask r & iTask v & TC w
+interact prompt shared {onInit,onEdit,onRefresh} editor = Task eval
 where
 	eval event evalOpts tt=:(TCDestroy _) iworld
 		# iworld = 'SDS'.clearTaskSDSRegistrations ('DS'.singleton $ fromOk $ taskIdFromTaskTree tt) iworld
@@ -66,83 +67,101 @@ where
 			(TCInit taskId ts)
 				= case 'SDS'.readRegister taskId shared iworld of
 					(Ok r,iworld)
-						# (l,v) = onInit r
-						= case initMask taskId mode editor v iworld of
-							(Ok m,iworld) = (Ok (taskId,ts,l,v,m),iworld)
+						# (l, mode) = onInit r
+						# v = case mode of
+							Enter    = Nothing
+							Update x = Just x
+							View x   = Just x
+						= case initEditorState taskId mode editor iworld of
+							(Ok st,iworld) = (Ok (taskId,ts,l,v,st, mode =: View _),iworld)
 							(Error e,iworld) = (Error e,iworld)
 					(Error e,iworld)  = (Error e,iworld)
-			(TCInteract taskId ts encl encv m)
+			(TCInteract taskId ts encl encv st viewMode)
 				//Just decode the initially stored values
 				= case (fromDeferredJSON encl, fromDeferredJSON encv) of
-					(Just l,Just v) = (Ok (taskId,ts,l,v,m),iworld)
+					(Just l,Just v) = (Ok (taskId,ts,l,v,st, viewMode),iworld)
 					_				= (Error (exception ("Failed to decode stored model and view in interact: '" +++ toString encl +++ "', '"+++toString encv+++"'")),iworld)
 		| mbd =:(Error _) = (ExceptionResult (fromError mbd), iworld)
-		# (taskId,ts,l,v,m) = fromOk mbd
+		# (taskId,ts,l,v,st,viewMode) = fromOk mbd
         # (mbRes, iworld) = case event of
             EditEvent eTaskId name edit | eTaskId == taskId =
-                applyEditEvent_ name edit taskId mode editor taskTime shared onEdit l v m iworld
+                applyEditEvent_ name edit taskId editor taskTime shared onEdit l v st iworld
             ResetEvent
-                # vst = {VSt| taskId = toString taskId, mode = mode, optional = False, selectedConsIndex = -1, iworld = iworld}
-                = case editor.Editor.genUI [] v vst of
-			        (Ok (ui,m),{VSt|iworld}) = (Ok (l,v,ReplaceUI (uic UIInteract [toPrompt prompt,ui]),m,taskTime),iworld)
-			        (Error e,{VSt|iworld})   = (Error (exception e),iworld)
+				# resetMode = case (viewMode, v) of
+					(True, Just v) = View v
+					(True, _)      = abort "view mode without value"
+					(_, Nothing)   = Enter
+					(_, Just v)    = Update v
+				= withVSt taskId
+					( \vst -> case editor.Editor.genUI [] resetMode vst of
+						(Ok (ui,st),vst) = (Ok (l,editor.Editor.valueFromState st,ReplaceUI (uic UIInteract [toPrompt prompt,ui]),st,taskTime), vst)
+						(Error e, vst)  = (Error (exception e), vst)
+					)
+					iworld
             RefreshEvent taskIds _ | 'DS'.member taskId taskIds
-                = refreshView_ taskId mode editor shared onRefresh l v m taskTime iworld
-            FocusEvent fTaskId | fTaskId == taskId = (Ok (l,v,NoChange,m,taskTime),iworld)
-            _ = (Ok (l,v,NoChange,m,ts),iworld)
+                = refreshView_ taskId editor shared onRefresh l v st taskTime iworld
+            FocusEvent fTaskId | fTaskId == taskId = (Ok (l,editor.Editor.valueFromState st,NoChange,st,taskTime),iworld)
+            _ = (Ok (l,editor.Editor.valueFromState st,NoChange,st,ts),iworld)
         = case mbRes of
 		   Error e = (ExceptionResult e, iworld)
-		   Ok (l,v,change,m,ts)
+		   Ok (l,mbV,change,st,ts)
                 //Construct the result
-                # valid     = not (containsInvalidFields m)
-                # value     = if valid (Value (l,v) False) NoValue
-                # info      = {TaskEvalInfo|lastEvent=ts,removedTasks=[],refreshSensitive=True}
-                = (ValueResult value info change (TCInteract taskId ts (DeferredJSON l) (DeferredJSON v) m), iworld)
+                # v     = maybe v Just mbV // use previous view state of editor is in invalid state
+                # value = maybe NoValue (\v -> Value (l, v) False) mbV
+                # info  = {TaskEvalInfo|lastEvent=ts,attributes='DM'.newMap,removedTasks=[]}
+                = (ValueResult value info change (TCInteract taskId ts (DeferredJSON l) (DeferredJSON v) st viewMode), iworld)
 
-initMask :: TaskId EditMode (Editor v) v !*IWorld -> (MaybeError TaskException EditMask, !*IWorld)
-initMask taskId mode editor v iworld
-	# vst = {VSt| taskId = toString taskId, mode = mode, optional = False, selectedConsIndex = -1, iworld = iworld}
-	= case editor.Editor.genUI [] v vst of
-		(Ok (_,mask),{VSt|iworld}) = (Ok mask, iworld)
-		(Error e, {VSt|iworld}) = (Error (exception e), iworld)
+initEditorState :: TaskId (EditMode v) (Editor v) !*IWorld -> (MaybeError TaskException EditState, !*IWorld)
+initEditorState taskId mode editor iworld = withVSt taskId
+	( \vst -> case editor.Editor.genUI [] uniqueMode vst of
+		(Ok (_, st), vst) = (Ok st,               vst)
+		(Error e,    vst) = (Error $ exception e, vst)
+	)
+	iworld
+where
+	uniqueMode = case mode of
+		Enter    = Enter
+		Update x = Update x
+		View x   = View x
 
-applyEditEvent_ :: String JSONNode TaskId EditMode (Editor v) TaskTime (SDS () r w) (v l v -> (l, v, Maybe (r -> w))) l v EditMask !*IWorld
-                -> (!MaybeError TaskException (!l, !v, !UIChange, !EditMask, !TaskTime), !*IWorld)
+applyEditEvent_ :: String JSONNode TaskId (Editor v) TaskTime (SDS () r w) (v l (Maybe v) -> (l, v, Maybe (r -> w))) l (Maybe v) EditState !*IWorld
+                -> (!MaybeError TaskException (!l, !Maybe v, !UIChange, !EditState, !TaskTime), !*IWorld)
                 | TC r & TC w
-applyEditEvent_ name edit taskId mode editor taskTime shared onEdit l ov m iworld
-	# vst = {VSt| taskId = toString taskId, mode = mode, optional = False, selectedConsIndex = -1, iworld = iworld}
-	= case editor.Editor.onEdit [] (s2dp name,edit) ov m vst of
-        (Ok (change,m),v,{VSt|iworld})
-	        # (l,v,mbf) = onEdit v l ov
-	        # change    = case change of NoChange = NoChange; _ = ChangeUI [] [(1,ChangeChild change)]
-            # valid     = not (containsInvalidFields m)
-	        = case mbf of
-		        Just f | valid = case 'SDS'.modify (\r -> ((),f r)) shared iworld of
-			        (Ok (),iworld) = (Ok (l,v,change,m,taskTime),iworld)
-			        (Error e,iworld) = (Error e,iworld)
-		        _
-			        = (Ok (l,v,change,m,taskTime),iworld)
-        (Error e,_,{VSt|iworld}) = (Error (exception e),iworld)
+applyEditEvent_ name edit taskId editor taskTime shared onEdit l ov st iworld
+	# (res, iworld) = withVSt taskId (editor.Editor.onEdit [] (s2dp name,edit) st) iworld
+	= case res of
+		Ok (change, st)
+			# change = case change of NoChange = NoChange; _ = ChangeUI [] [(1,ChangeChild change)]
+			= case editor.Editor.valueFromState st of
+				Just v
+					# (l, v, mbf) = onEdit v l ov
+					= case mbf of
+						Just f = case 'SDS'.modify (\r -> ((),f r)) shared iworld of
+							(Ok (),iworld)   = (Ok (l,Just v,change,st,taskTime),iworld)
+							(Error e,iworld) = (Error e,iworld)
+						_
+							= (Ok (l,Just v,change,st,taskTime),iworld)
+				_ = (Ok (l,Nothing,change,st,taskTime),iworld)
+        Error e = (Error (exception e), iworld)
 
-refreshView_ :: TaskId EditMode (Editor v) (SDS () r w) (r l v -> (l, v, Maybe (r -> w))) l v EditMask TaskTime !*IWorld
-             -> (!MaybeError TaskException (!l, !v, !UIChange, !EditMask, !TaskTime), !*IWorld)
+refreshView_ :: TaskId (Editor v) (SDS () r w) (r l (Maybe v) -> (l, v, Maybe (r -> w))) l (Maybe v) EditState TaskTime !*IWorld
+             -> (!MaybeError TaskException (!l, !Maybe v, !UIChange, !EditState, !TaskTime), !*IWorld)
              | TC r & TC w
-refreshView_ taskId mode editor shared onRefresh l ov m taskTime iworld
+refreshView_ taskId editor shared onRefresh l ov st taskTime iworld
 	//Read the shared source and refresh the editor
 	= case 'SDS'.readRegister taskId shared iworld of
 		(Error e,iworld) = (Error e,iworld)
 		(Ok r,iworld)
 			# (l,v,mbf) = onRefresh r l ov
-			# vst = {VSt| taskId = toString taskId, mode = mode, optional = False, selectedConsIndex = -1, iworld = iworld}
-			= case editor.Editor.onRefresh [] v ov m vst of
-				(Ok (change,m),_,vst=:{VSt|iworld})
+			# (res, iworld) = withVSt taskId (editor.Editor.onRefresh [] v st) iworld
+			= case res of
+				Ok (change,st)
 					# change = case change of NoChange = NoChange; _ = ChangeUI [] [(1,ChangeChild change)]
 					//Update the share if necessary
 					= case mbf of
 						Just f = case 'SDS'.modify (\r -> ((),f r)) shared iworld of
-							(Ok (),iworld) = (Ok (l,v,change,m,taskTime), iworld)
+							(Ok (),iworld) = (Ok (l,Just v,change,st,taskTime), iworld)
 							(Error e,iworld) = (Error e,iworld)
 						Nothing
-							= (Ok (l,v,change,m,taskTime), iworld)
-				(Error e,_,vst=:{VSt|iworld}) = (Error (exception e),iworld)
-
+							= (Ok (l,Just v,change,st,taskTime), iworld)
+				Error e = (Error (exception e), iworld)

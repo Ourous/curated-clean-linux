@@ -15,6 +15,7 @@ import Data.Functor
 import Data.List
 import Data.Maybe
 import Data.Tuple
+from Data.Foldable import class Foldable(foldr1)
 from Text import class Text(join,rpad), instance Text String
 
 instance Alternative (MaybeError [String])
@@ -109,6 +110,7 @@ where
 		upd oht=:(OptionHelpText opts args help add)
 		| isMember long opts = OptionHelpText (opts ++ [short]) args help add
 		| otherwise          = oht
+		upd oht=:(OperandHelpText var help add) = oht
 	helpText (Options ps) = concatMap helpText ps
 	helpText (WithHelp short p) =
 		[ OptionHelpText ["--help":if short ["-h"] []] [] "Show this help text" []
@@ -117,6 +119,7 @@ where
 	helpText (Biject _ _ p) = helpText p
 	helpText (AddHelpLines lines p) = case helpText p of
 		[OptionHelpText opts args help add:rest] -> [OptionHelpText opts args help (add ++ lines):rest]
+		[OperandHelpText var help add:rest]      -> [OperandHelpText var help (add ++ lines):rest]
 		[]                                       -> []
 
 cleanupHelpText :: [HelpText] -> [HelpText]

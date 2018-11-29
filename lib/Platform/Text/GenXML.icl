@@ -1,6 +1,6 @@
 implementation module Text.GenXML
 
-import StdArray, StdBool, StdInt, StdList, StdTuple, StdGeneric, StdFunc, StdString
+import StdArray, StdBool, StdInt, StdList, StdMisc, StdTuple, StdGeneric, StdFunc, StdString
 import Data.Error, Data.Either, Data.Maybe, Text, Data.GenEq
 from Text.Parsers.CParsers.ParserCombinators import :: Parser, :: ParsResult, :: CParser, &>, +&+, +&-, -&+, <!>, <&, <&>, <*?>, <@, >?<, @>, begin1, satisfy, symbol, yield, <|>, <+?>
 
@@ -17,6 +17,7 @@ addNamespaces mbDefaultNamespace namespaces (XMLElem qname attrs children)
 		Nothing					= ns
 		Just defaultNamespace	= [XMLAttr (XMLQName Nothing "xmlns") defaultNamespace:ns]
 	= (XMLElem qname (ns ++ attrs) children)
+addNamespaces _ _ _ = abort "addNamespaces called on non-XMLElem\n"
 	
 docSize :: !XMLDoc -> Int
 docSize (XMLDoc defaultNamespace namespaces documentElement)
@@ -304,6 +305,7 @@ where
 				XMLQName (Just "xmlns") ns	= (mbURI,[(ns,val):namespaces],attrs)
 				_							= (mbURI,namespaces,[attr:attrs])
 			= filterNamespaces rest acc
+	mkXMLDoc _ = abort "mkXMLDoc called on non-XMLElem\n"
 
 pDocDeclaration	= symbol TokenDeclarationStart &> (<+?> pAttr) <& symbol TokenDeclarationEnd
 pNode			= pCharData <@ (\d -> XMLText d) <!> pElem
@@ -313,9 +315,9 @@ pElemEmpty		= pElemStart <& symbol TokenEmptyTagClose <@ (\(name,attributes) -> 
 pElemStart		= (\name attributes -> (name,attributes)) @> symbol TokenStartTagOpen -&+ pName +&+ (<*?> pAttr)
 pElemContEnd	= symbol TokenEndTagOpen &> pName <& symbol TokenTagClose
 pAttr			= (\name v -> XMLAttr (toQName name) v) @> pName +&- symbol TokenEqual +&+ pAttrValue
-pName			= satisfy isName		<@ (\(TokenName n) -> n)
-pAttrValue		= satisfy isAttrValue	<@ (\(TokenAttrValue v) -> v)
-pCharData		= satisfy isCharData	<@ (\(TokenCharData d) -> d)
+pName			= satisfy isName		<@ \n -> case n of TokenName n -> n; _ -> abort "error in pName\n"
+pAttrValue		= satisfy isAttrValue	<@ \n -> case n of TokenAttrValue v -> v; _ -> abort "error in pAttrValue\n"
+pCharData		= satisfy isCharData	<@ \n -> case n of TokenCharData d -> d; _ -> abort "error in pCharData\n"
 
 toQName :: !String -> XMLQName
 toQName name
@@ -407,7 +409,9 @@ toElem :: !(!XMLQName,![XMLAttr],![XMLNode]) -> XMLNode
 toElem (name,attr,nodes) = XMLElem name attr nodes
 
 fromElem :: !XMLNode -> (!XMLQName,![XMLAttr],![XMLNode])
-fromElem (XMLElem name attr nodes) = (name,attr,nodes)
+fromElem n = case n of
+	XMLElem name attr nodes -> (name,attr,nodes)
+	_                       -> abort "fromElem called on non-XMLElem\n"
 
 toText :: !(!String,!XMLQName) -> XMLNode
 toText (txt,_) = XMLText txt

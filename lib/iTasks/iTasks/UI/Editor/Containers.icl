@@ -6,440 +6,505 @@ implementation module iTasks.UI.Editor.Containers
 */
 import iTasks.UI.Definition
 import iTasks.UI.Editor
-import Data.Error
+import Data.Error, Data.Func, Data.Functor, Data.Maybe
 import Text.GenJSON
 from Data.Map import :: Map
 
-import StdBool, StdList, StdTuple
+import StdBool, StdList, StdTuple, StdFunc
 
 //Empty container
 group :: !UIType -> Editor ()
-group type = {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
+group type = {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh,valueFromState=valueFromState}
 where
-	genUI _ _ vst			    = (Ok (uia type emptyAttr,newCompoundMask),vst)
-	onEdit _ _ val mask vst 	= (Ok (NoChange,mask),val,vst)
-	onRefresh _ _ val mask vst  = (Ok (NoChange,mask),val,vst)
+	genUI _ _ vst        = (Ok (uia type emptyAttr, CompoundState JSONNull []),vst)
+	onEdit _ _ st vst    = (Ok (NoChange,st),vst)
+	onRefresh _ _ st vst = (Ok (NoChange, st),vst)
+	valueFromState _     = Just ()
 
 groupl :: !UIType !(Editor a) -> Editor [a]
-groupl type {Editor|genUI=genUI_a,onEdit=onEdit_a,onRefresh=onRefresh_a}
-	= {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
+groupl type {Editor|genUI=genUI_a,onEdit=onEdit_a,onRefresh=onRefresh_a,valueFromState=valueFromState_a}
+	= compoundEditorToEditor
+		{CompoundEditor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh,valueFromState=valueFromState}
 where
-	genUI dp val vst = case genUIAll dp 0 val vst of
-		(Error e,vst) = (Error e,vst)
-		(Ok (uis,masks),vst) = (Ok (UI type emptyAttr uis, CompoundMask masks),vst)
+	genUI dp mode vst = case editModeValue mode of
+		Nothing = (Ok (UI type emptyAttr [], viewMode, []), vst)
+		Just val = case genUIAll viewMode dp 0 val vst of
+			(Error e,vst)            = (Error e,vst)
+			(Ok (uis, childSts),vst) = (Ok (UI type emptyAttr uis, viewMode, childSts),vst)
+	where
+		viewMode = mode =: View _
 
-	genUIAll dp i [] vst = (Ok ([],[]),vst)
-	genUIAll dp i [v:vs] vst = case genUI_a (dp ++ [i]) v vst of
+	genUIAll _ _ _ [] vst = (Ok ([],[]),vst)
+	genUIAll viewMode dp i [v:vs] vst = case genUI_a (dp ++ [i]) (if viewMode View Update $ v) vst of
 		(Error e,vst) = (Error e,vst)
-		(Ok (ui,m),vst) = case genUIAll dp (i + 1) vs vst of
+		(Ok (ui, st), vst) = case genUIAll viewMode dp (i + 1) vs vst of
+			(Error e,      vst) = (Error e,                  vst)
+			(Ok (uis, sts),vst) = (Ok ([ui: uis], [st: sts]),vst)
+
+	onEdit dp ([i:tp],e) viewMode childSts vst
+		| i < 0 || i >= length childSts  = (Error "Event route out of range",vst)
+		| otherwise = case onEdit_a (dp ++ [i]) (tp,e) (childSts !! i) vst of
 			(Error e,vst) = (Error e,vst)
-			(Ok (uis,ms),vst) = (Ok ([ui:uis],[m:ms]),vst)
+			(Ok (NoChange, ist),vst)
+				= (Ok (NoChange, viewMode, updateAt i ist childSts),vst)
+			(Ok (change, ist),vst)
+				= (Ok (ChangeUI [] [(i,ChangeChild change)], viewMode, updateAt i ist childSts),vst)
 
-	onEdit dp ([i:tp],e) val (CompoundMask masks) vst
-		| i < 0 || i >= length val || i >= length masks  = (Error "Event route out of range",val,vst)
-		| otherwise = case onEdit_a (dp ++ [i]) (tp,e) (val !! i) (masks !! i) vst of
-			(Error e,ival,vst) = (Error e,val,vst)
-			(Ok (NoChange,imask),ival,vst)
-				= (Ok (NoChange,CompoundMask (updateAt i imask masks)),updateAt i ival val,vst)
-			(Ok (change,imask),ival,vst)
-				= (Ok (ChangeUI [] [(i,ChangeChild change)],CompoundMask (updateAt i imask masks)),updateAt i ival val,vst)
+	onRefresh dp new viewMode childSts vst = case onRefreshAll dp 0 new childSts vst of
+		(Error e, vst)                = (Error e,vst)
+		(Ok ([], childSts), vst)      = (Ok (NoChange, viewMode, childSts),vst)
+        (Ok (changes, childSts), vst) = (Ok (ChangeUI [] changes, viewMode, childSts),vst)
+	where
+		onRefreshAll dp i [n: ns] [st: sts] vst
+			 = case onRefresh_a (dp ++ [i]) n st vst of
+				(Error e, vst) = (Error e, vst)
+				(Ok (c, st),vst) = case onRefreshAll dp (i + 1) ns sts vst of
+					(Error e,     vst) = (Error e, vst)
+					(Ok (cs, sts),vst) = (Ok ([(i,ChangeChild c):cs],[st: sts]), vst)
 
-	onRefresh dp new old (CompoundMask masks) vst = case onRefreshAll dp 0 new old masks vst of
-		(Error e,val,vst) = (Error e,val,vst)
-		(Ok ([],masks),val,vst) = (Ok (NoChange,CompoundMask masks),val,vst)
-		(Ok (changes,masks),val,vst) = (Ok (ChangeUI [] changes,CompoundMask masks),new,vst)
+		onRefreshAll dp i ns [] vst //There are new elements in the list
+			= case genUIAll viewMode dp i ns vst of
+				(Error e,vst)    = (Error e,vst)
+				(Ok (us, sts),vst) = (Ok ([(n,InsertChild u) \\ u <- us & n <- [i..]], sts),vst)
 
-	onRefreshAll dp i [n:ns] [o:os] [m:ms] vst
-		 = case onRefresh_a (dp ++ [i]) n o m vst of
-			(Error e,v,vst) = (Error e,[],vst)
-			(Ok (c,m),v,vst) = case onRefreshAll dp (i + 1) ns os ms vst of
-				(Error e,vs,vst) = (Error e,vs,vst)
-				(Ok (cs,ms),vs,vst) = (Ok ([(i,ChangeChild c):cs],[m:ms]),[v:vs],vst)
+		onRefreshAll dp i [] sts vst //Elements have been removed from the list
+			= (Ok (repeatn (length sts) (i,RemoveChild),[]),vst)
 
-	onRefreshAll dp i ns [] _ vst //There are new elements in the list 
-		= case genUIAll dp i ns vst of
-			(Error e,vst)    = (Error e,[],vst)
-			(Ok (us,ms),vst) = (Ok ([(n,InsertChild u) \\ u <- us & n <- [i..]],ms),ns,vst)
-
-	onRefreshAll dp i [] os ms vst //Elements have been removed from the list
-		= (Ok (repeatn (length os) (i,RemoveChild),[]),[],vst) 
+	valueFromState _ childSts = valuesFromState childSts []
+	where
+		valuesFromState [] acc = Just $ reverse acc
+		valuesFromState [st: sts] acc = case valueFromState_a st of
+			Just val = valuesFromState sts [val: acc]
+			_        = Nothing
 
 groupL :: !UIType ![Editor a] -> Editor [a]
-groupL type editors
-	= {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
+groupL type editors = compoundEditorToEditor
+	{CompoundEditor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh,valueFromState=valueFromState}
 where
-	genUI dp val vst = case genUIAll 0 editors dp val vst of
-		(Error e,vst) = (Error e,vst)
-		(Ok (uis,masks),vst) = (Ok (UI type emptyAttr uis, CompoundMask masks),vst)
+	genUI dp mode vst = case editModeValue mode of
+		Nothing = (Ok (UI type emptyAttr [], mode =: View _, []), vst)
+		Just val = case genUIAll (mode =: View _) 0 editors dp val vst of
+			(Error e,vst)            = (Error e,vst)
+			(Ok (uis, childSts),vst) = (Ok (UI type emptyAttr uis, mode =: View _, childSts),vst)
 
-	genUIAll i _ dp [] vst = (Ok ([],[]),vst)
-	genUIAll i [ed:eds] dp [v:vs] vst = case ed.Editor.genUI (dp ++ [i]) v vst of
-		(Error e,vst) = (Error e,vst)
-		(Ok (ui,m),vst) = case genUIAll (i + 1) eds dp vs vst of
+	genUIAll viewMode i [ed:eds] dp [v:vs] vst
+		= case ed.Editor.genUI (dp ++ [i]) (if viewMode View Update $ v) vst of
 			(Error e,vst) = (Error e,vst)
-			(Ok (uis,ms),vst) = (Ok ([ui:uis],[m:ms]),vst)
+			(Ok (ui,st),vst) = case genUIAll viewMode (i + 1) eds dp vs vst of
+				(Error e,vst) = (Error e,vst)
+				(Ok (uis, sts),vst) = (Ok ([ui:uis],[st: sts]),vst)
+	genUIAll viewMode _ _ _ _ vst = (Ok ([], []), vst)
 
-	onEdit dp ([i:tp],e) val (CompoundMask masks) vst
-		| i < 0 || i >= length val || i >= length masks  = (Error "Event route out of range",val,vst)
-		= case (editors !! i).Editor.onEdit (dp ++ [i]) (tp,e) (val !! i) (masks !! i) vst of
-			(Error e,ival,vst) = (Error e,val,vst)
-			(Ok (NoChange,imask),ival,vst)
-				= (Ok (NoChange,CompoundMask (updateAt i imask masks)),updateAt i ival val,vst)
-			(Ok (change,imask),ival,vst)
-				= (Ok (ChangeUI [] [(i,ChangeChild change)],CompoundMask (updateAt i imask masks)),updateAt i ival val, vst)
+	onEdit dp ([i:tp],e) viewMode childSts vst
+		| i < 0 || i >= length childSts  = (Error "Event route out of range",vst)
+		= case (editors !! i).Editor.onEdit (dp ++ [i]) (tp,e) (childSts !! i) vst of
+			(Error e,vst) = (Error e,vst)
+			(Ok (NoChange,ist),vst)
+				= (Ok (NoChange,viewMode,updateAt i ist childSts),vst)
+			(Ok (change,ist),vst)
+				= (Ok (ChangeUI [] [(i,ChangeChild change)],viewMode,updateAt i ist childSts), vst)
 
-	onRefresh dp new old (CompoundMask masks) vst = case onRefreshAll 0 editors dp new old masks vst of
-		(Error e,val,vst) = (Error e,val,vst)
-		(Ok ([],masks),val,vst) = (Ok (NoChange,CompoundMask masks),val,vst)
-		(Ok (changes,masks),val,vst) = (Ok (ChangeUI [] changes,CompoundMask masks),new,vst)
+	onRefresh dp new viewMode childSts vst = case onRefreshAll 0 editors dp new childSts vst of
+		(Error e, vst)              = (Error e, vst)
+		(Ok ([],childSts),vst)      = (Ok (NoChange,viewMode,childSts),vst)
+		(Ok (changes,childSts),vst) = (Ok (ChangeUI [] changes,viewMode,childSts),vst)
+	where
+		onRefreshAll i [ed:eds] dp [n:ns] [st:sts] vst
+			 = case ed.Editor.onRefresh (dp ++ [i]) n st vst of
+				(Error e,vst) = (Error e,vst)
+				(Ok (c,st),vst) = case onRefreshAll (i + 1) eds dp ns sts vst of
+					(Error e,vst)     = (Error e,vst)
+					(Ok (cs,sts),vst) = (Ok ([(i,ChangeChild c):cs],[st:sts]),vst)
 
-	onRefreshAll i [ed:eds] dp [n:ns] [o:os] [m:ms] vst
-		 = case ed.Editor.onRefresh (dp ++ [i]) n o m vst of
-			(Error e,v,vst) = (Error e,[],vst)
-			(Ok (c,m),v,vst) = case onRefreshAll (i + 1) eds dp ns os ms vst of
-				(Error e,vs,vst) = (Error e,vs,vst)
-				(Ok (cs,ms),vs,vst) = (Ok ([(i,ChangeChild c):cs],[m:ms]),[v:vs],vst)
+		//There are new elements in the list
+		onRefreshAll i editors dp ns [] vst
+			= case genUIAll viewMode i editors dp ns vst of
+				(Error e,vst)     = (Error e,vst)
+				(Ok (us,sts),vst) = (Ok ([(n,InsertChild u) \\ u <- us & n <- [i..]],sts),vst)
 
-	onRefreshAll i [ed:eds] dp ns [] _ vst //There are new elements in the list 
-		= case genUIAll i eds dp ns vst of
-			(Error e,vst)    = (Error e,[],vst)
-			(Ok (us,ms),vst) = (Ok ([(n,InsertChild u) \\ u <- us & n <- [i..]],ms),ns,vst)
+		//Elements have been removed from the list
+		onRefreshAll i _ dp [] sts vst
+			= (Ok (repeatn (length sts) (i,RemoveChild),[]),vst)
 
-	onRefreshAll i eds dp [] os ms vst //Elements have been removed from the list
-		= (Ok (repeatn (length os) (i,RemoveChild),[]),[],vst) 
+		//There are not enough editors
+		onRefreshAll _ _ _ _ _ vst = (Ok ([], []), vst)
+
+	valueFromState _ childSts = valuesFromState childSts editors []
+	where
+		valuesFromState [st: sts] [editor: editors] acc = case editor.Editor.valueFromState st of
+			Just val = valuesFromState sts editors [val: acc]
+			_        = Nothing
+		valuesFromState _ _ acc = Just $ reverse acc
 
 group1 :: !UIType !(Editor a) -> Editor a
-group1 type {Editor |genUI=genUI_a,onEdit=onEdit_a,onRefresh=onRefresh_a}
-	= {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
+group1 type {Editor |genUI=genUI_a,onEdit=onEdit_a,onRefresh=onRefresh_a,valueFromState=valueFromState_a}
+	= compoundEditorToEditor
+		{CompoundEditor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh,valueFromState=valueFromState}
 where
-	genUI dp val vst
-		= case genUI_a (dp ++ [0]) val vst of
-			(Error e,vst) = (Error e,vst)
-			(Ok (ui1,mask1),vst) = (Ok (UI type emptyAttr [ui1], CompoundMask [mask1]),vst)
+	genUI dp mode vst = case genUI_a (dp ++ [0]) (mapEditMode id mode) vst of
+		(Error e,vst)        = (Error e,vst)
+		(Ok (ui1,mask1),vst) = (Ok (UI type emptyAttr [ui1], (), [mask1]),vst)
 
-	onEdit dp ([0:tp],e) val (CompoundMask [m1]) vst = case onEdit_a (dp ++ [0]) (tp,e) val m1 vst of
-		(Error e,val,vst) = (Error e,val,vst)
-		(Ok (NoChange,m1),val,vst) = (Ok (NoChange,CompoundMask [m1]),val,vst)
-		(Ok (c1,m1),val,vst) = (Ok (ChangeUI [] [(0,ChangeChild c1)],CompoundMask [m1]),val,vst)
-	onEdit _ _ val mask vst = (Error "Event route out of range",val,vst)	
+	onEdit dp ([0:tp],e) _ [m1] vst = case onEdit_a (dp ++ [0]) (tp,e) m1 vst of
+		(Error e,vst)          = (Error e,vst)
+		(Ok (NoChange,m1),vst) = (Ok (NoChange, (), [m1]),vst)
+		(Ok (c1,m1),vst)       = (Ok (ChangeUI [] [(0,ChangeChild c1)], (), [m1]),vst)
+	onEdit _ _ _ _ vst = (Error "Event route out of range",vst)
 
-	onRefresh dp old new (CompoundMask [m1]) vst 
-		= case onRefresh_a (dp ++ [0]) old new m1 vst of
-			(Error e,val,vst) = (Error e,val,vst)
-			(Ok (NoChange,m1),val,vst) = (Ok (NoChange,CompoundMask [m1]),val,vst)
-			(Ok (c1,m1),val,vst) = (Ok (ChangeUI [] [(0,ChangeChild c1)],CompoundMask [m1]),val,vst)
+	onRefresh dp new _ [m1] vst = case onRefresh_a (dp ++ [0]) new m1 vst of
+		(Error e,vst)          = (Error e,vst)
+		(Ok (NoChange,m1),vst) = (Ok (NoChange, (), [m1]),vst)
+		(Ok (c1,m1),vst)       = (Ok (ChangeUI [] [(0,ChangeChild c1)], (), [m1]),vst)
+
+	valueFromState _ [m1] = case valueFromState_a m1 of
+		Just val1 = Just val1
+		_         = Nothing
+	valueFromState _ _ = Nothing
 
 group2 :: !UIType !(Editor a) !(Editor b) -> Editor (a,b)
-group2 type {Editor |genUI=genUI_a,onEdit=onEdit_a,onRefresh=onRefresh_a}
-            {Editor |genUI=genUI_b,onEdit=onEdit_b,onRefresh=onRefresh_b}
-	= {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
+group2 type {Editor |genUI=genUI_a,onEdit=onEdit_a,onRefresh=onRefresh_a,valueFromState=valueFromState_a}
+            {Editor |genUI=genUI_b,onEdit=onEdit_b,onRefresh=onRefresh_b,valueFromState=valueFromState_b}
+	= compoundEditorToEditor
+		{CompoundEditor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh,valueFromState=valueFromState}
 where
-	genUI dp (val1,val2) vst
-		= case genUI_a (dp ++ [0]) val1 vst of
-			(Error e,vst) = (Error e,vst)
-			(Ok (ui1,m1),vst) = case genUI_b (dp ++ [1]) val2 vst of
-				(Error e,vst) = (Error e,vst)
-				(Ok (ui2,m2),vst) = (Ok (UI type emptyAttr [ui1,ui2], CompoundMask [m1,m2]),vst)
+	genUI dp mode vst = case genUI_a (dp ++ [0]) (mapEditMode fst mode) vst of
+		(Error e,vst) = (Error e,vst)
+		(Ok (ui1,m1),vst) = case genUI_b (dp ++ [1]) (mapEditMode snd mode) vst of
+			(Error e,vst)     = (Error e,vst)
+			(Ok (ui2,m2),vst) = (Ok (UI type emptyAttr [ui1,ui2], (), [m1,m2]),vst)
 
-	onEdit dp ([0:tp],e) (val1,val2) (CompoundMask [m1,m2]) vst = case onEdit_a (dp ++ [0]) (tp,e) val1 m1 vst of
-		(Error e,val1,vst) = (Error e,(val1,val2),vst)
-		(Ok (NoChange,m1),val1,vst) = (Ok (NoChange,CompoundMask [m1,m2]),(val1,val2),vst)
-		(Ok (c1,m1),val1,vst) = (Ok (ChangeUI [] [(0,ChangeChild c1)],CompoundMask [m1,m2]),(val1,val2),vst)
+	onEdit dp ([0:tp],e) _ [m1,m2] vst = case onEdit_a (dp ++ [0]) (tp,e) m1 vst of
+		(Error e,vst)          = (Error e,vst)
+		(Ok (NoChange,m1),vst) = (Ok (NoChange, (), [m1,m2]),vst)
+		(Ok (c1,m1),vst)       = (Ok (ChangeUI [] [(0,ChangeChild c1)], (), [m1,m2]),vst)
 
-	onEdit dp ([1:tp],e) (val1,val2) (CompoundMask [m1,m2]) vst = case onEdit_b (dp ++ [1]) (tp,e) val2 m2 vst of
-		(Error e,val2,vst) = (Error e,(val1,val2),vst)
-		(Ok (NoChange,m2),val2,vst) = (Ok (NoChange,CompoundMask [m1,m2]),(val1,val2),vst)
-		(Ok (c2,m2),val2,vst) = (Ok (ChangeUI [] [(1,ChangeChild c2)],CompoundMask [m1,m2]),(val1,val2),vst)
-	onEdit _ _ val mask vst = (Error "Event route out of range",val,vst)	
+	onEdit dp ([1:tp],e) _ [m1,m2] vst = case onEdit_b (dp ++ [1]) (tp,e) m2 vst of
+		(Error e,vst)          = (Error e,vst)
+		(Ok (NoChange,m2),vst) = (Ok (NoChange, (), [m1,m2]),vst)
+		(Ok (c2,m2),vst)       = (Ok (ChangeUI [] [(1,ChangeChild c2)], (), [m1,m2]),vst)
+	onEdit _ _ _ _ vst         = (Error "Event route out of range",vst)
 	
-	onRefresh dp (n1,n2) (o1,o2) (CompoundMask [m1,m2]) vst 
-		= case onRefresh_a (dp ++ [0]) n1 o1 m1 vst of
-			(Error e,v1,vst) = (Error e,(v1,o2),vst)
-			(Ok (c1,m1),v1,vst) = case onRefresh_b (dp ++ [1]) n2 o2 m2 vst of
-				(Error e,v2,vst) = (Error e,(v1,v2),vst)
-				(Ok (c2,m2),v2,vst) 
+	onRefresh dp (n1,n2) _ [m1,m2] vst
+		= case onRefresh_a (dp ++ [0]) n1 m1 vst of
+			(Error e,vst) = (Error e,vst)
+			(Ok (c1,m1),vst) = case onRefresh_b (dp ++ [1]) n2 m2 vst of
+				(Error e,vst) = (Error e,vst)
+				(Ok (c2,m2),vst)
 					# changes = [(0,ChangeChild c1),(1,ChangeChild c2)]
 					# change = case changes of
 						[] = NoChange
 						_  = ChangeUI [] changes
-					= (Ok (change,CompoundMask [m1,m2]),(v1,v2),vst)
+					= (Ok (change, (), [m1,m2]),vst)
+
+	valueFromState _ [m1, m2] = case (valueFromState_a m1, valueFromState_b m2) of
+		(Just val1, Just val2) = Just (val1, val2)
+		_                      = Nothing
 
 group3 :: !UIType !(Editor a) !(Editor b) !(Editor c) -> Editor (a,b,c)
-group3 type {Editor |genUI=genUI_a,onEdit=onEdit_a,onRefresh=onRefresh_a}
-            {Editor |genUI=genUI_b,onEdit=onEdit_b,onRefresh=onRefresh_b}
-            {Editor |genUI=genUI_c,onEdit=onEdit_c,onRefresh=onRefresh_c}
-	= {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
+group3 type {Editor |genUI=genUI_a,onEdit=onEdit_a,onRefresh=onRefresh_a,valueFromState=valueFromState_a}
+            {Editor |genUI=genUI_b,onEdit=onEdit_b,onRefresh=onRefresh_b,valueFromState=valueFromState_b}
+            {Editor |genUI=genUI_c,onEdit=onEdit_c,onRefresh=onRefresh_c,valueFromState=valueFromState_c}
+	= compoundEditorToEditor
+		{CompoundEditor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh,valueFromState=valueFromState}
 where
-	genUI dp (val1,val2,val3) vst
-		= case genUI_a (dp ++ [0]) val1 vst of
+	genUI dp mode vst = case genUI_a (dp ++ [0]) (mapEditMode fst3 mode) vst of
+		(Error e,vst) = (Error e,vst)
+		(Ok (ui1,m1),vst) = case genUI_b (dp ++ [1]) (mapEditMode snd3 mode) vst of
 			(Error e,vst) = (Error e,vst)
-			(Ok (ui1,m1),vst) = case genUI_b (dp ++ [1]) val2 vst of
+			(Ok (ui2,m2),vst) = case genUI_c (dp ++ [2]) (mapEditMode thd3 mode) vst of
 				(Error e,vst) = (Error e,vst)
-				(Ok (ui2,m2),vst) = case genUI_c (dp ++ [2]) val3 vst of
-					(Error e,vst) = (Error e,vst)
-					(Ok (ui3,m3),vst) =(Ok (UI type emptyAttr [ui1,ui2,ui3], CompoundMask [m1,m2,m3]),vst)
+				(Ok (ui3,m3),vst) =(Ok (UI type emptyAttr [ui1,ui2,ui3], (), [m1,m2,m3]),vst)
 
-	onEdit dp ([0:tp],e) (val1,val2,val3) (CompoundMask [m1,m2,m3]) vst = case onEdit_a (dp ++ [0]) (tp,e) val1 m1 vst of
-		(Error e,val1,vst) = (Error e,(val1,val2,val3),vst)
-		(Ok (NoChange,m1),val1,vst) = (Ok (NoChange,CompoundMask [m1,m2,m3]),(val1,val2,val3),vst)
-		(Ok (c1,m1),val1,vst) = (Ok (ChangeUI [] [(0,ChangeChild c1)],CompoundMask [m1,m2,m3]),(val1,val2,val3),vst)
+	onEdit dp ([0:tp],e) _ [m1,m2,m3] vst = case onEdit_a (dp ++ [0]) (tp,e) m1 vst of
+		(Error e,vst)          = (Error e,vst)
+		(Ok (NoChange,m1),vst) = (Ok (NoChange, (), [m1,m2,m3]),vst)
+		(Ok (c1,m1),vst)       = (Ok (ChangeUI [] [(0,ChangeChild c1)], (), [m1,m2,m3]),vst)
 
-	onEdit dp ([1:tp],e) (val1,val2,val3) (CompoundMask [m1,m2,m3]) vst = case onEdit_b (dp ++ [1]) (tp,e) val2 m2 vst of
-		(Error e,val2,vst) = (Error e,(val1,val2,val3),vst)
-		(Ok (NoChange,m2),val2,vst) = (Ok (NoChange,CompoundMask [m1,m2,m3]),(val1,val2,val3),vst)
-		(Ok (c2,m2),val2,vst) = (Ok (ChangeUI [] [(1,ChangeChild c2)],CompoundMask [m1,m2,m3]),(val1,val2,val3),vst)
+	onEdit dp ([1:tp],e) _ [m1,m2,m3] vst = case onEdit_b (dp ++ [1]) (tp,e) m2 vst of
+		(Error e,vst)          = (Error e,vst)
+		(Ok (NoChange,m2),vst) = (Ok (NoChange, (), [m1,m2,m3]),vst)
+		(Ok (c2,m2),vst)       = (Ok (ChangeUI [] [(1,ChangeChild c2)], (), [m1,m2,m3]),vst)
 
-	onEdit dp ([2:tp],e) (val1,val2,val3) (CompoundMask [m1,m2,m3]) vst = case onEdit_c (dp ++ [2]) (tp,e) val3 m3 vst of
-		(Error e,val3,vst) = (Error e,(val1,val2,val3),vst)
-		(Ok (NoChange,m3),val3,vst) = (Ok (NoChange,CompoundMask [m1,m2,m3]),(val1,val2,val3),vst)
-		(Ok (c3,m3),val3,vst) = (Ok (ChangeUI [] [(2,ChangeChild c3)],CompoundMask [m1,m2,m3]),(val1,val2,val3),vst)
+	onEdit dp ([2:tp],e) _ [m1,m2,m3] vst = case onEdit_c (dp ++ [2]) (tp,e) m3 vst of
+		(Error e,vst)          = (Error e,vst)
+		(Ok (NoChange,m3),vst) = (Ok (NoChange, (), [m1,m2,m3]),vst)
+		(Ok (c3,m3),vst)       = (Ok (ChangeUI [] [(2,ChangeChild c3)], (), [m1,m2,m3]),vst)
 
-	onEdit _ _ val mask vst = (Error "Event route out of range",val,vst)	
+	onEdit _ _ _ _ vst = (Error "Event route out of range",vst)
 	
-	onRefresh dp (n1,n2,n3) (o1,o2,o3) (CompoundMask [m1,m2,m3]) vst 
-		= case onRefresh_a (dp ++ [0]) n1 o1 m1 vst of
-			(Error e,v1,vst) = (Error e,(v1,o2,o3),vst)
-			(Ok (c1,m1),v1,vst) = case onRefresh_b (dp ++ [1]) n2 o2 m2 vst of
-				(Error e,v2,vst) = (Error e,(v1,v2,o3),vst)
-				(Ok (c2,m2),v2,vst) = case onRefresh_c (dp ++ [2]) n3 o3 m3 vst of
-					(Error e,v3,vst) = (Error e,(v1,v2,v3),vst)
-					(Ok (c3,m3),v3,vst)
-						# changes = [(0,ChangeChild c1),(1,ChangeChild c2),(2,ChangeChild c3)]
+	onRefresh dp (n1,n2,n3) _ [m1,m2,m3] vst = case onRefresh_a (dp ++ [0]) n1 m1 vst of
+		(Error e,vst) = (Error e,vst)
+		(Ok (c1,m1),vst) = case onRefresh_b (dp ++ [1]) n2 m2 vst of
+			(Error e,vst) = (Error e,vst)
+			(Ok (c2,m2),vst) = case onRefresh_c (dp ++ [2]) n3 m3 vst of
+				(Error e,vst) = (Error e,vst)
+				(Ok (c3,m3),vst)
+					# changes = [(0,ChangeChild c1),(1,ChangeChild c2),(2,ChangeChild c3)]
+					# change = case changes of
+						[] = NoChange
+						_  = ChangeUI [] changes
+					= (Ok (change, (), [m1,m2,m3]),vst)
+
+	valueFromState _ [m1, m2, m3] = case (valueFromState_a m1, valueFromState_b m2, valueFromState_c m3) of
+		(Just val1, Just val2, Just val3) = Just (val1, val2, val3)
+		_                                 = Nothing
+
+group4 :: !UIType !(Editor a) !(Editor b) !(Editor c) !(Editor d) -> Editor (a,b,c,d)
+group4 type {Editor |genUI=genUI_a,onEdit=onEdit_a,onRefresh=onRefresh_a,valueFromState=valueFromState_a}
+            {Editor |genUI=genUI_b,onEdit=onEdit_b,onRefresh=onRefresh_b,valueFromState=valueFromState_b}
+            {Editor |genUI=genUI_c,onEdit=onEdit_c,onRefresh=onRefresh_c,valueFromState=valueFromState_c}
+            {Editor |genUI=genUI_d,onEdit=onEdit_d,onRefresh=onRefresh_d,valueFromState=valueFromState_d}
+	= compoundEditorToEditor
+		{CompoundEditor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh,valueFromState=valueFromState}
+where
+	genUI dp mode vst = case genUI_a (dp ++ [0]) (mapEditMode (\(a, _, _, _) -> a) mode) vst of
+		(Error e,vst) = (Error e,vst)
+		(Ok (ui1,m1),vst) = case genUI_b (dp ++ [1]) (mapEditMode (\(_, b, _, _) -> b) mode) vst of
+			(Error e,vst) = (Error e,vst)
+			(Ok (ui2,m2),vst) = case genUI_c (dp ++ [2]) (mapEditMode (\(_, _, c, _) -> c) mode) vst of
+				(Error e,vst) = (Error e,vst)
+				(Ok (ui3,m3),vst) = case genUI_d (dp ++ [3]) (mapEditMode (\(_, _, _, d) -> d) mode) vst of
+					(Error e,vst) = (Error e,vst)
+					(Ok (ui4,m4),vst) = (Ok (UI type emptyAttr [ui1,ui2,ui3,ui4], (), [m1,m2,m3,m4]),vst)
+
+	onEdit dp ([0:tp],e) _ [m1,m2,m3,m4] vst = case onEdit_a (dp ++ [0]) (tp,e) m1 vst of
+		(Error e,vst)          = (Error e,vst)
+		(Ok (NoChange,m1),vst) = (Ok (NoChange, (), [m1,m2,m3,m4]),vst)
+		(Ok (c1,m1),vst)       = (Ok (ChangeUI [] [(0,ChangeChild c1)], (), [m1,m2,m3,m4]),vst)
+
+	onEdit dp ([1:tp],e) _ [m1,m2,m3,m4] vst = case onEdit_b (dp ++ [1]) (tp,e) m2 vst of
+		(Error e,vst)          = (Error e,vst)
+		(Ok (NoChange,m2),vst) = (Ok (NoChange, (), [m1,m2,m3,m4]),vst)
+		(Ok (c2,m2),vst)       = (Ok (ChangeUI [] [(1,ChangeChild c2)], (), [m1,m2,m3,m4]),vst)
+
+	onEdit dp ([2:tp],e) _ [m1,m2,m3,m4] vst = case onEdit_c (dp ++ [2]) (tp,e) m3 vst of
+		(Error e,vst)          = (Error e,vst)
+		(Ok (NoChange,m3),vst) = (Ok (NoChange, (), [m1,m2,m3,m4]),vst)
+		(Ok (c3,m3),vst)       = (Ok (ChangeUI [] [(2,ChangeChild c3)], (), [m1,m2,m3,m4]),vst)
+
+	onEdit dp ([3:tp],e) _ [m1,m2,m3,m4] vst = case onEdit_d (dp ++ [3]) (tp,e) m4 vst of
+		(Error e,vst)          = (Error e,vst)
+		(Ok (NoChange,m4),vst) = (Ok (NoChange, (), [m1,m2,m3,m4]),vst)
+		(Ok (c4,m4),vst)       = (Ok (ChangeUI [] [(3,ChangeChild c4)], (), [m1,m2,m3,m4]),vst)
+
+	onEdit _ _ _ _ vst = (Error "Event route out of range",vst)
+
+	onRefresh dp (n1,n2,n3,n4) _ [m1,m2,m3,m4] vst = case onRefresh_a (dp ++ [0]) n1 m1 vst of
+		(Error e,vst) = (Error e,vst)
+		(Ok (c1,m1),vst) = case onRefresh_b (dp ++ [1]) n2 m2 vst of
+			(Error e,vst) = (Error e,vst)
+			(Ok (c2,m2),vst) = case onRefresh_c (dp ++ [2]) n3 m3 vst of
+				(Error e,vst) = (Error e,vst)
+				(Ok (c3,m3),vst) = case onRefresh_d (dp ++ [3]) n4 m4 vst of
+					(Error e,vst) = (Error e,vst)
+					(Ok (c4,m4),vst)
+						# changes = [(0,ChangeChild c1),(1,ChangeChild c2),(2,ChangeChild c3),(3,ChangeChild c4)]
 						# change = case changes of
 							[] = NoChange
 							_  = ChangeUI [] changes
-						= (Ok (change,CompoundMask [m1,m2,m3]),(v1,v2,v3),vst)
+						= (Ok (change, (), [m1,m2,m3,m4]),vst)
 
-group4 :: !UIType !(Editor a) !(Editor b) !(Editor c) !(Editor d) -> Editor (a,b,c,d)
-group4 type {Editor |genUI=genUI_a,onEdit=onEdit_a,onRefresh=onRefresh_a}
-            {Editor |genUI=genUI_b,onEdit=onEdit_b,onRefresh=onRefresh_b}
-            {Editor |genUI=genUI_c,onEdit=onEdit_c,onRefresh=onRefresh_c}
-            {Editor |genUI=genUI_d,onEdit=onEdit_d,onRefresh=onRefresh_d}
-	= {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
+	valueFromState _ [m1, m2, m3, m4] =
+		case (valueFromState_a m1, valueFromState_b m2, valueFromState_c m3, valueFromState_d m4) of
+			(Just val1, Just val2, Just val3, Just val4) = Just (val1, val2, val3, val4)
+			_                      = Nothing
+
+group5 :: !UIType !(Editor a) !(Editor b) !(Editor c) !(Editor d) !(Editor e) -> Editor (a,b,c,d,e)
+group5 type {Editor |genUI=genUI_a,onEdit=onEdit_a,onRefresh=onRefresh_a,valueFromState=valueFromState_a}
+            {Editor |genUI=genUI_b,onEdit=onEdit_b,onRefresh=onRefresh_b,valueFromState=valueFromState_b}
+            {Editor |genUI=genUI_c,onEdit=onEdit_c,onRefresh=onRefresh_c,valueFromState=valueFromState_c}
+            {Editor |genUI=genUI_d,onEdit=onEdit_d,onRefresh=onRefresh_d,valueFromState=valueFromState_d}
+            {Editor |genUI=genUI_e,onEdit=onEdit_e,onRefresh=onRefresh_e,valueFromState=valueFromState_e}
+	= compoundEditorToEditor
+		{CompoundEditor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh,valueFromState=valueFromState}
 where
-	genUI dp (val1,val2,val3,val4) vst
-		= case genUI_a (dp ++ [0]) val1 vst of
+	genUI dp mode vst = case genUI_a (dp ++ [0]) (mapEditMode (\(a, _, _, _, _) -> a) mode) vst of
+		(Error e,vst) = (Error e,vst)
+		(Ok (ui1,m1),vst) = case genUI_b (dp ++ [1]) (mapEditMode (\(_, b, _, _, _) -> b) mode) vst of
 			(Error e,vst) = (Error e,vst)
-			(Ok (ui1,m1),vst) = case genUI_b (dp ++ [1]) val2 vst of
+			(Ok (ui2,m2),vst) = case genUI_c (dp ++ [2]) (mapEditMode (\(_, _, c, _, _) -> c) mode) vst of
 				(Error e,vst) = (Error e,vst)
-				(Ok (ui2,m2),vst) = case genUI_c (dp ++ [2]) val3 vst of
+				(Ok (ui3,m3),vst) = case genUI_d (dp ++ [3]) (mapEditMode (\(_, _, _, d, _) -> d) mode) vst of
 					(Error e,vst) = (Error e,vst)
-					(Ok (ui3,m3),vst) = case genUI_d (dp ++ [3]) val4 vst of
+					(Ok (ui4,m4),vst) = case genUI_e (dp ++ [4]) (mapEditMode (\(_, _, _, _, e) -> e) mode) vst of
 						(Error e,vst) = (Error e,vst)
-						(Ok (ui4,m4),vst) = (Ok (UI type emptyAttr [ui1,ui2,ui3,ui4], CompoundMask [m1,m2,m3,m4]),vst)
+						(Ok (ui5,m5),vst) = (Ok (UI type emptyAttr [ui1,ui2,ui3,ui4,ui5], (), [m1,m2,m3,m4,m5]),vst)
 
-	onEdit dp ([0:tp],e) (val1,val2,val3,val4) (CompoundMask [m1,m2,m3,m4]) vst = case onEdit_a (dp ++ [0]) (tp,e) val1 m1 vst of
-		(Error e,val1,vst) = (Error e,(val1,val2,val3,val4),vst)
-		(Ok (NoChange,m1),val1,vst) = (Ok (NoChange,CompoundMask [m1,m2,m3,m4]),(val1,val2,val3,val4),vst)
-		(Ok (c1,m1),val1,vst) = (Ok (ChangeUI [] [(0,ChangeChild c1)],CompoundMask [m1,m2,m3,m4]),(val1,val2,val3,val4),vst)
+	onEdit dp ([0:tp],e) _ [m1,m2,m3,m4,m5] vst = case onEdit_a (dp ++ [0]) (tp,e) m1 vst of
+		(Error e,vst)          = (Error e,vst)
+		(Ok (NoChange,m1),vst) = (Ok (NoChange, (), [m1,m2,m3,m4,m5]),vst)
+		(Ok (c1,m1),vst)       = (Ok (ChangeUI [] [(0,ChangeChild c1)], (), [m1,m2,m3,m4,m5]),vst)
 
-	onEdit dp ([1:tp],e) (val1,val2,val3,val4) (CompoundMask [m1,m2,m3,m4]) vst = case onEdit_b (dp ++ [1]) (tp,e) val2 m2 vst of
-		(Error e,val2,vst) = (Error e,(val1,val2,val3,val4),vst)
-		(Ok (NoChange,m2),val2,vst) = (Ok (NoChange,CompoundMask [m1,m2,m3,m4]),(val1,val2,val3,val4),vst)
-		(Ok (c2,m2),val2,vst) = (Ok (ChangeUI [] [(1,ChangeChild c2)],CompoundMask [m1,m2,m3,m4]),(val1,val2,val3,val4),vst)
+	onEdit dp ([1:tp],e) _ [m1,m2,m3,m4,m5] vst = case onEdit_b (dp ++ [1]) (tp,e) m2 vst of
+		(Error e,vst)          = (Error e,vst)
+		(Ok (NoChange,m2),vst) = (Ok (NoChange, (), [m1,m2,m3,m4,m5]),vst)
+		(Ok (c2,m2),vst)       = (Ok (ChangeUI [] [(1,ChangeChild c2)], (), [m1,m2,m3,m4,m5]),vst)
 
-	onEdit dp ([2:tp],e) (val1,val2,val3,val4) (CompoundMask [m1,m2,m3,m4]) vst = case onEdit_c (dp ++ [2]) (tp,e) val3 m3 vst of
-		(Error e,val3,vst) = (Error e,(val1,val2,val3,val4),vst)
-		(Ok (NoChange,m3),val3,vst) = (Ok (NoChange,CompoundMask [m1,m2,m3,m4]),(val1,val2,val3,val4),vst)
-		(Ok (c3,m3),val3,vst) = (Ok (ChangeUI [] [(2,ChangeChild c3)],CompoundMask [m1,m2,m3,m4]),(val1,val2,val3,val4),vst)
+	onEdit dp ([2:tp],e) _ [m1,m2,m3,m4,m5] vst = case onEdit_c (dp ++ [2]) (tp,e) m3 vst of
+		(Error e,vst)          = (Error e,vst)
+		(Ok (NoChange,m3),vst) = (Ok (NoChange, (), [m1,m2,m3,m4,m5]),vst)
+		(Ok (c3,m3),vst)       = (Ok (ChangeUI [] [(2,ChangeChild c3)], (), [m1,m2,m3,m4,m5]),vst)
 
-	onEdit dp ([3:tp],e) (val1,val2,val3,val4) (CompoundMask [m1,m2,m3,m4]) vst = case onEdit_d (dp ++ [3]) (tp,e) val4 m4 vst of
-		(Error e,val4,vst) = (Error e,(val1,val2,val3,val4),vst)
-		(Ok (NoChange,m4),val4,vst) = (Ok (NoChange,CompoundMask [m1,m2,m3,m4]),(val1,val2,val3,val4),vst)
-		(Ok (c4,m4),val4,vst) = (Ok (ChangeUI [] [(3,ChangeChild c4)],CompoundMask [m1,m2,m3,m4]),(val1,val2,val3,val4),vst)
+	onEdit dp ([3:tp],e) _ [m1,m2,m3,m4,m5] vst = case onEdit_d (dp ++ [3]) (tp,e) m4 vst of
+		(Error e,vst)          = (Error e,vst)
+		(Ok (NoChange,m4),vst) = (Ok (NoChange, (), [m1,m2,m3,m4,m5]),vst)
+		(Ok (c4,m4),vst)       = (Ok (ChangeUI [] [(3,ChangeChild c4)], (), [m1,m2,m3,m4,m5]),vst)
 
-	onEdit _ _ val mask vst = (Error "Event route out of range",val,vst)	
+	onEdit dp ([4:tp],e) _ [m1,m2,m3,m4,m5] vst = case onEdit_e (dp ++ [4]) (tp,e) m5 vst of
+		(Error e,vst)          = (Error e,vst)
+		(Ok (NoChange,m5),vst) = (Ok (NoChange, (), [m1,m2,m3,m4,m5]),vst)
+		(Ok (c5,m5),vst)       = (Ok (ChangeUI [] [(4,ChangeChild c5)], (), [m1,m2,m3,m4,m5]),vst)
 
-	onRefresh dp (n1,n2,n3,n4) (o1,o2,o3,o4) (CompoundMask [m1,m2,m3,m4]) vst 
-		= case onRefresh_a (dp ++ [0]) n1 o1 m1 vst of
-			(Error e,v1,vst) = (Error e,(v1,o2,o3,o4),vst)
-			(Ok (c1,m1),v1,vst) = case onRefresh_b (dp ++ [1]) n2 o2 m2 vst of
-				(Error e,v2,vst) = (Error e,(v1,v2,o3,o4),vst)
-				(Ok (c2,m2),v2,vst) = case onRefresh_c (dp ++ [2]) n3 o3 m3 vst of
-					(Error e,v3,vst) = (Error e,(v1,v2,v3,o4),vst)
-					(Ok (c3,m3),v3,vst) = case onRefresh_d (dp ++ [3]) n4 o4 m4 vst of
-						(Error e,v4,vst) = (Error e,(v1,v2,v3,v4),vst)
-						(Ok (c4,m4),v4,vst)
-							# changes = [(0,ChangeChild c1),(1,ChangeChild c2),(2,ChangeChild c3),(3,ChangeChild c4)]
+	onEdit _ _ _ _ vst = (Error "Event route out of range",vst)
+
+	onRefresh dp (n1,n2,n3,n4,n5) _ [m1,m2,m3,m4,m5] vst = case onRefresh_a (dp ++ [0]) n1 m1 vst of
+		(Error e,vst) = (Error e,vst)
+		(Ok (c1,m1),vst) = case onRefresh_b (dp ++ [1]) n2 m2 vst of
+			(Error e,vst) = (Error e,vst)
+			(Ok (c2,m2),vst) = case onRefresh_c (dp ++ [2]) n3 m3 vst of
+				(Error e,vst) = (Error e,vst)
+				(Ok (c3,m3),vst) = case onRefresh_d (dp ++ [3]) n4 m4 vst of
+					(Error e,vst) = (Error e,vst)
+					(Ok (c4,m4),vst) = case onRefresh_e (dp ++ [4]) n5 m5 vst of
+						(Error e,vst) = (Error e,vst)
+						(Ok (c5,m5),vst)
+							# changes = [(0,ChangeChild c1),(1,ChangeChild c2),(2,ChangeChild c3),(3,ChangeChild c4),(4,ChangeChild c5)]
 							# change = case changes of
 								[] = NoChange
 								_  = ChangeUI [] changes
-							= (Ok (change,CompoundMask [m1,m2,m3,m4]),(v1,v2,v3,v4),vst)
+							= (Ok (change, (), [m1,m2,m3,m4,m5]),vst)
 
-group5 :: !UIType !(Editor a) !(Editor b) !(Editor c) !(Editor d) !(Editor e) -> Editor (a,b,c,d,e)
-group5 type {Editor |genUI=genUI_a,onEdit=onEdit_a,onRefresh=onRefresh_a}
-            {Editor |genUI=genUI_b,onEdit=onEdit_b,onRefresh=onRefresh_b}
-            {Editor |genUI=genUI_c,onEdit=onEdit_c,onRefresh=onRefresh_c}
-            {Editor |genUI=genUI_d,onEdit=onEdit_d,onRefresh=onRefresh_d}
-            {Editor |genUI=genUI_e,onEdit=onEdit_e,onRefresh=onRefresh_e}
-	= {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
+	valueFromState _ [m1, m2, m3, m4, m5] =
+		case (valueFromState_a m1, valueFromState_b m2, valueFromState_c m3, valueFromState_d m4, valueFromState_e m5) of
+			(Just val1, Just val2, Just val3, Just val4, Just val5) = Just (val1, val2, val3, val4, val5)
+			_                                                       = Nothing
+
+groupc :: !UIType !(Editor Int) ![((Maybe a) -> a, Editor a)] -> Editor (Int, a)
+groupc type {Editor|genUI=choiceEditorGenUI,onEdit=choiceEditorOnEdit,onRefresh=choiceEditorOnRefresh,valueFromState=choiceEditorValueFromState} fieldEditors = compoundEditorToEditor
+	{CompoundEditor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh,valueFromState=valueFromState}
 where
-	genUI dp (val1,val2,val3,val4,val5) vst
-		= case genUI_a (dp ++ [0]) val1 vst of
-			(Error e,vst) = (Error e,vst)
-			(Ok (ui1,m1),vst) = case genUI_b (dp ++ [1]) val2 vst of
-				(Error e,vst) = (Error e,vst)
-				(Ok (ui2,m2),vst) = case genUI_c (dp ++ [2]) val3 vst of
-					(Error e,vst) = (Error e,vst)
-					(Ok (ui3,m3),vst) = case genUI_d (dp ++ [3]) val4 vst of
+	genUI dp mode vst = case choiceEditorGenUI (dp ++ [0]) (mapEditMode fst mode) vst of
+		(Error e,vst) = (Error e,vst)
+		(Ok (uiSelector, stSelector),vst) = case choiceEditorValueFromState stSelector of
+			//Only generate the field UI if no selection has been made
+			Nothing = (Ok (UI type emptyAttr [uiSelector], mode =: View _, [stSelector]),vst)
+			Just choice = case fieldEditors !? choice of
+				//Only generate the field UI if selection is out of bounds
+				Nothing = (Ok (UI type emptyAttr [uiSelector], mode =: View _, [stSelector]),vst)
+				Just (selectFun, editor)
+					= case editor.Editor.genUI (dp ++ [1]) (mapEditMode (selectFun o Just o snd) mode) vst of
 						(Error e,vst) = (Error e,vst)
-						(Ok (ui4,m4),vst) = case genUI_e (dp ++ [4]) val5 vst of
-							(Error e,vst) = (Error e,vst)
-							(Ok (ui5,m5),vst) = (Ok (UI type emptyAttr [ui1,ui2,ui3,ui4,ui5], CompoundMask [m1,m2,m3,m4,m5]),vst)
-	onEdit dp ([0:tp],e) (val1,val2,val3,val4,val5) (CompoundMask [m1,m2,m3,m4,m5]) vst = case onEdit_a (dp ++ [0]) (tp,e) val1 m1 vst of
-		(Error e,val1,vst) = (Error e,(val1,val2,val3,val4,val5),vst)
-		(Ok (NoChange,m1),val1,vst) = (Ok (NoChange,CompoundMask [m1,m2,m3,m4,m5]),(val1,val2,val3,val4,val5),vst)
-		(Ok (c1,m1),val1,vst) = (Ok (ChangeUI [] [(0,ChangeChild c1)],CompoundMask [m1,m2,m3,m4,m5]),(val1,val2,val3,val4,val5),vst)
-
-	onEdit dp ([1:tp],e) (val1,val2,val3,val4,val5) (CompoundMask [m1,m2,m3,m4,m5]) vst = case onEdit_b (dp ++ [1]) (tp,e) val2 m2 vst of
-		(Error e,val2,vst) = (Error e,(val1,val2,val3,val4,val5),vst)
-		(Ok (NoChange,m2),val2,vst) = (Ok (NoChange,CompoundMask [m1,m2,m3,m4,m5]),(val1,val2,val3,val4,val5),vst)
-		(Ok (c2,m2),val2,vst) = (Ok (ChangeUI [] [(1,ChangeChild c2)],CompoundMask [m1,m2,m3,m4,m5]),(val1,val2,val3,val4,val5),vst)
-
-	onEdit dp ([2:tp],e) (val1,val2,val3,val4,val5) (CompoundMask [m1,m2,m3,m4,m5]) vst = case onEdit_c (dp ++ [2]) (tp,e) val3 m3 vst of
-		(Error e,val3,vst) = (Error e,(val1,val2,val3,val4,val5),vst)
-		(Ok (NoChange,m3),val3,vst) = (Ok (NoChange,CompoundMask [m1,m2,m3,m4,m5]),(val1,val2,val3,val4,val5),vst)
-		(Ok (c3,m3),val3,vst) = (Ok (ChangeUI [] [(2,ChangeChild c3)],CompoundMask [m1,m2,m3,m4,m5]),(val1,val2,val3,val4,val5),vst)
-
-	onEdit dp ([3:tp],e) (val1,val2,val3,val4,val5) (CompoundMask [m1,m2,m3,m4,m5]) vst = case onEdit_d (dp ++ [3]) (tp,e) val4 m4 vst of
-		(Error e,val4,vst) = (Error e,(val1,val2,val3,val4,val5),vst)
-		(Ok (NoChange,m4),val4,vst) = (Ok (NoChange,CompoundMask [m1,m2,m3,m4,m5]),(val1,val2,val3,val4,val5),vst)
-		(Ok (c4,m4),val4,vst) = (Ok (ChangeUI [] [(3,ChangeChild c4)],CompoundMask [m1,m2,m3,m4,m5]),(val1,val2,val3,val4,val5),vst)
-
-	onEdit dp ([4:tp],e) (val1,val2,val3,val4,val5) (CompoundMask [m1,m2,m3,m4,m5]) vst = case onEdit_e (dp ++ [4]) (tp,e) val5 m5 vst of
-		(Error e,val5,vst) = (Error e,(val1,val2,val3,val4,val5),vst)
-		(Ok (NoChange,m5),val5,vst) = (Ok (NoChange,CompoundMask [m1,m2,m3,m4,m5]),(val1,val2,val3,val4,val5),vst)
-		(Ok (c5,m5),val5,vst) = (Ok (ChangeUI [] [(4,ChangeChild c5)],CompoundMask [m1,m2,m3,m4,m5]),(val1,val2,val3,val4,val5),vst)
-
-	onEdit _ _ val mask vst = (Error "Event route out of range",val,vst)	
-
-	onRefresh dp (n1,n2,n3,n4,n5) (o1,o2,o3,o4,o5) (CompoundMask [m1,m2,m3,m4,m5]) vst 
-		= case onRefresh_a (dp ++ [0]) n1 o1 m1 vst of
-			(Error e,v1,vst) = (Error e,(v1,o2,o3,o4,o5),vst)
-			(Ok (c1,m1),v1,vst) = case onRefresh_b (dp ++ [1]) n2 o2 m2 vst of
-				(Error e,v2,vst) = (Error e,(v1,v2,o3,o4,o5),vst)
-				(Ok (c2,m2),v2,vst) = case onRefresh_c (dp ++ [2]) n3 o3 m3 vst of
-					(Error e,v3,vst) = (Error e,(v1,v2,v3,o4,o5),vst)
-					(Ok (c3,m3),v3,vst) = case onRefresh_d (dp ++ [3]) n4 o4 m4 vst of
-						(Error e,v4,vst) = (Error e,(v1,v2,v3,v4,o5),vst)
-						(Ok (c4,m4),v4,vst) = case onRefresh_e (dp ++ [4]) n5 o5 m5 vst of
-							(Error e,v5,vst) = (Error e,(v1,v2,v3,v4,v5),vst)
-							(Ok (c5,m5),v5,vst)
-								# changes = [(0,ChangeChild c1),(1,ChangeChild c2),(2,ChangeChild c3),(3,ChangeChild c4),(4,ChangeChild c5)]
-								# change = case changes of
-									[] = NoChange
-									_  = ChangeUI [] changes
-								= (Ok (change,CompoundMask [m1,m2,m3,m4,m5]),(v1,v2,v3,v4,v5),vst)
-
-groupc :: !UIType !(Editor Int) ![(a -> a, Editor a)] -> Editor (Int, a)
-groupc type {Editor|genUI=choiceEditorGenUI,onEdit=choiceEditorOnEdit,onRefresh=choiceEditorOnRefresh} fieldEditors
-	= {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
-where
-	genUI dp (choice,val) vst
-		= case choiceEditorGenUI (dp ++ [0]) choice vst of
-			(Error e,vst) = (Error e,vst)
-			(Ok (uiSelector,maskSelector),vst)
-				| (containsInvalidFields maskSelector)  //Only generate the field UI if a selection has been made
-					= (Ok (UI type emptyAttr [uiSelector], CompoundMask [maskSelector]),vst)
-				| otherwise
-					# (selectFun,editor) = fieldEditors !! choice
-					= case editor.Editor.genUI (dp ++ [1]) (selectFun val) vst of 
-						(Error e,vst) = (Error e,vst)
-						(Ok (uiField,maskField),vst)	
-							 = (Ok (UI type emptyAttr [uiSelector,uiField], CompoundMask [maskSelector,maskField]),vst)
+						(Ok (uiField, stField),vst)
+							 = (Ok (UI type emptyAttr [uiSelector, uiField], mode =: View _, [stSelector, stField]),vst)
 	
 	//Handle choice changes 
-	onEdit dp ([0:tp],choiceEdit) (currentChoice,val) mask=:(CompoundMask [maskSelector:optMaskField]) vst
-		= case choiceEditorOnEdit (dp ++ [0]) (tp,choiceEdit) currentChoice maskSelector vst of
-			(Error e,choice,vst) = (Error e,(choice,val),vst)
-			(Ok (choiceUIChange,maskSelector),newChoice,vst)
+	onEdit dp ([0:tp],choiceEdit) viewMode st=:[stateSelector:optStateField] vst
+		= case choiceEditorOnEdit (dp ++ [0]) (tp,choiceEdit) stateSelector vst of
+			(Error e,vst) = (Error e,vst)
+			(Ok (choiceUIChange,stateSelector),vst)
+				# (Just currentChoice, val) = valAndChoiceFromState st
+                # mbNewChoice = choiceEditorValueFromState stateSelector
 				//Based on the effect of the selection change we may need to update the field editor
-				| optMaskField =:[] //Previously no choice was made
-					| containsInvalidFields maskSelector //Still no choice has been made
-						# change = ChangeUI [] [(0,ChangeChild choiceUIChange)]
-						# mask = CompoundMask [maskSelector]
-						= (Ok (change,mask), (newChoice,val), vst)
-					| otherwise //A choice has been made -> create an initial UI
-						# (selectFun,editor) = fieldEditors !! newChoice
+                = case (optStateField, mbNewChoice) of
+					//Previously no choice was made, but now a choice (within the bounds) has been made
+					//-> create an initial UI
+					([], Just newChoice) | newChoice >= 0 && newChoice < length fieldEditors
+						# (selectFun, editor) = fieldEditors !! newChoice
 						# val = selectFun val
-						= case editor.Editor.genUI (dp ++ [1]) val vst of 
-							(Error e,vst) = (Error e,(newChoice,val),vst)
-							(Ok (uiField,maskField),vst)
+						= case editor.Editor.genUI (dp ++ [1]) (if viewMode View Update $ val) vst of
+							(Error e,vst) = (Error e,vst)
+							(Ok (uiField, stateField),vst)
 								# change = ChangeUI [] [(0,ChangeChild choiceUIChange),(1,InsertChild uiField)]
-								# mask = CompoundMask [maskSelector,maskField]
-								= (Ok (change,mask), (newChoice,val), vst)
-				| otherwise // Previously an editor was chosen
-					| containsInvalidFields maskSelector //The selection has been cleared 
-						# change = ChangeUI [] [(0,ChangeChild choiceUIChange),(1,RemoveChild)]
-						# mask = CompoundMask [maskSelector]
-						= (Ok (change,mask), (newChoice,val), vst)
-					| newChoice == currentChoice //The selection stayed the same
+								= (Ok (change,viewMode,[stateSelector, stateField]), vst)
+					//Previously no choice was made and still no choice has been made
+                    ([], _)
 						# change = ChangeUI [] [(0,ChangeChild choiceUIChange)]
-						# mask = CompoundMask [maskSelector:optMaskField]
-						= (Ok (change,mask), (newChoice,val), vst)
-					| otherwise //The selection changed -> replace with an initial UI of the new choice	
-						# (selectFun,editor) = fieldEditors !! newChoice
-						# val = selectFun val
-						= case editor.Editor.genUI (dp ++ [1]) val vst of 
-							(Error e,vst) = (Error e,(newChoice,val),vst)
-							(Ok (uiField,maskField),vst)
-								# change = ChangeUI [] [(0,ChangeChild choiceUIChange),(1,ChangeChild (ReplaceUI uiField))]
-								# mask = CompoundMask [maskSelector,maskField]
-								= (Ok (change,mask), (newChoice,val), vst)
+						= (Ok (change,viewMode,[stateSelector]), vst)
+					//A new choice (within the bounds) has been made
+					(_, Just newChoice) | newChoice >= 0 && newChoice < length fieldEditors
+						| newChoice == currentChoice //The selection stayed the same
+							# change = ChangeUI [] [(0,ChangeChild choiceUIChange)]
+							= (Ok (change,viewMode,[stateSelector:optStateField]), vst)
+						| otherwise //The selection changed -> replace with an initial UI of the new choice
+							# (selectFun,editor) = fieldEditors !! newChoice
+							# val = selectFun val
+							= case editor.Editor.genUI (dp ++ [1]) (if viewMode View Update $ val) vst of
+								(Error e,vst) = (Error e,vst)
+								(Ok (uiField,stateField),vst)
+									# change = ChangeUI [] [(0,ChangeChild choiceUIChange),(1,ChangeChild (ReplaceUI uiField))]
+									= (Ok (change,viewMode,[stateSelector, stateField]), vst)
+					//The selection has been cleared or an invalid choice is made
+					_
+						# change = ChangeUI [] [(0,ChangeChild choiceUIChange),(1,RemoveChild)]
+						= (Ok (change,viewMode,[stateSelector]), vst)
 
 	//Handle edits in the field editor
-	onEdit dp ([1:tp],fieldEdit) (choice,val) mask=:(CompoundMask [maskSelector,maskField]) vst
-		# (_,editor) = fieldEditors !! choice
-		= case editor.Editor.onEdit (dp ++ [1]) (tp,fieldEdit) val maskField vst of 
-			(Error e,val,vst) = (Error e,(choice,val),vst)
-			(Ok (fieldChange,maskField),val,vst) 
-				# change = ChangeUI [] [(1,ChangeChild fieldChange)]
-				# mask = CompoundMask [maskSelector,maskField]
-				= (Ok (change,mask), (choice,val), vst)
+	onEdit dp ([1:tp],fieldEdit) viewMode st=:[stateSelector, stateField] vst = case valAndChoiceFromState st of
+		(Just choice, _) = case fieldEditors !? choice of
+			Just (_, editor) = case editor.Editor.onEdit (dp ++ [1]) (tp,fieldEdit) stateField vst of
+				(Error e,vst) = (Error e,vst)
+				(Ok (fieldChange, stateField),vst)
+					# change = ChangeUI [] [(1,ChangeChild fieldChange)]
+					= (Ok (change,viewMode,[stateSelector, stateField]), vst)
+			Nothing = (Ok (NoChange, viewMode, st), vst)
+		_ = (Ok (NoChange, viewMode, st), vst)
 
-	onEdit _ (tp,e) val mask vst = (Error "Event route out of range",val,vst)	
+	onEdit _ _ _ _ vst = (Error "Event route out of range",vst)
 
-	onRefresh dp (newChoice,newField) (oldChoice,oldField) mask=:(CompoundMask [maskSelector:optMaskField]) vst 
+	onRefresh dp (newChoice, newField) viewMode st=:[stateSelector:optStateField] vst
 		//Update the choice selector
-		= case choiceEditorOnRefresh (dp ++ [0]) newChoice oldChoice maskSelector vst of
-			(Error e,_,vst) = (Error e,(oldChoice,oldField),vst)
-			(Ok (choiceUIChange,maskSelector),newChoice,vst)
-				| optMaskField =:[] //Previously no choice was made
-					| containsInvalidFields maskSelector //Still no choice has been made
+		= case choiceEditorOnRefresh (dp ++ [0]) newChoice stateSelector vst of
+			(Error e,vst) = (Error e,vst)
+			(Ok (choiceUIChange,stateSelector),vst)
+				| optStateField =:[] //Previously no choice was made
+					//Still no choice has been made or choice is out of bounds
+					| isNothing (choiceEditorValueFromState stateSelector) ||
+					  newChoice < 0 || newChoice >= length fieldEditors
 						# change = ChangeUI [] [(0,ChangeChild choiceUIChange)]
-						# mask = CompoundMask [maskSelector]
-						= (Ok (change,mask), (newChoice,newField), vst)
+						= (Ok (change,viewMode,[stateSelector]), vst)
 					| otherwise //A choice has been made -> create an initial UI
-						# (selectFun,editor) = fieldEditors !! newChoice
-						# newField = selectFun newField
-						= case editor.Editor.genUI (dp ++ [1]) newField vst of 
-							(Error e,vst) = (Error e,(oldChoice,oldField),vst)
-							(Ok (uiField,maskField),vst)
+						# (selectFun, editor) = fieldEditors !! newChoice
+						# newField = selectFun $ Just newField
+						= case editor.Editor.genUI (dp ++ [1]) (if viewMode View Update $ newField) vst of
+							(Error e,vst) = (Error e,vst)
+							(Ok (uiField,stateField),vst)
 								# change = ChangeUI [] [(0,ChangeChild choiceUIChange),(1,InsertChild uiField)]
-								# mask = CompoundMask [maskSelector,maskField]
-								= (Ok (change,mask), (newChoice,newField), vst)
+								= (Ok (change,viewMode,[stateSelector,stateField]), vst)
 				| otherwise // Previously an editor was chosen
-					| containsInvalidFields maskSelector //The selection has been cleared 
+					# mbOldChoice = fst <$> valueFromState viewMode st
+					//The selection has been cleared or the choice is out of bounds
+					| isNothing (choiceEditorValueFromState stateSelector) ||
+					  newChoice < 0 || newChoice >= length fieldEditors
 						# change = ChangeUI [] [(0,ChangeChild choiceUIChange),(1,RemoveChild)]
-						# mask = CompoundMask [maskSelector]
-						= (Ok (change,mask), (newChoice,newField), vst)
-					| newChoice == oldChoice //The selection stayed the same -> update the field
+						= (Ok (change,viewMode,[stateSelector]), vst)
+					| Just newChoice == mbOldChoice //The selection stayed the same -> update the field
 						# (selectFun,editor) = fieldEditors !! newChoice
-						= case editor.Editor.onRefresh (dp ++ [1]) newField oldField (hd optMaskField) vst of
-							(Error e,_,vst) = (Error e,(oldChoice,oldField),vst)
-							(Ok (fieldUIChange,maskField),newField,vst)
+						= case editor.Editor.onRefresh (dp ++ [1]) newField (hd optStateField) vst of
+							(Error e,vst) = (Error e,vst)
+							(Ok (fieldUIChange,stateField),vst)
 								# change = ChangeUI [] [(0,ChangeChild choiceUIChange),(1,ChangeChild fieldUIChange)]
-								# mask = CompoundMask [maskSelector,maskField]
-								= (Ok (change,mask), (newChoice,newField), vst)
+								= (Ok (change,viewMode,[stateSelector,stateField]), vst)
 					| otherwise //The selection changed -> replace with an initial UI of the new choice	
 						# (selectFun,editor) = fieldEditors !! newChoice
-						# newField = selectFun newField
-						= case editor.Editor.genUI (dp ++ [1]) newField vst of 
-							(Error e,vst) = (Error e,(oldChoice,oldField),vst)
-							(Ok (uiField,maskField),vst)
+						# newField = selectFun $ Just newField
+						= case editor.Editor.genUI (dp ++ [1]) (if viewMode View Update $ newField) vst of
+							(Error e,vst) = (Error e,vst)
+							(Ok (uiField,stateField),vst)
 								# change = ChangeUI [] [(0,ChangeChild choiceUIChange),(1,ChangeChild (ReplaceUI uiField))]
-								# mask = CompoundMask [maskSelector,maskField]
-								= (Ok (change,mask), (newChoice,newField), vst)
+								= (Ok (change,viewMode,[stateSelector,stateField]), vst)
+
+	valueFromState _ st = case valAndChoiceFromState st of
+		(Just choice, Just val) = Just (choice, val)
+		_                       = Nothing
+
+	valAndChoiceFromState [stateSelector, childSt] = case choiceEditorValueFromState stateSelector of
+		Just choice = case fieldEditors !? choice of
+			Just (_, editor) = case editor.Editor.valueFromState childSt of
+				Just val = (Just choice, Just val)
+				_        = (Just choice, Nothing)
+			_ = (Nothing, Nothing)
+		_ = (Nothing, Nothing)
+	valAndChoiceFromState _ = (Nothing, Nothing)
 
 //# UIContainer
 container :: Editor ()
@@ -466,7 +531,7 @@ container4 e1 e2 e3 e4 = group4 UIContainer e1 e2 e3 e4
 container5 :: !(Editor a) !(Editor b) !(Editor c) !(Editor d) !(Editor e) -> Editor (a,b,c,d,e)
 container5 e1 e2 e3 e4 e5 = group5 UIContainer e1 e2 e3 e4 e5
 
-containerc :: !(Editor Int) ![(a -> a, Editor a)] -> Editor (Int,a)
+containerc :: !(Editor Int) ![((Maybe a) -> a, Editor a)] -> Editor (Int,a)
 containerc ec es = groupc UIContainer ec es
 
 //# UIPanel
@@ -494,7 +559,7 @@ panel4 e1 e2 e3 e4 = group4 UIPanel e1 e2 e3 e4
 panel5 :: !(Editor a) !(Editor b) !(Editor c) !(Editor d) !(Editor e) -> Editor (a,b,c,d,e)
 panel5 e1 e2 e3 e4 e5 = group5 UIPanel e1 e2 e3 e4 e5
 
-panelc :: !(Editor Int) ![(a -> a, Editor a)] -> Editor (Int,a)
+panelc :: !(Editor Int) ![((Maybe a) -> a, Editor a)] -> Editor (Int,a)
 panelc ec es = groupc UIPanel ec es
 
 //# UITabSet
@@ -522,7 +587,7 @@ tabset4 e1 e2 e3 e4 = group4 UITabSet e1 e2 e3 e4
 tabset5 :: !(Editor a) !(Editor b) !(Editor c) !(Editor d) !(Editor e) -> Editor (a,b,c,d,e)
 tabset5 e1 e2 e3 e4 e5 = group5 UITabSet e1 e2 e3 e4 e5
 
-tabsetc :: !(Editor Int) ![(a -> a, Editor a)] -> Editor (Int,a)
+tabsetc :: !(Editor Int) ![((Maybe a) -> a, Editor a)] -> Editor (Int,a)
 tabsetc ec es = groupc UITabSet ec es
 
 //# UIWindow
@@ -550,7 +615,7 @@ window4 e1 e2 e3 e4 = group4 UIWindow e1 e2 e3 e4
 window5 :: !(Editor a) !(Editor b) !(Editor c) !(Editor d) !(Editor e) -> Editor (a,b,c,d,e)
 window5 e1 e2 e3 e4 e5 = group5 UIWindow e1 e2 e3 e4 e5
 
-windowc :: !(Editor Int) ![(a -> a, Editor a)] -> Editor (Int,a)
+windowc :: !(Editor Int) ![((Maybe a) -> a, Editor a)] -> Editor (Int,a)
 windowc ec es = groupc UIWindow ec es
 
 //# UIMenu
@@ -578,7 +643,7 @@ menu4 e1 e2 e3 e4 = group4 UIMenu e1 e2 e3 e4
 menu5 :: !(Editor a) !(Editor b) !(Editor c) !(Editor d) !(Editor e) -> Editor (a,b,c,d,e)
 menu5 e1 e2 e3 e4 e5 = group5 UIMenu e1 e2 e3 e4 e5
 
-menuc :: !(Editor Int) ![(a -> a, Editor a)] -> Editor (Int,a)
+menuc :: !(Editor Int) ![((Maybe a) -> a, Editor a)] -> Editor (Int,a)
 menuc ec es = groupc UIMenu ec es
 
 //# UIToolBar
@@ -606,7 +671,7 @@ toolbar4 e1 e2 e3 e4 = group4 UIToolBar e1 e2 e3 e4
 toolbar5 :: !(Editor a) !(Editor b) !(Editor c) !(Editor d) !(Editor e) -> Editor (a,b,c,d,e)
 toolbar5 e1 e2 e3 e4 e5 = group5 UIToolBar e1 e2 e3 e4 e5
 
-toolbarc :: !(Editor Int) ![(a -> a, Editor a)] -> Editor (Int,a)
+toolbarc :: !(Editor Int) ![((Maybe a) -> a, Editor a)] -> Editor (Int,a)
 toolbarc ec es = groupc UIToolBar ec es
 
 //# UIButtonBar
@@ -634,7 +699,7 @@ buttonbar4 e1 e2 e3 e4 = group4 UIButtonBar e1 e2 e3 e4
 buttonbar5 :: !(Editor a) !(Editor b) !(Editor c) !(Editor d) !(Editor e) -> Editor (a,b,c,d,e)
 buttonbar5 e1 e2 e3 e4 e5 = group5 UIButtonBar e1 e2 e3 e4 e5
 
-buttonbarc :: !(Editor Int) ![(a -> a, Editor a)] -> Editor (Int,a)
+buttonbarc :: !(Editor Int) ![((Maybe a) -> a, Editor a)] -> Editor (Int,a)
 buttonbarc ec es = groupc UIButtonBar ec es
 
 //# UIList
@@ -662,7 +727,7 @@ list4 e1 e2 e3 e4 = group4 UIList e1 e2 e3 e4
 list5 :: !(Editor a) !(Editor b) !(Editor c) !(Editor d) !(Editor e) -> Editor (a,b,c,d,e)
 list5 e1 e2 e3 e4 e5 = group5 UIList e1 e2 e3 e4 e5
 
-listc :: !(Editor Int) ![(a -> a, Editor a)] -> Editor (Int,a)
+listc :: !(Editor Int) ![((Maybe a) -> a, Editor a)] -> Editor (Int,a)
 listc ec es = groupc UIList ec es
 
 //# UIListItem
@@ -690,7 +755,7 @@ listitem4 e1 e2 e3 e4 = group4 UIListItem e1 e2 e3 e4
 listitem5 :: !(Editor a) !(Editor b) !(Editor c) !(Editor d) !(Editor e) -> Editor (a,b,c,d,e)
 listitem5 e1 e2 e3 e4 e5 = group5 UIListItem e1 e2 e3 e4 e5
 
-listitemc :: !(Editor Int) ![(a -> a, Editor a)] -> Editor (Int,a)
+listitemc :: !(Editor Int) ![((Maybe a) -> a, Editor a)] -> Editor (Int,a)
 listitemc ec es = groupc UIListItem ec es
 
 //# UIDebug
@@ -718,5 +783,5 @@ debug4 e1 e2 e3 e4 = group4 UIDebug e1 e2 e3 e4
 debug5 :: !(Editor a) !(Editor b) !(Editor c) !(Editor d) !(Editor e) -> Editor (a,b,c,d,e)
 debug5 e1 e2 e3 e4 e5 = group5 UIDebug e1 e2 e3 e4 e5
 
-debugc :: !(Editor Int) ![(a -> a, Editor a)] -> Editor (Int,a)
+debugc :: !(Editor Int) ![((Maybe a) -> a, Editor a)] -> Editor (Int,a)
 debugc ec es = groupc UIDebug ec es

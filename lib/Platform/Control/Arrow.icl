@@ -108,8 +108,12 @@ instance ArrowApply (Kleisli m) | Monad m where
 instance Functor (ArrowMonad a) | Arrow a where
     fmap f (ArrowMonad m) = ArrowMonad (m >>> arr f)
 
-instance Applicative (ArrowMonad a) | Arrow a where
-   pure x = ArrowMonad (arr (const x))
+instance pure (ArrowMonad a) | Arrow a
+where
+	pure x = ArrowMonad (arr (const x))
+
+instance <*> (ArrowMonad a) | Arrow a
+where
    (<*>) (ArrowMonad f) (ArrowMonad x) = ArrowMonad (f &&& x >>> arr (uncurry cid))
 
 instance Monad (ArrowMonad a) | ArrowApply a where

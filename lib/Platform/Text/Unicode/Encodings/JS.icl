@@ -1,6 +1,6 @@
 implementation module Text.Unicode.Encodings.JS
 
-import StdString, StdArray, StdOverloaded, StdInt, StdChar, StdBool, StdFunc
+import StdString, StdArray, StdOverloaded, StdInt, StdChar, StdBool, StdFunc, StdMisc
 import Data.List
 
 import Text.Unicode
@@ -91,11 +91,10 @@ where
 			= (fromInt (dti h1 << 12 + dti h2 << 8 + dti h3 << 4 + dti h4), chars)			
 	// unrecognized escape sequense (e.g. less than 2 or 4 digits)
 	scanBSChar [c: chars] = (fromChar c, chars)
+	scanBSChar [] = abort "final \\ in decodeString\n"
 
-	dti c 
-		| c >= '0' && c <= '9' = toInt (c - '0')
-		| c >= 'a' && c <= 'f' = 10 + toInt (c - 'a')
-		| c >= 'A' && c <= 'F' = 10 + toInt (c - 'A')				
-		
-		
-
+	dti c
+	| c >= '0' && c <= '9' = toInt (c - '0')
+	| c >= 'a' && c <= 'f' = 10 + toInt (c - 'a')
+	| c >= 'A' && c <= 'F' = 10 + toInt (c - 'A')
+	| otherwise            = abort "error in decodeString\n"

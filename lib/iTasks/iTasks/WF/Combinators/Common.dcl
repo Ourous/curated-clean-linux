@@ -4,7 +4,6 @@ definition module iTasks.WF.Combinators.Common
 */
 import iTasks.SDS.Definition
 import iTasks.WF.Combinators.Core
-import iTasks.UI.Tune
 
 from StdBool					import not
 from Data.Map				    import :: Map
@@ -147,13 +146,12 @@ justdo	:: !(Task (Maybe a)) -> Task a | iTask a
 /**
 * Execute the list of tasks one after another.
 * 
-* @param Label: A label for tracing
 * @param Tasks: The list of tasks to be executed sequentially
 * @return The combined task
 * 
 * @gin-icon sequence
 */
-sequence	:: !String ![Task a] 						-> Task [a]		| iTask a
+sequence	:: ![Task a] 						-> Task [a]		| iTask a
 
 /**
 * Repeats a task until a given predicate holds. The predicate is tested as soon as the
@@ -269,6 +267,19 @@ feedSideways :: (Task a) ((ReadOnlyShared (Maybe a)) -> Task b) -> Task a | iTas
 
 //Infix version of feedSideways
 (>&^) infixl 1  :: (Task a) ((ReadOnlyShared (Maybe a)) -> Task b) -> Task a | iTask a & iTask b
+
+/**
+ * Feed the result of one task as read-only shared to another one and vice versa.
+ */
+feedBidirectionally :: !((ReadOnlyShared (Maybe b)) -> Task a) !((ReadOnlyShared (Maybe a)) -> Task b)
+                    -> Task (a, b) | iTask a & iTask b
+
+/**
+ * Infix version of `feedBidirectionally`.
+ * @type ((ReadOnlyShared (Maybe b)) -> Task a) ((ReadOnlyShared (Maybe a)) -> Task b) -> Task (a, b) | iTask a & iTask b
+ */
+(<&>) infixl 1
+(<&>) x y :== feedBidirectionally x y
 
 /**
 * Group a list of tasks in parallel.

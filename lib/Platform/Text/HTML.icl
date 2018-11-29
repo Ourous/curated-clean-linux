@@ -1,7 +1,7 @@
 implementation module Text.HTML
 
-import StdString, StdArray, StdList, StdTuple, StdBool
-import Data.Maybe
+import StdEnv
+import Data.Maybe, Data.GenEq
 from StdFunc import o
 from StdMisc import abort
 from Data.List import intersperse
@@ -74,10 +74,10 @@ tagSize (KdbTag a t)		= 11 + (attrsSize a) + (tagsSize t)
 tagSize (LabelTag a t)		= 15 + (attrsSize a) + (tagsSize t) 
 tagSize (LegendTag a t)		= 17 + (attrsSize a) + (tagsSize t) 
 tagSize (LiTag a t)			=  9 + (attrsSize a) + (tagsSize t) 
-tagSize (LinkTag a t)		= 13 + (attrsSize a) + (tagsSize t) 
+tagSize (LinkTag a)			=  7 + (attrsSize a)
 tagSize (MapTag a t)		= 11 + (attrsSize a) + (tagsSize t) 
 tagSize (MenuTag a t)		= 13 + (attrsSize a) + (tagsSize t) 
-tagSize (MetaTag a t)		= 13 + (attrsSize a) + (tagsSize t) 
+tagSize (MetaTag a)			=  7 + (attrsSize a)
 tagSize (NoframesTag a t)	= 21 + (attrsSize a) + (tagsSize t) 
 tagSize (NoscriptTag a t)	= 21 + (attrsSize a) + (tagsSize t) 
 tagSize (ObjectTag a t)		= 17 + (attrsSize a) + (tagsSize t) 
@@ -208,6 +208,7 @@ attrSize (OnresetAttr a)		= 11 + (escapedSize a)
 attrSize (OnselectAttr a)		= 12 + (escapedSize a)
 attrSize (OnsubmitAttr a)		= 12 + (escapedSize a)
 attrSize (OnunloadAttr a)		= 12 + (escapedSize a)
+attrSize (PlaceholderAttr a)	= 15 + (escapedSize a)
 attrSize (ProfileAttr a)		= 11 + (escapedSize a)
 attrSize (PromptAttr a)			= 10 + (escapedSize a)
 attrSize (ReadonlyAttr)			= 20
@@ -321,10 +322,10 @@ serializeTag (LabelTag a t) s i			= writeTag "label" a t s i
 serializeTag (LegendTag a t) s i		= writeTag "legend" a t s i
 serializeTag (LiTag a t) s i			= writeTag "li" a t s i
 //serializeTag (LineTag a) s i			= writeEmptyTag "line" a s i
-serializeTag (LinkTag a t) s i			= writeTag "link" a t s i
+serializeTag (LinkTag a) s i			= writeEmptyTag "link" a s i
 serializeTag (MapTag a t) s i			= writeTag "map" a t s i
 serializeTag (MenuTag a t) s i			= writeTag "menu" a t s i
-serializeTag (MetaTag a t) s i			= writeTag "meta" a t s i
+serializeTag (MetaTag a) s i			= writeEmptyTag "meta" a s i
 serializeTag (NoframesTag a t) s i		= writeTag "noframes" a t s i
 serializeTag (NoscriptTag a t) s i		= writeTag "noscript" a t s i
 serializeTag (ObjectTag a t) s i		= writeTag "object" a t s i
@@ -457,6 +458,7 @@ serializeAttr (OnresetAttr a) s i		= writeAttr "onreset" a s i
 serializeAttr (OnselectAttr a) s i		= writeAttr "onselect" a s i
 serializeAttr (OnsubmitAttr a) s i		= writeAttr "onsubmit" a s i
 serializeAttr (OnunloadAttr a) s i		= writeAttr "onunload" a s i
+serializeAttr (PlaceholderAttr a) s i	= writeAttr "placeholder" a s i
 serializeAttr (ProfileAttr a) s i		= writeAttr "profile" a s i
 serializeAttr (PromptAttr a) s i		= writeAttr "prompt" a s i
 serializeAttr (ReadonlyAttr) s i		= writeAttr "readonly" "readonly" s i
@@ -1264,6 +1266,7 @@ browserFriendlyHTMLAttrToString (OnresetAttr a)    = writeBrowserFriendlyAttr "o
 browserFriendlyHTMLAttrToString (OnselectAttr a)    = writeBrowserFriendlyAttr "onselect" a
 browserFriendlyHTMLAttrToString (OnsubmitAttr a)    = writeBrowserFriendlyAttr "onsubmit" a
 browserFriendlyHTMLAttrToString (OnunloadAttr a)    = writeBrowserFriendlyAttr "onunload" a
+browserFriendlyHTMLAttrToString (PlaceholderAttr a) = writeBrowserFriendlyAttr "placeholder" a
 browserFriendlyHTMLAttrToString (ProfileAttr a)    = writeBrowserFriendlyAttr "profile" a
 browserFriendlyHTMLAttrToString (PromptAttr a)    = writeBrowserFriendlyAttr "prompt" a
 browserFriendlyHTMLAttrToString (ReadonlyAttr)    = writeBrowserFriendlyAttr "readonly" "readonly"
@@ -1311,3 +1314,6 @@ escapeStr str
   | otherwise
       #! (str, _) = copyChars str 0 True (createArray escdSz '\0') 0
       = str
+
+derive gEq HtmlTag, HtmlAttr
+derive gEq SVGElt, SVGAttr, SVGAlign, SVGColor, SVGDefer, SVGFillOpacity, SVGFuncIRI, SVGLengthAdjust, SVGLengthUnit, SVGLineCap, SVGFillRule, SVGLineJoin, SVGMeetOrSlice, SVGStrokeMiterLimit, SVGPaint, SVGStrokeDashArray, SVGStrokeDashOffset, SVGStrokeWidth, SVGTransform, SVGZoomAndPan

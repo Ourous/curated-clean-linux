@@ -12,10 +12,10 @@ from iTasks.Internal.Task     import :: ConnectionTask, :: TaskException
 from iTasks.Internal.IWorld   import :: IWorld
 from iTasks.Internal.IWorld	  import :: IWorld, :: BackgroundTaskId
 from iTasks.Internal.Task     import :: ConnectionTask, :: BackgroundTask, :: TaskException
-from iTasks.Engine            import :: TaskWrapper
+from iTasks.Engine            import :: StartupTask
 
 //Core task server loop
-serve :: ![TaskWrapper] ![(!Int,!ConnectionTask)] ![BackgroundTask] (*IWorld -> (!Maybe Timeout,!*IWorld)) *IWorld -> *IWorld
+serve :: ![StartupTask] ![(!Int,!ConnectionTask)] ![BackgroundTask] (*IWorld -> (!Maybe Timeout,!*IWorld)) *IWorld -> *IWorld
 
 //Dynamically add a listener
 addListener :: !TaskId !Int !Bool !ConnectionTask !*IWorld -> (!MaybeError TaskException (),!*IWorld)

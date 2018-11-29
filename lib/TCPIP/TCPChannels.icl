@@ -1,6 +1,7 @@
 implementation module TCPChannels
 
 import	StdEnv
+from StdFunc import seq
 import	TCPDef, TCPChannelClass
 import	tcp, ostcp, tcp_bytestreams
 

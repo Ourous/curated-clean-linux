@@ -2,7 +2,7 @@ definition module Text.Parsers.ZParsers.ParsersKernel
 from StdEnv import class Eq, class toString, class ==
 from Data.Maybe import :: Maybe(..)
 
-from Control.Applicative import class Applicative, class Alternative, class *>
+from Control.Applicative import class pure, class <*>, class Applicative, class *>, class <*, class Alternative
 from Control.Monad import class Monad
 from Data.Functor import class Functor
 
@@ -22,7 +22,8 @@ instance == SugPosition
 
 instance Functor (Parser s t)
 
-instance Applicative (Parser s t)
+instance pure (Parser s t)
+instance <*> (Parser s t)
 
 instance Alternative (Parser s t)
 
@@ -50,7 +51,8 @@ instance Functor (PAlt f) | Functor f
 
 (<||>) infixl 4 :: !(Gram f (b -> a)) !(Gram f b) -> Gram f a | Functor f
 
-instance Applicative (Gram f) | Functor f
+instance pure (Gram f)
+instance <*> (Gram f) | Functor f
 
 instance Alternative (Gram f) | Functor f
 
@@ -58,9 +60,9 @@ instance Monad (Gram f) | Functor f
 
 mkP :: !(Gram f a) -> f a | Monad f & Applicative f & Alternative f
 
-sepBy :: !(Gram f a) (f b) -> f a | Monad, Applicative, Alternative, *> f
+sepBy :: !(Gram f a) (f b) -> f a | Monad, *>, Alternative f
 
-insertSep :: (f b) !(Gram f a) -> Gram f a | Monad, Applicative, Alternative, *> f
+insertSep :: (f b) !(Gram f a) -> Gram f a | Monad, *>, Alternative f
 
 gmList :: !(Gram f a) -> Gram f [a] | Functor f
 

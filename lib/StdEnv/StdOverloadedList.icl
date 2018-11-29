@@ -693,7 +693,7 @@ RemoveMemberM e l :== removeMember_ e l
 						= [|a:removeMember_ e as]
 		removeMember_ e [|] = [|]	
 
-RemoveMembers:: u:(l e) .(l e) -> u:(l e) | List l e & Eq e
+RemoveMembers :: !u:(l e) !.(l e) -> u:(l e) | List l e & Eq e
 RemoveMembers x [|]		= x
 RemoveMembers x [|b:y]	= RemoveMembers (RemoveMember b x) y
 
@@ -711,7 +711,7 @@ RemoveDupM l :== removeDup_ l
 		removeDup_ [|x:xs] = [|x:removeDup_ (Filter ((<>) x) xs)]
 		removeDup_ _      = [|]
 
-RemoveIndex :: e !u:(l e) -> (Int,u:(l e)) | List l e & Eq e
+RemoveIndex :: !e !u:(l e) -> (Int,u:(l e)) | List l e & Eq e
 RemoveIndex e xs = removei e xs 0
 	where
 		removei :: a u:(l a) !Int -> (Int,u:(l a)) | List l a & == a;

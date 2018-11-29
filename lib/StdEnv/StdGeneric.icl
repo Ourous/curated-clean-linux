@@ -70,7 +70,7 @@ where
 	is_id :: !.(.a -> .b) -> Bool
 	is_id f = code inline
 	{
-		eq_desc e_StdFunc_did 0 0
+		eq_desc e_StdFunctions_did 0 0
 		pop_a 1
 	}
 	

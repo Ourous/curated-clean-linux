@@ -1,7 +1,7 @@
 implementation module iTasks.Internal.Task
 
 from StdFunc import const, id
-import StdClass, StdArray, StdTuple, StdInt, StdList, StdBool, StdMisc
+import StdClass, StdArray, StdTuple, StdInt, StdList, StdBool, StdMisc, Data.Func
 from Data.Map import :: Map
 import qualified Data.Map as DM
 import Text.HTML, Internet.HTTP, Data.Error, Data.Functor, Text.GenJSON
@@ -34,7 +34,9 @@ JSONDecode{|Task|} _ _ [tt:c] = (dynamicJSONDecode tt,c)
 JSONDecode{|Task|} _ _ c = (Nothing,c)
 
 gText{|Task|} _ _ _ = ["<Task>"]
-gEditor{|Task|} _ _ _ _ _ = emptyEditor
+gEditor{|Task|} _ _ tj fj =
+	emptyEditorWithErrorInEnterMode_  (JSONEncode{|* -> *|} tj) (JSONDecode{|* -> *|} fj) "Tasks cannot be entered."
+
 gEq{|Task|} _ _ _			= True // tasks are always equal??
 
 gDefault{|Task|} gDefx = Task (\_ -> abort error)
@@ -93,11 +95,11 @@ mkInstantTask :: (TaskId *IWorld -> (!MaybeError (Dynamic,String) a,!*IWorld)) -
 mkInstantTask iworldfun = Task (evalOnce iworldfun)
 where
 	evalOnce f event repOpts (TCInit taskId ts) iworld = case f taskId iworld of	
-		(Ok a,iworld)							= (ValueResult (Value a True) {lastEvent=ts,removedTasks=[],refreshSensitive=False} (rep event) (TCStable taskId ts (DeferredJSON a)), iworld)
+		(Ok a,iworld)							= (ValueResult (Value a True) {lastEvent=ts,attributes='DM'.newMap,removedTasks=[]} (rep event) (TCStable taskId ts (DeferredJSON a)), iworld)
 		(Error e, iworld)					    = (ExceptionResult e, iworld)
 
 	evalOnce f event repOpts state=:(TCStable taskId ts enc) iworld = case fromJSONOfDeferredJSON enc of
-		Just a	= (ValueResult (Value a True) {lastEvent=ts,removedTasks=[],refreshSensitive=False} (rep event) state, iworld)
+		Just a	= (ValueResult (Value a True) {lastEvent=ts,attributes='DM'.newMap,removedTasks=[]} (rep event) state, iworld)
 		Nothing	= (ExceptionResult (exception "Corrupt task result"), iworld)
 
 	evalOnce f _ _ (TCDestroy _) iworld	= (DestroyedResult,iworld)

@@ -11,13 +11,14 @@ from Data.Maybe import :: Maybe
  * The type of a function.
  */
 :: Type
-	= Type String [Type]             //* Concrete type with arguments
-	| Func [Type] Type TypeContext   //* A function with parameters, a result and class context (no uniqueness unequalities yet)
-	| Var TypeVar                    //* A type variable
-	| Cons TypeVar [Type]            //* A constructor variable with arguments
-	| Uniq Type                      //* A unique type
-	| Forall [Type] Type TypeContext //* Universally quantified variables
-	| Arrow (Maybe Type)             //* `(->)` and `((->) t)`
+	= Type !String ![Type]              //* Concrete type with arguments
+	| Func ![Type] !Type !TypeContext   //* A function with parameters, a result and class context (no uniqueness unequalities yet)
+	| Var !TypeVar                      //* A type variable
+	| Cons !TypeVar ![Type]             //* A constructor variable with arguments
+	| Uniq !Type                        //* A unique type
+	| Forall ![Type] !Type !TypeContext //* Universally quantified variables
+	| Arrow !(Maybe Type)               //* `(->)` and `((->) t)`
+	| Strict !Type                      //* A type annotated for strictness
 
 /**
  * A type variable.
@@ -29,19 +30,19 @@ from Data.Maybe import :: Maybe
  * An assignment of a type to a type variable.
  * @representation A tuple of the variable and the type
  */
-:: TVAssignment :== (TypeVar, Type)
+:: TVAssignment :== (!TypeVar, !Type)
 
 /**
  * A unifier of a left type and a right type.
  */
 :: Unifier
-	= { assignments   :: [UnifyingAssignment] //* The assignments
-	  , used_synonyms :: [TypeDef]            //* Type synonyms used in the unification
+	= { assignments   :: ![UnifyingAssignment] //* The assignments
+	  , used_synonyms :: ![TypeDef]            //* Type synonyms used in the unification
 	  }
 
 :: UnifyingAssignment
-	= RightToLeft TVAssignment
-	| LeftToRight TVAssignment
+	= RightToLeft !TVAssignment
+	| LeftToRight !TVAssignment
 
 /**
  * A type context.
@@ -52,65 +53,65 @@ from Data.Maybe import :: Maybe
  * A restriction on a type.
  */
 :: TypeRestriction
-	= Instance String [Type]
-	| Derivation String Type
+	= Instance !String ![Type]
+	| Derivation !String !Type
 
 /**
  * The kind of a Clean type.
  */
 :: Kind
 	= KStar
-	| KArrow infixr 1 Kind Kind
+	| KArrow infixr 1 !Kind !Kind
 
 /**
  * A Clean type definition.
  */
 :: TypeDef
-	= { td_name :: String     //* The name of the type
-	  , td_uniq :: Bool       //* Whether the type is unique
-	  , td_args :: [Type]     //* Var or Uniq Var; arguments
-	  , td_rhs  :: TypeDefRhs //* The right-hand side
+	= { td_name :: !String     //* The name of the type
+	  , td_uniq :: !Bool       //* Whether the type is unique
+	  , td_args :: ![Type]     //* Var or Uniq Var; arguments
+	  , td_rhs  :: !TypeDefRhs //* The right-hand side
 	  }
 
 /**
  * The right-hand side of a type definition.
  */
 :: TypeDefRhs
-	= TDRCons Bool [Constructor]
+	= TDRCons !Bool ![Constructor]
 		//* A list of constructors. The boolean indicates if the type is extensible
-	| TDRNewType Constructor         //* A newtype
-	| TDRMoreConses [Constructor]    //* More constructors for an extensible ADT
-	| TDRRecord String [TypeVar] [RecordField]
+	| TDRNewType !Constructor         //* A newtype
+	| TDRMoreConses ![Constructor]    //* More constructors for an extensible ADT
+	| TDRRecord !String ![TypeVar] ![RecordField]
 		//* A record with its internal identifier, existentially quantified variables and fields
-	| TDRSynonym Type                //* A type synonym
-	| TDRAbstract (Maybe TypeDefRhs) //* An abstract type
-	| TDRAbstractSynonym Type        //* An abstract type synonym
+	| TDRSynonym !Type                //* A type synonym
+	| TDRAbstract !(Maybe TypeDefRhs) //* An abstract type
+	| TDRAbstractSynonym !Type        //* An abstract type synonym
 
 /**
  * The constructor of an algebraic data type.
  */
 :: Constructor
-	= { cons_name     :: String         //* The name of the constructor
-	  , cons_args     :: [Type]         //* The arguments of the constructor
-	  , cons_exi_vars :: [TypeVar]      //* Existentially quantified variables
-	  , cons_context  :: TypeContext    //* The class context of the constructor
-	  , cons_priority :: Maybe Priority //* Priority, if this is an infix constructor
+	= { cons_name     :: !String         //* The name of the constructor
+	  , cons_args     :: ![Type]         //* The arguments of the constructor
+	  , cons_exi_vars :: ![TypeVar]      //* Existentially quantified variables
+	  , cons_context  :: !TypeContext    //* The class context of the constructor
+	  , cons_priority :: !Maybe Priority //* Priority, if this is an infix constructor
 	  }
 
 /**
  * Priority of an infix function.
  */
 :: Priority
-	= LeftAssoc Int  //* Left-associative operator with precedence
-	| RightAssoc Int //* Right-associative operator with precedence
-	| NoAssoc Int    //* Infix operator with precedence but no explicit associativity
+	= LeftAssoc !Int  //* Left-associative operator with precedence
+	| RightAssoc !Int //* Right-associative operator with precedence
+	| NoAssoc !Int    //* Infix operator with precedence but no explicit associativity
 
 /**
  * A record field.
  */
 :: RecordField
-	= { rf_name :: String //* The name of the field
-	  , rf_type :: Type   //* The type of the field
+	= { rf_name :: !String //* The name of the field
+	  , rf_type :: !Type   //* The type of the field
 	  }
 
 instance == Type

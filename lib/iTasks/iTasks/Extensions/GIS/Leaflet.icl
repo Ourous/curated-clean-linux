@@ -2,7 +2,7 @@ implementation module iTasks.Extensions.GIS.Leaflet
 
 import iTasks
 import iTasks.UI.Definition, iTasks.UI.JS.Map, iTasks.UI.Editor, iTasks.UI.JS.Encoding
-import StdMisc, Data.Tuple, Data.Error
+import StdMisc, Data.Tuple, Data.Error, Data.Func
 import qualified Data.Map as DM
 from Text.HTML import instance toString HtmlTag
 from iTasks.UI.Editor.Common import diffChildren
@@ -49,9 +49,17 @@ openStreetMapTiles :: String
 openStreetMapTiles = "http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
 	
 leafletEditor :: Editor LeafletMap
-leafletEditor = {Editor|genUI = withClientSideInit initUI genUI, onEdit  = onEdit, onRefresh = onRefresh}
+leafletEditor = leafEditorToEditor
+	{ LeafEditor
+    | genUI          = withClientSideInit initUI genUI
+    , onEdit         = onEdit
+    , onRefresh      = onRefresh
+    , valueFromState = valueFromState
+    }
 where
-	genUI dp val=:{LeafletMap|perspective={center,zoom,cursor},tilesUrls,objects,icons} world
+	genUI dp mode world
+		# val=:{LeafletMap|perspective={center,zoom,cursor},tilesUrls,objects,icons} =
+			fromMaybe gDefault{|*|} $ editModeValue mode
 		# mapAttr = 'DM'.fromList
 			[("zoom", JSONInt zoom)
 			,("center", JSONArray [JSONReal center.LeafletLatLng.lat, JSONReal center.LeafletLatLng.lng])
@@ -61,7 +69,7 @@ where
 			]
 		# attr = 'DM'.unions [mapAttr, sizeAttr (ExactSize 500) (ExactSize 150)]
 		# children = map encodeUI objects
-		= (Ok (uiac UIHtmlView attr children,newFieldMask), world)
+		= (Ok (uiac UIHtmlView attr children, val), world)
 
 	encodeUI (Marker o) = let (JSONObject attr) = toJSON o
                               dataMap = 'DM'.fromList [("type",JSONString "marker"):attr]
@@ -466,9 +474,7 @@ where
 			= forall` (i + 1) len (f i el world)
 
 	//Process the edits received from the client
-	onEdit dp ([],diff) m msk vst = case decodeOnServer diff of
-		Just diffs = (Ok (NoChange,msk),foldl app m diffs,vst)
-		Nothing = (Ok (NoChange,msk),m,vst)
+	onEdit dp ([], diffs) m vst = (Ok (NoChange, foldl app m diffs), vst)
 	where
 		app m (LDSetZoom zoom)          = {LeafletMap|m & perspective = {m.perspective & zoom = zoom}}
 		app m (LDSetCenter center)      = {LeafletMap|m & perspective = {m.perspective & center = center}}
@@ -483,15 +489,15 @@ where
             notToRemove (Window {windowId}) = windowId <> idToRemove
             notToRemove _                   = True
 		app m _ = m
-	onEdit _ _ m msk ust = (Ok (NoChange,msk),m,ust)
+	onEdit _ _ msk ust = (Ok (NoChange,msk),ust)
 
 	//Check for changed objects and update the client
-	onRefresh _ m2 m1 mask vst
+	onRefresh _ newMap oldMap vst
 		//Determine attribute changes
-		# attrChanges = diffAttributes m1 m2
+		# attrChanges = diffAttributes oldMap newMap
 		//Determine object changes
-		# childChanges = diffChildren m1.LeafletMap.objects m2.LeafletMap.objects encodeUI
-		= (Ok (ChangeUI attrChanges childChanges,mask),m2,vst)
+		# childChanges = diffChildren oldMap.LeafletMap.objects newMap.LeafletMap.objects encodeUI
+		= (Ok (ChangeUI attrChanges childChanges, newMap),vst)
 	where
 		//Only center, zoom and cursor are synced to the client, bounds are only synced from client to server
 		diffAttributes {LeafletMap|perspective=p1} {LeafletMap|perspective=p2}
@@ -502,6 +508,8 @@ where
 			//Cursor
 			# cursor = if (p2.LeafletPerspective.cursor === p1.LeafletPerspective.cursor) [] [SetAttribute "cursor" (maybe JSONNull toJSON p2.LeafletPerspective.cursor)]
 			= center ++ zoom ++ cursor
+
+	valueFromState m = Just m
 
 gEditor{|LeafletMap|} = leafletEditor
 

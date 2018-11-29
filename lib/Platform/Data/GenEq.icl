@@ -21,10 +21,11 @@ gEq{|OBJECT|} f (OBJECT x) (OBJECT y) 		= f x y
 gEq{|{}|} f xs ys 							= eqArray f xs ys
 gEq{|{!}|} f xs ys 							= eqArray f xs ys
 
-derive gEq [], (,), (,,), (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,)
+derive gEq [], (), (,), (,,), (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,)
 
 eqArray f xs ys = size xs == size ys && eq 0 (size xs) xs ys
 where
 	eq i n xs ys
-		| i == n 	= True		
-		| i < n 	= f xs.[i] ys.[i] && eq (inc i) n xs ys
+	| i == n    = True
+	| i < n     = f xs.[i] ys.[i] && eq (inc i) n xs ys
+	| otherwise = abort "error in eqArray\n"

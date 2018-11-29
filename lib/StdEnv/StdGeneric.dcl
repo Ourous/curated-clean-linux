@@ -10,10 +10,10 @@ bimapId :: Bimap .a .a
 :: PAIR a b = PAIR a b
 
 // for constructor information
-:: OBJECT a = OBJECT a		// object marking
+:: OBJECT a =: OBJECT a		// object marking
 :: CONS a = CONS a 			// constructor marking
 :: RECORD a = RECORD a 		// record marking
-:: FIELD a = FIELD a 		// record field marking
+:: FIELD a =: FIELD a 		// record field marking
 
 :: GenericTypeDefDescriptor =
 	{ gtd_name  	:: String 

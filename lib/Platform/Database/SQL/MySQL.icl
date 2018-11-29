@@ -141,7 +141,8 @@ where
 		formatSQLValue (SQLVEnum s) cursor
 			# (s, cursor) = escapeString s cursor
 			= ("'" +++ s +++ "'", cursor)
-		formatSQLValue (SQLVNull) cursor = ("NULL", cursor)
+		formatSQLValue SQLVNull cursor = ("NULL", cursor)
+		formatSQLValue (SQLVBlob b) _ = abort "formatSQLValue for SQLVBlob not implemented\n"
 		formatSQLValue (SQLVUnknown s) cursor 
 			# (s, cursor) = escapeString s cursor
 			= ("'" +++ s +++ "'", cursor)

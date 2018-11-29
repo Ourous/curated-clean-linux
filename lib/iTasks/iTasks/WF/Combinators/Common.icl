@@ -3,7 +3,7 @@ implementation module iTasks.WF.Combinators.Common
 * This module contains a collection of useful iTasks combinators defined in terms of the basic iTask combinators
 */
 import StdBool, StdList,StdOrdList, StdTuple, StdGeneric, StdMisc, StdInt, StdClass, StdString
-import Text, System.Time, Data.Maybe, Data.Tuple, Data.List, Data.Either, Data.Functor, Data.GenEq, Text.GenJSON
+import Text, System.Time, Data.Maybe, Data.Tuple, Data.List, Data.Either, Data.Functor, Data.GenEq, Text.GenJSON, Data.Func
 import iTasks.Internal.Util
 from StdFunc			import id, const, o
 from iTasks.SDS.Sources.Core import randomInt
@@ -23,7 +23,6 @@ import iTasks.WF.Combinators.Core, iTasks.WF.Combinators.Tune, iTasks.WF.Combina
 import iTasks.UI.Editor
 import iTasks.UI.Editor.Controls
 import iTasks.UI.Prompt
-import iTasks.UI.Tune
 import iTasks.UI.Layout
 import iTasks.UI.Layout.Common, iTasks.UI.Layout.Default
 
@@ -90,24 +89,32 @@ justdo task
 	Just x	= return x
 	Nothing	= throw ("The task returned nothing.")
 
-sequence :: !String ![Task a]  -> Task [a] | iTask a
-sequence _ tasks = seqTasks tasks
-where
-	seqTasks []		= return []
-	seqTasks [t:ts]	= t >>- \a -> seqTasks ts >>- \as -> return [a:as]
+sequence :: ![Task a]  -> Task [a] | iTask a
+sequence tasks = foreverStIf
+	//Continue while there are tasks left
+	(not o isEmpty o snd)
+	//Initial state, empty accumulator, all tasks
+	([], tasks)
+	//Run the first task and add it to the accumulator
+	(\(acc, [todo:todos])->todo >>- \t->treturn ([t:acc], todos))
+	//When done, just return the accumulator
+	@ reverse o fst
 
 foreverStIf :: (a -> Bool) a !(a -> Task a) -> Task a | iTask a
-foreverStIf pred st t = parallel [(Embedded, par st Nothing)] []
-	>>- \tv->case tv of
-		[(_, Value i True)] = treturn i
-		_ = throw "Corrupt parallel in foreverStIf"
+foreverStIf pred st t = parallel [(Embedded, par st Nothing)] [] @? fromParValue
 where
 	par st (Just tid) tlist = removeTask tid tlist >>- \_->par st Nothing tlist
 	par st Nothing tlist
 		| not (pred st) = treturn st
-		= get (sdsFocus {gDefault{|*|} & onlySelf=True} tlist)
-			>>- \(_, [{TaskListItem|taskId}])->t st
-			>>- \st`->appendTask Embedded (par st` (Just taskId)) tlist @? const NoValue
+		= step
+			(t st)
+			id
+			[ OnValue $ ifStable \st` -> get (sdsFocus {gDefault{|*|} & onlySelf=True} tlist) >>- \(_, [{TaskListItem|taskId}]) ->
+			                             appendTask Embedded (par st` (Just taskId)) tlist    @! st`
+		    ]
+
+	fromParValue (Value [(_, val=:Value _ _)] _) = val
+	fromParValue _                               = NoValue
 
 (-||-) infixr 3 :: !(Task a) !(Task a) -> (Task a) | iTask a
 (-||-) taska taskb = anyTask [taska,taskb]
@@ -165,6 +172,22 @@ where
 
 (>&^) infixl 1 :: (Task a) ((ReadOnlyShared (Maybe a)) -> Task b) -> Task a | iTask a & iTask b
 (>&^) taska taskbf = feedSideways taska taskbf
+
+feedBidirectionally :: !((ReadOnlyShared (Maybe b)) -> Task a) !((ReadOnlyShared (Maybe a)) -> Task b)
+                    -> Task (a, b) | iTask a & iTask b
+feedBidirectionally taskaf taskbf = parallel
+	[(Embedded, \s -> taskaf (mapRead prjR (toReadOnly (sdsFocus (Left 1) (taskListItemValue s)))) @ Left)
+	,(Embedded, \s -> taskbf (mapRead prjL (toReadOnly (sdsFocus (Left 0) (taskListItemValue s)))) @ Right)
+	] [] @? res
+where
+	prjL (Value (Left a) _)  = Just a
+	prjL _                   = Nothing
+
+	prjR (Value (Right a) _) = Just a
+	prjR _                   = Nothing
+
+	res (Value [(_,Value (Left a) sa),(_,Value (Right b) sb)] _) = Value (a,b) (sa && sb)
+	res _                                                        = NoValue
 
 anyTask :: ![Task a] -> Task a | iTask a
 anyTask tasks
@@ -227,7 +250,7 @@ compute :: !String a -> Task a | iTask a
 compute s a = enterInformation s [EnterUsing id ed] >>~ \_->return a
 where
 	ed :: Editor Bool
-	ed = fieldComponent UILoader
+	ed = fieldComponent UILoader Nothing
 
 valToMaybe :: (TaskValue a) -> Maybe a
 valToMaybe (Value v _)  = Just v

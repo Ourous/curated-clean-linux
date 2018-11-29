@@ -362,7 +362,10 @@ unionWith f m1 m2 = unionWithKey (\_ x y -> f x y) m1 m2
 // > let f key left_value right_value = (show key) ++ ":" ++ left_value ++ "|" ++ right_value
 // > unionWithKey f (fromList [(5, "a"), (3, "b")]) (fromList [(5, "A"), (7, "C")]) == fromList [(3, "b"), (5, "5:a|A"), (7, "C")]
 unionWithKey :: !(Int a a -> a) !(IntMap a) !(IntMap a) -> IntMap a
-unionWithKey f m1 m2 = mergeWithKey` Bin (\(Tip k1 x1) (Tip _ x2) -> Tip k1 (f k1 x1 x2)) id id m1 m2
+unionWithKey f m1 m2 = mergeWithKey` Bin g id id m1 m2
+where
+	g (Tip k1 x1) (Tip _ x2) = Tip k1 (f k1 x1 x2)
+	g _           _          = abort "error in unionWithKey\n"
 
 // | /O(n+m)/. Difference with a combining function.
 //
@@ -434,10 +437,11 @@ intersectionWithKey f m1 m2 = mergeWithKey` bin (\(Tip k1 x1) (Tip _ x2) -> Tip 
 mergeWithKey :: !(Int a b -> Maybe c) !((IntMap a) -> IntMap c) !((IntMap b) -> IntMap c)
                 !(IntMap a) !(IntMap b) -> IntMap c
 mergeWithKey f g1 g2 m1 m2 = mergeWithKey` bin combine g1 g2 m1 m2
-  where
-  combine (Tip k1 x1) (Tip _ x2) = case f k1 x1 x2 of
-                                     Nothing -> Nil
-                                     Just x -> Tip k1 x
+where
+	combine (Tip k1 x1) (Tip _ x2) = case f k1 x1 x2 of
+		Nothing -> Nil
+		Just x -> Tip k1 x
+	combine _ _ = abort "error in mergeWithKey\n"
 
 // | /O(log n)/. Update the value at the minimal key.
 //

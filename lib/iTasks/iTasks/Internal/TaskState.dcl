@@ -6,7 +6,7 @@ from iTasks.WF.Definition import :: Task, :: TaskResult, :: TaskValue, :: TaskEx
 from iTasks.WF.Definition import :: InstanceNo, :: InstanceKey, :: InstanceProgress
 from iTasks.WF.Combinators.Core import :: AttachmentStatus
 from iTasks.UI.Definition import :: UIChange
-from iTasks.UI.Editor import :: EditMask
+from iTasks.UI.Editor import :: EditState
 from iTasks.UI.Layout import :: LUI, :: LUIMoves, :: LUIMoveID, :: LUINo, :: LUIEffectStage
 from Text.GenJSON import generic JSONEncode, generic JSONDecode, :: JSONNode
 from Data.Map import :: Map
@@ -59,18 +59,19 @@ derive JSONDecode TIMeta, TIReduct, TaskTree
 	| UIException !String 							//An unhandled exception occurred and the UI should only show the error message
 
 :: TaskTree
-	= TCInit		            !TaskId !TaskTime													//Initial state for all tasks
-	| TCBasic		            !TaskId !TaskTime !DeferredJSON !Bool 									//Encoded value and stable indicator
-	| TCInteract	            !TaskId !TaskTime !DeferredJSON !DeferredJSON !EditMask
-	| TCStep					!TaskId !TaskTime !(Either (!TaskTree, ![String]) (!DeferredJSON, !Int, !TaskTree))
-	| TCParallel				!TaskId !TaskTime ![(!TaskId,!TaskTree)] ![String] //Subtrees of embedded tasks and enabled actions
-	| TCShared					!TaskId !TaskTime !TaskTree
-	| TCAttach                  !TaskId !TaskTime !AttachmentStatus !String !String
-	| TCExposedShared			!TaskId !TaskTime !String !TaskTree	// +URL //TODO: Remove
-	| TCStable					!TaskId !TaskTime !DeferredJSON
-	| TCLayout					!(!LUI,!LUIMoves) !TaskTree
-	| TCNop			
-	| TCDestroy					!TaskTree	//Marks a task state as garbage that must be destroyed (TODO: replace by explicit event
+	= TCInit          !TaskId !TaskTime	//Initial state for all tasks
+	| TCBasic         !TaskId !TaskTime !DeferredJSON !Bool //Encoded value and stable indicator
+	| TCInteract      !TaskId !TaskTime !DeferredJSON !DeferredJSON !EditState !Bool
+	| TCStep          !TaskId !TaskTime !(Either (!TaskTree, ![String]) (!DeferredJSON, !Int, !TaskTree))
+	| TCParallel      !TaskId !TaskTime ![(!TaskId,!TaskTree)] ![String] //Subtrees of embedded tasks and enabled actions
+	| TCShared        !TaskId !TaskTime !TaskTree
+	| TCAttach        !TaskId !TaskTime !AttachmentStatus !String !String
+	| TCStable        !TaskId !TaskTime !DeferredJSON
+	| TCLayout        !(!LUI,!LUIMoves) !TaskTree
+	| TCAttribute     !TaskId !String !TaskTree
+	| TCNop
+	| TCDestroy       !TaskTree //Marks a task state as garbage that must be destroyed (TODO: replace by explicit event)
+	| TCExposedShared !TaskId !TaskTime !String !TaskTree	// +URL //TODO: Remove
 
 taskIdFromTaskTree :: TaskTree -> MaybeError TaskException TaskId
 

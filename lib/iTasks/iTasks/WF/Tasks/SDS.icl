@@ -10,6 +10,7 @@ import iTasks.Internal.TaskEval
 import qualified iTasks.Internal.SDS as SDS
 import StdString, Data.Func, Data.Error
 import qualified Data.Set as DS
+import qualified Data.Map as DM
 
 instance toString SharedException
 where
@@ -55,7 +56,7 @@ where
 	eval event evalOpts (TCInit taskId=:(TaskId instanceNo _) ts) iworld
 		# (val,iworld)	= 'SDS'.readRegister taskId shared iworld
 		# res = case val of
-			Ok val		= ValueResult (Value val False) {TaskEvalInfo|lastEvent=ts,removedTasks=[],refreshSensitive=True} (rep event) (TCInit taskId ts)
+			Ok val		= ValueResult (Value val False) {TaskEvalInfo|lastEvent=ts,attributes='DM'.newMap,removedTasks=[]} (rep event) (TCInit taskId ts)
 			Error e		= ExceptionResult e
 		= (res,iworld)
 	eval event repAs ttree=:(TCDestroy _) iworld

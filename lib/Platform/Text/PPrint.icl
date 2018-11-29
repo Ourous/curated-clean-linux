@@ -1,7 +1,9 @@
 implementation module Text.PPrint
 
 import StdEnv
+import Data.List
 import Data.Maybe
+from Data.Foldable import class Foldable(foldr1)
 
 /*
  * PPrint
@@ -452,10 +454,3 @@ where
 
 spaceString :: Int -> *{#Char}
 spaceString i = createArray i ' '
-
-/* -----------------------------------------------------------
- * Utility functions
- * ----------------------------------------------------------- */
-foldr1 :: (a a -> a) [a] -> a
-foldr1 f [x]      = x
-foldr1 f [x:xs]   = f x (foldr1 f xs)

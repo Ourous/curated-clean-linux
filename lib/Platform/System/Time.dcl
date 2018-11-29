@@ -6,6 +6,7 @@ definition module System.Time
 
 from StdString import class toString
 import StdOverloaded
+from Data.GenEq import generic gEq
 
 /**
 * The resolution of the system clock ticks
@@ -31,6 +32,9 @@ CLK_PER_SEC	:== 1000000
 * The time data type represents a number of seconds since the epoch (1-1-1970).
 */
 :: Timestamp	= Timestamp !Int
+
+derive gEq Timestamp
+
 /**
 * The clock data type represents a number of CPU clock ticks.
 */

@@ -157,4 +157,4 @@ instance + String
  * This is a simple wrapper around the {{`+++`}} instance for `String` which
  * first applies {{`toString`}} to both its parameters.
  */
-(<+) infixr 5 :: a b -> String | toString a & toString b
+(<+) infixr 5 :: !a !b -> String | toString a & toString b

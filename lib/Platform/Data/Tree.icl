@@ -2,12 +2,13 @@ implementation module Data.Tree
 
 // Ported from Haskell's Data.Tree by Jurriën Stutterheim
 from Data.Functor import class Functor (..), <$>
-from Control.Applicative import class Applicative (..)
+from Control.Applicative import class pure(..), class <*>(..), class Applicative
 from Control.Monad import class Monad (..), liftM, `b`, mapM
 from Data.Monoid import class Monoid (..), class Semigroup
 from StdList import map, ++
 from StdOverloaded import class +++ (..)
 from StdFunc import o
+import StdMisc
 from Data.List import zipWith, iterate, foldr, repeat, concatMap, takeWhile, isEmpty
 from StdBool import not
 import StdString
@@ -24,10 +25,14 @@ instance Functor RTree where
 fmapRTree :: (a -> b) (RTree a) -> RTree b
 fmapRTree f (RNode x ts) = RNode (f x) (map (fmapRTree f) ts)
 
-instance Applicative RTree where
-  pure x = RNode x []
-  (<*>) (RNode f tfs) tx=:(RNode x txs) =
-      RNode (f x) (map (\x -> f <$> x) txs ++ map (\x -> x <*> tx) tfs)
+instance pure RTree
+where
+	pure x = RNode x []
+
+instance <*> RTree
+where
+	(<*>) (RNode f tfs) tx=:(RNode x txs) =
+		RNode (f x) (map (\x -> f <$> x) txs ++ map (\x -> x <*> tx) tfs)
 
 instance Monad RTree where
   bind (RNode x ts) f
@@ -40,6 +45,7 @@ mergeForestsByChoice _ _ xs [] = xs
 mergeForestsByChoice pred choose [xn=:(RNode x xs) : xss] [yn=:(RNode y ys) : yss]
   | pred x y  = [RNode (choose x y) (mergeForestsByChoice pred choose xs ys) : mergeForestsByChoice pred choose xss yss]
   | otherwise = [xn : yn : mergeForestsByChoice pred choose xss yss]
+mergeForestsByChoice _ _ _ _ = abort "error in mergeForestsByChoice\n"
 
 mergeForestsBy :: (a a -> Bool) (RForest a) (RForest a) -> RForest a
 mergeForestsBy f xs ys = mergeForestsByChoice f (\x _ -> x) xs ys

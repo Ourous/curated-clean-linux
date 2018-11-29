@@ -1,5 +1,6 @@
 implementation module Control.Monad.State
 
+import StdFunctions
 import StdTuple
 import Control.Monad
 import Data.Functor
@@ -10,12 +11,25 @@ import Control.Monad.Trans
 from StdFunc import o
 from StdTuple import fst, snd
 
-instance Functor (StateT s m) | Monad m where
-  fmap f m = StateT (\s -> fmap (\(a, s`) -> (f a, s`)) (runStateT m s))
+instance Functor (StateT s m) | Functor m
+where
+	fmap f m = StateT \s -> fmap (\(a, s`) -> (f a, s`)) (runStateT m s)
 
-instance Applicative (StateT s m) | Monad m where
-  pure a = state (\s -> (a, s))
-  (<*>) sf sa = ap sf sa
+instance pure (StateT s m) | pure m
+where
+	pure a = state \s -> (a, s)
+
+instance <*> (StateT s m) | Monad m
+where
+	(<*>) sf sa = liftM2 id sf sa
+
+instance *> (StateT s m) | Monad m
+where
+	*> fa fb = liftA2 (\a b -> b) fa fb
+
+instance <* (StateT s m) | Monad m
+where
+	<* fa fb = liftA2 (\a b -> a) fa fb
 
 instance Alternative (StateT s m) | Alternative m where
   empty = StateT (const empty)
@@ -27,7 +41,7 @@ instance Monad (StateT s m) | Monad m where
 instance MonadTrans (StateT s) where
   liftT m = StateT (\s -> m >>= \a -> pure (a, s))
 
-state :: (s -> .(a, s)) -> StateT s m a | Monad m
+state :: (s -> .(a, s)) -> StateT s m a | pure m
 state f = StateT (\s -> pure (f s))
 
 getState :: StateT s m s | Monad m
@@ -45,19 +59,19 @@ gets f = state (\s -> (f s, s))
 runState :: .(StateT s Identity a) s -> (a, s)
 runState m s = runIdentity (runStateT m s)
 
-runStateT :: u:(StateT v:s m a) v:s -> m w:(a, v:s), [w <= v,u <= w]
+runStateT :: !u:(StateT v:s m a) v:s -> m w:(a, v:s), [w <= v,u <= w]
 runStateT (StateT f) s = f s
 
 evalState :: .(StateT s Identity a) s -> a
 evalState m s = fst (runState m s)
 
-evalStateT :: .(StateT s m a) s -> m a | Monad m
+evalStateT :: !.(StateT s m a) s -> m a | Monad m
 evalStateT m s = runStateT m s >>= \(a, _) -> pure a
 
 execState :: .(StateT s Identity a) s -> s
 execState m s = snd (runState m s)
 
-execStateT :: .(StateT s m a) s -> m s | Monad m
+execStateT :: !.(StateT s m a) s -> m s | Monad m
 execStateT m s = runStateT m s >>= \(_, s`) -> pure s`
 
 mapState :: ((a, s) -> (b, s)) .(StateT s Identity a) -> StateT s Identity b

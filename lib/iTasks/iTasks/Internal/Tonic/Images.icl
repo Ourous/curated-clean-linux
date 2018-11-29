@@ -269,7 +269,7 @@ tLam inh vars e tsrc
                    []   -> [ tHorizConnArr (fillColorFromStatStab (r.syn_status, r.syn_stability))
                            , r.syn_img]
                    vars -> [ tHorizConn (fillColorFromStatStab (r.syn_status, r.syn_stability))
-                           , tTextWithGreyBackground ArialRegular10px (strictFoldr (\x xs -> x +++ " " +++ xs) "" vars)
+                           , tTextWithGreyBackground ArialRegular10px (foldr (\x xs -> x +++ " " +++ xs) "" vars)
                            , tHorizConnArr (fillColorFromStatStab (r.syn_status, r.syn_stability))
                            , r.syn_img]
   #! img       = beside (repeat AtMiddleY) [] Nothing [] lineParts NoHost
@@ -482,7 +482,7 @@ tLet inh pats expr [(txttag, uTxtTag) : tsrc]
       _
         #! (t, tsrc)       = tExpr2Image inh expr tsrc
         #! (patRhss, tsrc) = strictTRMapSt (tExpr2Image inh) (map snd pats) tsrc
-        #! binds           = strictFoldr (\(var, expr) acc -> [text ArialRegular10px (ppTExpr var) : text ArialRegular10px " = " : expr.syn_img : acc]) [] (strictTRZip2 (strictTRMap fst pats) patRhss)
+        #! binds           = foldr (\(var, expr) acc -> [text ArialRegular10px (ppTExpr var) : text ArialRegular10px " = " : expr.syn_img : acc]) [] (strictTRZip2 (strictTRMap fst pats) patRhss)
         #! letText         = tag uTxtTag ('GS'.grid (Columns 3) (RowMajor, LeftToRight, TopToBottom) [] [] [] [] binds NoHost)
         #! letWidth        = imagexspan txttag + px 8.0
         #! letHeight       = imageyspan txttag + px 8.0
@@ -928,7 +928,7 @@ tAssign inh lhsExpr assignedTask [(assignTaskTag, uAssignTaskTag) : (headerTag, 
   mkUser (TFApp _ "UserWithRole" [r:_] _) = "Anyone with role " +++ ppTExpr r
   mkUser (TFApp _ "SystemUser" _ _)       = "System user"
   mkUser (TFApp _ "AnonymousUser" _ _)    = "Anonymous user"
-  mkUser (TFApp _ "AuthenticatedUser" [uid:rs:_] _) = ppTExpr uid +++ " with roles " +++ strictFoldr (\x xs -> ppTExpr x +++ " " +++ xs) "" (tSafeExpr2List rs)
+  mkUser (TFApp _ "AuthenticatedUser" [uid:rs:_] _) = ppTExpr uid +++ " with roles " +++ foldr (\x xs -> ppTExpr x +++ " " +++ xs) "" (tSafeExpr2List rs)
   mkUser (TFApp _ usr _ _)                = usr
   mkUser (TVar _ ppe _)                   = ppe
   mkUser (TLit (TString ppe))             = ppe
@@ -974,7 +974,7 @@ tSafeExpr2List e                                 = [e]
 
 tStepCont :: ![UI] !(InhMkImg i) !TExpr !*TagSource -> *(!SynMkImg, !*TagSource) | BlueprintLike i
 tStepCont actions inh (TFApp _ "OnAction" [TFApp _ "Action" [actionLit : _] _ : cont : _ ] _) tsrc
-  = mkStepCont inh (Just (ppTExpr actionLit, strictFoldr f False actions)) cont tsrc
+  = mkStepCont inh (Just (ppTExpr actionLit, foldr f False actions)) cont tsrc
   where
   f ui acc = (replaceSubString "\"" "" (an ui) == replaceSubString "\"" "" (ppTExpr actionLit) && enabled ui) || acc
   where
@@ -1070,7 +1070,7 @@ stepIfStableUnstableHasValue inh mact filter [TLam pats e : _] [ref : tsrc]
   #! pats                 = filterLamVars pats
   #! imgs2                = if (length pats > 0)
                               [ addAction mact (tHorizConn (stepArrActivity inh syn_e)) ref
-                              , tTextWithGreyBackground ArialRegular10px (strictFoldr (\x xs -> ppTExpr x +++ " " +++ xs) "" pats)]
+                              , tTextWithGreyBackground ArialRegular10px (foldr (\x xs -> ppTExpr x +++ " " +++ xs) "" pats)]
                               [addAction mact (tShortHorizConn (stepArrActivity inh syn_e)) ref]
   #! imgs3                = [ tHorizConnArr (stepArrActivity inh syn_e)
                             , syn_e.syn_img
@@ -1188,7 +1188,7 @@ tBranches inh mkBranch needAllDone inclVertConns exprs contextTag tsrc
     | otherwise
         #! firstTag   = hd ts
         #! lastTag    = last ts
-        #! allYSpans  = strictFoldl (\acc x -> imageyspan x + acc) (px 0.0) ts
+        #! allYSpans  = foldl (\acc x -> imageyspan x + acc) (px 0.0) ts
         #! halfFirstY = imageyspan firstTag /. 2.0
         #! halfLastY  = imageyspan lastTag /. 2.0
         = above (repeat AtMiddleX) [] Nothing []
@@ -1284,9 +1284,3 @@ strictTRZipWith3Acc :: !(a b c -> d) ![a] ![b] ![c] ![d] -> [d]
 strictTRZipWith3Acc f [a:as] [b:bs] [c:cs] acc
   = strictTRZipWith3Acc f as bs cs [f a b c : acc]
 strictTRZipWith3Acc _ _ _ _ acc = acc
-
-strictFoldl :: !(.a -> .(.b -> .a)) !.a ![.b] -> .a
-strictFoldl f b [] = b
-strictFoldl f b [x:xs]
-  #! r = f b x
-  = strictFoldl f r xs

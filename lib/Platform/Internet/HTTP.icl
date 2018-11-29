@@ -12,7 +12,7 @@ import Data.Functor
 
 import Control.Applicative
 from Control.Monad import class Monad
-import qualified Control.Monad as CM
+import qualified Control.Monad 
 import TCPIP
 
 doHTTPRequest :: !HTTPRequest Int !*World -> *(!MaybeErrorString HTTPResponse, !*World)
@@ -33,7 +33,7 @@ doHTTPRequest req timeout w
 # (rpt,resp,rChannel,w) = receive_MT (Just timeout) rChannel w
 | rpt <> TR_Success
 	= (Error $ "Did not receive a reply from " + req.server_name + ".", w)
-# resp = 'CM'.join $ parseResponse <$> toString <$> resp
+# resp = 'Control.Monad'.join $ parseResponse <$> toString <$> resp
 | isNothing resp
 	# w = closeChannel sChannel (closeRChannel rChannel w)
 	= (Error $ "Server did not respond with HTTP.", w)
@@ -178,14 +178,12 @@ where
 
 //Server utilities
 parseRequestLine	:: !String																							-> Maybe (!String, !String, !String, !String)
-parseRequestLine line
-	# parts						= split " " line
-	| length parts <> 3			= Nothing
-	# [method,path,version:_]	= parts
-	# qindex					= indexOf "?" path
-	| qindex <> -1				= Just (method, path % (0, qindex - 1), path % (qindex + 1, size path), version)
-								= Just (method, path, "", version)
-	
+parseRequestLine line = case split " " line of
+	[method,path,version] -> case indexOf "?" path of
+		-1 -> Just (method, path, "", version)
+		qi -> Just (method, path % (0, qi - 1), path % (qi + 1, size path), version)
+	_      -> Nothing
+
 parseHeader			:: !String																							-> Maybe (!String, !String)
 parseHeader header
 	# index					= indexOf ":" header

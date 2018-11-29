@@ -1,10 +1,13 @@
 implementation module System.IO
 
+import StdFile
+from StdFunc import o, id
+import StdMisc
+import StdString
+
 import Control.Applicative
 import Control.Monad
 import Data.Functor
-from StdFunc import o, id
-import StdFile, StdString
 from Text import class Text (trim), instance Text String
 
 execIO :: !(IO a) !*World -> *World
@@ -18,12 +21,17 @@ evalIO (IO f) world = f world
 withWorld :: (*World -> *(.a, !*World)) -> IO .a
 withWorld f = IO f
 
-instance Applicative IO where
-  pure x     = IO (\s -> (x, s))
-  (<*>) f g  = liftA2 id f g
+instance Functor IO
+where
+	fmap f x = x >>= (lift o f)
 
-instance Functor IO where
-  fmap f x = x >>= (lift o f)
+instance pure IO
+where
+	pure x     = IO (\s -> (x, s))
+
+instance <*> IO
+where
+	(<*>) f g  = liftA2 id f g
 
 instance Monad IO where
   bind ma a2mb = IO (run ma)
@@ -88,6 +96,7 @@ unsafePerformIO :: !(*World -> *(.a, !*World)) -> .a
 unsafePerformIO f
   # (x, world) = f make_world
   | world_to_true world = x
+  | otherwise           = abort "error in unsafePerformIO\n"
 
 unsafePerformIOTrue :: !(*World -> *(a, !*World)) -> Bool
 unsafePerformIOTrue f

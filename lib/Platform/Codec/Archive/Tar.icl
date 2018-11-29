@@ -103,16 +103,18 @@ where
 	isOctDigit c = '0' <= c && c <= '7'
 
 parseType :: TarParser TarFileType
-parseType = StateT $ \[c:cs] -> case c of
-	'0' = Ok (NormalFile, cs)
-	'1' = Ok (HardLink, cs)
-	'2' = Ok (SymLink, cs)
-	'3' = Ok (CharSpecial, cs)
-	'4' = Ok (BlockSpecial, cs)
-	'5' = Ok (Directory, cs)
-	'6' = Ok (FIFO, cs)
-	'7' = Ok (Contiguous, cs)
-	c   = Error $ UnsupportedFileTypeId c
+parseType = StateT $ \cs -> case cs of
+	[]     -> Error UnexpectedEOS
+	[c:cs] -> case c of
+		'0' = Ok (NormalFile, cs)
+		'1' = Ok (HardLink, cs)
+		'2' = Ok (SymLink, cs)
+		'3' = Ok (CharSpecial, cs)
+		'4' = Ok (BlockSpecial, cs)
+		'5' = Ok (Directory, cs)
+		'6' = Ok (FIFO, cs)
+		'7' = Ok (Contiguous, cs)
+		c   = Error $ UnsupportedFileTypeId c
 
 skip :: Int -> TarParser ()
 skip i = StateT $ \cs -> Ok ((), drop i cs)

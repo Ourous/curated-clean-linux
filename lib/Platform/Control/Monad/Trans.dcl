@@ -1,7 +1,7 @@
 definition module Control.Monad.Trans
 
 from Control.Monad import class Monad
-from Control.Applicative import class Applicative
+from Control.Applicative import class pure, class <*>, class Applicative
 from Data.Functor import class Functor
 
 class MonadTrans t where
