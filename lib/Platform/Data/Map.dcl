@@ -74,7 +74,6 @@ from Data.GenEq import generic gEq
 from Data.GenLexOrd import generic gLexOrd, :: LexOrd
 from Data.Monoid    import class Monoid, class Semigroup
 import qualified StdList
-from Data.List import foldr
 from Data.Functor import class Functor (..)
 from StdOverloaded import class < (..)
 import StdClass

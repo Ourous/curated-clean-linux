@@ -13,7 +13,7 @@ definition module iTasks.WF.Combinators.Tune
 import iTasks.WF.Definition
 from iTasks.UI.Layout import :: LayoutRule, :: LUI, :: LUINo, :: LUIMoves, :: LUIMoveID, :: LUIEffectStage
 from Text.GenJSON import :: JSONNode
-from iTasks.SDS.Definition import :: SDS
+import iTasks.SDS.Definition
 
 
 class addConstantAttribute f :: !String !b !(f a) -> f a | toAttribute b
@@ -26,7 +26,7 @@ instance addValueAttribute Task
 //instance addConstantAttribute Editor
 
 //Setting attributes based on an SDS value (only possible for tasks)
-class addSDSAttribute f :: !String (SDS () r w) (r -> b) !(f a) -> f a | toAttribute b & TC r
+class addSDSAttribute f :: !String (sds () r w) (r -> b) !(f a) -> f a | toAttribute b & TC r & TC w & Registrable, Readable sds
 instance addSDSAttribute Task
 
 class toAttribute a where toAttribute :: a -> String
@@ -51,8 +51,8 @@ class tunev b a f | iTask a :: !(b a) !(f a) -> f a
 :: ApplyAttribute a = ApplyAttribute String a
 instance tune (ApplyAttribute a) Task | toAttribute a
 
-:: ApplySDSAttribute a r w = ApplySDSAttribute String (SDS () r w) (r -> a)
-instance tune (ApplySDSAttribute a r w) Task | toAttribute a & TC r
+:: ApplySDSAttribute a r w = E. sds: ApplySDSAttribute String (sds () r w) (r -> a) & Readable, Registrable sds
+instance tune (ApplySDSAttribute a r w) Task | toAttribute a & TC r & TC w
 
 //* Apply a layout to a task
 applyLayout :: LayoutRule (Task a) -> Task a

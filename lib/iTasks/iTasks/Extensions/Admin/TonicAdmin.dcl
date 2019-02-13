@@ -6,13 +6,15 @@ from iTasks.Internal.Tonic.Types import :: AllBlueprints, :: TonicModule, :: Ton
 from Graphics.Scalable.Image import :: TagSource, :: TagRef, :: Image, :: ImageTag
 from Graphics.Scalable.Internal.Image` import :: Image`
 
+import iTasks.SDS.Definition
+
 tonicDashboard :: [TaskAppRenderer] -> Task ()
 
 tonic :: Task ()
 
 tonicStaticBrowser    :: [TaskAppRenderer] -> Task ()
 
-tonicBrowseWithModule :: AllBlueprints [TaskAppRenderer] (Shared NavStack) TonicModule -> Task ()
+tonicBrowseWithModule :: AllBlueprints [TaskAppRenderer] (Shared sds NavStack) TonicModule -> Task () | RWShared sds
 
 tonicStaticWorkflow   :: [TaskAppRenderer] -> Workflow
 
@@ -20,4 +22,4 @@ tonicDynamicBrowser   :: [TaskAppRenderer] -> Task ()
 
 tonicDynamicWorkflow  :: [TaskAppRenderer] -> Workflow
 
-viewStaticTask :: !AllBlueprints ![TaskAppRenderer] !(Shared NavStack) !BlueprintIdent !TonicModule !TonicFunc !Int !Bool -> Task ()
+viewStaticTask :: !AllBlueprints ![TaskAppRenderer] !(Shared sds NavStack) !BlueprintIdent !TonicModule !TonicFunc !Int !Bool -> Task () | RWShared sds

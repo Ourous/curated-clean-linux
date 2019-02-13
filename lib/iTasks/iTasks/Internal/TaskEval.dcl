@@ -6,7 +6,7 @@ definition module iTasks.Internal.TaskEval
 from iTasks.WF.Definition           import :: Task, :: TaskResult, :: TaskException, :: TaskValue, :: TaskAttributes, :: Event, :: TaskId, :: InstanceNo
 from iTasks.WF.Combinators.Core     import :: TaskListItem
 from iTasks.Internal.IWorld		import :: IWorld
-from iTasks.Internal.SDS          import :: SDS, :: Shared, :: ReadOnlyShared
+import iTasks.Internal.SDS
 from iTasks.Internal.Tonic        import :: ExprId
 from iTasks.Internal.TaskState import :: DeferredJSON
 from Text.GenJSON import :: JSONNode
@@ -20,7 +20,7 @@ from Data.CircularStack import :: CircularStack
 //Additional options to pass down the tree when evaluating a task
 :: TaskEvalOpts	=
 	{ noUI              :: Bool
-    , tonicOpts         :: TonicOpts
+	, tonicOpts         :: TonicOpts
 	}
 
 :: TonicOpts =
@@ -79,4 +79,4 @@ updateInstanceConnect       :: !String  ![InstanceNo]       !*IWorld -> *(!Maybe
 updateInstanceDisconnect    ::          ![InstanceNo]       !*IWorld -> *(!MaybeError TaskException (), !*IWorld)
 
 //Shares providing access to the evaluation information (constants from an evaluation point of view)
-currentInstanceShare        :: ReadOnlyShared InstanceNo
+currentInstanceShare :: SDSSource () InstanceNo ()

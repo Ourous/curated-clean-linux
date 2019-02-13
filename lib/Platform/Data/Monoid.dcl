@@ -41,13 +41,34 @@ instance Monoid ()
 :: Last a = Last (Maybe a)
 
 instance Semigroup (Dual a) | Semigroup a
+where
+	mappend :: !(Dual a) !(Dual a) -> Dual a | Semigroup a
+
 instance Semigroup (Endo .a)
+where
+	mappend :: !(Endo .a) !(Endo .a) -> Endo .a
+
 instance Semigroup All
+where
+	mappend :: !All !All -> All
+
 instance Semigroup Any
-instance Semigroup (Sum a) | + a & zero a
-instance Semigroup (Product a) | * a & one a
+where
+	mappend :: !Any !Any -> Any
+
+instance Semigroup (Sum a) | +, zero a
+where
+	mappend :: !(Sum a) !(Sum a) -> Sum a | +, zero a
+
+instance Semigroup (Product a) | *, one a
+where
+	mappend :: !(Product a) !(Product a) -> Product a | *, one a
+
 instance Semigroup (First a)
 instance Semigroup (Last a)
+where
+	mappend :: !(Last a) !(Last a) -> Last a
+
 
 instance Monoid (Dual a) | Monoid a
 instance Monoid (Endo .a)

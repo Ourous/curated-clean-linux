@@ -68,7 +68,7 @@ tonicStaticBrowser rs
   selectModule      = getTonicModules >>- enterChoice "Select a module" [ChooseFromDropdown id]
   noModuleSelection = viewInformation () [] "Select module..."
 
-tonicBrowseWithModule :: AllBlueprints [TaskAppRenderer] (Shared NavStack) TonicModule -> Task ()
+tonicBrowseWithModule :: AllBlueprints [TaskAppRenderer] (Shared sds NavStack) TonicModule -> Task () | RWShared sds
 tonicBrowseWithModule allbps rs navstack tm
   =           (selectTask tm
            >&> withSelection noTaskSelection (
@@ -90,7 +90,7 @@ tonicBrowseWithModule allbps rs navstack tm
   noTaskSelection = viewInformation () [] "Select task..."
 
 
-viewStaticTask :: !AllBlueprints ![TaskAppRenderer] !(Shared NavStack) !BlueprintIdent !TonicModule !TonicFunc !Int !Bool -> Task ()
+viewStaticTask :: !AllBlueprints ![TaskAppRenderer] !(Shared sds NavStack) !BlueprintIdent !TonicModule !TonicFunc !Int !Bool -> Task () | RWShared sds
 viewStaticTask allbps rs navstack bpref tm tt depth compact
   =          get navstack
   >>~ \ns -> (showStaticBlueprint rs bpref (expandTask allbps depth tt) compact depth
@@ -169,7 +169,6 @@ showBlueprintInstance rs bpi selDetail enabledSteps compact depth
   editor outputs` = fromSVGEditor
     { initView    = id
     , renderImage = \_ -> mkTaskInstanceImage rs bpi outputs` enabledSteps selDetail compact
-    , updView     = \_ x -> x
     , updModel    = \x _ -> x
     }
 
@@ -187,7 +186,6 @@ showStaticBlueprint rs bpref task compact depth
   editor = fromSVGEditor
     { initView    = id
     , renderImage = \_ -> mkStaticImage rs bpref compact
-    , updView     = \_ x -> x
     , updModel    = \x _ -> x
     }
 
@@ -202,7 +200,7 @@ tonicDynamicBrowser rs
                          , (Embedded, \_ -> filterQuery)
                          , (Embedded, \_ -> activeUsers)
                          , (Embedded, \_ -> taskViewer)
-                         ] [] /*<<@ ArrangeCustom layout*/ 
+                         ] [] /*<<@ ArrangeCustom layout*/
                )) @! ()
   where
 /*
@@ -283,16 +281,16 @@ tonicDynamicBrowser rs
   //# (as,bs) = split xs
   //= merge f (mergeSortBy f as) (mergeSortBy f bs)
 
-tonicDynamicBrowser` :: [TaskAppRenderer] (Shared NavStack) -> Task ()
+tonicDynamicBrowser` :: [TaskAppRenderer] (Shared sds NavStack) -> Task () | RWShared sds
 tonicDynamicBrowser` rs navstack =
   ((activeBlueprintInstances -&&- blueprintViewer) /* <<@ ArrangeVertical */) @! ()
-  where
+where
   activeBlueprintInstances = editSharedChoiceWithSharedAs
                                (Title "Active blueprint instances")
                                [ChooseFromGrid customView]
-                               (mapRead (\(trt, q) -> filterActiveTasks q (flattenRTMap trt)) (tonicSharedRT |+| queryShare))
+                               (mapRead (\(trt, q) -> filterActiveTasks q (flattenRTMap trt)) (tonicSharedRT |*| queryShare))
                                setTaskId selectedBlueprint <<@ ArrangeWithSideBar 0 TopSide 175 True
-    where
+  where
     setTaskId x = { click_origin_mbbpident  = Nothing
                   , click_origin_mbnodeId   = Nothing
                   , click_target_bpident    = { bpident_moduleName = x.bpi_bpref.bpr_moduleName
@@ -310,13 +308,13 @@ tonicDynamicBrowser` rs navstack =
       g tid ((mn, fn), bpi) acc = 'DM'.put (tid, mn, fn) bpi acc
 
   blueprintViewer
-    = whileUnchanged (selectedBlueprint |+| navstack) (
+    = whileUnchanged (selectedBlueprint |*| navstack) (
         \(bpmeta, ns) -> case bpmeta of
                            Just meta=:{click_target_bpident = {bpident_compId = Just tid, bpident_moduleName, bpident_compName}}
                              # focus = (sdsFocus (comp2TaskId tid, bpident_moduleName, bpident_compName) tonicInstances)
                              =                 get focus
                              >>~ \mbprnt ->    get selectedDetail
-                             >>~ \selDetail -> whileUnchanged (focus |+| dynamicDisplaySettings) (
+                             >>~ \selDetail -> whileUnchanged (focus |*| dynamicDisplaySettings) (
                                                  \shareData ->
                                                     case shareData of
                                                        (Just bpinst, dynSett) ->     viewInstance rs navstack dynSett bpinst selDetail meta
@@ -329,23 +327,6 @@ tonicDynamicBrowser` rs navstack =
                            _ = viewInformation () [] "Please select a blueprint" @! ()
       )<<@ ApplyLayout (layoutSubUIs (SelectByType UIAction) (setActionIcon ('DM'.fromList [("Back","previous"),("Parent task","open")])))
      where
-     //navToParent currinst=:{bpi_bpref = currbpref} dynSett selDetail tid rs (Just inst=:{bpi_bpref = bpref}) // TODO Check
-       //=   Just (   upd (\xs -> [mkMeta tid : xs]) navstack
-                //>>| set (Just (mkMeta inst.bpi_taskId)) selectedBlueprint
-                //>>| viewInstance rs navstack dynSett inst selDetail (mkMeta inst.bpi_taskId) @! ())
-       //where
-       //mkMeta tid =
-         //{ click_origin_mbbpident  = Just { bpident_moduleName = currbpref.bpr_moduleName
-                                          //, bpident_compName   = currbpref.bpr_taskName
-                                          //, bpident_compId     = Just (toComp currinst.bpi_taskId)
-                                          //}
-         //, click_origin_mbnodeId   = Nothing
-         //, click_target_bpident    = { bpident_moduleName = bpref.bpr_moduleName
-                                     //, bpident_compName   = bpref.bpr_taskName
-                                     //, bpident_compId     = Just (toComp tid)
-                                     //}
-         //}
-     //navToParent _ _ _ _ _ _ = Nothing
 
      navigateBackwards :: !DynamicDisplaySettings !(Maybe (Either ClickMeta (ModuleName, FuncName, ComputationId, Int))) NavStack a -> Maybe (Task ())
      navigateBackwards _ _ [] _ = Nothing
@@ -398,9 +379,9 @@ getModuleAndTask allbps mn tn
                 Just tt -> return (mod, tt)
                 _       -> throw "Can't get module and task"
 
-viewInstance :: ![TaskAppRenderer] !(Shared NavStack) !DynamicDisplaySettings !BlueprintInstance
+viewInstance :: ![TaskAppRenderer] !(Shared sds NavStack) !DynamicDisplaySettings !BlueprintInstance
                 !(Maybe (Either ClickMeta (ModuleName, FuncName, ComputationId, Int))) !ClickMeta
-             -> Task ()
+             -> Task () | RWShared sds
 viewInstance rs navstack dynSett bpinst=:{bpi_bpref = {bpr_moduleName, bpr_taskName}} selDetail meta=:{click_target_bpident = {bpident_compId = Just tid}}
   = (if (dynSett.DynamicDisplaySettings.show_comments && bpinst.bpi_blueprint.tf_comments <> "")
        (viewInformation "Task comments" [] bpinst.bpi_blueprint.tf_comments @! ())

@@ -25,7 +25,7 @@ derive class iTask FileCollectionItem
 * @param Delete flag: When this is true, files on disk that are not in the collection, but match the filter are deleted during a write.
                       If it is false, entries on that are removed are only marked in a file called 'exclude.txt' but not deleted.
 */
-fileCollection :: FileFilter Bool -> SDS FilePath FileCollection FileCollection
+fileCollection :: FileFilter Bool -> SDSSource FilePath FileCollection FileCollection
 
 //Access utilities:
 getStringContent:: String FileCollection -> Maybe String

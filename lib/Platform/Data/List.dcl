@@ -1,6 +1,9 @@
 definition module Data.List
 
+from StdClass import class Ord, class Eq, class IncDec
+from StdOverloaded import class ==, class <, class length, class %, class toString, class toChar, class fromString, class fromChar, class +, class *, class /, class *, class /, class *, class /, class *, class /, class zero, class one, class -
 import StdList
+
 from Data.GenEq import generic gEq
 from Data.Functor import class Functor
 from Data.Maybe import :: Maybe
@@ -83,8 +86,6 @@ transpose       :: ![[a]] -> [.[a]]
 subsequences    :: .[a] -> .[[a]]
 permutations    :: [a] -> .[[a]]
 concatMap       :: (.a -> [.b]) ![.a] -> [.b]
-maximum         :: !.[a] -> a | < a
-minimum         :: !.[a] -> a | Ord a
 getItems        :: ![a] ![Int] -> [a]
 scanl           :: (a -> .(.b -> a)) a [.b] -> .[a]
 scanl1          :: (a -> .(a -> a)) !.[a] -> .[a]

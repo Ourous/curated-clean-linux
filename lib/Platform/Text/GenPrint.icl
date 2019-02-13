@@ -173,7 +173,7 @@ where
 		$ print_list f xs	
 
 //-------------------------------------------------------------------------------------
-generic gPrint a :: a (PrintState *s) -> (PrintState *s) | PrintOutput s
+generic gPrint a :: !a !(PrintState *s) -> (PrintState *s) | PrintOutput s
 gPrint{|Int|} x st 
 	= printString (toString x) st
 gPrint{|Real|} x st 
@@ -286,10 +286,10 @@ derive gPrint (,), (,,), (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,)
 //derive gOutput (,), (,,), (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,)
 	
 //-------------------------------------------------------------------------------------
-(<<-) infixl 0 :: (PrintState *s) a -> *(PrintState *s) | gPrint{|*|} a & PrintOutput s
+(<<-) infixl 0 :: !(PrintState *s) !a -> *(PrintState *s) | gPrint{|*|} a & PrintOutput s
 (<<-) s x = gPrint{|*|} x s
 
-mkPrintState :: *s -> PrintState *s | PrintOutput s
+mkPrintState :: !*s -> PrintState *s | PrintOutput s
 mkPrintState s =
 	{ ps_output = s
 	, ps_context = CtxNone
@@ -304,7 +304,7 @@ openFilePrintState name fs
 	| ok 	= (Just (mkPrintState file), fs)
 			= (Nothing, fs)
 
-printToString :: a -> String | gPrint{|*|} a
+printToString :: !a -> String | gPrint{|*|} a
 printToString x
 	# string_output = (mkStringPrintState <<- x).ps_output
 	= string_output.so_str % (0,string_output.so_pos-1)

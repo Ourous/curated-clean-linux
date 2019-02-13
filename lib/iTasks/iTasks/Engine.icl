@@ -15,9 +15,9 @@ from Data.Queue import :: Queue(..)
 from Data.Set import :: Set, newSet
 
 import qualified Data.Map as DM
-from System.OS import IF_POSIX_OR_WINDOWS, OS_NEWLINE
+from System.OS import IF_POSIX_OR_WINDOWS, OS_NEWLINE, IF_WINDOWS
 
-import Data.List, Data.Error, Data.Func, Data.Tuple, Math.Random, Text 
+import Data.List, Data.Error, Data.Func, Data.Tuple, Math.Random, Text
 import System.Time, System.CommandLine, System.Environment, System.OSError, System.File, System.FilePath, System.Directory
 
 import iTasks.Internal.Util, iTasks.Internal.HtmlUtil
@@ -34,6 +34,7 @@ import iTasks.Internal.IWorld, iTasks.Internal.TaskEval, iTasks.Internal.TaskSto
 import iTasks.Internal.Util
 import iTasks.Internal.TaskServer
 import iTasks.Internal.EngineTasks
+import iTasks.Internal.Distributed.Symbols
 
 from Sapl.Linker.LazyLinker import generateLoaderState, :: LoaderStateExt
 from Sapl.Linker.SaplLinkerShared import :: SkipSet
@@ -56,23 +57,30 @@ doTasksWithOptions initFun startable world
 	# iworld				= createIWorld options world
 	# (res,iworld) 			= initJSCompilerState iworld
 	| res =:(Error _) 		= show ["Fatal error: " +++ fromError res] (destroyIWorld iworld)
-	# iworld				= serve startupTasks (tcpTasks options.serverPort options.keepaliveTime)
+	# (symbolsResult, iworld) = initSymbolsShare options.distributed options.appName iworld
+	| symbolsResult =: (Error _) = show ["Error reading symbols while required: " +++ fromError symbolsResult] (destroyIWorld iworld)
+	# iworld				= serve (startupTasks options) (tcpTasks options.serverPort options.keepaliveTime)
 	                                engineTasks (timeout options.timeout) iworld
 	= destroyIWorld iworld
 where
     webTasks = [t \\ WebTask t <- toStartable startable]
-	startupTasks = [t \\ StartupTask t <- toStartable startable]
+	startupTasks {distributed, sdsPort} = (if distributed [case onStartup (sdsServiceTask sdsPort) of StartupTask t = t;] []) ++ [t \\ StartupTask t <- toStartable startable]
 	hasWebTasks = not (webTasks =: [])
+
+	initSymbolsShare False _ iworld = (Ok (), iworld)
+	initSymbolsShare True appName iworld = case storeSymbols (IF_WINDOWS (appName +++ ".exe") appName) iworld of
+		(Error (e, s), iworld) = (Error s, iworld)
+		(Ok noSymbols, iworld) = (Ok (),  {iworld & world = show ["Read number of symbols: " +++ toString noSymbols] iworld.world})
 
 	//Only run a webserver if there are tasks that are started through the web
 	tcpTasks serverPort keepaliveTime
 		| webTasks =: [] = []
 		| otherwise
 			= [(serverPort,httpServer serverPort keepaliveTime (engineWebService webTasks) taskOutput)]
-	
+
 	engineTasks =
- 		[BackgroundTask updateClock
-		,BackgroundTask (processEvents MAX_EVENTS)
+ 		[BackgroundTask updateClock,
+ 		 BackgroundTask (processEvents MAX_EVENTS)
 		:if (webTasks =: [])
 			[BackgroundTask stopOnStable]
 			[BackgroundTask removeOutdatedSessions
@@ -81,11 +89,10 @@ where
 		]
 
 	// The iTasks engine consist of a set of HTTP Web services
-	engineWebService :: [WebTask] -> [WebService (Map InstanceNo TaskOutput) (Map InstanceNo TaskOutput)] 
+	engineWebService :: [WebTask] -> [WebService (Map InstanceNo TaskOutput) (Map InstanceNo TaskOutput)]
 	engineWebService webtasks =
 		[taskUIService webtasks
 		,documentService
-		,sdsService
 		,staticResourceService [path \\ {WebTask|path} <- webtasks]
 		]
 
@@ -96,7 +103,7 @@ where
 		# (_,world)			= fclose console world
 		= world
 
-defaultEngineCLIOptions :: [String] EngineOptions -> MaybeError [String] EngineOptions 
+defaultEngineCLIOptions :: [String] EngineOptions -> MaybeError [String] EngineOptions
 defaultEngineCLIOptions [argv0:argv] defaults
 	# (settings, positionals, errs) = getOpt Permute opts argv
 	| not (errs =: []) = Error errs
@@ -110,7 +117,7 @@ where
 		[ Option ['?'] ["help"] (NoArg $ const Nothing)
 			"Display this message"
 		, Option ['p'] ["port"] (ReqArg (\p->fmap \o->{o & serverPort=toInt p}) "PORT")
-			("Specify the HTTP port (default: " +++ toString defaults.serverPort)
+			("Specify the HTTP port (default: " +++ toString defaults.serverPort +++ ")")
 		, Option [] ["timeout"] (OptArg (\mp->fmap \o->{o & timeout=fmap toInt mp}) "MILLISECONDS")
 			"Specify the timeout in ms (default: 500)\nIf not given, use an indefinite timeout."
 		, Option [] ["keepalive"] (ReqArg (\p->fmap \o->{o & keepaliveTime={tv_sec=toInt p,tv_nsec=0}}) "SECONDS")
@@ -133,6 +140,10 @@ where
 			("Specify the folder containing the temporary files\ndefault: " +++ defaults.tempDirPath)
 		, Option [] ["sapldir"] (ReqArg (\p->fmap \o->{o & saplDirPath=p}) "PATH")
 			("Specify the folder containing the sapl files\ndefault: " +++ defaults.saplDirPath)
+		, Option [] ["distributed"] (NoArg (fmap \o->{o & distributed=True}))
+			"Enable distributed mode (populate the symbols share)"
+		, Option ['s'] ["sdsPort"] (ReqArg (\p->fmap \o->{o & sdsPort=toInt p}) "SDSPORT")
+			("Specify the SDS port (default: " +++ toString defaults.sdsPort +++ ")")
 		]
 
 onStartup :: (Task a) -> StartableTask | iTask a
@@ -192,20 +203,22 @@ viewWebServerInstructions
 
 defaultEngineOptions :: !*World -> (!EngineOptions,!*World)
 defaultEngineOptions world
-	# (appPath,world)    = determineAppPath world	
+	# (appPath,world)    = determineAppPath world
 	# (appVersion,world) = determineAppVersion appPath world
 	# appDir             = takeDirectory appPath
 	# appName            = (dropExtension o dropDirectory) appPath
-	# options =	
+	# options =
 		{ appName			= appName
 		, appPath			= appPath
-        , appVersion        = appVersion
+		, appVersion        = appVersion
 		, serverPort		= IF_POSIX_OR_WINDOWS 8080 80
         , serverUrl         = "http://localhost/"
 		, keepaliveTime     = {tv_sec=300,tv_nsec=0} // 5 minutes
 		, sessionTime       = {tv_sec=60,tv_nsec=0}  // 1 minute, (the client pings every 10 seconds by default)
         , persistTasks      = False
 		, autoLayout        = True
+		, distributed       = False
+		, sdsPort			= 9090
 		, timeout			= Just 500
 		, webDirPath 		= appDir </> appName +++ "-www"
 		, storeDirPath      = appDir </> appName +++ "-data" </> "stores"
@@ -217,28 +230,28 @@ defaultEngineOptions world
 // Determines the server executables path
 determineAppPath :: !*World -> (!FilePath, !*World)
 determineAppPath world
-	# ([arg:_],world) = getCommandLine world 
+	# ([arg:_],world) = getCommandLine world
 	| dropDirectory arg <> "ConsoleClient.exe"	= toCanonicalPath arg world
-	//Using dynamic linker:	
-	# (res, world)				= getCurrentDirectory world	
-	| isError res				= abort "Cannot get current directory."	
+	//Using dynamic linker:
+	# (res, world)				= getCurrentDirectory world
+	| isError res				= abort "Cannot get current directory."
 	# currentDirectory			= fromOk res
-	# (res, world)				= readDirectory currentDirectory world	
-	| isError res				= abort "Cannot read current directory."	
+	# (res, world)				= readDirectory currentDirectory world
+	| isError res				= abort "Cannot read current directory."
 	# batchfiles				= [f \\ f <- fromOk res | takeExtension f == "bat" ]
-	| isEmpty batchfiles		= abort "No dynamic linker batch file found."	
-	# (infos, world)			= seqList (map getFileInfo batchfiles) world	
-	| any isError infos	 		= abort "Cannot get file information."	
-	= (currentDirectory </> (fst o hd o sortBy cmpFileTime) (zip2 batchfiles infos), world)	
-	where		
+	| isEmpty batchfiles		= abort "No dynamic linker batch file found."
+	# (infos, world)			= seqList (map getFileInfo batchfiles) world
+	| any isError infos	 		= abort "Cannot get file information."
+	= (currentDirectory </> (fst o hd o sortBy cmpFileTime) (zip2 batchfiles infos), world)
+	where
 		cmpFileTime (_,Ok {FileInfo | lastModifiedTime = x})
 					(_,Ok {FileInfo | lastModifiedTime = y}) = timeGm x > timeGm y
 
-//By default, we use the modification time of the applaction executable as version id
-determineAppVersion :: !FilePath!*World -> (!String,!*World)	
+//By default, we use the modification time of the application executable as version id
+determineAppVersion :: !FilePath!*World -> (!String,!*World)
 determineAppVersion appPath world
 	# (res,world)       = getFileInfo appPath world
-	| res =: (Error _)  = ("unknown",world) 
+	| res =: (Error _)  = ("unknown",world)
 	# tm				= (fromOk res).lastModifiedTime
 	# version           = strfTime "%Y%m%d-%H%M%S" tm
 	= (version,world)

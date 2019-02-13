@@ -123,13 +123,13 @@ where
 
 derive class iTask		Credentials
 
-currentUser :: RWShared () User User
-currentUser = sdsLens "currentUser" id (SDSRead userFromAttr) (SDSWrite userToAttr) (SDSNotify notify) currentTaskInstanceAttributes
+currentUser :: SimpleSDSLens User
+currentUser = sdsLens "currentUser" id (SDSRead userFromAttr) (SDSWrite userToAttr) (SDSNotify notify) Nothing currentTaskInstanceAttributes
 where
 	notify _ _ _ = const (const True)
 
-taskInstanceUser :: RWShared InstanceNo User User
-taskInstanceUser = sdsLens "taskInstanceUser" id (SDSRead userFromAttr) (SDSWrite userToAttr) (SDSNotify notify) taskInstanceAttributesByNo
+taskInstanceUser :: SDSLens InstanceNo User User
+taskInstanceUser = sdsLens "taskInstanceUser" id (SDSRead userFromAttr) (SDSWrite userToAttr) (SDSNotify notify) Nothing taskInstanceAttributesByNo
 where
 	notify _ _ _ = const (const True)
 
@@ -154,11 +154,11 @@ userToAttr _ attr _
 	# attr = 'DM'.del "auth-title" attr
 	= Ok (Just attr)
 
-processesForUser :: User -> ReadOnlyShared [TaskListItem ()]
+processesForUser :: User -> SDSLens () [TaskListItem ()] ()
 processesForUser user = mapRead (filter (forWorker user)) currentProcesses
 
-processesForCurrentUser	:: ReadOnlyShared [TaskListItem ()]
-processesForCurrentUser = mapRead readPrj (currentProcesses >+| currentUser)
+processesForCurrentUser	:: SDSLens () [TaskListItem ()] ()
+processesForCurrentUser = mapRead readPrj ((currentProcesses >*| currentUser))
 where
 	readPrj (items,user)	= filter (forWorker user) items
 
@@ -172,8 +172,8 @@ forWorker user {TaskListItem|attributes} = case 'DM'.get "user" attributes of
             _                               = False
         Nothing = True
 
-taskInstancesForUser :: ROShared User [TaskInstance]
-taskInstancesForUser = sdsLens "taskInstancesForUser" (const ()) (SDSRead read) (SDSWriteConst write) (SDSNotify notify) detachedTaskInstances
+taskInstancesForUser :: SDSLens User [TaskInstance] ()
+taskInstancesForUser = sdsLens "taskInstancesForUser" (const ()) (SDSRead read) (SDSWriteConst write) (SDSNotify notify) Nothing detachedTaskInstances
 where
 	read u instances = Ok (filter (forUser u) instances)
 	write _ () = Ok Nothing
@@ -190,13 +190,16 @@ where
 				_                               = False
 			Nothing = True
 
-taskInstancesForCurrentUser :: ROShared () [TaskInstance]
+taskInstancesForCurrentUser :: SDSSequence () [TaskInstance] ()
 taskInstancesForCurrentUser
 	= sdsSequence "taskInstancesForCurrentUser"
 		id
 		(\() u -> u)
 		(\_ _ -> Right snd)
-		(SDSWriteConst (\_ _ -> Ok Nothing)) (SDSWriteConst (\_ _ -> Ok Nothing)) currentUser taskInstancesForUser
+		(SDSWrite (\_ _ _ -> Ok Nothing))
+		(SDSWriteConst (\_ _ -> Ok Nothing)) 
+		currentUser
+		taskInstancesForUser
 
 workOn :: !t -> Task AttachmentStatus | toInstanceNo t
 workOn t 

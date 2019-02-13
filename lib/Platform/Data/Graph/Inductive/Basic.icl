@@ -6,6 +6,7 @@ import Data.Graph.Inductive.Graph
 import Data.Graph.Inductive.Internal.Thread
 
 import Data.List
+import StdList
 from StdFunc import o
 import StdTuple
 

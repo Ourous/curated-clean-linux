@@ -35,7 +35,7 @@ instance toUserConstraint UserId
 :: UserId		:== String
 :: Role			:== String
 :: UserTitle	:== String			// A descriptive name of a user (not used for identification)
-	
+
 instance toUserConstraint (a,b) | toUserConstraint a & toString b
 
 //* User authentication
@@ -52,7 +52,7 @@ instance toString		Username, Password
 instance ==				Username, Password
 instance <				Username, Password
 
-derive JSONEncode		User, UserConstraint, Username, Password 
+derive JSONEncode		User, UserConstraint, Username, Password
 derive JSONDecode		User, UserConstraint, Username, Password
 derive gDefault			User, UserConstraint, Username, Password
 derive gEq				User, UserConstraint, Username, Password
@@ -63,19 +63,19 @@ derive gEditor 			User, UserConstraint, Username, Password
 derive class iTask	Credentials
 
 //* Authentication of the current instance
-currentUser 			:: RWShared () User User
+currentUser 			:: SimpleSDSLens User
 //* Authentication of a task instance instance
-taskInstanceUser 		:: RWShared InstanceNo User User
+taskInstanceUser 		:: SDSLens InstanceNo User User
 
 //* Selected task instances
-processesForUser :: User -> ReadOnlyShared [TaskListItem ()]
-processesForCurrentUser :: ReadOnlyShared [TaskListItem ()]
+processesForUser :: User -> SDSLens () [TaskListItem ()] ()
+processesForCurrentUser	:: SDSLens () [TaskListItem ()] ()
 
-taskInstancesForUser :: ROShared User [TaskInstance]
-taskInstancesForCurrentUser :: ROShared () [TaskInstance]
+taskInstancesForUser :: SDSLens User [TaskInstance] ()
+taskInstancesForCurrentUser :: SDSSequence () [TaskInstance] ()
 
 /*
-* Copies authentication attributes of current task 
+* Copies authentication attributes of current task
 * and then attaches it
 */
 workOn :: !t -> Task AttachmentStatus | toInstanceNo t

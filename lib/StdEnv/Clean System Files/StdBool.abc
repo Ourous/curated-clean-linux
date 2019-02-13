@@ -42,7 +42,17 @@
 .export e_StdBool_sfromBool;6
 .descexp e_StdBool_dfromBool;6 e_StdBool_nfromBool;6 e_StdBool_lfromBool;6 1 0 "fromBool;6"
 .pb "fromBool;6"
+.o 1 1 b
+e_StdBool_ifromBool;6
+	pop_a 1
+.d 0 1 b
+	jsr s7
+.o 1 0
+	buildh ARRAY 1
+.d 1 0
+	rtn
 .pld
+.ai 1 _ e_StdBool_ifromBool;6
 .o 2 0
 e_StdBool_lfromBool;6
 	pop_a 1
@@ -85,7 +95,18 @@ s7
 .export e_StdBool_sfromBool;5
 .descexp e_StdBool_dfromBool;5 e_StdBool_nfromBool;5 e_StdBool_lfromBool;5 1 0 "fromBool;5"
 .pb "fromBool;5"
+.o 1 1 b
+e_StdBool_ifromBool;5
+	pop_a 1
+.d 0 1 b
+	jsr s6
+.o 0 1 b
+	buildB_b 0
+	pop_b 1
+.d 1 0
+	rtn
 .pld
+.ai 1 _ e_StdBool_ifromBool;5
 .o 2 0
 e_StdBool_lfromBool;5
 	pop_a 1
@@ -128,7 +149,15 @@ s6
 .export e_StdBool_stoBool;4
 .descexp e_StdBool_dtoBool;4 e_StdBool_ntoBool;4 e_StdBool_ltoBool;4 1 0 "toBool;4"
 .pb "toBool;4"
+.o 2 0
+e_StdBool_itoBool;4
+	pop_a 1
+	pushB_a 0
+	pop_a 1
+.d 0 1 b
+	jmp s5
 .pld
+.ai 1 _ e_StdBool_itoBool;4
 .o 2 0
 e_StdBool_ltoBool;4
 	pop_a 1
@@ -171,8 +200,16 @@ s5
 .export e_StdBool_s==;3
 .descexp e_StdBool_d==;3 e_StdBool_n==;3 e_StdBool_l==;3 2 0 "==;3"
 .pb "==;3"
+.o 3 0
+e_StdBool_i==;3
+	pop_a 1
+	pushB_a 1
+	pushB_a 0
+	pop_a 2
+.d 0 2 bb
+	jmp s4
 .pld
-.a 0 a4
+.ai 0 a4 e_StdBool_i==;3
 .o 2 0
 e_StdBool_l==;3
 	repl_args 1 1

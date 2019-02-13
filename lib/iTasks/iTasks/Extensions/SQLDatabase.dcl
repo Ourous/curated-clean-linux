@@ -34,7 +34,7 @@ derive class iTask SQLDatabaseDef, SQLDatabase, SQLValue, SQLTime, SQLDate, SQLT
 * @return The shared data source
 */
 sqlShare :: String (A.*cur: p *cur -> *(MaybeErrorString r,*cur) | SQLCursor cur)
-								(A.*cur: p w *cur -> *(MaybeErrorString (), *cur) | SQLCursor cur) -> RWShared (SQLDatabaseDef,p) r w
+								(A.*cur: p w *cur -> *(MaybeErrorString (), *cur) | SQLCursor cur) -> SDSSource (SQLDatabaseDef,p) r w
 
 
 
@@ -59,16 +59,16 @@ sqlExecuteSelect :: SQLDatabaseDef SQLStatement ![SQLValue] -> Task [SQLRow]
 * Note: Although it is possible to do other queries than just selects,
 * this is a bad idea. You never know how many times the query will be executed
 */
-sqlSelectShare	:: String SQLStatement ![SQLValue] -> ROShared SQLDatabaseDef [SQLRow]
+sqlSelectShare	:: String SQLStatement ![SQLValue] -> SDSLens SQLDatabaseDef [SQLRow] ()
 
 /*
 * View the list of tables in a database
 */
-sqlTables :: ROShared SQLDatabaseDef [SQLTableName]
+sqlTables :: SDSSource SQLDatabaseDef [SQLTableName] ()
 /**
 * The structure of database table
 */
-sqlTableDefinition :: ROShared (SQLDatabaseDef,SQLTableName) SQLTable
+sqlTableDefinition :: SDSSource (SQLDatabaseDef,SQLTableName) SQLTable ()
 
 sqlExecuteCreateTable :: SQLDatabaseDef SQLTable -> Task ()
 sqlExecuteDropTable :: SQLDatabaseDef SQLTableName -> Task ()

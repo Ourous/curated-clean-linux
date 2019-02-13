@@ -91,17 +91,17 @@ decodeString s a
     decodeLastOctet dest
       | s.[src_o + 2] == '='
         // lose the last four obsolete bits (2*6-8b)
-        #! oct = (fromChar a.[toInt s.[src_o]]     << 2) +
+        # oct = (fromChar a.[toInt s.[src_o]]     << 2) +
                  (fromChar a.[toInt s.[src_o + 1]] >> 4)
-        #! dest & [dest_o] = toChar oct
+        # dest & [dest_o] = toChar oct
         = dest
       | s.[src_o + 3] == '='
         #! oct = (fromChar a.[toInt s.[src_o]]     << 10) +
                  (fromChar a.[toInt s.[src_o + 1]] << 4)  +
                  (fromChar a.[toInt s.[src_o + 2]] >> 2)
         // lose the last two obsolete bits (3*6-2*8b)
-        #! dest & [dest_o+1] = toChar oct
-        #! dest & [dest_o]   = toChar (oct >> 8)
+        # dest & [dest_o+1] = toChar oct
+        # dest & [dest_o]   = toChar (oct >> 8)
         = dest
       | otherwise = decodeCommonOctet dest src_o dest_o
   decodeCommonOctet :: !*String !Int !Int -> *String
@@ -110,9 +110,9 @@ decodeString s a
              ((fromChar a.[toInt (s.[src_o + 1])]) << 12) +
              ((fromChar a.[toInt (s.[src_o + 2])]) << 6)  +
               (fromChar a.[toInt (s.[src_o + 3])])
-    #! dest & [dest_o + 2] = toChar oct
-    #! dest & [dest_o + 1] = toChar (oct >> 8)
-    #! dest & [dest_o]     = toChar (oct >> 16)
+    # dest & [dest_o + 2] = toChar oct
+    # dest & [dest_o + 1] = toChar (oct >> 8)
+    # dest & [dest_o]     = toChar (oct >> 16)
     = dest
 
   srcSize = size s

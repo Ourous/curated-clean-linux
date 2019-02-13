@@ -1,0 +1,96 @@
+
+OBJECTS = \
+	backend.obj backendsupport.obj buildtree.obj checker_2.obj \
+	checksupport.obj cocl.obj codegen1.obj codegen2.obj \
+	codegen3.obj codegen.obj comparser_2.obj \
+	comsupport.obj dbprint.obj instructions.obj optimisations.obj \
+	overloading_2.obj pattern_match_2.obj result_state_database.obj \
+	sa.obj scanner_2.obj set_scope_numbers.obj settings.obj \
+	statesgen.obj tcsupport_2.obj typeconv_2.obj version.obj windows_io.obj
+
+backend.dll: $(OBJECTS)
+	link /dll /release /out:..\backend.dll $(OBJECTS) @..\backend.link64
+
+backend.obj:
+	cl /nologo /c /D_WINDOWS_ /O /Wp64 backend.c
+
+backendsupport.obj:
+	cl /nologo /c /D_WINDOWS_ /O /Wp64 backendsupport.c
+
+buildtree.obj:
+	cl /nologo /c /D_WINDOWS_ /O /Wp64 buildtree.c
+
+checker_2.obj:
+	cl /nologo /c /D_WINDOWS_ /O /Wp64 checker_2.c
+
+checksupport.obj:
+	cl /nologo /c /D_WINDOWS_ /O /Wp64 checksupport.c
+
+cocl.obj:
+	cl /nologo /c /D_WINDOWS_ /O /Wp64 cocl.c
+
+codegen1.obj:
+	cl /nologo /c /D_WINDOWS_ /O /Wp64 codegen1.c
+
+codegen2.obj:
+	cl /nologo /c /D_WINDOWS_ /DG_A64 /O /Wp64 codegen2.c
+
+codegen3.obj:
+	cl /nologo /c /D_WINDOWS_ /O /Wp64 codegen3.c
+
+codegen.obj:
+	cl /nologo /c /D_WINDOWS_ /O /Wp64 codegen.c
+
+comparser_2.obj:
+	cl /nologo /c /D_WINDOWS_ /O /Wp64 comparser_2.c
+
+comsupport.obj:
+	cl /nologo /c /D_WINDOWS_ /O /Wp64 comsupport.c
+
+dbprint.obj:
+	cl /nologo /c /D_WINDOWS_ /O /Wp64 dbprint.c
+
+instructions.obj:
+	cl /nologo /c /D_WINDOWS_ /O /Wp64 instructions.c
+
+optimisations.obj:
+	cl /nologo /c /D_WINDOWS_ /O /Wp64 optimisations.c
+
+overloading_2.obj:
+	cl /nologo /c /D_WINDOWS_ /O /Wp64 overloading_2.c
+
+pattern_match_2.obj:
+	cl /nologo /c /D_WINDOWS_ /O /Wp64 pattern_match_2.c
+
+result_state_database.obj:
+	cl /nologo /c /D_WINDOWS_ /O /Wp64 result_state_database.c
+
+sa.obj:
+	cl /nologo /c /D_WINDOWS_ /O /Wp64 sa.c
+
+scanner_2.obj:
+	cl /nologo /c /D_WINDOWS_ /O /Wp64 scanner_2.c
+
+set_scope_numbers.obj:
+	cl /nologo /c /D_WINDOWS_ /O /Wp64 set_scope_numbers.c
+
+settings.obj:
+	cl /nologo /c /D_WINDOWS_ /O /Wp64 settings.c
+
+statesgen.obj:
+	cl /nologo /c /D_WINDOWS_ /O /Wp64 statesgen.c
+
+tcsupport_2.obj:
+	cl /nologo /c /D_WINDOWS_ /O /Wp64 tcsupport_2.c
+
+typeconv_2.obj:
+	cl /nologo /c /D_WINDOWS_ /O /Wp64 typeconv_2.c
+
+version.obj:
+	cl /nologo /c /D_WINDOWS_ /O /Wp64 version.c
+
+windows_io.obj:
+	cl /nologo /c /D_WINDOWS_ /O /Wp64 windows_io.c
+
+cleanup:
+	del $(OBJECTS)

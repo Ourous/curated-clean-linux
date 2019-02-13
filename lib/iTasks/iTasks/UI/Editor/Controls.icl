@@ -115,13 +115,14 @@ where
 	leafEditor toJSON =
 		{LeafEditor|genUI=genUI toJSON,onEdit=onEdit,onRefresh=onRefresh toJSON,valueFromState=valueFromState}
 
-	genUI toJSON dp mode vst=:{VSt|taskId,optional}
+	genUI toJSON attr dp mode vst=:{VSt|taskId,optional}
 		# mbVal   = maybe mbEditModeInitValue Just $ editModeValue mode
 		# jsonVal = maybe JSONNull toJSON mbVal
 		# attr    = 'DM'.unions [ optionalAttr optional
 		                        , taskIdAttr taskId
 		                        , editorIdAttr $ editorId dp
 		                        , valueAttr jsonVal
+		                        , attr
 		                        ]
 		= (Ok (uia type attr, mbVal), vst)
 
@@ -142,8 +143,8 @@ viewComponent toAttributes type = leafEditorToEditor leafEditor
 where
 	leafEditor = {LeafEditor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh,valueFromState=valueFromState}
 
-	genUI dp mode vst = case editModeValue mode of
-		Just val = (Ok (uia type (toAttributes val), val),                vst)
+	genUI attr dp mode vst = case editModeValue mode of
+		Just val = (Ok (uia type ('DM'.union attr $ toAttributes val), val),                vst)
 		_        = (Error "View components cannot be used in enter mode", vst)
 
 	onEdit _ (_, ()) _ vst = (Error "Edit event for view component",vst)
@@ -171,19 +172,21 @@ choiceComponent :: !(a -> UIAttributes) !(a -> [o]) !(o -> JSONNode) !([o] Int -
 choiceComponent attr getOptions toOption checkBounds type = disableOnView $
 	leafEditorToEditor {LeafEditor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh,valueFromState=valueFromState}
 where
-	genUI dp mode vst=:{VSt|taskId}
+	genUI attrs dp mode vst=:{VSt|taskId}
 		# (mbVal, sel) = maybe (Nothing, []) (appFst Just) $ editModeValue mode
-		# attr = 'DM'.unions [maybe 'DM'.newMap attr mbVal, choiceAttrs taskId (editorId dp) sel $ mbValToOptions mbVal]
-		= (Ok (uia type attr, (mbVal, sel)), vst)
+		# attr = 'DM'.unions [attrs, maybe 'DM'.newMap attr mbVal, choiceAttrs taskId (editorId dp) sel $ mbValToOptions mbVal]
 
-	onEdit dp (tp, selection) (mbVal, sel) vst=:{VSt|optional}
+		# multiple = maybe False (\(JSONBool b) -> b) ('DM'.get "multiple" attr)
+		= (Ok (uia type attr, (mbVal, sel, multiple)), vst)
+
+	onEdit dp (tp, selection) (mbVal, sel, multiple) vst=:{VSt|optional}
 		# options = maybe [] getOptions mbVal
 		| all (checkBounds options) selection
-			= (Ok (NoChange, (mbVal, selection)),vst)
+			= (Ok (NoChange, (mbVal, selection, multiple)),vst)
 		| otherwise
 			= (Error ("Choice event out of bounds: " +++ toString (toJSON selection)), vst)
 
-	onRefresh dp (newVal, newSel) (mbOldVal, oldSel) vst
+	onRefresh dp (newVal, newSel) (mbOldVal, oldSel, multiple) vst
 		//Check options
 		# oldOpts            = mbValToOptions mbOldVal
 		# newOpts            = mbValToOptions $ Just newVal
@@ -192,14 +195,12 @@ where
 		                          NoChange
 		//Check selection
 		# cSel               = if (newSel =!= oldSel) (ChangeUI [SetAttribute "value" (toJSON newSel)] []) NoChange
-		= (Ok (mergeUIChanges cOptions cSel, (Just newVal, newSel)),vst)
+		= (Ok (mergeUIChanges cOptions cSel, (Just newVal, newSel, multiple)),vst)
 
-	valueFromState (Just val, sel)
+	valueFromState (Just val, sel, multiple)
 		//The selection is only allowed to be empty when multiselect is enabled
 		| not multiple && isEmpty sel = Nothing
 		| otherwise                   = Just (val, sel)
-	where
-		multiple = maybe False (\(JSONBool b) -> b) ('DM'.get "multiple" $ attr val)
 	valueFromState _               = Nothing
 
 	mbValToOptions mbVal = toOption <$> maybe [] getOptions mbVal

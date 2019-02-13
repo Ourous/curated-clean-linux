@@ -45,7 +45,7 @@
 .impdesc d_S.6
 .implab n_S.6 ea_S.6
 .implab _driver
-.desc0 d60 0 "Files"
+.desc0 d61 0 "Files"
 .export e_StdFile_rFileSystem;
 .record e_StdFile_rFileSystem; aaaa 4 0 "FileSystem;"
 .pb "FileSystem;"
@@ -229,11 +229,87 @@ e_StdFile_ea<<<;.<<<
 .d 1 0
 	rtn
 .pe
+.export e_StdFile_s<<<;40
+.descexp e_StdFile_d<<<;40 e_StdFile_n<<<;40 e_StdFile_l<<<;40 2 0 "<<<;40"
+.pb "<<<;40"
+.o 2 2 f
+e_StdFile_i<<<;40
+	pop_a 1
+	pushR_a 0
+	pop_a 1
+	push_b 2
+	update_b 1 3
+	update_b 2 1
+	update_b 0 2
+	pop_b 1
+.d 0 3 fr
+	jmp s41
+.pld
+.ai 0 a41 e_StdFile_i<<<;40
+.o 2 0
+e_StdFile_l<<<;40
+	repl_args 1 1
+.o 2 0
+.pn
+a41
+.d 2 0
+	jsr ea41
+.o 0 2 f
+	buildF_b 0
+	pop_b 2
+.d 1 0
+	rtn
+.pd
+.n 2 e_StdFile_d<<<;40
+.o 1 0
+e_StdFile_n<<<;40
+	push_node _cycle_in_spine 2
+.d 2 0
+	jsr ea41
+.o 0 2 f
+	fillF_b 0 0
+	pop_b 2
+.d 1 0
+	rtn
+.o 2 0
+.pn
+ea41
+	jsr_eval 1
+	jsr_eval 0
+	pushR_a 1
+	pushF_a 0
+	pop_a 2
+.o 0 3 fr
+e_StdFile_s<<<;40
+.o 0 3 fr
+s41
+.inline <<<;40
+	push_b 2
+	update_b 2 3
+	update_b 1 2
+	update_b 0 1
+	pop_b 1
+.d 0 3 r f
+	jsr writeFR
+.o 0 2 f
+.end
+
+.d 0 2 f
+	rtn
+.pe
 .export e_StdFile_s<<<;39
 .descexp e_StdFile_d<<<;39 e_StdFile_n<<<;39 e_StdFile_l<<<;39 2 0 "<<<;39"
 .pb "<<<;39"
+.o 2 2 f
+e_StdFile_i<<<;39
+	pop_a 1
+	push_array 0
+	update_a 0 1
+	pop_a 1
+.d 1 2 f
+	jmp s40
 .pld
-.a 0 a40
+.ai 0 a40 e_StdFile_i<<<;39
 .o 2 0
 e_StdFile_l<<<;39
 	repl_args 1 1
@@ -264,21 +340,17 @@ e_StdFile_n<<<;39
 ea40
 	jsr_eval 1
 	jsr_eval 0
-	pushR_a 1
-	pushF_a 0
+	push_array 1
+	pushF_a 1
+	update_a 0 2
 	pop_a 2
-.o 0 3 fr
+.o 1 2 f
 e_StdFile_s<<<;39
-.o 0 3 fr
+.o 1 2 f
 s40
 .inline <<<;39
-	push_b 2
-	update_b 2 3
-	update_b 1 2
-	update_b 0 1
-	pop_b 1
-.d 0 3 r f
-	jsr writeFR
+.d 1 2 f
+	jsr writeFS
 .o 0 2 f
 .end
 
@@ -288,8 +360,20 @@ s40
 .export e_StdFile_s<<<;38
 .descexp e_StdFile_d<<<;38 e_StdFile_n<<<;38 e_StdFile_l<<<;38 2 0 "<<<;38"
 .pb "<<<;38"
+.o 2 2 f
+e_StdFile_i<<<;38
+	pop_a 1
+	pushC_a 0
+	pop_a 1
+	push_b 2
+	update_b 1 3
+	update_b 2 1
+	update_b 0 2
+	pop_b 1
+.d 0 3 fc
+	jmp s39
 .pld
-.a 0 a39
+.ai 0 a39 e_StdFile_i<<<;38
 .o 2 0
 e_StdFile_l<<<;38
 	repl_args 1 1
@@ -320,17 +404,21 @@ e_StdFile_n<<<;38
 ea39
 	jsr_eval 1
 	jsr_eval 0
-	push_array 1
-	pushF_a 1
-	update_a 0 2
+	pushC_a 1
+	pushF_a 0
 	pop_a 2
-.o 1 2 f
+.o 0 3 fc
 e_StdFile_s<<<;38
-.o 1 2 f
+.o 0 3 fc
 s39
 .inline <<<;38
-.d 1 2 f
-	jsr writeFS
+	push_b 2
+	update_b 2 3
+	update_b 1 2
+	update_b 0 1
+	pop_b 1
+.d 0 3 c f
+	jsr writeFC
 .o 0 2 f
 .end
 
@@ -340,8 +428,20 @@ s39
 .export e_StdFile_s<<<;37
 .descexp e_StdFile_d<<<;37 e_StdFile_n<<<;37 e_StdFile_l<<<;37 2 0 "<<<;37"
 .pb "<<<;37"
+.o 2 2 f
+e_StdFile_i<<<;37
+	pop_a 1
+	pushI_a 0
+	pop_a 1
+	push_b 2
+	update_b 1 3
+	update_b 2 1
+	update_b 0 2
+	pop_b 1
+.d 0 3 fi
+	jmp s38
 .pld
-.a 0 a38
+.ai 0 a38 e_StdFile_i<<<;37
 .o 2 0
 e_StdFile_l<<<;37
 	repl_args 1 1
@@ -372,70 +472,14 @@ e_StdFile_n<<<;37
 ea38
 	jsr_eval 1
 	jsr_eval 0
-	pushC_a 1
-	pushF_a 0
-	pop_a 2
-.o 0 3 fc
-e_StdFile_s<<<;37
-.o 0 3 fc
-s38
-.inline <<<;37
-	push_b 2
-	update_b 2 3
-	update_b 1 2
-	update_b 0 1
-	pop_b 1
-.d 0 3 c f
-	jsr writeFC
-.o 0 2 f
-.end
-
-.d 0 2 f
-	rtn
-.pe
-.export e_StdFile_s<<<;36
-.descexp e_StdFile_d<<<;36 e_StdFile_n<<<;36 e_StdFile_l<<<;36 2 0 "<<<;36"
-.pb "<<<;36"
-.pld
-.a 0 a37
-.o 2 0
-e_StdFile_l<<<;36
-	repl_args 1 1
-.o 2 0
-.pn
-a37
-.d 2 0
-	jsr ea37
-.o 0 2 f
-	buildF_b 0
-	pop_b 2
-.d 1 0
-	rtn
-.pd
-.n 2 e_StdFile_d<<<;36
-.o 1 0
-e_StdFile_n<<<;36
-	push_node _cycle_in_spine 2
-.d 2 0
-	jsr ea37
-.o 0 2 f
-	fillF_b 0 0
-	pop_b 2
-.d 1 0
-	rtn
-.o 2 0
-.pn
-ea37
-	jsr_eval 1
-	jsr_eval 0
 	pushI_a 1
 	pushF_a 0
 	pop_a 2
 .o 0 3 fi
-e_StdFile_s<<<;36
+e_StdFile_s<<<;37
 .o 0 3 fi
-s37
-.inline <<<;36
+s38
+.inline <<<;37
 	push_b 2
 	update_b 2 3
 	update_b 1 2
@@ -449,14 +493,25 @@ s37
 .d 0 2 f
 	rtn
 .pe
-.export e_StdFile_sappFiles;35
-.export e_StdFile_eaappFiles;35
-.descexp e_StdFile_dappFiles;35 e_StdFile_nappFiles;35 e_StdFile_lappFiles;35 2 0 "appFiles;35"
-.pb "appFiles;35"
+.export e_StdFile_sappFiles;36
+.export e_StdFile_eaappFiles;36
+.descexp e_StdFile_dappFiles;36 e_StdFile_nappFiles;36 e_StdFile_lappFiles;36 2 0 "appFiles;36"
+.pb "appFiles;36"
+.o 3 0
+e_StdFile_iappFiles;36
+	pop_a 1
+	create
+	push_a 2
+	update_a 1 3
+	update_a 2 1
+	update_a 0 2
+	pop_a 1
+.d 3 0
+	jmp s37
 .pl
-.a 2 e_StdFile_eaappFiles;35
+.ai 2 e_StdFile_eaappFiles;36 e_StdFile_iappFiles;36
 .o 2 0
-e_StdFile_lappFiles;35
+e_StdFile_lappFiles;36
 	push_args 0 1 1
 	update_a 2 1
 	create
@@ -464,21 +519,21 @@ e_StdFile_lappFiles;35
 	pop_a 1
 .d 3 0
 .pn
-	jmp e_StdFile_eaappFiles;35
-.n 2 e_StdFile_dappFiles;35 e_StdFile_eaappFiles;35
+	jmp e_StdFile_eaappFiles;36
+.n 2 e_StdFile_dappFiles;36 e_StdFile_eaappFiles;36
 .o 1 0
-e_StdFile_nappFiles;35
+e_StdFile_nappFiles;36
 	push_node _cycle_in_spine 2
 .o 3 0
 .pn
-e_StdFile_eaappFiles;35
+e_StdFile_eaappFiles;36
 	jsr_eval 1
 	jsr_eval 0
 .o 3 0
-e_StdFile_sappFiles;35
+e_StdFile_sappFiles;36
 .o 3 0
-s36
-	buildh d60 0
+s37
+	buildh d61 0
 	push_a 0
 	push_a 2
 	update_a 1 3
@@ -494,10 +549,10 @@ s36
 .d 1 0
 	rtn
 .pe
-.pb "do_files;45"
+.pb "do_files;46"
 .o 3 0
-s46
-.inline do_files;45
+s47
+.inline do_files;46
 	fill_a 1 2
 	pop_a 2
 .end
@@ -505,19 +560,24 @@ s46
 .d 1 0
 	rtn
 .pe
-.export e_StdFile_saccFiles;34
-.descexp e_StdFile_daccFiles;34 e_StdFile_naccFiles;34 e_StdFile_laccFiles;34 2 0 "accFiles;34"
-.pb "accFiles;34"
+.export e_StdFile_saccFiles;35
+.descexp e_StdFile_daccFiles;35 e_StdFile_naccFiles;35 e_StdFile_laccFiles;35 2 0 "accFiles;35"
+.pb "accFiles;35"
+.o 3 0
+e_StdFile_iaccFiles;35
+	pop_a 1
+.d 2 0
+	jmp s36
 .pld
-.a 0 a35
+.ai 0 a36 e_StdFile_iaccFiles;35
 .o 2 0
-e_StdFile_laccFiles;34
+e_StdFile_laccFiles;35
 	repl_args 1 1
 .o 2 0
 .pn
-a35
+a36
 .d 2 0
-	jsr ea35
+	jsr ea36
 .o 2 0
 	push_a 1
 	push_a 1
@@ -526,12 +586,12 @@ a35
 .d 1 0
 	rtn
 .pd
-.n 2 e_StdFile_daccFiles;34
+.n 2 e_StdFile_daccFiles;35
 .o 1 0
-e_StdFile_naccFiles;34
+e_StdFile_naccFiles;35
 	push_node _cycle_in_spine 2
 .d 2 0
-	jsr ea35
+	jsr ea36
 .o 2 0
 	push_a 1
 	push_a 1
@@ -541,14 +601,14 @@ e_StdFile_naccFiles;34
 	rtn
 .o 2 0
 .pn
-ea35
+ea36
 	jsr_eval 1
 	jsr_eval 0
 .o 2 0
-e_StdFile_saccFiles;34
+e_StdFile_saccFiles;35
 .o 2 0
-s35
-	buildh d60 0
+s36
+	buildh d61 0
 	push_a 0
 	push_a 2
 	update_a 1 3
@@ -568,11 +628,11 @@ s35
 	update_a 1 3
 	updatepop_a 0 2
 .d 3 0
-	jmp s45
+	jmp s46
 .pe
-.pb "do_files2;44"
+.pb "do_files2;45"
 .o 3 0
-s45
+s46
 	push_a 2
 	push_a 2
 	update_a 1 4
@@ -580,15 +640,21 @@ s45
 .d 2 0
 	rtn
 .pe
-.export e_StdFile_sstdio;33
-.descexp e_StdFile_dstdio;33 e_StdFile_nstdio;33 e_StdFile_lstdio;33 1 0 "stdio;33"
-.pb "stdio;33"
-.pld
+.export e_StdFile_sstdio;34
+.descexp e_StdFile_dstdio;34 e_StdFile_nstdio;34 e_StdFile_lstdio;34 1 0 "stdio;34"
+.pb "stdio;34"
 .o 2 0
-e_StdFile_lstdio;33
+e_StdFile_istdio;34
 	pop_a 1
 .d 1 0
-	jsr ea34
+	jmp s35
+.pld
+.ai 1 _ e_StdFile_istdio;34
+.o 2 0
+e_StdFile_lstdio;34
+	pop_a 1
+.d 1 0
+	jsr ea35
 .o 1 2 f
 	push_a 0
 	buildF_b 0
@@ -598,12 +664,12 @@ e_StdFile_lstdio;33
 .d 1 0
 	rtn
 .pd
-.n 1 e_StdFile_dstdio;33
+.n 1 e_StdFile_dstdio;34
 .o 1 0
-e_StdFile_nstdio;33
+e_StdFile_nstdio;34
 	push_node _cycle_in_spine 1
 .d 1 0
-	jsr ea34
+	jsr ea35
 .o 1 2 f
 	push_a 0
 	buildF_b 0
@@ -614,12 +680,12 @@ e_StdFile_nstdio;33
 	rtn
 .o 1 0
 .pn
-ea34
+ea35
 	jsr_eval 0
 .o 1 0
-e_StdFile_sstdio;33
+e_StdFile_sstdio;34
 .o 1 0
-s34
+s35
 .d 0 0
 	jsr	stdioF
 .o 0 2 f
@@ -629,13 +695,94 @@ s34
 .d 1 2 f
 	rtn
 .pe
-.export e_StdFile_ssfopen;32
-.descexp e_StdFile_dsfopen;32 e_StdFile_nsfopen;32 e_StdFile_lsfopen;32 3 0 "sfopen;32"
-.pb "sfopen;32"
+.export e_StdFile_ssfopen;33
+.descexp e_StdFile_dsfopen;33 e_StdFile_nsfopen;33 e_StdFile_lsfopen;33 3 0 "sfopen;33"
+.pb "sfopen;33"
+.o 3 1 i
+e_StdFile_isfopen;33
+	pop_a 1
+.d 2 1 i
+	jmp s34
 .pld
-.a 0 a33
+.ai 0 a34 e_StdFile_isfopen;33
 .o 2 0
-e_StdFile_lsfopen;32
+e_StdFile_lsfopen;33
+	repl_args 2 2
+.o 3 0
+.pn
+a34
+.d 3 0
+	jsr ea34
+.o 1 3 bf
+	push_a 0
+	buildF_b 1
+	buildB_b 0
+	buildh _Tuple 3
+	updatepop_a 0 1
+	pop_b 3
+.d 1 0
+	rtn
+.pd
+.n 3 e_StdFile_dsfopen;33
+.o 1 0
+e_StdFile_nsfopen;33
+	push_node _cycle_in_spine 3
+.d 3 0
+	jsr ea34
+.o 1 3 bf
+	push_a 0
+	buildF_b 1
+	buildB_b 0
+	fillh _Tuple 3 4
+	pop_a 1
+	pop_b 3
+.d 1 0
+	rtn
+.o 3 0
+.pn
+ea34
+	jsr_eval 2
+	jsr_eval 1
+	jsr_eval 0
+	pushI_a 1
+	push_array 0
+	update_a 0 2
+	pop_a 2
+.o 2 1 i
+e_StdFile_ssfopen;33
+.o 2 1 i
+s34
+	push_b 0
+	push_a 0
+	updatepop_b 0 1
+	updatepop_a 0 1
+.d 1 1 i
+	jsr	openSF
+.o 0 3 b f
+
+	push_a 0
+	push_b 2
+	push_b 2
+	push_b 2
+	updatepop_a 0 1
+	update_b 2 5
+	update_b 1 4
+	updatepop_b 0 3
+.d 1 3 bf
+	rtn
+.pe
+.export e_StdFile_sfopen;32
+.descexp e_StdFile_dfopen;32 e_StdFile_nfopen;32 e_StdFile_lfopen;32 3 0 "fopen;32"
+.pb "fopen;32"
+.o 3 1 i
+e_StdFile_ifopen;32
+	pop_a 1
+.d 2 1 i
+	jmp s33
+.pld
+.ai 0 a33 e_StdFile_ifopen;32
+.o 2 0
+e_StdFile_lfopen;32
 	repl_args 2 2
 .o 3 0
 .pn
@@ -652,9 +799,9 @@ a33
 .d 1 0
 	rtn
 .pd
-.n 3 e_StdFile_dsfopen;32
+.n 3 e_StdFile_dfopen;32
 .o 1 0
-e_StdFile_nsfopen;32
+e_StdFile_nfopen;32
 	push_node _cycle_in_spine 3
 .d 3 0
 	jsr ea33
@@ -678,80 +825,9 @@ ea33
 	update_a 0 2
 	pop_a 2
 .o 2 1 i
-e_StdFile_ssfopen;32
+e_StdFile_sfopen;32
 .o 2 1 i
 s33
-	push_b 0
-	push_a 0
-	updatepop_b 0 1
-	updatepop_a 0 1
-.d 1 1 i
-	jsr	openSF
-.o 0 3 b f
-
-	push_a 0
-	push_b 2
-	push_b 2
-	push_b 2
-	updatepop_a 0 1
-	update_b 2 5
-	update_b 1 4
-	updatepop_b 0 3
-.d 1 3 bf
-	rtn
-.pe
-.export e_StdFile_sfopen;31
-.descexp e_StdFile_dfopen;31 e_StdFile_nfopen;31 e_StdFile_lfopen;31 3 0 "fopen;31"
-.pb "fopen;31"
-.pld
-.a 0 a32
-.o 2 0
-e_StdFile_lfopen;31
-	repl_args 2 2
-.o 3 0
-.pn
-a32
-.d 3 0
-	jsr ea32
-.o 1 3 bf
-	push_a 0
-	buildF_b 1
-	buildB_b 0
-	buildh _Tuple 3
-	updatepop_a 0 1
-	pop_b 3
-.d 1 0
-	rtn
-.pd
-.n 3 e_StdFile_dfopen;31
-.o 1 0
-e_StdFile_nfopen;31
-	push_node _cycle_in_spine 3
-.d 3 0
-	jsr ea32
-.o 1 3 bf
-	push_a 0
-	buildF_b 1
-	buildB_b 0
-	fillh _Tuple 3 4
-	pop_a 1
-	pop_b 3
-.d 1 0
-	rtn
-.o 3 0
-.pn
-ea32
-	jsr_eval 2
-	jsr_eval 1
-	jsr_eval 0
-	pushI_a 1
-	push_array 0
-	update_a 0 2
-	pop_a 2
-.o 2 1 i
-e_StdFile_sfopen;31
-.o 2 1 i
-s32
 	push_b 0
 	push_a 0
 	updatepop_b 0 1
@@ -771,19 +847,24 @@ s32
 .d 1 3 bf
 	rtn
 .pe
-.export e_StdFile_sfclose;30
-.descexp e_StdFile_dfclose;30 e_StdFile_nfclose;30 e_StdFile_lfclose;30 2 0 "fclose;30"
-.pb "fclose;30"
+.export e_StdFile_sfclose;31
+.descexp e_StdFile_dfclose;31 e_StdFile_nfclose;31 e_StdFile_lfclose;31 2 0 "fclose;31"
+.pb "fclose;31"
+.o 2 2 f
+e_StdFile_ifclose;31
+	pop_a 1
+.d 1 2 f
+	jmp s32
 .pld
-.a 0 a31
+.ai 0 a32 e_StdFile_ifclose;31
 .o 2 0
-e_StdFile_lfclose;30
+e_StdFile_lfclose;31
 	repl_args 1 1
 .o 2 0
 .pn
-a31
+a32
 .d 2 0
-	jsr ea31
+	jsr ea32
 .o 1 1 b
 	push_a 0
 	buildB_b 0
@@ -793,12 +874,12 @@ a31
 .d 1 0
 	rtn
 .pd
-.n 2 e_StdFile_dfclose;30
+.n 2 e_StdFile_dfclose;31
 .o 1 0
-e_StdFile_nfclose;30
+e_StdFile_nfclose;31
 	push_node _cycle_in_spine 2
 .d 2 0
-	jsr ea31
+	jsr ea32
 .o 1 1 b
 	push_a 0
 	buildB_b 0
@@ -809,15 +890,15 @@ e_StdFile_nfclose;30
 	rtn
 .o 2 0
 .pn
-ea31
+ea32
 	jsr_eval 1
 	jsr_eval 0
 	pushF_a 0
 	pop_a 1
 .o 1 2 f
-e_StdFile_sfclose;30
+e_StdFile_sfclose;31
 .o 1 2 f
-s31
+s32
 	push_b 1
 	push_b 1
 	update_b 1 3
@@ -831,15 +912,21 @@ s31
 .d 1 1 b
 	rtn
 .pe
-.export e_StdFile_sstdio;29
-.descexp e_StdFile_dstdio;29 e_StdFile_nstdio;29 e_StdFile_lstdio;29 1 0 "stdio;29"
-.pb "stdio;29"
-.pld
+.export e_StdFile_sstdio;30
+.descexp e_StdFile_dstdio;30 e_StdFile_nstdio;30 e_StdFile_lstdio;30 1 0 "stdio;30"
+.pb "stdio;30"
 .o 2 0
-e_StdFile_lstdio;29
+e_StdFile_istdio;30
 	pop_a 1
 .d 1 0
-	jsr ea30
+	jmp s31
+.pld
+.ai 1 _ e_StdFile_istdio;30
+.o 2 0
+e_StdFile_lstdio;30
+	pop_a 1
+.d 1 0
+	jsr ea31
 .o 1 2 f
 	push_a 0
 	buildF_b 0
@@ -849,12 +936,12 @@ e_StdFile_lstdio;29
 .d 1 0
 	rtn
 .pd
-.n 1 e_StdFile_dstdio;29
+.n 1 e_StdFile_dstdio;30
 .o 1 0
-e_StdFile_nstdio;29
+e_StdFile_nstdio;30
 	push_node _cycle_in_spine 1
 .d 1 0
-	jsr ea30
+	jsr ea31
 .o 1 2 f
 	push_a 0
 	buildF_b 0
@@ -865,12 +952,12 @@ e_StdFile_nstdio;29
 	rtn
 .o 1 0
 .pn
-ea30
+ea31
 	jsr_eval 0
 .o 1 0
-e_StdFile_sstdio;29
+e_StdFile_sstdio;30
 .o 1 0
-s30
+s31
 .d 0 0
 	jsr	stdioF
 .o 0 2 f
@@ -880,13 +967,94 @@ s30
 .d 1 2 f
 	rtn
 .pe
-.export e_StdFile_ssfopen;28
-.descexp e_StdFile_dsfopen;28 e_StdFile_nsfopen;28 e_StdFile_lsfopen;28 3 0 "sfopen;28"
-.pb "sfopen;28"
+.export e_StdFile_ssfopen;29
+.descexp e_StdFile_dsfopen;29 e_StdFile_nsfopen;29 e_StdFile_lsfopen;29 3 0 "sfopen;29"
+.pb "sfopen;29"
+.o 3 1 i
+e_StdFile_isfopen;29
+	pop_a 1
+.d 2 1 i
+	jmp s30
 .pld
-.a 0 a29
+.ai 0 a30 e_StdFile_isfopen;29
 .o 2 0
-e_StdFile_lsfopen;28
+e_StdFile_lsfopen;29
+	repl_args 2 2
+.o 3 0
+.pn
+a30
+.d 3 0
+	jsr ea30
+.o 1 3 bf
+	push_a 0
+	buildF_b 1
+	buildB_b 0
+	buildh _Tuple 3
+	updatepop_a 0 1
+	pop_b 3
+.d 1 0
+	rtn
+.pd
+.n 3 e_StdFile_dsfopen;29
+.o 1 0
+e_StdFile_nsfopen;29
+	push_node _cycle_in_spine 3
+.d 3 0
+	jsr ea30
+.o 1 3 bf
+	push_a 0
+	buildF_b 1
+	buildB_b 0
+	fillh _Tuple 3 4
+	pop_a 1
+	pop_b 3
+.d 1 0
+	rtn
+.o 3 0
+.pn
+ea30
+	jsr_eval 2
+	jsr_eval 1
+	jsr_eval 0
+	pushI_a 1
+	push_array 0
+	update_a 0 2
+	pop_a 2
+.o 2 1 i
+e_StdFile_ssfopen;29
+.o 2 1 i
+s30
+	push_b 0
+	push_a 0
+	updatepop_b 0 1
+	updatepop_a 0 1
+.d 1 1 i
+	jsr	openSF
+.o 0 3 b f
+
+	push_a 0
+	push_b 2
+	push_b 2
+	push_b 2
+	updatepop_a 0 1
+	update_b 2 5
+	update_b 1 4
+	updatepop_b 0 3
+.d 1 3 bf
+	rtn
+.pe
+.export e_StdFile_sfopen;28
+.descexp e_StdFile_dfopen;28 e_StdFile_nfopen;28 e_StdFile_lfopen;28 3 0 "fopen;28"
+.pb "fopen;28"
+.o 3 1 i
+e_StdFile_ifopen;28
+	pop_a 1
+.d 2 1 i
+	jmp s29
+.pld
+.ai 0 a29 e_StdFile_ifopen;28
+.o 2 0
+e_StdFile_lfopen;28
 	repl_args 2 2
 .o 3 0
 .pn
@@ -903,9 +1071,9 @@ a29
 .d 1 0
 	rtn
 .pd
-.n 3 e_StdFile_dsfopen;28
+.n 3 e_StdFile_dfopen;28
 .o 1 0
-e_StdFile_nsfopen;28
+e_StdFile_nfopen;28
 	push_node _cycle_in_spine 3
 .d 3 0
 	jsr ea29
@@ -929,80 +1097,9 @@ ea29
 	update_a 0 2
 	pop_a 2
 .o 2 1 i
-e_StdFile_ssfopen;28
+e_StdFile_sfopen;28
 .o 2 1 i
 s29
-	push_b 0
-	push_a 0
-	updatepop_b 0 1
-	updatepop_a 0 1
-.d 1 1 i
-	jsr	openSF
-.o 0 3 b f
-
-	push_a 0
-	push_b 2
-	push_b 2
-	push_b 2
-	updatepop_a 0 1
-	update_b 2 5
-	update_b 1 4
-	updatepop_b 0 3
-.d 1 3 bf
-	rtn
-.pe
-.export e_StdFile_sfopen;27
-.descexp e_StdFile_dfopen;27 e_StdFile_nfopen;27 e_StdFile_lfopen;27 3 0 "fopen;27"
-.pb "fopen;27"
-.pld
-.a 0 a28
-.o 2 0
-e_StdFile_lfopen;27
-	repl_args 2 2
-.o 3 0
-.pn
-a28
-.d 3 0
-	jsr ea28
-.o 1 3 bf
-	push_a 0
-	buildF_b 1
-	buildB_b 0
-	buildh _Tuple 3
-	updatepop_a 0 1
-	pop_b 3
-.d 1 0
-	rtn
-.pd
-.n 3 e_StdFile_dfopen;27
-.o 1 0
-e_StdFile_nfopen;27
-	push_node _cycle_in_spine 3
-.d 3 0
-	jsr ea28
-.o 1 3 bf
-	push_a 0
-	buildF_b 1
-	buildB_b 0
-	fillh _Tuple 3 4
-	pop_a 1
-	pop_b 3
-.d 1 0
-	rtn
-.o 3 0
-.pn
-ea28
-	jsr_eval 2
-	jsr_eval 1
-	jsr_eval 0
-	pushI_a 1
-	push_array 0
-	update_a 0 2
-	pop_a 2
-.o 2 1 i
-e_StdFile_sfopen;27
-.o 2 1 i
-s28
 	push_b 0
 	push_a 0
 	updatepop_b 0 1
@@ -1022,19 +1119,24 @@ s28
 .d 1 3 bf
 	rtn
 .pe
-.export e_StdFile_sfclose;26
-.descexp e_StdFile_dfclose;26 e_StdFile_nfclose;26 e_StdFile_lfclose;26 2 0 "fclose;26"
-.pb "fclose;26"
+.export e_StdFile_sfclose;27
+.descexp e_StdFile_dfclose;27 e_StdFile_nfclose;27 e_StdFile_lfclose;27 2 0 "fclose;27"
+.pb "fclose;27"
+.o 2 2 f
+e_StdFile_ifclose;27
+	pop_a 1
+.d 1 2 f
+	jmp s28
 .pld
-.a 0 a27
+.ai 0 a28 e_StdFile_ifclose;27
 .o 2 0
-e_StdFile_lfclose;26
+e_StdFile_lfclose;27
 	repl_args 1 1
 .o 2 0
 .pn
-a27
+a28
 .d 2 0
-	jsr ea27
+	jsr ea28
 .o 1 1 b
 	push_a 0
 	buildB_b 0
@@ -1044,12 +1146,12 @@ a27
 .d 1 0
 	rtn
 .pd
-.n 2 e_StdFile_dfclose;26
+.n 2 e_StdFile_dfclose;27
 .o 1 0
-e_StdFile_nfclose;26
+e_StdFile_nfclose;27
 	push_node _cycle_in_spine 2
 .d 2 0
-	jsr ea27
+	jsr ea28
 .o 1 1 b
 	push_a 0
 	buildB_b 0
@@ -1060,15 +1162,15 @@ e_StdFile_nfclose;26
 	rtn
 .o 2 0
 .pn
-ea27
+ea28
 	jsr_eval 1
 	jsr_eval 0
 	pushF_a 0
 	pop_a 1
 .o 1 2 f
-e_StdFile_sfclose;26
+e_StdFile_sfclose;27
 .o 1 2 f
-s27
+s28
 	push_b 1
 	push_b 1
 	update_b 1 3
@@ -1084,7 +1186,7 @@ s27
 .pe
 .pb "sfopen_"
 .o 1 1 i
-s44
+s45
 .inline sfopen_
 .d 1 1 i
 	jsr	openSF
@@ -1096,7 +1198,7 @@ s44
 .pe
 .pb "stdio_"
 .o 0 0
-s43
+s44
 .inline stdio_
 .d 0 0
 	jsr	stdioF
@@ -1108,7 +1210,7 @@ s43
 .pe
 .pb "fclose_"
 .o 0 2 f
-s42
+s43
 .inline fclose_
 .d 0 2 f
 	jsr	closeF
@@ -1120,12 +1222,59 @@ s42
 .pe
 .pb "fopen_"
 .o 1 1 i
-s41
+s42
 .inline fopen_
 .d 1 1 i
 	jsr	openF
 .o 0 3 b f
 .end
+
+.d 0 3 bf
+	rtn
+.pe
+.export e_StdFile_sfflush
+.descexp e_StdFile_dfflush e_StdFile_nfflush e_StdFile_lfflush 1 0 "fflush"
+.pb "fflush"
+.pld
+.o 2 0
+e_StdFile_lfflush
+	pop_a 1
+.d 1 0
+	jsr ea27
+.o 0 3 bf
+	buildF_b 1
+	buildB_b 0
+	buildh _Tuple 2
+	pop_b 3
+.d 1 0
+	rtn
+.pd
+.n 1 e_StdFile_dfflush
+.o 1 0
+e_StdFile_nfflush
+	push_node _cycle_in_spine 1
+.d 1 0
+	jsr ea27
+.o 0 3 bf
+	buildF_b 1
+	buildB_b 0
+	fillh _Tuple 2 2
+	pop_b 3
+.d 1 0
+	rtn
+.o 1 0
+.pn
+ea27
+	jsr_eval 0
+	pushF_a 0
+	pop_a 1
+.o 0 2 f
+e_StdFile_sfflush
+.o 0 2 f
+s27
+.d 0 2 f
+	jsr flushF
+.o 0 3 bf
 
 .d 0 3 bf
 	rtn

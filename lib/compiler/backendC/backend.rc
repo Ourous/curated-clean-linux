@@ -1,0 +1,51 @@
+# include <winver.h>
+# include "backend.h"
+
+# define BCDtoInt(bcd) (((bcd>>4) & 0x0F)*10 + ((bcd) & 0x0F))
+
+# define kBEMajorVersion			BCDtoInt (kBEVersionCurrent >> 24)
+# define kBEMinorVersion			BCDtoInt (kBEVersionCurrent >> 16)
+# define kBEDevelopmentStageVersion	BCDtoInt (kBEVersionCurrent >>  8)
+# define kBERevisionVersion			BCDtoInt (kBEVersionCurrent >>  0)
+
+# define kProductVersion 	kBEMajorVersion, kBEMinorVersion, kBEDevelopmentStageVersion, kBERevisionVersion
+# define kFileVersion		kProductVersion
+
+# define kFileFlags VS_FF_DEBUG | VS_FF_PRERELEASE
+
+# define kFileFlagsMask VS_FF_DEBUG | VS_FF_PRERELEASE
+# define kFileVersionString "2.2.0.0"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION kFileVersion
+PRODUCTVERSION kProductVersion
+FILEFLAGSMASK kFileFlagsMask
+FILEFLAGS kFileFlags
+FILEOS VOS__WINDOWS32
+FILETYPE VFT_DLL
+FILESUBTYPE 0 // not used
+BEGIN
+	BLOCK "StringFileInfo"
+	BEGIN
+		BLOCK "040904E4" // Lang=US English, CharSet=Windows Multilual
+		BEGIN
+			VALUE "CompanyName",     "Radboud University Nijmegen\0"
+			VALUE "FileDescription", "backend Shared Library\0"
+			VALUE "FileVersion",     kFileVersionString  "\0"
+			VALUE "InternalName",    "backend\0"
+			VALUE "LegalCopyright",  "\251 Radboud University Nijmegen 1999-2006\0"
+			VALUE "LegalTrademarks", "\0"
+			VALUE "OriginalFilename","backend.dll\0"
+			VALUE "ProductName",     "Clean System"
+			VALUE "ProductVersion",  "2.2.0.0"
+			VALUE "OLESelfRegister", "\0"
+		END
+	
+	END
+
+	BLOCK "VarFileInfo"
+	BEGIN
+		VALUE "Translation", 0x409, 1252
+			// English language (0x409) and the Windows ANSI codepage (1252)
+	END
+END

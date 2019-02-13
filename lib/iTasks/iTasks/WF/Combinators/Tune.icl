@@ -12,10 +12,6 @@ import qualified Data.Set as DS
 import qualified Data.Map as DM
 import qualified iTasks.Internal.SDS as SDS
 
-//This type records the states of layouts applied somewhere in a ui tree
-derive JSONEncode LUI, LUIChanges, LUIEffects, LUIEffectStage, LUINo, Set
-derive JSONDecode LUI, LUIChanges, LUIEffects, LUIEffectStage, LUINo, Set
-
 class addConstantAttribute f :: !String !b !(f a) -> f a | toAttribute b
 instance addConstantAttribute Task
 where
@@ -54,19 +50,20 @@ where
 		eval event evalOpts (TCDestroy (TCAttribute _ _ tree)) iworld =
 			evala event evalOpts (TCDestroy tree) iworld
 
-class addSDSAttribute f :: !String (SDS () r w) (r -> b) !(f a) -> f a | toAttribute b & TC r
+class addSDSAttribute f :: !String (sds () r w) (r -> b) !(f a) -> f a | toAttribute b & TC r & TC w & Registrable, Readable sds
 instance addSDSAttribute Task
 where
-	addSDSAttribute attrName sds attrValueFun task=:(Task evala) = Task eval
+	addSDSAttribute attrName sds attrValueFun task=:(Task evala) = Task (eval sds attrValueFun task)
 	where
 		//Init
-		eval event evalOpts tree=:(TCInit taskId ts) iworld
+		eval :: (sds () r w) (r -> b) (Task a) Event TaskEvalOpts TaskTree !*IWorld -> (TaskResult a, !*IWorld) | toAttribute b & TC r & TC w & Registrable sds & Readable sds
+		eval sds attrValueFun (Task evala) event evalOpts tree=:(TCInit taskId ts) iworld
 			# (mbr,iworld) = 'SDS'.readRegister taskId sds iworld 
-			| isError mbr
-				= (ExceptionResult (fromError mbr),iworld)
-			= eval event evalOpts (TCAttribute taskId (toAttribute (attrValueFun (fromOk mbr))) tree) iworld
+			| isError mbr = (ExceptionResult (fromError mbr),iworld)
+			# v = directResult (fromOk mbr)
+			= eval sds attrValueFun (Task evala) event evalOpts (TCAttribute taskId (toAttribute (attrValueFun v)) tree) iworld
 
-		eval event evalOpts (TCAttribute taskId curAttrValue tree) iworld
+		eval sds attrValueFun (Task evala) event evalOpts (TCAttribute taskId curAttrValue tree) iworld
 			//Evaluate inner task
 			# (result,iworld) = evala event evalOpts tree iworld
 			//Check if we need to refresh the share
@@ -85,11 +82,11 @@ where
 			refreshAttribute taskId cur (RefreshEvent refreshSet _) iworld
 				| 'DS'.member taskId refreshSet
 					# (mbr,iworld) = 'SDS'.readRegister taskId sds iworld 
-					= (fmap (toAttribute o attrValueFun) mbr,iworld)
+					= (fmap (toAttribute o attrValueFun o directResult) mbr,iworld)
 			refreshAttribute taskId cur _ iworld
 				= (Ok cur,iworld)
 		//Destroy
-		eval event evalOpts (TCDestroy (TCAttribute _ _ tree)) iworld =
+		eval sds attrValueFun (Task evala) event evalOpts (TCDestroy (TCAttribute _ _ tree)) iworld =
 			evala event evalOpts (TCDestroy tree) iworld
 
 //Shared helper functions
@@ -132,7 +129,7 @@ class tunev b a f | iTask a :: !(b a) !(f a) -> f a
 instance tune (ApplyAttribute a) Task | toAttribute a
 where tune (ApplyAttribute k v) task = addConstantAttribute k v task
 
-instance tune (ApplySDSAttribute a r w) Task | toAttribute a & TC r
+instance tune (ApplySDSAttribute a r w) Task | toAttribute a & TC r & TC w
 where tune (ApplySDSAttribute k sds f) task = addSDSAttribute k sds f task
 
 applyLayout :: LayoutRule (Task a) -> Task a

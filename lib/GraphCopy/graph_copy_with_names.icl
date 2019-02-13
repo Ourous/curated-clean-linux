@@ -393,6 +393,7 @@ get_thunk_n_non_pointers d
 		# b_size = arity>>8;
 		= b_size;
 
+make_symbol_name :: !String !String !Int -> String;
 make_symbol_name "_system" descriptor_name prefix
 	= case descriptor_name of {
 		"INT"

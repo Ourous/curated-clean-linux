@@ -5,4 +5,4 @@ definition module iTasks.Extensions.Development.Tools
 */
 import iTasks
 
-cpmExecutable :: ROShared () FilePath
+cpmExecutable :: SDSSource () FilePath ()

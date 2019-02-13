@@ -1,17 +1,12 @@
 implementation module Data.Tree
 
 // Ported from Haskell's Data.Tree by Jurriën Stutterheim
-from Data.Functor import class Functor (..), <$>
-from Control.Applicative import class pure(..), class <*>(..), class Applicative
-from Control.Monad import class Monad (..), liftM, `b`, mapM
-from Data.Monoid import class Monoid (..), class Semigroup
-from StdList import map, ++
-from StdOverloaded import class +++ (..)
-from StdFunc import o
-import StdMisc
-from Data.List import zipWith, iterate, foldr, repeat, concatMap, takeWhile, isEmpty
-from StdBool import not
-import StdString
+import StdEnv
+import Data.Functor
+import Data.Monoid
+import Data.List
+import Control.Applicative
+import Control.Monad
 
 rootLabel :: (RTree a) -> a
 rootLabel (RNode x _) = x

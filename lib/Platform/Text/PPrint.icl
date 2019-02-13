@@ -3,7 +3,6 @@ implementation module Text.PPrint
 import StdEnv
 import Data.List
 import Data.Maybe
-from Data.Foldable import class Foldable(foldr1)
 
 /*
  * PPrint
@@ -100,7 +99,7 @@ vcat            = fold (<$$>)
 
 fold :: (Doc Doc ->Doc) ![Doc] -> Doc
 fold f []       = empty
-fold f ds       = foldr1 f ds
+fold f [d:ds]   = foldr f d ds
 
 (<->) infixr 6 :: Doc Doc -> Doc
 (<->) x y         = beside x y

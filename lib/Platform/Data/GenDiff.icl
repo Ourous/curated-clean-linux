@@ -23,10 +23,10 @@ where
 	== OnlyLeft  OnlyLeft  = True
 	== _         _         = False
 
-setStatus :: DiffStatus Diff -> Diff
+setStatus :: !DiffStatus !Diff -> Diff
 setStatus s d = {d & status=s, children=map (setStatus s) d.children}
 
-generic gDiff a :: a a -> [Diff]
+generic gDiff a :: !a !a -> [Diff]
 gDiff{|Int|} x y = eqDiff x y
 gDiff{|Char|} x y = eqDiff x y
 gDiff{|Bool|} x y = eqDiff x y

@@ -16,6 +16,7 @@ import iTasks.SDS.Combinators.Common
 
 from iTasks.Extensions.DateTime import toDate, toTime, instance == Date, instance == Time
 from System.Time import time
+import Text.GenJSON
 
 from TCPIP import :: Timeout
 
@@ -23,19 +24,19 @@ import Data.Queue
 import Text
 
 timeout :: !(Maybe Timeout) !*IWorld -> (!Maybe Timeout,!*IWorld)
-timeout mt iworld = case read taskEvents iworld of
+timeout mt iworld = case read taskEvents EmptyContext iworld of
 	//No events
-	(Ok (Queue [] []),iworld=:{sdsNotifyRequests,world})
+	(Ok (ReadingDone (Queue [] [])),iworld=:{sdsNotifyRequests,world})
 		# (ts, world) = nsTime world
 		= ( minListBy lesser [mt:flatten $ map (getTimeoutFromClock ts) $ 'DM'.elems sdsNotifyRequests]
 		  , {iworld & world = world})
-	(Ok _,iworld)               = (Just 0,iworld)   //There are still events, don't wait
+	(Ok (ReadingDone (Queue _ _)), iworld)               = (Just 0,iworld)   //There are still events, don't wait
 	(Error _,iworld)            = (Just 500,iworld) //Keep retrying, but not too fast
 where
 	lesser (Just x) (Just y) = x < y
 	lesser (Just _) Nothing = True
 	lesser Nothing Nothing = False
-	
+
 	getTimeoutFromClock :: Timespec (Map SDSNotifyRequest Timespec) -> [Maybe Timeout]
 	getTimeoutFromClock now requests = getTimeoutFromClock` <$> 'DM'.toList requests
 	where
@@ -55,17 +56,18 @@ updateClock iworld=:{IWorld|clock,world}
 	# (timespec,world) 	= nsTime world
     # iworld = {iworld & world = world}
     //Write SDS if necessary
-    # (mbe,iworld) = write timespec (sdsFocus {start=zero,interval=zero} iworldTimespec) iworld
-	| mbe =:(Error _) = (mbe,iworld)
-    = (Ok (),iworld)
+    # (mbe,iworld) = write timespec (sdsFocus {start=zero,interval=zero} iworldTimespec) EmptyContext iworld
+    = case mbe of
+    	(Error e ) -> (Error e, iworld)
+    	(_) -> (Ok (), iworld)
 
 //When we run the built-in HTTP server we need to do active garbage collection of instances that were created for sessions
 removeOutdatedSessions :: !*IWorld -> *(!MaybeError TaskException (), !*IWorld)
 removeOutdatedSessions iworld=:{IWorld|options}
-    # (mbIndex,iworld) = read (sdsFocus {InstanceFilter|defaultValue & onlySession=Just True} filteredInstanceIndex) iworld
+    # (mbIndex,iworld) = read (sdsFocus {InstanceFilter|defaultValue & onlySession=Just True} filteredInstanceIndex) EmptyContext iworld
     = case mbIndex of
-        Ok index    = checkAll removeIfOutdated index iworld 
-        Error e     = (Error e, iworld)
+        Ok (ReadingDone index) = checkAll removeIfOutdated index iworld
+        Error e     			= (Error e, iworld)
 where
 	checkAll f [] iworld = (Ok (),iworld)
 	checkAll f [x:xs] iworld = case f x iworld of
@@ -73,28 +75,28 @@ where
 		(Error e,iworld) = (Error e,iworld)
 
     removeIfOutdated (instanceNo,_,_,_) iworld=:{options={appVersion},clock=tNow}
-		# (remove,iworld) = case read (sdsFocus instanceNo taskInstanceIO) iworld of
+		# (remove,iworld) = case read (sdsFocus instanceNo taskInstanceIO) EmptyContext iworld of
 			//If there is I/O information, we check that age first
-			(Ok (Just (client,tInstance)),iworld) //No IO for too long, clean up
+			(Ok (ReadingDone (Just (client,tInstance))),iworld) //No IO for too long, clean up
 				= (Ok ((tNow - tInstance) > options.EngineOptions.sessionTime),iworld)
 			//If there is no I/O information, get meta-data and check builtId and creation date
-			(Ok Nothing,iworld)
-				= case read (sdsFocus instanceNo taskInstanceConstants) iworld of
-					(Ok {InstanceConstants|build,issuedAt=tInstance},iworld)
+			(Ok (ReadingDone Nothing),iworld)
+				= case read (sdsFocus instanceNo taskInstanceConstants) EmptyContext iworld of
+					(Ok (ReadingDone {InstanceConstants|build,issuedAt=tInstance}),iworld)
 						| build <> appVersion = (Ok True,iworld)
 						| (tNow - tInstance) > options.EngineOptions.sessionTime = (Ok True,iworld)
 						= (Ok False,iworld)
 					(Error e,iworld)
 						= (Error e,iworld)
-			(Error e,iworld) 
+			(Error e,iworld)
 				= (Error e,iworld)
 		= case remove of
 			(Ok True)
 				# (e,iworld) = deleteTaskInstance instanceNo iworld
 				| e=:(Error _) = (e,iworld)
-				# (e,iworld) = write Nothing (sdsFocus instanceNo taskInstanceIO) iworld
-				| e=:(Error _) = (e,iworld)
-				= (Ok (),iworld)
+				= case write Nothing (sdsFocus instanceNo taskInstanceIO) EmptyContext iworld of
+					(Error e, iworld) = (Error e, iworld)
+					(Ok WritingDone, iworld) = (Ok (), iworld)
 			(Ok False)
 				= (Ok (), iworld)
 			(Error e)
@@ -102,25 +104,25 @@ where
 
 //When the event queue is empty, write deferred SDS's
 flushWritesWhenIdle:: !*IWorld -> (!MaybeError TaskException (), !*IWorld)
-flushWritesWhenIdle iworld = case read taskEvents iworld of
+flushWritesWhenIdle iworld = case read taskEvents EmptyContext iworld of
 		(Error e,iworld)          = (Error e,iworld)
-		(Ok (Queue [] []),iworld) = flushDeferredSDSWrites iworld
+		(Ok (ReadingDone (Queue [] [])),iworld) = flushDeferredSDSWrites iworld
 		(Ok _,iworld)             = (Ok (),iworld)
 
 //When we don't run the built-in HTTP server we don't want to loop forever so we stop the loop
 //once all tasks are stable
 stopOnStable :: !*IWorld -> *(!MaybeError TaskException (), !*IWorld)
 stopOnStable iworld=:{IWorld|shutdown}
-    # (mbIndex,iworld) = read (sdsFocus {InstanceFilter|defaultValue & includeProgress=True} filteredInstanceIndex) iworld
-	= case mbIndex of 
-		Ok index 
+    # (mbIndex,iworld) = read (sdsFocus {InstanceFilter|defaultValue & includeProgress=True} filteredInstanceIndex) EmptyContext iworld
+	= case mbIndex of
+		Ok (ReadingDone index)
 			# shutdown = case shutdown of
 				Nothing = if (allStable index) (Just (if (exceptionOccurred index) 1 0)) Nothing
 				_       = shutdown
 			= (Ok (), {IWorld|iworld & shutdown = shutdown})
 		Error e  = (Error e, iworld)
 where
-	allStable instances = all (\v -> v =: Stable || v =: (Exception _)) (values instances) 
+	allStable instances = all (\v -> v =: Stable || v =: (Exception _)) (values instances)
 	exceptionOccurred instances = any (\v -> v =: (Exception _)) (values instances)
 	values instances = [value \\ (_,_,Just {InstanceProgress|value},_) <- instances]
 

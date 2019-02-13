@@ -28,7 +28,7 @@ import StdOrdList
 import Data.List
 
 import Data.Maybe
-import StdTuple, StdMisc, StdFunc
+import StdInt, StdTuple, StdMisc, StdFunc
 
 import Data.Graph.Inductive.Basic
 import Data.Graph.Inductive.Graph

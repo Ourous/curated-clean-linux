@@ -8,7 +8,7 @@ import Data.Functor
 import Data.Maybe
 import Data.Monoid
 from Data.Foldable import class Foldable(foldMap,foldl,foldr)
-from Data.Traversable import class Traversable(traverse,mapM)
+from Data.Traversable import class Traversable(..)
 import Data.Bifunctor
 import Data.GenEq
 
@@ -67,21 +67,12 @@ instance Traversable (Either a)
 where
 	traverse _ (Left x) = pure (Left x)
 	traverse f (Right y) = Right <$> f y
-	sequenceA f = traverse id f
-	mapM f x = unwrapMonad (traverse (WrapMonad o f) x)
-	sequence x = mapM id x
 
 instance Bifunctor Either
 where
 	bifmap :: (a -> c) (b -> d) !(Either a b) -> Either c d
 	bifmap f _ (Left a) = Left (f a)
 	bifmap _ g (Right b) = Right (g b)
-
-	first :: (a -> c) !(Either a b) -> Either c b
-	first f d = bifmap f id d
-
-	second :: (b -> d) !(Either a b) -> Either a d
-	second g d = bifmap id g d
 
 instance Alternative (Either m) | Monoid m
 where

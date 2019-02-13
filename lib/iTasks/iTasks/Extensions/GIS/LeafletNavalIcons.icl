@@ -4,9 +4,9 @@ implementation module iTasks.Extensions.GIS.LeafletNavalIcons
 */
 from iTasks.Extensions.GIS.Leaflet import :: LeafletIcon(..), :: LeafletIconID(..)
 from StdFunc import o
-import StdString, StdInt, StdList, Data.Maybe
+import StdString, StdInt, StdList, Data.Maybe, Text
 
-URL iconId :== "/leaflet-naval-icons/" +++ iconId +++ ".png"
+URL (LeafletIconID iconId) :== concat ["/leaflet-naval-icons/", iconId, ".png"]
 SIZE  :== (24,24)
 
 instance toString ShipIconColor
@@ -29,6 +29,7 @@ where
 * Find the right icon based on a heading and color
 */
 shipIconId :: (Maybe ShipIconHeading) ShipIconColor Bool -> LeafletIconID
-shipIconId mbHeading color selected = toString color +++ if selected "-sel" "" +++ maybe "" toRoundedHeading mbHeading 
+shipIconId mbHeading color selected =
+	LeafletIconID (concat [toString color, if selected "-sel" "", maybe "" toRoundedHeading mbHeading])
 where	
 	toRoundedHeading h = "-" +++ toString (((h rem 360) / 15) * 15)

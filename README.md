@@ -1,20 +1,20 @@
 # Curated Clean
 
-The intention of the Curated Clean project is to provide a version of the Clean programming language more current than the infrequent full releases and more stable than the nightly builds, intended primarily for consumption by online IDE/compiler services.
-Curated Clean is based off of the nightly Clean builds found at ftp://ftp.cs.ru.nl/pub/Clean/builds/ with minimal changes. 
+The intention of the Curated Clean project is to provide a version of the Clean programming language more current than the infrequent full releases and more stable than the nightly builds, intended primarily for consumption by online IDE/compiler services.  
+Curated Clean is based off of the nightly Clean builds found at ftp://ftp.cs.ru.nl/pub/Clean/builds/ and the repositories at https://gitlab.science.ru.nl/ with minimal changes. 
 
 Currently, it is composed of:
 
-	12 May 2018:
-		lib/Generics
+	13 February 2019:
+		gitlab.science.ru.nl/clean-compiler-and-rts -> lib/compiler
 
 All other contents are from:
 
-	29 November 2018
+	13 February 2019
 
 With these changes made to allow compilation:
 
-	Specializations for UNIT added to several modules in the Generics library
+	Currently none
 
 Below follows Clean's official `README.md`:
 

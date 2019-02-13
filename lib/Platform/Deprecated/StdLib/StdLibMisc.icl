@@ -32,12 +32,6 @@ instance gMap {!}
   where
 	gMap f a = { f el \\ el<-:a }
 
-inf =: 1.0/0.0
-minus_inf =: (-1.0)/0.0
-
-isFinite :: !Real -> Bool
-isFinite r = minus_inf<r && r<inf
-
 roundupToMultiple s m :== (s + (m-1)) bitand (~m)
 
 // extensions for StdFunc
@@ -45,4 +39,3 @@ roundupToMultiple s m :== (s + (m-1)) bitand (~m)
 sseq :: ![.(.s -> .s)] !.s -> .s
 sseq [f:fs] arg	=	sseq fs (f arg)
 sseq [] arg		=	arg
-

@@ -42,7 +42,7 @@ from Data.Maybe import :: Maybe
 	| OperandHelpText String String [String]
 		//* Help text for an operand: the meta variable, a description, additional lines
 
-showHelpText :: [HelpText] -> String
+showHelpText :: ![HelpText] -> String
 
 /**
  * Types instantiating this class can be combined to form new parsers.
@@ -54,14 +54,14 @@ where
 	 * @param The option description
 	 * @result The corresponding parser
 	 */
-	optParser :: (t opts) -> OptParser opts
+	optParser :: !(t opts) -> OptParser opts
 
 	/**
 	 * The help text belonging to an option description.
 	 * @param The option description
 	 * @result The corresponding parser
 	 */
-	helpText :: (t opts) -> [HelpText]
+	helpText :: !(t opts) -> [HelpText]
 
 /**
  * Parse commnd line arguments.
@@ -71,7 +71,7 @@ where
  * @param The default settings
  * @result Either a list of error/warning messages or the new settings object
  */
-parseOptions :: (t opts) [String] opts -> MaybeError [String] opts | OptionDescription t
+parseOptions :: !(t opts) ![String] !opts -> MaybeError [String] opts | OptionDescription t
 
 /**
  * Basic command line options
@@ -102,4 +102,4 @@ instance OptionDescription Option
  * function removes these inconsistencies that can arise from combining
  * option descriptors together.
  */
-cleanupHelpText :: [HelpText] -> [HelpText]
+cleanupHelpText :: ![HelpText] -> [HelpText]

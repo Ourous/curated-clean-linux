@@ -16,7 +16,7 @@ import StdEnv
 from Data.Func import $
 import Data.Functor
 from Data.List import instance Functor [], concatMap
-import qualified Data.Map as Map
+import qualified Data.Map
 import Math.Random
 import Testing.TestEvents
 import Text
@@ -34,7 +34,7 @@ instance == Result where (==) x y = x===y
 newAdmin :: Admin
 newAdmin = { res=Undef, labels=[], args=[], argsRepresentation = [], failedAssertions = []
            , namePath = []
-           , recFieldValueNrLimits = 'Map'.newMap
+           , recFieldValueNrLimits = 'Data.Map'.newMap
            }
 
 instance Testable Bool where

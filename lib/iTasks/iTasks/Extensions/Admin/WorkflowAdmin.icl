@@ -36,20 +36,20 @@ gDefault{|WorkflowTaskContainer|}					    = WorkflowTask (return ())
 derive class iTask WorklistRow
 
 // list of active task instances for current user without current one (to avoid work on dependency cycles)
-myWork :: ReadOnlyShared [(TaskId,WorklistRow)]
+myWork :: SDSLens () [(TaskId,WorklistRow)] ()
 myWork = workList taskInstancesForCurrentUser
 
-allWork :: ReadOnlyShared [(TaskId,WorklistRow)]
+allWork :: SDSLens () [(TaskId,WorklistRow)] ()
 allWork = workList allTaskInstances
 
-workList instances = mapRead projection (instances |+| currentTopTask)
+workList instances = mapRead projection (instances |*| currentTopTask)
 where
 	projection (instances,ownPid)
 		= [(TaskId i.TaskInstance.instanceNo 0, mkRow i) \\ i <- instances | notSelf ownPid i && isActive i]
 
 	notSelf ownPid {TaskInstance|instanceNo} = (TaskId instanceNo 0) <> ownPid
 	notSelf ownPid _ = False
-		
+
 	isActive {TaskInstance|value} = value === Unstable
 
 	mkRow {TaskInstance|instanceNo,attributes,listId} =
@@ -64,39 +64,37 @@ where
 		,parentTask = if (listId == TaskId 0 0) Nothing (Just (toString listId))
 		}
 
-
 // SHARES
 // Available workflows
 
-workflows :: Shared [Workflow]
+workflows :: SDSLens () [Workflow] [Workflow]
 workflows = sharedStore "Workflows" []
 
-workflowByPath :: !String -> Shared Workflow
-workflowByPath path = mapReadWriteError (toPrj,fromPrj) workflows
+workflowByPath :: !String -> SDSLens () Workflow Workflow
+workflowByPath path = mapReadWriteError (toPrj,fromPrj) (Just \_ flows -> toPrj flows) workflows
 where
 	toPrj wfs = case [wf \\ wf <- wfs | wf.Workflow.path == path] of
 		[wf:_]	= Ok wf
 		_		= Error (exception ("Workflow " +++ path +++ " could not be found"))
 
-	fromPrj nwf wfs
-		= Ok (Just [if (wf.Workflow.path == path) nwf wf \\ wf <- wfs])
+	fromPrj nwf wfs = Ok (Just [if (wf.Workflow.path == path) nwf wf \\ wf <- wfs])
 
-allowedWorkflows :: ReadOnlyShared [Workflow]
-allowedWorkflows = mapRead filterAllowed (workflows |+| currentUser)
+allowedWorkflows :: SDSLens () [Workflow] ()
+allowedWorkflows = mapRead filterAllowed (workflows |*| currentUser)
 where
 	filterAllowed (workflows,user) = filter (isAllowedWorkflow user) workflows
 
 //All tasks that you can do in a session
-allowedTransientTasks :: ReadOnlyShared [Workflow] 
+allowedTransientTasks :: SDSLens () [Workflow] ()
 allowedTransientTasks = mapRead (\wfs -> [wf \\ wf=:{Workflow|transient} <- wfs | transient]) allowedWorkflows
 
-allowedPersistentWorkflows :: ReadOnlyShared [Workflow]
+allowedPersistentWorkflows :: SDSLens () [Workflow] ()
 allowedPersistentWorkflows = mapRead (\wfs -> [wf \\ wf=:{Workflow|transient} <- wfs | not transient]) allowedWorkflows
 
 instance Startable WorkflowCollection
 where
 	toStartable {WorkflowCollection|name,workflows} =
-		[onStartup (installWorkflows workflows) 
+		[onStartup (installWorkflows workflows)
 		,onRequest "/" (loginAndManageWork name)
 		]
 
@@ -107,9 +105,9 @@ installWorkflows iflows
 	>>= \flows -> case flows of
 		[]	= set iflows workflows @! ()
 		_	= return ()
-		
+
 loginAndManageWork :: !String -> Task ()
-loginAndManageWork welcome 
+loginAndManageWork welcome
 	= forever
 		(((	viewTitle welcome
 			||-
@@ -131,9 +129,9 @@ where
 			Nothing		= viewInformation (Title "Login failed") [] "Your username or password is incorrect" >>| return ()
 	browse Nothing
 		= workAs (AuthenticatedUser "guest" ["manager"] (Just "Guest user")) manageWorkOfCurrentUser
-		
+
 	layout = sequenceLayouts [layoutSubUIs (SelectByType UIAction) (setActionIcon ('DM'.fromList [("Login","login")])) ,frameCompact]
-		
+
 manageWorkOfCurrentUser :: Task ()
 manageWorkOfCurrentUser
 	= 	((manageSession -||
@@ -163,30 +161,30 @@ where
 
 manageSession :: Task ()
 manageSession =
-		(viewSharedInformation () [ViewAs view] currentUser	
+		(viewSharedInformation () [ViewAs view] currentUser
 	>>* [OnAction (Action "Log out") (always (return ()))])
 		 <<@ ApplyLayout (layoutSubUIs (SelectByType UIAction) (setActionIcon ('DM'.fromList [("Log out","logout")])))
 where
-	view user	= "Welcome " +++ toString user		
+	view user	= "Welcome " +++ toString user
 
 chooseWhatToDo = updateChoiceWithShared (Title "Menu") [ChooseFromList workflowTitle] (mapRead addManageWork allowedTransientTasks) manageWorkWf
 where
 	addManageWork wfs = [manageWorkWf:wfs]
 	manageWorkWf = transientWorkflow "My work" "Manage your worklist"  manageWork
-	
+
 manageWork :: Task ()
 manageWork = parallel [(Embedded, manageList)] [] <<@ ApplyLayout layoutManageWork @! ()
 where
-	
+
 	manageList taskList
 		= get currentUser @ userRoles
-		>>- \roles -> 
-			 forever
+		>>- \roles ->
+			forever
 			(	enterChoiceWithSharedAs () [ChooseFromGrid snd] (worklist roles) (appSnd (\{WorklistRow|parentTask} -> isNothing parentTask))
 				>>* (continuations roles taskList)
 			)
 
-	worklist roles = if (isMember "admin" roles) allWork myWork
+	worklist roles = if (isMember "admin" roles) allWork  myWork
 	continuations roles taskList = if (isMember "manager" roles) [new,open,delete] [open]
 	where
 		new = OnAction (Action "New") (always (appendTask Embedded (removeWhenStable (addNewTask taskList)) taskList @! () ))
@@ -206,7 +204,7 @@ where
 		]
 
 addNewTask :: !(SharedTaskList ()) -> Task ()
-addNewTask list 
+addNewTask list
 	=   ((chooseWorkflow >&> viewWorkflowDetails) <<@ ApplyLayout (setUIAttributes (directionAttr Horizontal))
 	>>* [OnAction (Action "Start task") (hasValue (\wf -> startWorkflow list wf @! ()))
 		,OnAction ActionCancel (always (return ()))
@@ -215,7 +213,7 @@ addNewTask list
 chooseWorkflow :: Task Workflow
 chooseWorkflow
 	=  editSelectionWithShared [Att (Title "Tasks"), Att IconEdit] False (SelectInTree toTree fromTree) allowedWorkflows (const []) <<@ Title "Workflow Catalogue"
-	@? tvHd 
+	@? tvHd
 where
 	//We assign unique negative id's to each folder and unique positive id's to each workflow in the list
 	toTree workflows = snd (seq (map add (zip ([0..],workflows))) (-1,[]))
@@ -234,7 +232,7 @@ where
 		    add` wfpath path=:[nodeP:pathR] (folderId,[])
 				# (folderId`,children) = add` wfpath pathR (folderId - 1,[])
                 = (folderId`,[{ChoiceNode|id = folderId, label=nodeP, icon=Nothing, children=children,expanded=False}])
-		    add` wfpath path (folderId,[node:nodesR]) 
+		    add` wfpath path (folderId,[node:nodesR])
 				# (folderId,rest) = add` wfpath path (folderId,nodesR)
 				= (folderId,[node:rest])
 
@@ -245,13 +243,13 @@ where
 	result (Value [x] s) = Value x s
 	result _ = NoValue
 
-viewWorkflowDetails :: !(ReadOnlyShared (Maybe Workflow)) -> Task Workflow
+viewWorkflowDetails :: !(sds () (Maybe Workflow) ()) -> Task Workflow | RWShared sds
 viewWorkflowDetails sel
 	= viewSharedInformation [Att (Title "Task description"), Att IconView] [ViewUsing view textView] sel
 	@? onlyJust
 where
 	view = maybe "" (\wf -> wf.Workflow.description)
-	
+
 	onlyJust (Value (Just v) s) = Value v s
 	onlyJust _					= NoValue
 
@@ -273,7 +271,7 @@ where
     userAttr _                           = []
 
 unwrapWorkflowTask (WorkflowTask t) = t @! ()
-unwrapWorkflowTask (ParamWorkflowTask tf) = (enterInformation "Enter parameters" [] >>= tf @! ())		
+unwrapWorkflowTask (ParamWorkflowTask tf) = (enterInformation "Enter parameters" [] >>= tf @! ())
 
 openTask :: !(SharedTaskList ()) !TaskId -> Task ()
 openTask taskList taskId
@@ -282,7 +280,7 @@ openTask taskList taskId
 workOnTask :: !TaskId -> Task ()
 workOnTask taskId
     =   (workOn taskId <<@ ApplyLayout (setUIAttributes (heightAttr FlexSize))
-    >>* [OnValue    (ifValue ((===) ASExcepted) (\_ -> viewInformation (Title "Error") [] "An exception occurred in this task" >>| return ()))
+    >>* [OnValue    (ifValue (\v. case v of (ASExcepted _) = True; _ = False) (\(ASExcepted excs) -> viewInformation (Title "Error: An exception occurred in this task") [] excs >>| return ()))
         ,OnValue    (ifValue ((===) ASIncompatible) (\_ -> dealWithIncompatibleTask))
         ,OnValue    (ifValue ((===) ASDeleted) (\_ -> return ()))
         ,OnValue    (ifValue ((===) (ASAttached True)) (\_ -> return ())) //If the task is stable, there is no need to work on it anymore
@@ -308,7 +306,7 @@ where
     //Look in the catalog for an entry that has the same path as
     //the 'catalogId' that is stored in the incompatible task instance's properties
     findReplacement taskId
-        =  get (sdsFocus taskId (taskListEntryMeta topLevelTasks) |+| workflows)
+        =  get ((sdsFocus taskId (taskListEntryMeta topLevelTasks)) |*| workflows)
         @  \(taskListEntry,catalog) -> maybe Nothing (lookup catalog) ('DM'.get "catalogId" taskListEntry.TaskListItem.attributes)
     where
         lookup [wf=:{Workflow|path}:wfs] cid = if (path == cid) (Just wf) (lookup wfs cid)
@@ -352,12 +350,12 @@ restrictedTransientWorkflow path description roles task = toWorkflow path descri
 
 inputWorkflow :: String String String (a -> Task b) -> Workflow | iTask a & iTask b
 inputWorkflow name desc inputdesc tfun
-	= workflow name desc (enterInformation inputdesc [] >>= tfun)  
-	
+	= workflow name desc (enterInformation inputdesc [] >>= tfun)
+
 instance toWorkflow (Task a) | iTask a
 where
 	toWorkflow path description roles transient task = toWorkflow path description roles transient (Workflow defaultValue task)
-	
+
 instance toWorkflow (WorkflowContainer a) | iTask a
 where
 	toWorkflow path description roles transient (Workflow managerP task) = mkWorkflow path description roles transient (WorkflowTask task) managerP
@@ -365,11 +363,11 @@ where
 instance toWorkflow (a -> Task b) | iTask a & iTask b
 where
 	toWorkflow path description roles transient paramTask = toWorkflow path description roles transient (ParamWorkflow defaultValue paramTask)
-	
+
 instance toWorkflow (ParamWorkflowContainer a b) | iTask a & iTask b
 where
 	toWorkflow path description roles transient (ParamWorkflow managerP paramTask) = mkWorkflow path description roles transient (ParamWorkflowTask paramTask) managerP
-	
+
 mkWorkflow path description roles transient taskContainer managerProps =
 	{ Workflow
 	| path	= path

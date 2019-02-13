@@ -1,8 +1,6 @@
 implementation module System.Directory
 
-import StdBool
-import StdString
-import StdFunctions
+import StdEnv
 
 import Data.Error
 import Data.Func

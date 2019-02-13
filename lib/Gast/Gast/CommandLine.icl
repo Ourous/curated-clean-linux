@@ -6,7 +6,8 @@ import StdList
 import StdString
 import StdTuple
 
-import Control.Monad => qualified join
+import Control.Applicative
+from Control.Monad import class Monad(..)
 import Data.Either
 import Data.Error
 from Data.Func import $

@@ -2,7 +2,9 @@ implementation module Clean.Types.Util
 
 import StdArray
 import StdBool
-from StdFunc import flip, id, o
+import StdChar
+import StdFunctions
+import StdInt
 import StdMisc
 import StdOrdList
 import StdString
@@ -11,9 +13,8 @@ import StdTuple
 import Clean.Types
 import Control.Applicative
 import Control.Monad
-from Data.Func import $
+import Data.Func
 import Data.Functor
-import Data.GenEq
 import Data.List
 from Data.Map import :: Map(..), get
 import Data.Maybe

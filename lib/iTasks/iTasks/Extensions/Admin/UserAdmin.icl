@@ -1,55 +1,68 @@
 implementation module iTasks.Extensions.Admin.UserAdmin
 
-import iTasks
+import StdEnv
+import iTasks, iTasks.Internal.Store
 import iTasks.Extensions.CSVFile
 import iTasks.UI.Editor
-import Text, Data.Tuple, StdArray, Data.Maybe
+import Text, Data.Tuple, Data.Maybe, Data.Func, Data.Functor, Data.List, Crypto.Hash.SHA1
 
-derive class iTask UserAccount
+derive class iTask UserAccount, StoredUserAccount, StoredCredentials
 
 //Initial root user
-ROOT_USER :== {credentials={Credentials|username=Username "root",password = Password "root"},title = Just "Root user", roles = ["admin","manager"]}
+ROOT_USER :== { StoredUserAccount
+              | credentials = { StoredCredentials
+                              | username           = Username "root"
+                              , saltedPasswordHash = "1e27e41d50caf2b0516e77c60fc377e8ae5a32ee" // password is "root"
+                              , salt               = "25wAdtdQcJZOQLETvki7eJFcI7u5XoSO"
+                              }
+              , title       = Just "Root user"
+              , roles       = ["admin","manager"]
+              }
 
-userAccounts :: Shared [UserAccount]
-userAccounts = sharedStore "UserAccounts" [ROOT_USER]
+userAccounts :: SDSLens () [StoredUserAccount] [StoredUserAccount]
+userAccounts = sdsFocus "UserAccounts" (storeShare NS_APPLICATION_SHARES False InJSONFile (Just [ROOT_USER]))
 
-users :: ReadOnlyShared [User]
-users = mapReadWrite (\accounts -> [AuthenticatedUser (toString a.UserAccount.credentials.Credentials.username) a.UserAccount.roles a.UserAccount.title
+users :: SDSLens () [User] ()
+users = mapReadWrite (\accounts -> [AuthenticatedUser (toString a.StoredUserAccount.credentials.StoredCredentials.username) a.StoredUserAccount.roles a.StoredUserAccount.title
 									\\ a <- accounts]
-					 , \() accounts -> Nothing) userAccounts
+					 , \() _ -> Nothing) (Just \_ _ -> Ok ()) userAccounts
 
-usersWithRole :: !Role -> ReadOnlyShared [User]
+usersWithRole :: !Role -> SDSLens () [User] ()
 usersWithRole role = mapRead (filter (hasRole role)) users
 where
 	hasRole role (AuthenticatedUser _ roles _) = isMember role roles
 	hasRole _ _ = False
 
-userAccount :: UserId -> Shared (Maybe UserAccount)
-userAccount userId = mapReadWrite (getAccount userId, \w r -> Just (setAccount w r)) userAccounts
+userAccount :: UserId -> SDSLens () (Maybe StoredUserAccount) (Maybe StoredUserAccount)
+userAccount userId = mapReadWrite (getAccount userId, \w r -> Just (setAccount w r)) (Just \_ accounts -> Ok (getAccount userId accounts)) userAccounts
 where
-	getAccount :: UserId [UserAccount] -> Maybe UserAccount
+	getAccount :: UserId [StoredUserAccount] -> Maybe StoredUserAccount
 	getAccount userId accounts = case [a \\ a <- accounts | identifyUserAccount a == userId] of
 		[a] = Just a
 		_	= Nothing
 		
-	setAccount :: (Maybe UserAccount) [UserAccount] -> [UserAccount]
+	setAccount :: (Maybe StoredUserAccount) [StoredUserAccount] -> [StoredUserAccount]
 	setAccount Nothing accounts = accounts
 	setAccount (Just updated) accounts = [if (identifyUserAccount a == identifyUserAccount updated) updated a \\ a <- accounts]
 
-identifyUserAccount :: UserAccount -> UserId
-identifyUserAccount {UserAccount|credentials={Credentials|username}} = toString username
+identifyUserAccount :: StoredUserAccount -> UserId
+identifyUserAccount {StoredUserAccount|credentials={StoredCredentials|username}} = toString username
 
-accountToUser :: UserAccount -> User
-accountToUser {UserAccount|credentials={Credentials|username},title,roles} = AuthenticatedUser (toString username) roles title
+accountToUser :: !StoredUserAccount -> User
+accountToUser {StoredUserAccount|credentials={StoredCredentials|username},title,roles} = AuthenticatedUser (toString username) roles title
 
-accountTitle :: UserAccount -> String
-accountTitle {UserAccount|credentials={Credentials|username},title=Just title} = title  
-accountTitle {UserAccount|credentials={Credentials|username}} = "Untitled (" +++ toString username +++ ")" 
+accountTitle :: !StoredUserAccount -> String
+accountTitle {StoredUserAccount|credentials={StoredCredentials|username},title=Just title} = title
+accountTitle {StoredUserAccount|credentials={StoredCredentials|username}} = "Untitled (" +++ toString username +++ ")"
 
 authenticateUser :: !Username !Password	-> Task (Maybe User)
 authenticateUser (Username username) password
 	=	get (userAccount username)
-	@	(maybe Nothing (\a -> if (a.UserAccount.credentials.Credentials.password == password) (Just (accountToUser a)) Nothing))
+	@	(maybe Nothing (\a -> if (isValidPassword password a.StoredUserAccount.credentials) (Just (accountToUser a)) Nothing))
+where
+    isValidPassword :: !Password !StoredCredentials -> Bool
+    isValidPassword (Password password) credentials =
+		sha1 (password +++ credentials.salt) == credentials.saltedPasswordHash
 	
 doAuthenticated :: (Task a) -> Task a | iTask a
 doAuthenticated task = doAuthenticatedWith verify task
@@ -64,24 +77,31 @@ doAuthenticatedWith verifyCredentials task
 		Nothing		= throw "Authentication failed"
 		Just user	= workAs user task
 	
-createUser :: !UserAccount -> Task UserAccount
+createUser :: !UserAccount -> Task StoredUserAccount
 createUser account
-	=	get (userAccount (identifyUserAccount account))
+	=	createStoredAccount >>~ \storedAccount ->
+	    get (userAccount (identifyUserAccount storedAccount))
 	>>= \mbExisting -> case mbExisting of
 		Nothing
-			= upd (\accounts -> accounts ++ [account]) userAccounts @ const account
+			= upd (\accounts -> accounts ++ [storedAccount]) userAccounts @ const storedAccount
 		_	
 			= throw ("A user with username '" +++ toString account.UserAccount.credentials.Credentials.username +++ "' already exists.")
+where
+	createStoredAccount :: Task StoredUserAccount
+	createStoredAccount = createStoredCredentials account.UserAccount.credentials.Credentials.username
+	                                              account.UserAccount.credentials.Credentials.password @ \credentials ->
+		                  { StoredUserAccount | credentials = credentials , title       = account.UserAccount.title , roles       = account.UserAccount.roles
+		                  }
 
 deleteUser :: !UserId -> Task ()
 deleteUser userId = upd (filter (\acc -> identifyUserAccount acc <> userId)) userAccounts @! ()
-
 
 manageUsers :: Task ()
 manageUsers =
 	(		enterChoiceWithSharedAs ("Users","The following users are available") [ChooseFromGrid id] userAccounts identifyUserAccount
 		>>*	[ OnAction		(Action "New")									(always (createUserFlow	@ const False))
 			, OnAction 	    (ActionEdit) 						                (hasValue (\u -> updateUserFlow u @ const False))
+		    , OnAction      (Action "Change Password")                      (hasValue (\u -> changePasswordFlow u @ const False))
 			, OnAction      (ActionDelete) 		            					(hasValue (\u -> deleteUserFlow u @ const False))
 			, OnAction      (Action "Import & export/Import CSV file...")	(always (importUserFileFlow @ const False))
 			, OnAction      (Action "Import & export/Export CSV file...")	(always (exportUserFileFlow @ const False))
@@ -100,23 +120,48 @@ createUserFlow =
 									    ))
 		]
 		
-updateUserFlow :: UserId -> Task UserAccount
+updateUserFlow :: UserId -> Task StoredUserAccount
 updateUserFlow userId
 	=	get (userAccount userId)
 	>>= \mbAccount -> case mbAccount of 
 		(Just account)
-			=	(updateInformation ("Editing " +++ fromMaybe "Untitled" account.UserAccount.title ,"Please make your changes") [] account
+			=	(updateInformation ("Editing " +++ fromMaybe "Untitled" account.StoredUserAccount.title ,"Please make your changes") [] account
 			>>*	[ OnAction ActionCancel (always (return account))
 				, OnAction ActionOk (hasValue (\newAccount ->
 												set (Just newAccount) (userAccount userId)
-											>>=	viewInformation "User updated" [ViewAs (\(Just {UserAccount|title}) -> "Successfully updated " +++ fromMaybe "Untitled" title)]
+											>>=	viewInformation "User updated" [ViewAs (\(Just {StoredUserAccount|title}) -> "Successfully updated " +++ fromMaybe "Untitled" title)]
 											>>| return newAccount
 											))
 				])
 		Nothing
 			=	(throw "Could not find user details")
-				
-deleteUserFlow :: UserId -> Task UserAccount
+
+changePasswordFlow :: !UserId -> Task StoredUserAccount
+changePasswordFlow userId =
+	get (userAccount userId) >>~ \mbAccount ->
+	case mbAccount of
+		Just account = enterInformation
+			( "Change Password for " +++ fromMaybe "Untitled" account.StoredUserAccount.title
+			, "Please enter a new password"
+			)
+			[]
+			>>* [ OnAction ActionCancel (always   $ return account)
+			    , OnAction ActionOk     (hasValue $ updatePassword account)
+			    ]
+		Nothing = throw "Could not find user details"
+where
+	updatePassword :: !StoredUserAccount !Password -> Task StoredUserAccount
+	updatePassword account password =
+		createStoredCredentials account.StoredUserAccount.credentials.StoredCredentials.username password >>= \creds ->
+		let account` = {StoredUserAccount| account & credentials = creds} in
+		set (Just account`) (userAccount userId) >>=
+		viewInformation "Password updated"
+		                [ ViewAs \(Just {StoredUserAccount|title}) ->
+		                         "Successfully changed password for " +++ fromMaybe "Untitled" title
+		                ] >>|
+		return account`
+
+deleteUserFlow :: UserId -> Task StoredUserAccount
 deleteUserFlow userId
 	=	get (userAccount userId)
 	>>= \mbAccount -> case mbAccount of 
@@ -139,12 +184,12 @@ exportUserFileFlow
 		createCSVFile (app +++ "-users.csv") (map toRow list)
 	>>=	viewInformation ("Export users file","A CSV file containing the users of this application has been created for you to download.") []
 where
-	toRow {credentials = {Credentials|username =(Username username), password = (Password password)}, title, roles}
-		= [fromMaybe "" title,username,password:roles]
+	toRow {StoredUserAccount| credentials = {StoredCredentials|username = (Username username), saltedPasswordHash, salt}, title, roles}
+		= [fromMaybe "" title,username,saltedPasswordHash,salt:roles]
 	
 importDemoUsersFlow :: Task [UserAccount]
 importDemoUsersFlow =
-	allTasks [catchAll (createUser (demoUser n)) (\_ -> return (demoUser n)) \\ n <- names]
+	allTasks [catchAll (createUser u @ const u) (\_ -> return u) \\ u <- demoUser <$> names]
 where
 	demoUser name
 		= {UserAccount
@@ -153,3 +198,11 @@ where
 		  , roles = ["manager"]
 		  }
 	names = ["Alice","Bob","Carol","Dave","Eve","Fred"]
+
+createStoredCredentials :: !Username !Password -> Task StoredCredentials
+createStoredCredentials username password =
+	get (sdsFocus 32 randomString) @ \salt ->
+	{ username           = username
+	, saltedPasswordHash = sha1 $ toString password +++ salt
+	, salt               = salt
+	}

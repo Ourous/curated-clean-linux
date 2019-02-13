@@ -495,3 +495,10 @@ instance FileEnv World where
 			 }
 
 create_files :== Files;
+
+fflush :: !*File -> (!Bool,!*File)
+fflush f = code {
+    .d 0 2 f
+    jsr flushF
+    .o 0 3 bf
+}

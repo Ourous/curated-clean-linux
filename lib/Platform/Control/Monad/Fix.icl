@@ -9,6 +9,7 @@ import Data.List
 import Data.Maybe
 
 instance MonadFix Maybe where
+  mfix :: !(a -> Maybe a) -> Maybe a
   mfix f =
     let a = f (unJust a) in a
     where unJust (Just x) = x

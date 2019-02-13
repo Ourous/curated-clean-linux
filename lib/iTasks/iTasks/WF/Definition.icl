@@ -17,9 +17,11 @@ import Text, Text.GenJSON
 
 import StdString, StdClass, StdBool, StdInt
 
-
 exception :: !e -> TaskException | TC, toString e
 exception e = (dynamic e, toString e)
+
+derive JSONDecode Event, Set
+derive JSONEncode Event, Set
 
 instance Functor TaskValue
 where

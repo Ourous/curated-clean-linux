@@ -33,6 +33,7 @@ from StdOverloaded import class ==
 			| RefreshEvent	!(Set TaskId) !String     //Recalcalutate the tasks with given IDs,
                                                       //using the current SDS values (the string is the reason for the refresh)
 			| ResetEvent                              //Nop event, recalculate the entire task and reset output stream
+			| ReadEvent
 
 :: TaskResult a
    //If all goes well, a task computes its current value, a ui effect and a new task state
@@ -81,18 +82,22 @@ instance toInstanceNo TaskId
 
 // Instance data which does not change after creation (except when a task is replaced)
 :: InstanceConstants =
-    { listId        :: !TaskId              //* Reference to parent tasklist
-    , session       :: !Bool                //* True for sessions (instances that automatically get garbage collected)
+    { type          :: !InstanceType        //* The type of task instance: startup, session or persistent
     , build         :: !String              //* Application build version when the instance was created
-    , issuedAt		:: !Timespec           //* When was the task created
+    , issuedAt		:: !Timespec            //* When was the task created
     }
 
+:: InstanceType
+	= StartupInstance
+	| SessionInstance
+	| PersistentInstance !(Maybe TaskId) //* If the task is a sub-task a detached part of another instance
+
 :: InstanceProgress =
-	{ value             :: !ValueStatus     //* Status of the task value
-    , attachedTo        :: ![TaskId]        //* Chain of tasks through which this instance was attached
-	, instanceKey       :: !InstanceKey     //* Random token that a client gets to have (temporary) access to the task instance
-	, firstEvent		:: !Maybe Timespec //* When was the first work done on this task
-	, lastEvent		    :: !Maybe Timespec //* When was the latest event on this task (excluding Refresh events)
+	{ value             :: !ValueStatus       //* Status of the task value
+    , attachedTo        :: ![TaskId]          //* Chain of tasks through which this instance was attached
+	, instanceKey       :: !Maybe InstanceKey //* Random token that a client gets to have (temporary) access to the task instance
+	, firstEvent		:: !Maybe Timespec    //* When was the first work done on this task
+	, lastEvent		    :: !Maybe Timespec    //* When was the latest event on this task (excluding Refresh events)
 	}
 
 :: ValueStatus

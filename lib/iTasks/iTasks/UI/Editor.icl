@@ -20,7 +20,7 @@ leafEditorToEditor_ :: !(Bool st -> [JSONNode]) !(Bool [JSONNode] -> (!Maybe st,
 leafEditorToEditor_ jsonEncode jsonDecode leafEditor =
 	{Editor| genUI = genUI, onEdit = onEdit, onRefresh = onRefresh, valueFromState = valueFromState}
 where
-	genUI dp val vst = mapRes False $ leafEditor.LeafEditor.genUI dp val vst
+	genUI attr dp val vst = mapRes False $ leafEditor.LeafEditor.genUI attr dp val vst
 
 	onEdit dp (tp, jsone) (LeafState {state}) vst = case fromJSON` state of
 		Just st = case decodeOnServer jsone of
@@ -52,7 +52,7 @@ compoundEditorToEditor :: !(CompoundEditor st a) -> Editor a | JSONDecode{|*|}, 
 compoundEditorToEditor compoundEditor =
 	{Editor| genUI = genUI, onEdit = onEdit, onRefresh = onRefresh, valueFromState = valueFromState}
 where
-	genUI dp val vst = mapRes $ compoundEditor.CompoundEditor.genUI dp val vst
+	genUI attr dp val vst = mapRes $ compoundEditor.CompoundEditor.genUI attr dp val vst
 
 	onEdit dp e (CompoundState jsonSt childSts) vst = case fromJSON jsonSt of
 		Just st = mapRes $ compoundEditor.CompoundEditor.onEdit dp e st childSts vst
@@ -79,7 +79,7 @@ editorModifierWithStateToEditor :: !(EditorModifierWithState st a) -> Editor a |
 editorModifierWithStateToEditor modifier =
 	{Editor| genUI = genUI, onEdit = onEdit, onRefresh = onRefresh, valueFromState = valueFromState}
 where
-	genUI dp val vst = mapRes $ modifier.EditorModifierWithState.genUI dp val vst
+	genUI attr dp val vst = mapRes $ modifier.EditorModifierWithState.genUI attr dp val vst
 
 	onEdit dp e (AnnotatedState jsonSt childSt) vst = case fromJSON jsonSt of
 		Just st = mapRes $ modifier.EditorModifierWithState.onEdit dp e st childSt vst
@@ -147,10 +147,10 @@ isCompound (AnnotatedState _ childSt) = isCompound childSt
 isCompound (CompoundState _ _)        = True
 
 withClientSideInit ::
-	((JSObj ()) *JSWorld -> *JSWorld)
-	(DataPath a *VSt -> *(!MaybeErrorString (!UI, !st), !*VSt))
-	DataPath a *VSt -> *(!MaybeErrorString (!UI, !st), !*VSt)
-withClientSideInit initUI genUI dp val vst=:{VSt|taskId} = case genUI dp val vst of
+	!((JSObj ()) *JSWorld -> *JSWorld)
+	!(UIAttributes DataPath a *VSt -> *(!MaybeErrorString (!UI, !st), !*VSt))
+	!UIAttributes !DataPath !a !*VSt -> *(!MaybeErrorString (!UI, !st), !*VSt)
+withClientSideInit initUI genUI attr dp val vst=:{VSt|taskId} = case genUI attr dp val vst of
     (Ok (UI type attr items,mask),vst=:{VSt|iworld}) = case editorLinker initUI iworld of
         (Ok (saplDeps, saplInit),iworld)
 			# extraAttr = 'DM'.fromList [("taskId",  JSONString taskId)
@@ -162,4 +162,3 @@ withClientSideInit initUI genUI dp val vst=:{VSt|taskId} = case genUI dp val vst
         (Error e,iworld)
             = (Error e, {VSt|vst & iworld = iworld})
     (Error e,vst) = (Error e,vst)
-

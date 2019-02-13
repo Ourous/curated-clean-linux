@@ -34,7 +34,7 @@ fromGraph :: (g a b) -> NodeMap a | Ord a & Graph g
 fromGraph g =
     let ns = 'Data.Graph.Inductive.Graph'.labNodes g
         aux (n, a) (m`, k`) = ('Data.Map'.put a n m`, max n k`)
-        (m, k) = 'Data.List'.foldr aux ('Data.Map'.newMap, 0) ns
+        (m, k) = foldr aux ('Data.Map'.newMap, 0) ns
     in {NodeMap | map = m, key = k+1 }
 
 // | Generate a labelled node from the given label.  Will return the same node

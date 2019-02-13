@@ -1,12 +1,12 @@
 implementation module Text.Parsers.Simple.Chars
 
+import StdEnv
 import Text.Parsers.Simple.Core
 import Control.Applicative
 import Control.Monad
 import Data.Either
 import Data.Func
 import Data.List
-from StdFunc import o, const
 
 pUpper :: Parser Char Char
 pUpper = pSatisfy isUpper

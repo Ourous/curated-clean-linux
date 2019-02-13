@@ -1,11 +1,17 @@
 implementation module iTasks.UI.Layout.BasicForms
 
+import StdEnv
+
 import iTasks.UI.Definition
 import iTasks.UI.Layout
 import iTasks.UI.Layout.Common
-import StdBool, StdString, StdArray, Data.List, Data.Maybe, Text.GenJSON
+
+import Text.GenJSON
+import Data.Maybe
+import Data.List
+
 import qualified Data.Map as DM
-from Data.Foldable import class Foldable (foldr1)
+import qualified Data.Foldable as DF
 
 basicFormsSessionLayout :: LayoutRule
 basicFormsSessionLayout = layoutCombinatorContainers
@@ -42,7 +48,7 @@ layoutInteract = sequenceLayouts
 	]
 
 SelectFormElement = SelectByHasAttribute LABEL_ATTRIBUTE
-SelectEditorContainers = foldr1 SelectOR
+SelectEditorContainers = 'DF'.foldr1 SelectOR
 	(map SelectByType [UIPair,UIRecord,UICons,UIVarCons])
 
 layoutEditorContainer = sequenceLayouts

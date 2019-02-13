@@ -16,7 +16,7 @@ CGI_HEADERS :== [ ("Content-Type","CONTENT_TYPE")
 				]
 
 //Starts the CGI Wrapper
-startCGI :: [CGIOption] [((String -> Bool),(HTTPRequest *World-> (HTTPResponse,*World)))] *World -> *World
+startCGI :: ![CGIOption] ![((String -> Bool),(HTTPRequest *World-> (HTTPResponse,*World)))] !*World -> *World
 startCGI options handlers world
 	# (console, world)		= stdio world
 	# (ok,console)			= freopen console FReadData

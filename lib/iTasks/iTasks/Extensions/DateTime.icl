@@ -15,6 +15,8 @@ import iTasks.UI.Editor
 import iTasks.UI.Editor.Controls
 import iTasks.UI.Editor.Modifiers
 
+import iTasks.Internal.SDS
+
 import StdBool, StdArray, StdEnum, StdList, StdString
 
 import Text, Text.GenJSON, System.Time

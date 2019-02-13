@@ -13,9 +13,9 @@ implementation module Gast.Gen
 
 import StdEnv, StdFunc, StdGeneric, Math.Random, Data.Maybe, Data.Functor, Data.List
 from Data.Set import :: Set
-import qualified Data.Set as Set
+import qualified Data.Set
 from Data.Map import :: Map, instance Functor (Map k)
-import qualified Data.Map as Map
+import qualified Data.Map
 from Data.Func import $
 
 // -------
@@ -58,14 +58,14 @@ genState =
 	, mode                  = SkewGeneration { skewl = 1
 	                                         , skewr = 3
 	                                         }
-	, recInfo               = 'Map'.newMap
+	, recInfo               = 'Data.Map'.newMap
 	, pairTree              = PTLeaf
-	, recFieldValueNrLimits = 'Map'.newMap
+	, recFieldValueNrLimits = 'Data.Map'.newMap
 	}
 
 // ================= skew generation ================= //
 directNames :: GenericTypeDefDescriptor -> Set TypeName
-directNames gtd = 'Set'.fromList (foldr scan [] gtd.gtd_conses)
+directNames gtd = 'Data.Set'.fromList (foldr scan [] gtd.gtd_conses)
 where
 	scan gcd = allTypes (init (types gcd.gcd_type)) // init removes the type itself, as required.
 
@@ -82,8 +82,8 @@ where
 
 addRecInfo :: TypeName (Set TypeName) (Map TypeName (Set TypeName)) -> Map TypeName (Set TypeName)
 addRecInfo name names ri
-	# ri =  (\types -> if ('Set'.member name types) ('Set'.union types names) types) <$> ri
-    = 'Map'.alter (Just o maybe names ('Set'.union names)) name ri
+	# ri =  (\types -> if ('Data.Set'.member name types) ('Data.Set'.union types names) types) <$> ri
+    = 'Data.Map'.alter (Just o maybe names ('Data.Set'.union names)) name ri
 
 recArgs :: TypeName (Map TypeName (Set TypeName)) GenType -> [Bool]
 recArgs typeName ri genType = scanArgs genType
@@ -95,7 +95,7 @@ where
 	recCount :: GenType -> Bool
 	recCount (GenTypeApp t1 t2)   = recCount t1 || recCount t2
 	recCount (GenTypeArrow t1 t2) = recCount t1 || recCount t2
-	recCount (GenTypeCons name)   = maybe False ('Set'.member typeName) ('Map'.get name ri)
+	recCount (GenTypeCons name)   = maybe False ('Data.Set'.member typeName) ('Data.Map'.get name ri)
 	recCount genType              = False
 
 genPairTree :: [Bool] Int -> PairTree
@@ -118,8 +118,7 @@ ggen{|Real|} s
 		= takeWhile (\r -> abs r <= toReal (s.maxDepth - s.depth)) l
 		= l
 where
-	//       -nan    nan        inf     -inf
-	l = [0.0,0.0/0.0,~(0.0/0.0),1.0/0.0,-1.0/0.0
+	l = [0.0, NaN, ~NaN, Infinity, ~Infinity
 		:interleave
 			[r \\ x <- diag [1:prims] [1:prims] (\n d.toReal n/toReal d), r <- [x,~ x]]
 		(interleave
@@ -191,7 +190,7 @@ where
 
 ggen{|FIELD of d|}  f s = [FIELD fi \\ fi <- vals]
 where
-    vals = case 'Map'.get (d.gfd_cons.grd_name, d.gfd_name) s.recFieldValueNrLimits of
+    vals = case 'Data.Map'.get (d.gfd_cons.grd_name, d.gfd_name) s.recFieldValueNrLimits of
         Nothing    -> f s
         Just limit -> take limit $ f s
 

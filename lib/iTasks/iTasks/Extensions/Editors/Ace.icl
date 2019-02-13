@@ -36,7 +36,7 @@ aceEditor = leafEditorToEditor
     , valueFromState = valueFromState
     }
 where
-	genUI dp mode vst=:{VSt|taskId,optional}
+	genUI attr dp mode vst=:{VSt|taskId,optional}
 		# (options,state) = fromMaybe gDefault{|*|} $ editModeValue mode
 		//Set both state and options as attributes
 		# aceAttr = 'DM'.fromList
@@ -47,7 +47,7 @@ where
 			,("theme",JSONString options.AceOptions.theme)
 			,("mode",JSONString options.AceOptions.mode)
 			]
-    	# attr = 'DM'.unions [aceAttr, optionalAttr optional, taskIdAttr taskId, editorIdAttr (editorId dp)]
+		# attr = 'DM'.unions [aceAttr, optionalAttr optional, taskIdAttr taskId, editorIdAttr (editorId dp), attr]
 		= (Ok (uia UIComponent attr, (options, state)),vst)
 
 	initUI me world

@@ -40,6 +40,10 @@ foldM :: (a -> .(b -> c a)) a ![b] -> c a | Monad c
 foldM _ a []      = lift a
 foldM f a [x:xs]  = f a x >>= \fax -> foldM f fax xs
 
+mapStM :: (a st -> m (b, st)) ![a] !st -> m (![b], st) | Monad m
+mapStM _ [] st = pure ([], st)
+mapStM f [x:xs] st = f x st >>= \(y,st) -> mapStM f xs st >>= \(ys,st) -> pure ([y:ys],st)
+
 replicateM :: !.Int (a b) -> a [b] | Monad a
 replicateM n x = sequence (replicate n x)
 

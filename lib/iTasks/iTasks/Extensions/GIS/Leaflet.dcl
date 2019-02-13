@@ -5,24 +5,24 @@ import iTasks
 leafletEditor :: Editor LeafletMap
 
 :: LeafletMap =
-    { perspective   :: LeafletPerspective 
-	, tilesUrls     :: [String]
-	, objects       :: [LeafletObject]    //Markers, lines and polygon
-    , icons         :: [LeafletIcon]      //Custom icons used by markers. They are indexed by 'iconId' string and cannot be changed once the map is loaded
+    { perspective   :: !LeafletPerspective
+	, tilesUrls     :: ![String]
+	, objects       :: ![LeafletObject]    //Markers, lines and polygon
+    , icons         :: ![LeafletIcon]      //Custom icons used by markers. They are indexed by 'iconId' string and cannot be changed once the map is loaded
     }
 
 :: LeafletPerspective =
-    { center        :: LeafletLatLng
-    , zoom          :: Int
-    , cursor        :: Maybe LeafletLatLng
-    , bounds        :: Maybe LeafletBounds
+    { center        :: !LeafletLatLng
+    , zoom          :: !Int
+    , cursor        :: !Maybe LeafletLatLng
+    , bounds        :: !Maybe LeafletBounds
     }
 
-:: LeafletIconID :== String
+:: LeafletIconID =: LeafletIconID String
 :: LeafletIcon =
-    { iconId        :: LeafletIconID
-    , iconUrl       :: String
-    , iconSize      :: (!Int,!Int)
+    { iconId        :: !LeafletIconID
+    , iconUrl       :: !String
+    , iconSize      :: !(!Int,!Int)
     }
 
 :: LeafletLatLng =
@@ -41,7 +41,7 @@ leafletEditor :: Editor LeafletMap
     | Polygon  !LeafletPolygon
     | Window   !LeafletWindow
 
-:: LeafletObjectID :== String
+:: LeafletObjectID =: LeafletObjectID String
 :: LeafletMarker =
     { markerId      :: !LeafletObjectID
     , position      :: !LeafletLatLng
@@ -68,7 +68,7 @@ leafletEditor :: Editor LeafletMap
     , initPosition   :: !LeafletWindowPos
     , title          :: !String
     , content        :: !HtmlTag
-    , relatedMarkers :: ![(LeafletObjectID, [LeafletStyleDef LeafletLineStyle])] // connecting lines are drawn between the window and the markers
+    , relatedMarkers :: ![(!LeafletObjectID, ![LeafletStyleDef LeafletLineStyle])] // connecting lines are drawn between the window and the markers
                                                                                  // to visualise the relation
     }
 
@@ -85,7 +85,7 @@ leafletEditor :: Editor LeafletMap
                        | PolygonFillColor       !String // html/css color definition
                        | PolygonFillOpacity     !Real
 
-:: CSSClass :== String
+:: CSSClass =: CSSClass String
 :: LeafletStyleDef style = Style style
                          | Class CSSClass
 
@@ -102,4 +102,3 @@ derive gEq        LeafletMap, LeafletPerspective
 derive gText      LeafletMap, LeafletPerspective, LeafletLatLng
 derive gEditor    LeafletMap, LeafletPerspective, LeafletLatLng
 derive class iTask LeafletIcon, LeafletBounds, LeafletObject, LeafletMarker, LeafletPolyline, LeafletPolygon, LeafletWindow, LeafletWindowPos, LeafletLineStyle, LeafletStyleDef, LeafletPolygonStyle
-

@@ -8,6 +8,7 @@ from Data.Maybe import :: Maybe
 class MonadFix m | Monad m where
   mfix :: (a -> m a) -> m a
 
-instance MonadFix Maybe
+instance MonadFix Maybe where
+  mfix :: !(a -> Maybe a) -> Maybe a
 
 instance MonadFix []

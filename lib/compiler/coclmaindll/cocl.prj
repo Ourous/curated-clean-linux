@@ -1,0 +1,51 @@
+Version: 1.4
+Global
+	ProjectRoot:	.
+	Built:	False
+	Target:	StdEnv
+	Exec:	{Project}\cocl.exe
+	CodeGen
+		CheckStacks:	False
+		CheckIndexes:	True
+	Application
+		HeapSize:	25165824
+		StackSize:	2097152
+		ExtraMemory:	0
+		IntialHeapSize:	8388608
+		HeapSizeMultiplier:	1024
+		ShowExecutionTime:	False
+		ShowGC:	False
+		ShowStackSize:	False
+		MarkingCollector:	True
+		StandardRuntimeEnv:	True
+		Profile
+			Memory:	False
+			MemoryMinimumHeapSize:	0
+			Time:	False
+			Stack:	False
+		Output
+			Output:	NoConsole
+			Font:	MS Sans Serif
+			FontSize:	8
+			WriteStdErr:	False
+	Link
+		LinkMethod:	Static
+		GenerateRelocations:	False
+		GenerateLinkMap:	False
+		LinkResources:	False
+		ResourceSource:	
+		GenerateDLL:	False
+		ExportedNames:	
+	Paths
+		Path:	{Project}\frontend
+		Path:	{Project}\backend
+		Path:	{Project}\backendCModules
+		Path:	{Project}\main
+		Path:	{Project}\main\Windows
+		Path:	{Project}\backend\Windows
+		Path:	{Application}\Libraries\ArgEnv
+	Precompile:	
+	Postlink:	
+MainModule
+	Name:	cocl
+	Dir:	{Project}\main

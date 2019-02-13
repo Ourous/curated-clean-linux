@@ -60,10 +60,10 @@ serveWebService port handler
     @! ()
 where
 	manageConnections io
-		= tcplisten port False (currentTimespec |+< io)
+		= tcplisten port False (currentTimespec |*< io)
 			{ConnectionHandlers|onConnect=onConnect,onData=onData,onShareChange=onShareChange,onDisconnect=onDisconnect}
-
-    onConnect client_name (now,io)
+			
+    onConnect connId client_name (now,io)
 		= (Ok (Idle client_name now), Nothing, [], False)
 
     onData data l=:(Idle client_name last) (now,io)
@@ -192,7 +192,7 @@ where
     //VERY SIMPLE HTTP 1.1 Request
     req = toString method +++ " " +++ path +++ " HTTP/1.1\r\nHost:"+++uriRegName+++"\r\nConnection: close\r\n\r\n"+++data
 
-    onConnect _ _
+    onConnect _ _ _
         = (Ok (Left []),Nothing,[req],False)
     onData data (Left acc) _
         = (Ok (Left (acc ++ [data])),Nothing,[],False)

@@ -12,7 +12,8 @@ import StdFunc
 
 //Data
 import Data.Maybe, Data.Func
-from Data.List import maximum
+from Data.List import instance Foldable []
+from Data.Foldable import maximum
 
 //System
 import System.FilePath

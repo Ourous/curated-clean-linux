@@ -55,8 +55,21 @@
 .export e_StdInt_slcm;30
 .descexp e_StdInt_dlcm;30 e_StdInt_nlcm;30 e_StdInt_llcm;30 2 0 "lcm;30"
 .pb "lcm;30"
+.o 3 0
+e_StdInt_ilcm;30
+	pop_a 1
+	pushI_a 1
+	pushI_a 0
+	pop_a 2
+.d 0 2 ii
+	jsr s31
+.o 0 1 i
+	buildI_b 0
+	pop_b 1
+.d 1 0
+	rtn
 .pld
-.a 0 a31
+.ai 0 a31 e_StdInt_ilcm;30
 .o 2 0
 e_StdInt_llcm;30
 	repl_args 1 1
@@ -137,8 +150,21 @@ case.4
 .export e_StdInt_sgcd;29
 .descexp e_StdInt_dgcd;29 e_StdInt_ngcd;29 e_StdInt_lgcd;29 2 0 "gcd;29"
 .pb "gcd;29"
+.o 3 0
+e_StdInt_igcd;29
+	pop_a 1
+	pushI_a 1
+	pushI_a 0
+	pop_a 2
+.d 0 2 ii
+	jsr s30
+.o 0 1 i
+	buildI_b 0
+	pop_b 1
+.d 1 0
+	rtn
 .pld
-.a 0 a30
+.ai 0 a30 e_StdInt_igcd;29
 .o 2 0
 e_StdInt_lgcd;29
 	repl_args 1 1
@@ -216,8 +242,21 @@ case.6
 .export e_StdInt_srem;28
 .descexp e_StdInt_drem;28 e_StdInt_nrem;28 e_StdInt_lrem;28 2 0 "rem;28"
 .pb "rem;28"
+.o 3 0
+e_StdInt_irem;28
+	pop_a 1
+	pushI_a 1
+	pushI_a 0
+	pop_a 2
+.d 0 2 ii
+	jsr s29
+.o 0 1 i
+	buildI_b 0
+	pop_b 1
+.d 1 0
+	rtn
 .pld
-.a 0 a29
+.ai 0 a29 e_StdInt_irem;28
 .o 2 0
 e_StdInt_lrem;28
 	repl_args 1 1
@@ -265,7 +304,17 @@ s29
 .export e_StdInt_sfromInt;27
 .descexp e_StdInt_dfromInt;27 e_StdInt_nfromInt;27 e_StdInt_lfromInt;27 1 0 "fromInt;27"
 .pb "fromInt;27"
+.o 1 1 i
+e_StdInt_ifromInt;27
+	pop_a 1
+.d 0 1 i
+	jsr s28
+.o 1 0
+	buildh ARRAY 1
+.d 1 0
+	rtn
 .pld
+.ai 1 _ e_StdInt_ifromInt;27
 .o 2 0
 e_StdInt_lfromInt;27
 	pop_a 1
@@ -308,7 +357,18 @@ s28
 .export e_StdInt_sfromInt;26
 .descexp e_StdInt_dfromInt;26 e_StdInt_nfromInt;26 e_StdInt_lfromInt;26 1 0 "fromInt;26"
 .pb "fromInt;26"
+.o 1 1 i
+e_StdInt_ifromInt;26
+	pop_a 1
+.d 0 1 i
+	jsr s27
+.o 0 1 r
+	buildR_b 0
+	pop_b 1
+.d 1 0
+	rtn
 .pld
+.ai 1 _ e_StdInt_ifromInt;26
 .o 2 0
 e_StdInt_lfromInt;26
 	pop_a 1
@@ -351,7 +411,18 @@ s27
 .export e_StdInt_sfromInt;25
 .descexp e_StdInt_dfromInt;25 e_StdInt_nfromInt;25 e_StdInt_lfromInt;25 1 0 "fromInt;25"
 .pb "fromInt;25"
+.o 1 1 i
+e_StdInt_ifromInt;25
+	pop_a 1
+.d 0 1 i
+	jsr s26
+.o 0 1 c
+	buildC_b 0
+	pop_b 1
+.d 1 0
+	rtn
 .pld
+.ai 1 _ e_StdInt_ifromInt;25
 .o 2 0
 e_StdInt_lfromInt;25
 	pop_a 1
@@ -394,7 +465,18 @@ s26
 .export e_StdInt_sfromInt;24
 .descexp e_StdInt_dfromInt;24 e_StdInt_nfromInt;24 e_StdInt_lfromInt;24 1 0 "fromInt;24"
 .pb "fromInt;24"
+.o 1 1 i
+e_StdInt_ifromInt;24
+	pop_a 1
+.d 0 1 i
+	jsr s25
+.o 0 1 i
+	buildI_b 0
+	pop_b 1
+.d 1 0
+	rtn
 .pld
+.ai 1 _ e_StdInt_ifromInt;24
 .o 2 0
 e_StdInt_lfromInt;24
 	pop_a 1
@@ -437,7 +519,16 @@ s25
 .export e_StdInt_stoInt;23
 .descexp e_StdInt_dtoInt;23 e_StdInt_ntoInt;23 e_StdInt_ltoInt;23 1 0 "toInt;23"
 .pb "toInt;23"
+.o 2 0
+e_StdInt_itoInt;23
+	pop_a 1
+	push_array 0
+	update_a 0 1
+	pop_a 1
+.d 1 0
+	jmp s24
 .pld
+.ai 1 _ e_StdInt_itoInt;23
 .o 2 0
 e_StdInt_ltoInt;23
 	pop_a 1
@@ -608,7 +699,15 @@ else.11
 .export e_StdInt_stoInt;22
 .descexp e_StdInt_dtoInt;22 e_StdInt_ntoInt;22 e_StdInt_ltoInt;22 1 0 "toInt;22"
 .pb "toInt;22"
+.o 2 0
+e_StdInt_itoInt;22
+	pop_a 1
+	pushR_a 0
+	pop_a 1
+.d 0 1 r
+	jmp s23
 .pld
+.ai 1 _ e_StdInt_itoInt;22
 .o 2 0
 e_StdInt_ltoInt;22
 	pop_a 1
@@ -651,7 +750,15 @@ s23
 .export e_StdInt_stoInt;21
 .descexp e_StdInt_dtoInt;21 e_StdInt_ntoInt;21 e_StdInt_ltoInt;21 1 0 "toInt;21"
 .pb "toInt;21"
+.o 2 0
+e_StdInt_itoInt;21
+	pop_a 1
+	pushI_a 0
+	pop_a 1
+.d 0 1 i
+	jmp s22
 .pld
+.ai 1 _ e_StdInt_itoInt;21
 .o 2 0
 e_StdInt_ltoInt;21
 	pop_a 1
@@ -694,7 +801,15 @@ s22
 .export e_StdInt_stoInt;20
 .descexp e_StdInt_dtoInt;20 e_StdInt_ntoInt;20 e_StdInt_ltoInt;20 1 0 "toInt;20"
 .pb "toInt;20"
+.o 2 0
+e_StdInt_itoInt;20
+	pop_a 1
+	pushC_a 0
+	pop_a 1
+.d 0 1 c
+	jmp s21
 .pld
+.ai 1 _ e_StdInt_itoInt;20
 .o 2 0
 e_StdInt_ltoInt;20
 	pop_a 1
@@ -737,7 +852,15 @@ s21
 .export e_StdInt_sisOdd;19
 .descexp e_StdInt_disOdd;19 e_StdInt_nisOdd;19 e_StdInt_lisOdd;19 1 0 "isOdd;19"
 .pb "isOdd;19"
+.o 2 0
+e_StdInt_iisOdd;19
+	pop_a 1
+	pushI_a 0
+	pop_a 1
+.d 0 1 i
+	jmp s20
 .pld
+.ai 1 _ e_StdInt_iisOdd;19
 .o 2 0
 e_StdInt_lisOdd;19
 	pop_a 1
@@ -784,7 +907,20 @@ s20
 .export e_StdInt_s~;15
 .descexp e_StdInt_d~;15 e_StdInt_n~;15 e_StdInt_l~;15 1 0 "~;15"
 .pb "~;15"
+.o 2 0
+e_StdInt_i~;15
+	pop_a 1
+	pushI_a 0
+	pop_a 1
+.d 0 1 i
+	jsr s16
+.o 0 1 i
+	buildI_b 0
+	pop_b 1
+.d 1 0
+	rtn
 .pld
+.ai 1 _ e_StdInt_i~;15
 .o 2 0
 e_StdInt_l~;15
 	pop_a 1
@@ -827,7 +963,15 @@ s16
 .export e_StdInt_ssign;14
 .descexp e_StdInt_dsign;14 e_StdInt_nsign;14 e_StdInt_lsign;14 1 0 "sign;14"
 .pb "sign;14"
+.o 2 0
+e_StdInt_isign;14
+	pop_a 1
+	pushI_a 0
+	pop_a 1
+.d 0 1 i
+	jmp s15
 .pld
+.ai 1 _ e_StdInt_isign;14
 .o 2 0
 e_StdInt_lsign;14
 	pop_a 1
@@ -888,8 +1032,16 @@ else.14
 .export e_StdInt_s==;16
 .descexp e_StdInt_d==;16 e_StdInt_n==;16 e_StdInt_l==;16 2 0 "==;16"
 .pb "==;16"
+.o 3 0
+e_StdInt_i==;16
+	pop_a 1
+	pushI_a 1
+	pushI_a 0
+	pop_a 2
+.d 0 2 ii
+	jmp s17
 .pld
-.a 0 a17
+.ai 0 a17 e_StdInt_i==;16
 .o 2 0
 e_StdInt_l==;16
 	repl_args 1 1
@@ -937,7 +1089,20 @@ s17
 .export e_StdInt_sabs;13
 .descexp e_StdInt_dabs;13 e_StdInt_nabs;13 e_StdInt_labs;13 1 0 "abs;13"
 .pb "abs;13"
+.o 2 0
+e_StdInt_iabs;13
+	pop_a 1
+	pushI_a 0
+	pop_a 1
+.d 0 1 i
+	jsr s14
+.o 0 1 i
+	buildI_b 0
+	pop_b 1
+.d 1 0
+	rtn
 .pld
+.ai 1 _ e_StdInt_iabs;13
 .o 2 0
 e_StdInt_labs;13
 	pop_a 1
@@ -990,8 +1155,21 @@ else.15
 .export e_StdInt_s^;12
 .descexp e_StdInt_d^;12 e_StdInt_n^;12 e_StdInt_l^;12 2 0 "^;12"
 .pb "^;12"
+.o 3 0
+e_StdInt_i^;12
+	pop_a 1
+	pushI_a 1
+	pushI_a 0
+	pop_a 2
+.d 0 2 ii
+	jsr s13
+.o 0 1 i
+	buildI_b 0
+	pop_b 1
+.d 1 0
+	rtn
 .pld
-.a 0 a13
+.ai 0 a13 e_StdInt_i^;12
 .o 2 0
 e_StdInt_l^;12
 	repl_args 1 1
@@ -1055,8 +1233,16 @@ else.16
 .export e_StdInt_s<;17
 .descexp e_StdInt_d<;17 e_StdInt_n<;17 e_StdInt_l<;17 2 0 "<;17"
 .pb "<;17"
+.o 3 0
+e_StdInt_i<;17
+	pop_a 1
+	pushI_a 1
+	pushI_a 0
+	pop_a 2
+.d 0 2 ii
+	jmp s18
 .pld
-.a 0 a18
+.ai 0 a18 e_StdInt_i<;17
 .o 2 0
 e_StdInt_l<;17
 	repl_args 1 1
@@ -1166,7 +1352,15 @@ else.19
 .export e_StdInt_sisEven;18
 .descexp e_StdInt_disEven;18 e_StdInt_nisEven;18 e_StdInt_lisEven;18 1 0 "isEven;18"
 .pb "isEven;18"
+.o 2 0
+e_StdInt_iisEven;18
+	pop_a 1
+	pushI_a 0
+	pop_a 1
+.d 0 1 i
+	jmp s19
 .pld
+.ai 1 _ e_StdInt_iisEven;18
 .o 2 0
 e_StdInt_lisEven;18
 	pop_a 1
@@ -1213,6 +1407,16 @@ s19
 .descexp e_StdInt_done;11 e_StdInt_none;11 e_StdInt_lone;11 0 0 "one;11"
 .pb "one;11"
 .o 1 0
+e_StdInt_ione;11
+	pop_a 1
+.d 0 0
+	jsr s12
+.o 0 1 i
+	buildI_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
 e_StdInt_lone;11
 	halt
 .pd
@@ -1244,8 +1448,21 @@ s12
 .export e_StdInt_s/;10
 .descexp e_StdInt_d/;10 e_StdInt_n/;10 e_StdInt_l/;10 2 0 "/;10"
 .pb "/;10"
+.o 3 0
+e_StdInt_i/;10
+	pop_a 1
+	pushI_a 1
+	pushI_a 0
+	pop_a 2
+.d 0 2 ii
+	jsr s11
+.o 0 1 i
+	buildI_b 0
+	pop_b 1
+.d 1 0
+	rtn
 .pld
-.a 0 a11
+.ai 0 a11 e_StdInt_i/;10
 .o 2 0
 e_StdInt_l/;10
 	repl_args 1 1
@@ -1293,8 +1510,21 @@ s11
 .export e_StdInt_s*;9
 .descexp e_StdInt_d*;9 e_StdInt_n*;9 e_StdInt_l*;9 2 0 "*;9"
 .pb "*;9"
+.o 3 0
+e_StdInt_i*;9
+	pop_a 1
+	pushI_a 1
+	pushI_a 0
+	pop_a 2
+.d 0 2 ii
+	jsr s10
+.o 0 1 i
+	buildI_b 0
+	pop_b 1
+.d 1 0
+	rtn
 .pld
-.a 0 a10
+.ai 0 a10 e_StdInt_i*;9
 .o 2 0
 e_StdInt_l*;9
 	repl_args 1 1
@@ -1343,6 +1573,16 @@ s10
 .descexp e_StdInt_dzero;8 e_StdInt_nzero;8 e_StdInt_lzero;8 0 0 "zero;8"
 .pb "zero;8"
 .o 1 0
+e_StdInt_izero;8
+	pop_a 1
+.d 0 0
+	jsr s9
+.o 0 1 i
+	buildI_b 0
+	pop_b 1
+.d 1 0
+	rtn
+.o 1 0
 e_StdInt_lzero;8
 	halt
 .pd
@@ -1374,8 +1614,21 @@ s9
 .export e_StdInt_s-;7
 .descexp e_StdInt_d-;7 e_StdInt_n-;7 e_StdInt_l-;7 2 0 "-;7"
 .pb "-;7"
+.o 3 0
+e_StdInt_i-;7
+	pop_a 1
+	pushI_a 1
+	pushI_a 0
+	pop_a 2
+.d 0 2 ii
+	jsr s8
+.o 0 1 i
+	buildI_b 0
+	pop_b 1
+.d 1 0
+	rtn
 .pld
-.a 0 a8
+.ai 0 a8 e_StdInt_i-;7
 .o 2 0
 e_StdInt_l-;7
 	repl_args 1 1
@@ -1423,8 +1676,21 @@ s8
 .export e_StdInt_s+;6
 .descexp e_StdInt_d+;6 e_StdInt_n+;6 e_StdInt_l+;6 2 0 "+;6"
 .pb "+;6"
+.o 3 0
+e_StdInt_i+;6
+	pop_a 1
+	pushI_a 1
+	pushI_a 0
+	pop_a 2
+.d 0 2 ii
+	jsr s7
+.o 0 1 i
+	buildI_b 0
+	pop_b 1
+.d 1 0
+	rtn
 .pld
-.a 0 a7
+.ai 0 a7 e_StdInt_i+;6
 .o 2 0
 e_StdInt_l+;6
 	repl_args 1 1

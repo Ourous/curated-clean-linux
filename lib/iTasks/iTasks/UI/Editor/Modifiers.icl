@@ -11,14 +11,12 @@ instance tune UIAttributes Editor
 where
 	tune extra editor=:{Editor|genUI=editorGenUI} = {Editor|editor & genUI = genUI}
 	where
-		genUI dp mode vst=:{VSt|taskId,optional} = case editorGenUI dp (mapEditMode id mode) vst of
-			(Ok (UI type attr items, st),vst) = (Ok (UI type ('DM'.union attr extra) items, st),vst)
-			(e,vst)                           = (e,vst)
+		genUI attr dp mode vst = editorGenUI ('DM'.union attr extra) dp (mapEditMode id mode) vst
 
 withEditModeAttr :: !(Editor a) -> Editor a
 withEditModeAttr editor=:{Editor|genUI=editorGenUI} = {Editor|editor & genUI = genUI}
 where
-	genUI dp mode vst=:{VSt|taskId} = case editorGenUI dp (mapEditMode id mode) vst of
+	genUI attr dp mode vst=:{VSt|taskId} = case editorGenUI attr dp (mapEditMode id mode) vst of
 		(Ok (UI type attr items,mask),vst) = (Ok (UI type ('DM'.put "mode" (JSONString (modeString mode)) attr) items, mask),vst)
 		(e,vst) = (e,vst)
 	where
@@ -30,7 +28,7 @@ withDynamicHintAttributes :: !String !(Editor a) -> Editor a
 withDynamicHintAttributes typeDesc editor=:{Editor|genUI=editorGenUI,onEdit=editorOnEdit,onRefresh=editorOnRefresh, valueFromState}
 	= {Editor| editor & genUI=genUI,onEdit=onEdit,onRefresh=onRefresh}
 where
-	genUI dp mode vst=:{VSt|taskId,optional} = case editorGenUI dp (mapEditMode id mode) vst of
+	genUI attr dp mode vst=:{VSt|taskId,optional} = case editorGenUI attr dp (mapEditMode id mode) vst of
 		(Ok (UI type attr items,mask),vst)
 			//Add hint attributes
 			# attr = 'DM'.union (stdAttributes typeDesc (isJust $ valueFromState mask) optional mask) attr
@@ -90,10 +88,10 @@ selectByMode
 	= editorModifierWithStateToEditor
 		{EditorModifierWithState|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh,valueFromState=valueFromState}
 where
-	genUI dp mode vst = attachMode storedMode $ case mode of
-		View _   = viewGenUI   dp mode` vst
-		Enter    = enterGenUI  dp mode` vst
-		Update _ = updateGenUI dp mode` vst
+	genUI attr dp mode vst = attachMode storedMode $ case mode of
+		View _   = viewGenUI   attr dp mode` vst
+		Enter    = enterGenUI  attr dp mode` vst
+		Update _ = updateGenUI attr dp mode` vst
 	where
 		mode` = mapEditMode id mode
 
@@ -122,7 +120,7 @@ where
 withChangedEditMode :: !((EditMode a) -> EditMode a) !(Editor a) -> Editor a
 withChangedEditMode toNewMode editor=:{Editor| genUI=editorGenUI} = {Editor| editor & genUI = genUI}
 where
-	genUI dp mode vst = editorGenUI dp (mapEditMode id $ toNewMode mode) vst
+	genUI attr dp mode vst = editorGenUI attr dp (mapEditMode id $ toNewMode mode) vst
 
 viewConstantValue :: !a !(Editor a) -> Editor ()
 viewConstantValue val e = bijectEditorValue (const val) (const ()) $ withChangedEditMode (const $ View val) e
@@ -131,7 +129,7 @@ bijectEditorValue :: !(a -> b) !(b -> a) !(Editor b) -> Editor a
 bijectEditorValue tof fromf editor=:{Editor|genUI=editorGenUI,onRefresh=editorOnRefresh,valueFromState=editorValueFromState}
 	= {Editor| editor & genUI=genUI,onRefresh=onRefresh,valueFromState=valueFromState}
 where
-	genUI dp mode vst       = editorGenUI dp (mapEditMode tof mode) vst
+	genUI attr dp mode vst  = editorGenUI attr dp (mapEditMode tof mode) vst
 	onRefresh dp new st vst = editorOnRefresh dp (tof new) st vst
 
 	valueFromState st = case editorValueFromState st of
@@ -142,7 +140,7 @@ injectEditorValue :: !(a -> b) !(b -> MaybeErrorString a) !(Editor b) -> Editor 
 injectEditorValue tof fromf {Editor|genUI=editorGenUI,onEdit=editorOnEdit,onRefresh=editorOnRefresh,valueFromState=editorValueFromState}
 	= {Editor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh,valueFromState=valueFromState}
 where
-	genUI dp mode vst        = editorGenUI dp (mapEditMode tof mode) vst
+	genUI attr dp mode vst   = editorGenUI attr dp (mapEditMode tof mode) vst
 	onEdit dp e st vst       = mbMapFromF $ editorOnEdit dp e st vst
 	onRefresh dp newa st vst = mbMapFromF $ editorOnRefresh dp (tof newa) st vst
 
@@ -167,7 +165,7 @@ surjectEditorValue :: !(a -> b) !(b (Maybe a) -> a) !(Editor b) -> Editor a | JS
 surjectEditorValue tof fromf {Editor|genUI=editorGenUI,onEdit=editorOnEdit,onRefresh=editorOnRefresh,valueFromState=editorValueFromState} = editorModifierWithStateToEditor
 	{EditorModifierWithState|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh,valueFromState=valueFromState}
 where
-	genUI dp mode vst = case editorGenUI dp (mapEditMode tof mode) vst of
+	genUI attr dp mode vst = case editorGenUI attr dp (mapEditMode tof mode) vst of
 		(Error e,vst)     = (Error e,vst)
 		//Track value of the 'outer' editor
 		(Ok (ui, st),vst) = (Ok (ui, editModeValue mode, st), vst)
@@ -193,8 +191,8 @@ comapEditorValue tof {Editor|genUI=editorGenUI,onRefresh=editorOnRefresh,valueFr
 	= editorModifierWithStateToEditor
 		{EditorModifierWithState|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh,valueFromState=valueFromState}
 where
-	genUI dp mode vst          = appFst (fmap (\(ui, st) -> (ui, editModeValue mode, st))) $
-	                             editorGenUI dp (mapEditMode tof mode) vst
+	genUI attr dp mode vst     = appFst (fmap (\(ui, st) -> (ui, editModeValue mode, st))) $
+	                             editorGenUI attr dp (mapEditMode tof mode) vst
 	onEdit dp _ mbB st vst     = (Ok (NoChange, mbB, st), vst) //Ignore edits
 	onRefresh dp newB _ st vst = appFst (fmap (\(ui, st) -> (ui, Just newB, st))) $
 	                             editorOnRefresh dp (tof newB) st vst

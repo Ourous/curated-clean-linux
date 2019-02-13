@@ -1,0 +1,335 @@
+This file documents the mechanism used for explicit imports
+
+Basic problem: The modules are checked one after the other.
+When there are cycles between dcl modules, the algorithm has
+to solve imports from a module that is unchecked yet. The exported
+declarations of such an unchecked module are not known. 
+
+A difficulty in designing this algorithm was inctroduced by the
+fact that there can only be one symbol table at a time (because
+of the use of pointers). But for cyclic module dependencies
+one wants to incrementally build up symbol table information for
+all modules on the cycle at the same time.
+
+To solve this difficulty we introduced a new datastructure "ExplImpInfos", that can
+contain symbol table information for all modules at once:
+
+  :: *ExplImpInfos :== *{!*{!*ExplImpInfo}}
+  :: ExplImpInfo = ExplImpInfo Ident !.DeclaringModulesSet
+  :: DeclaringModulesSet :== IntKeyHashtable DeclarationInfo
+
+  :: DeclarationInfo = { di_decl :: !Declaration, ... }
+
+The outer array is indexed with the "module component number"
+(short:component number, see below, this is _not_ the module number).
+The inner array
+is indexed with the module component's "symbol number". We do
+not use pointers to identify symbols (like id_info). Instead
+we identify each symbol with a number. Caution: For one symbol
+(one id_info pointer) this number can vary from module component
+to module component! Finally each array element contains the "Ident"
+representation of the symbol and a "DeclaringModulesSet". This set,
+implemented as a hash table, contains the module numbers (not component numbers)
+of all currently known modules that declare/define the symbol, together with
+the "Declaration" information, which allows to find the original definition
+of that symbol's instance (no, I don't mean "instance of a class" here).
+
+When the dcl modules have to be checked, at first the dependency graph
+of these modules is partitioned (in function checkDclModules). Then an
+initial ExplImpInfos array is created. We only take symbols into account
+that somewhere appear in an explicit import statement and assign numbers to these
+symbols. This is also the place were the component numbers are created. The parser
+delivers import statements as a "ParsedImport" in which symbols are identified
+by pointers. These pointers are translated into symbol
+numbers (type "ImportNrAndIdents"). Now we process all components
+beginning with the leafs.
+
+Processing a component:
+All explicit imports are solved before the symbol table for
+any module is actually built. Take the following modules:
+  _________________________
+  definition module t1
+  from t2 import ::T2, ::TDouble
+  :: T1
+  _________________________
+  definition module t2
+  from t1 import ::T1
+  from t4 import ::T4
+  import t3
+  :: T2
+  _________________________
+  definition module t3
+  :: TDouble
+  _________________________
+  definition module t4
+  :: TDouble
+  :: T4
+  
+We assume that t1 becomes checked before t2. The problem here
+is to find out that t1 imports ::TDouble from t3 and not from
+t4
+
+Let's assume the following:
+  module t1 has been assigned number 11
+  module t2 ------------"----------- 12
+  module t3 ------------"----------- 13
+  module t4 ------------"----------- 14
+  component {t1,t2} has been assigned number 0
+  component {t3}    ------------"----------- 1
+  component {t4}    ------------"----------- 2
+  ::TDouble has been assigned nr 0 in component nr 0
+  ::T1      ------"------------- 1 -------"---------
+  ::T2      ------"------------- 2 -------"---------
+  ::T4      ------"------------- 3 -------"---------
+
+So the inital "ExplImpInfos" structure looks like this
+(we use a list notation here to denote the hashtable contents)
+
+        { {(TDouble,[]), (T1,[]), (T2,[]), (T4,[])}
+        , {}
+        , {}
+        }
+
+It is always known which components import directly from the actual
+module (this info is stored in "super_components", which maps module indices to
+lists of component numbers)
+ 
+First lets say module t4 is checked. At the end of checking this
+module "ExplImpInfos" is updated for those components that directly
+import from t4: component nr 0 (={t1,t2}):
+
+        { {(TDouble,[14]), (T1,[]), (T2,[]), (T4,[14])}
+        , {}
+        , {}
+        }
+
+So now we got the information that within component 0 (={t1,t2}) the
+symbols TDouble and T4 could be imported from module nr. 14 (=t4).
+
+After checking module t3:
+
+        { {(TDouble,[14, 13]), (T1,[]), (T2,[]), (T4,[14])}
+        , {}
+        , {}
+        }
+
+Now we check component {t1,t2}. At the beginning of checking any module
+component we add all symbols that are defined (in contrast to declared)
+to the ExplImpInfos structure, here ::T1 and ::T2:
+
+        { {(TDouble,[14, 13]), (T1,[11]), (T2,[12]), (T4,[14])}
+        , {}
+        , {}
+        }
+
+Now we try to solve all explicit imports in module t1:
+
+  from t2 import ::T2, ::TDouble
+  
+This involves a depth first search algorithm (function 
+"depth_first_search" in module explicitimports). 
+
+At first we search a path from module t1 to the definition of ::T2.
+
+The search will begin in module t2. We can infer that ::T2 is 
+indeed defined in t2 from
+the ExplImpInfos structure: We simply search the module t2 (nr. 12) in the
+entry for that symbol in the current component:
+
+        { {(TDouble,[14, 13]), (T1,[11]), (T2,[12]), (T4,[14])}
+                                          ^^^^^^^^^
+
+So we found the definition of ::T2. 
+
+The statement in module t1 was:
+
+  from t2 import ::T2, ::TDouble
+
+So we have to search for ::TDouble now. Beginning in t2 we can skip
+the following two imports, because they can't import ::TDouble:
+
+  from t1 import ::T1
+  from t4 import ::T4
+
+The remaining import statement
+
+  import t3
+
+is followed by our depth search algorithm. Again we infer from
+our ExplImpInfos structure that ::TDouble is indeed declared in
+module t3 (nr 13):
+
+        { {(TDouble,[14, 13]), (T1,[11]), (T2,[12]), (T4,[14])}
+                        ^^^^
+
+So we solved that import, too. Always when we have found a path to
+a desired symbol we will store that new information in the ExplImpInfos
+structure for possible later use. In this case we only add the fact that
+::TDouble is delared in module t2:
+
+        { {(TDouble,[14, 13, 12]), (T1,[11]), (T2,[12,11]), (T4,[14])}
+
+If there would have been a third module in the {t1, t2} component that
+would have tried to import ::TDouble from t2, we wouldn't have had 
+to search the path to the definition again (kinda cache).
+
+(The presentation of this example ends here.)
+
+The algorithm distinguishes between two kinds of symbols: top
+level symbols and belonging symbols. Top level symbols are types,
+functions, classes and instances. Belonging symbols are
+those that can occur in brackets in an explicit import
+statement: constructors (belonging to a type), fields (dito)
+an members (belonging to a class). At first all imports of
+top level symbols are solved. Later the belonging symbols are
+searched. This happens in a different manner, because for these
+symbols we don't assign numbers in the beginning. We don't assign
+numbers because the belonging symbols don't have to be explicitly
+stated in an import statement. For instance in
+  
+  from m import ::T(..)
+
+we could assign a number to the top level symbol ::T but not to
+the belonging constructor symbols: just _after_ solving the type
+symbol we know the constructors. We still have to apply a depth
+first search for every constructor of ::T, because it could happen
+that some of them are _not_ exported by "m". We have to find
+out which of them.
+
+Belonging symbols are identified by two values: the number of the
+corresponding top level symbol and the "ds_index" of the belonging
+symbol. E.g. with
+
+:: T = C0 | C1 |  C2
+
+the "ds_index" for C0 would be 0, and the "ds_index" for C2 would be 2.
+
+To search for a belonging symbol one needs both numbers. The ExplImpInfos
+data structure stores for each symbol in which modules it is declared. But
+there are only entries for the top level symbols in each hash table. To
+infer from the ExplImpInfos data whether a given belonging symbol is
+declared in a given module we use a field of the "DeclarationInfo": The
+"di_belonging" field which is a kind of bit vector. E.g. to test whether
+the upper belonging symbol "C1" is declared in module nr i we first check
+whether the (already known) top level symbol ::T is declared in module i. If
+not, then "C1" cannot be declared there either. If yes, we consult the second
+bit in the "di_belonging" bit vector.
+
+Some additional info:
+
+The depth search algorithm only visits modules within the actual component
+and those that are directly imported from the actual component. E.g. with
+"m1" importing only from "m2" and "m2" importing only from "m3", while
+checking "m1" module "m3" would never be visited.
+
+
+Status
+******
+
+1)
+
+One thing that doesn't work: macro members.
+E.g. the Ord class in module StdClass defines a "member" <=
+which indeed is a macro:
+
+  class Ord a	| < a
+  where
+    (<=) infix 4 :: !a !a -> Bool | Ord a
+    (<=) x y :== not (y<x)
+
+The following will fail:
+
+  from StdClass import class Ord(<=)
+  "<= does not belong to Ord"
+
+Do the following instead:
+
+  from StdClass import class Ord, <=
+
+Also using ".." doesn't import <= :
+
+  from StdClass import class Ord(..)
+  Start = 1<=2
+  "<= undefined"
+
+BTW:
+
+  from StdClass import Ord
+  Start = 1<=2
+
+makes Clean 1.3.3 crash
+
+2)
+
+There is an optimisation that could still be applied.
+
+Imagine the following situation:
+  ______________________
+  definition module t1
+  import m1,m2, .. mn 
+  from t2 import ::T
+  ______________________
+  definition module mi (for all i)
+  from t2 import ::T
+  ______________________
+  definition module t2
+  ::T
+  import m1,m2, .. mn 
+  ______________________
+
+
+There are no cycles. First t2 would be checked, then the mi and then t1.
+The ExplImpInfos data structure would look like this just before checking t1:
+
+   { {(T,[t2, m0, m1, ..mn])} ..
+
+But because the explicit import of ::T in module t1 is _not_ via any module
+within the component (there is only one: t1 itself) it would be completely
+sufficient just to store 
+
+   { {(T,[t2])} ..
+
+When resolving the explicit import we would never search the mi!
+
+I don't know whether you could gain much with such an optimisation.
+
+
+A better optimisation:
+
+The ExplImpInfos data structure is massively unique. The elements of
+the two dimensional array are unique, too. So one has to select the
+array elements with the "replace" mechanism. Unfortunately there is no
+"replace" like primitive for two dimensional arrays. I implemented
+this one:
+
+  replaceTwoDimArrElt :: !Int !Int !.e !{!*{!.e}} -> (!.e, !{!.{!.e}})
+  
+But this one allocates a new array with every call. In a (quite constructed)
+test case I measured that 4% of allocation was done by allocating arrays.
+I guess this was the array in replaceTwoDimArrElt. One can solve this problem
+by faking around with casts or abc code.
+
+An even more better optimisation:
+
+This optimisation doesn't deal with explicit imports, but with implicit
+imports. Consider the following situation:
+
+  ______________________
+  definition module t1
+  import m1,m2
+  ______________________
+  definition module m1
+  import StdIO
+  ______________________
+  definition module m2
+  import StdIO
+  ______________________
+
+When building the t1's symbol table the current algorithm will try to add
+StdIO's symbols _twice_ to that symbol table. In the first turn these
+symbols will be added indeed, but in the second turn trying to add new
+symbols of StdIO will not change the symbol table (because the symbol
+table already contains all these symbols). One could invent a mechanism
+that keeps track which modules have been added to the symbol table
+_as a whole_. In this way superflous work could be saved.
+

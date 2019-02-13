@@ -1,29 +1,31 @@
 implementation module Graphics.Scalable.Internal.Image`
 
-import _SystemArray
-from StdBool import &&, ||
-from StdFunc import o, seqList, :: St (..)
-from StdMisc import abort
-from StdOrdList import minList, maxList
+import StdMisc
+import StdBool
+import StdFunc
+import StdClass
+import StdTuple
+import StdOverloaded
 import StdString
-from StdTuple import fst, snd
+import StdInt
+import StdReal
+import StdOrdList
+
 import Data.List
 import Data.GenEq
-from Data.Set import :: Set, instance == (Set a), instance < (Set a), instance Foldable Set, fromList, toList, toAscList
-from Data.Map import :: Map, findKeyWith
-from Data.Maybe import :: Maybe (..), fromJust, maybeToList, instance Functor Maybe, instance == (Maybe a)
+import Data.Maybe
 import Data.Error
-from Data.Functor        import class Functor (..)
-from Data.Foldable       import class Foldable (foldl1, foldr`)
-from Control.Applicative import class Applicative
-import Control.Monad
+import Data.Functor
+import Data.Monoid
 import Data.MapCollection
-from Text.HTML import :: SVGColor (..)
 import Math.Geometry
 import Graphics.Scalable.Types
 import Graphics.Scalable.Internal.Types
 
+import qualified Data.Foldable
+
 import qualified Data.Set
+from Data.Set import instance Foldable Set
 import qualified Data.Map
 
 :: Image` m
@@ -675,7 +677,7 @@ where
 attr` (MaskAttr` mask) image font_spans text_spans imgTables=:{ImgTables | imgUniqIds = no}
   #! (img,imgTables) = toImg image font_spans text_spans {ImgTables | imgTables & imgUniqIds = no-1}
   #! (m`, imgTables=:{ImgTables | imgMasks = curMasks, imgSpans = curSpans}) = toImg mask font_spans text_spans imgTables
-  #! (mask_key,masks) = case findKeyWith (equivImg m`) curMasks of
+  #! (mask_key,masks) = case 'Data.Map'.findKeyWith (equivImg m`) curMasks of
                            Just k  = (k, curMasks)                                                  // similar mask already present, so use it's identification
                            nothing = (m`.Img.uniqId, 'Data.Map'.put m`.Img.uniqId m` curMasks)            // similar mask not yet present, so add it to mask collection
   = ( mkTransformImg no img (MaskImg mask_key)                                                      // this *must* be the id of the mask image, because for that an svg-definition is generated
@@ -767,13 +769,13 @@ spanImgTexts text_spans span txts
       LookupSpan (TextXSpan font str) = case lookupTextSpan font str text_spans of
                                           Just w  = (PxSpan w,txts)
                                           no_info = (span,    addToMapSet font str txts)
-      AddSpan sp1 sp2                 = spanImgTexts` text_spans (foldl1 (+)) [sp1,sp2] txts
-      SubSpan sp1 sp2                 = spanImgTexts` text_spans (foldl1 (-)) [sp1,sp2] txts
-      MulSpan sp1 sp2                 = spanImgTexts` text_spans (foldl1 (*)) [sp1,sp2] txts
-      DivSpan sp1 sp2                 = spanImgTexts` text_spans (foldl1 (/)) [sp1,sp2] txts
-      AbsSpan sp                      = spanImgTexts` text_spans (abs o hd)   [sp]      txts
-      MinSpan sps                     = spanImgTexts` text_spans minSpan      sps       txts
-      MaxSpan sps                     = spanImgTexts` text_spans maxSpan      sps       txts
+      AddSpan sp1 sp2                 = spanImgTexts` text_spans ('Data.Foldable'.foldl1 (+)) [sp1,sp2] txts
+      SubSpan sp1 sp2                 = spanImgTexts` text_spans ('Data.Foldable'.foldl1 (-)) [sp1,sp2] txts
+      MulSpan sp1 sp2                 = spanImgTexts` text_spans ('Data.Foldable'.foldl1 (*)) [sp1,sp2] txts
+      DivSpan sp1 sp2                 = spanImgTexts` text_spans ('Data.Foldable'.foldl1 (/)) [sp1,sp2] txts
+      AbsSpan sp                      = spanImgTexts` text_spans (abs o hd)                   [sp]      txts
+      MinSpan sps                     = spanImgTexts` text_spans minSpan                      sps       txts
+      MaxSpan sps                     = spanImgTexts` text_spans maxSpan                      sps       txts
       span                            = (span,txts)
 where
 	spanImgTexts` :: !TextSpans !([Span] -> Span) ![Span] !ImgTexts -> (!Span,!ImgTexts)
@@ -952,10 +954,10 @@ where
 	
 	resolveImgAttrs :: !ImgTags !FontSpans !TextSpans !(Set BasicImgAttr) !*(!ImgPaths,!ImgSpans,!GridSpans) -> (!MaybeError SpanResolveError (Set BasicImgAttr),!*(!ImgPaths,!ImgSpans,!GridSpans))
 	resolveImgAttrs user_tags font_spans text_spans attrs spans
-	  #! (m_attrs`,spans) = strictTRMapSt (resolveImgAttr user_tags font_spans text_spans) (foldr` (\a as -> [a:as]) [] attrs) spans // USING (toList attrs) INSTEAD OF (fold (\a as -> [a:as]) [] attrs) CRASHES THE COMPILER: Run Time Error: index out of range
+	  #! (m_attrs`,spans) = strictTRMapSt (resolveImgAttr user_tags font_spans text_spans) ('Data.Foldable'.foldr` (\a as -> [a:as]) [] attrs) spans // USING (toList attrs) INSTEAD OF (fold (\a as -> [a:as]) [] attrs) CRASHES THE COMPILER: Run Time Error: index out of range
 	  = case [e \\ Error e <- m_attrs`] of
 	      [e : _] = (Error e,spans)
-	      _       = (Ok (fromList (map fromOk m_attrs`)),spans)
+	      _       = (Ok ('Data.Set'.fromList (map fromOk m_attrs`)),spans)
 	
 	resolveImgAttr :: !ImgTags !FontSpans !TextSpans !BasicImgAttr !*(!ImgPaths,!ImgSpans,!GridSpans) -> (!MaybeError SpanResolveError BasicImgAttr,!*(!ImgPaths,!ImgSpans,!GridSpans))
 	resolveImgAttr user_tags font_spans text_spans (BasicImgStrokeWidthAttr span) spans

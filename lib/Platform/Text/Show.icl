@@ -1,9 +1,11 @@
 implementation module Text.Show
 
-import StdArray, StdBool, StdFunc, StdOverloaded, StdClass, StdList
+import StdArray, StdBool, StdFunc, StdOverloaded, StdClass, StdMisc, StdInt, StdChar
 import StdString
-import Data.Maybe, Data.List
-from Data.Foldable import class Foldable(foldr1)
+import Data.Maybe
+import  Data.List
+import Data.Monoid
+import qualified Data.Foldable
 import Text
 
 // | The @shows@ functions return a function that prepends the
@@ -212,7 +214,7 @@ instance Show (a,b,c,d,e,f,g,h,i,j,k,l) | Show a & Show b & Show c & Show d & Sh
 
 show_tuple :: [ShowS] -> ShowS
 show_tuple ss = showChar '('
-              o foldr1 (\s r -> s o showChar ',' o r) ss
+              o 'Data.Foldable'.foldr1 (\s r -> s o showChar ',' o r) ss
               o showChar ')'
 
 //------------------------------------------------------------

@@ -5,16 +5,16 @@ import Data.Maybe
 from iTasks.Internal.IWorld import :: IWorld
 
 jsStoreValue :: !String !String !a !*IWorld -> *IWorld
-jsStoreValue namespace key value iworld = undef	
+jsStoreValue namespace key value iworld = abort "jsDeleteValues"	
 
 jsLoadValue :: !String !String !*IWorld -> (!Maybe a,!*IWorld)
-jsLoadValue namespace key iworld = undef
+jsLoadValue namespace key iworld = abort "jsDeleteValues"
 
 jsDeleteValue :: !String !String !*IWorld -> *IWorld
-jsDeleteValue namespace key iworld  = undef
+jsDeleteValue namespace key iworld  = abort "jsDeleteValues"
 
 jsDeleteValues :: !String !String !*IWorld -> *IWorld
-jsDeleteValues namespace keyprefix iworld = undef
+jsDeleteValues namespace keyprefix iworld = abort "jsDeleteValues"
 
 
 

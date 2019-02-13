@@ -6,10 +6,6 @@ import Control.Applicative
 from StdFunc import o, const
 import Control.Monad.Trans
 
-:: ReaderT r m a = ReaderT (r -> m a)
-
-:: Reader r a :== ReaderT r Identity a
-
 instance Functor (ReaderT r m) | Monad m where
   fmap f m = liftM f m
 
@@ -24,10 +20,12 @@ where
 instance Monad (ReaderT r m) | Monad m where
   bind m k = ReaderT (\r -> runReaderT m r >>= \a -> runReaderT (k a) r)
 
-instance MonadTrans (ReaderT r) where
-  liftT r = liftReaderT r
+instance MonadTrans (ReaderT r)
+where
+	liftT :: !(m a) -> ReaderT r m a | Monad m
+	liftT r = liftReaderT r
 
-runReaderT :: .(ReaderT .a u:b .c) -> .a -> u:(b .c)
+runReaderT :: !.(ReaderT .a u:b .c) -> .a -> u:(b .c)
 runReaderT (ReaderT f) = f
 
 reader :: (.a -> .b) -> .(ReaderT .a .Identity .b)
@@ -48,7 +46,7 @@ mapReaderT f m = ReaderT (f o runReaderT m)
 withReaderT :: (.a -> .b) .(ReaderT .b .c .d) -> .(ReaderT .a .c .d)
 withReaderT f m = ReaderT (runReaderT m o f)
 
-liftReaderT :: (a .b) -> .(ReaderT .c a .b)
+liftReaderT :: !(a .b) -> .(ReaderT .c a .b)
 liftReaderT m = ReaderT (const m)
 
 ask :: .(ReaderT a b a) | Monad b

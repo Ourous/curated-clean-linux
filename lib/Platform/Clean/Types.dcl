@@ -5,14 +5,14 @@ definition module Clean.Types
  */
 
 from StdOverloaded import class ==
-from Data.Maybe import :: Maybe
+from StdMaybe import :: Maybe
 
 /**
  * The type of a function.
  */
 :: Type
 	= Type !String ![Type]              //* Concrete type with arguments
-	| Func ![Type] !Type !TypeContext   //* A function with parameters, a result and class context (no uniqueness unequalities yet)
+	| Func ![Type] !Type !TypeContext   //* A function with parameters, a result and class context (no uniqueness inequalities yet)
 	| Var !TypeVar                      //* A type variable
 	| Cons !TypeVar ![Type]             //* A constructor variable with arguments
 	| Uniq !Type                        //* A unique type
@@ -114,8 +114,7 @@ from Data.Maybe import :: Maybe
 	  , rf_type :: !Type   //* The type of the field
 	  }
 
-instance == Type
-instance == TypeRestriction
+instance == Type, TypeRestriction, Kind
 
 class toType a :: !a -> Type
 class toTypeVar a :: !a -> TypeVar

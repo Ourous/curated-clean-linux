@@ -10,25 +10,28 @@ import StdMisc, Data.Maybe
 
 NS_TONIC_INSTANCES :== "tonic-instances"
 
-sdsUnsafeRead :: (RWShared () a b) *IWorld -> *(a, *IWorld) | TC a
+sdsUnsafeRead :: (sds () a b) *IWorld -> *(a, *IWorld) | TC a & RWShared sds & TC b
 sdsUnsafeRead focus iworld
-  # (res, iworld) = 'DSDS'.read focus iworld
+  # (res, iworld) = 'DSDS'.read focus 'DSDS'.EmptyContext iworld
   = case res of
-      Ok x -> (x, iworld)
+      Ok ('DSDS'.ReadingDone x) -> (x, iworld)
 
-selectedBlueprint :: RWShared () (Maybe ClickMeta) (Maybe ClickMeta)
+selectedBlueprint :: SimpleSDSLens (Maybe ClickMeta)
 selectedBlueprint = sdsFocus "selectedBlueprint" (removeMaybe (Just Nothing) memoryShare)
 
-selectedDetail :: RWShared () (Maybe (Either ClickMeta (ModuleName, FuncName, ComputationId, Int))) (Maybe (Either ClickMeta (ModuleName, FuncName, ComputationId, Int)))
+selectedDetail :: SimpleSDSLens (Maybe (Either ClickMeta (ModuleName, FuncName, ComputationId, Int)))
 selectedDetail = sdsFocus "selectedDetail" (removeMaybe (Just Nothing) memoryShare)
 
-storedOutputEditors :: RWShared () (Map (TaskId, ExprId) (TaskId, Int, Task (), TStability)) (Map (TaskId, ExprId) (TaskId, Int, Task (), TStability))
+storedOutputEditors :: SimpleSDSLens (Map (TaskId, ExprId) (TaskId, Int, Task (), TStability))
 storedOutputEditors = sdsTranslate "storedOutputEditors" (\t -> t +++> "-storedOutputEditors")
                                   (removeMaybe (Just 'DM'.newMap) memoryShare)
 
-outputForTaskId :: RWShared (TaskId, ExprId) (TaskId, Int, Task (), TStability) (TaskId, Int, Task (), TStability)
-outputForTaskId = sdsLens "outputForTaskId" (const ()) (SDSRead read) (SDSWrite write) (SDSNotify notify) storedOutputEditors
+outputForTaskId :: SDSLens (TaskId, ExprId) (TaskId, Int, Task (), TStability) (TaskId, Int, Task (), TStability)
+outputForTaskId = sdsLens "outputForTaskId" (const ()) (SDSRead read) (SDSWrite write) (SDSNotify notify) (Just reducer) storedOutputEditors
   where
+
+  reducer p ws = read p  ws
+
   read :: (TaskId, ExprId) (Map (TaskId, ExprId) (TaskId, Int, Task (), TStability))
        -> MaybeError TaskException (TaskId, Int, Task (), TStability)
   read oid=:(tid, _) trtMap = maybe (Ok (TaskId 0 0, 0, viewInformation (Title "Notice") [] ("No task value for the selected task. Try entering or updating a value in its editor.") @! (), TNoVal))
@@ -41,16 +44,16 @@ outputForTaskId = sdsLens "outputForTaskId" (const ()) (SDSRead read) (SDSWrite 
   notify :: (TaskId, ExprId) (Map (TaskId, ExprId) (TaskId, Int, Task (), TStability)) (TaskId, Int, Task (), TStability)
          -> SDSNotifyPred (TaskId, ExprId)
   notify tid oldmap (_, n, _, st) = \_ tid` -> case (tid == tid`, 'DM'.get tid oldmap) of
-                                               (True, Just (_, n`, _, st`)) -> n <> n` || st =!= st`
-                                               _                            -> False
+    (True, Just (_, n`, _, st`)) -> n <> n` || st =!= st`
+    _                            -> False
 
-tonicSharedRT :: RWShared () TonicRTMap TonicRTMap
+tonicSharedRT :: SimpleSDSLens TonicRTMap
 tonicSharedRT = sdsTranslate "tonicSharedRT" (\t -> t +++> "-tonicSharedRT")
                              (memoryStore NS_TONIC_INSTANCES (Just 'DM'.newMap))
 
-allTonicInstances :: RWShared TaskId [((ModuleName, FuncName), BlueprintInstance)] ()
-allTonicInstances = sdsLens "allTonicInstances" (const ()) (SDSRead read) (SDSWrite write) (SDSNotify notify) tonicSharedRT
-  where
+allTonicInstances :: SDSLens TaskId [((ModuleName, FuncName), BlueprintInstance)] ()
+allTonicInstances = sdsLens "allTonicInstances" (const ()) (SDSRead read) (SDSWrite write) (SDSNotify notify) (Just \_ _ -> Ok ()) tonicSharedRT
+where
   //read :: (TaskId, ModuleName, FuncName) TonicRTMap -> MaybeError TaskException  (Maybe BlueprintInstance) BlueprintInstance
   read tid trtMap = Ok (fromMaybe [] ('DM'.get tid trtMap))
 
@@ -60,9 +63,9 @@ allTonicInstances = sdsLens "allTonicInstances" (const ()) (SDSRead read) (SDSWr
   //notify :: (TaskId, ModuleName, FuncName) TonicRTMap BlueprintInstance -> SDSNotifyPred (TaskId, ModuleName, FuncName)
   notify tid oldmap inst = \_ tid` -> False
 
-tonicInstances :: RWShared (TaskId, ModuleName, FuncName) (Maybe BlueprintInstance) BlueprintInstance
-tonicInstances = sdsLens "tonicInstances" (const ()) (SDSRead read) (SDSWrite write) (SDSNotify notify) tonicSharedRT
-  where
+tonicInstances :: SDSLens (TaskId, ModuleName, FuncName) (Maybe BlueprintInstance) BlueprintInstance
+tonicInstances = sdsLens "tonicInstances" (const ()) (SDSRead read) (SDSWrite write) (SDSNotify notify) (Just reducer) tonicSharedRT
+where
   read :: (TaskId, ModuleName, FuncName) TonicRTMap -> MaybeError TaskException (Maybe BlueprintInstance)
   read (tid, mn, fn) trtMap = Ok ('DM'.get tid trtMap >>= 'DM'.get (mn, fn) o 'DM'.fromList)
 
@@ -75,18 +78,23 @@ tonicInstances = sdsLens "tonicInstances" (const ()) (SDSRead read) (SDSWrite wr
                                                                                 (elems ++ [((mn, fn), {bpref & bpi_index = length elems})])) trtMap
                                                  _       -> 'DM'.put tid [((mn, fn), bpref)] trtMap))
 
+  reducer p ws = case read p ws of
+    (Error e) -> (Error e)
+    Ok Nothing -> Error (exception "No Blueprint avaialbe?")
+    Ok (Just v) -> (Ok v)
+
   notify :: (TaskId, ModuleName, FuncName) TonicRTMap BlueprintInstance -> SDSNotifyPred (TaskId, ModuleName, FuncName)
   notify tid oldmap inst = \_ tid` -> case (tid == tid`, read tid oldmap) of
                                       (True, Ok (Just oldinst)) -> oldinst =!= inst
                                       _                    -> False
 
 
-tonicEnabledSteps :: RWShared () (Map TaskId (Map ExprId [UI])) (Map TaskId (Map ExprId [UI]))
+tonicEnabledSteps :: SimpleSDSLens (Map TaskId (Map ExprId [UI]))
 tonicEnabledSteps = sdsTranslate "tonicEnabledSteps" (\t -> t +++> "-tonicEnabledSteps")
                                  (memoryStore NS_TONIC_INSTANCES (Just 'DM'.newMap))
 
-tonicActionsForTaskID :: RWShared TaskId (Map ExprId [UI]) (Map ExprId [UI])
-tonicActionsForTaskID = sdsLens "tonicActionsForTaskID" (const ()) (SDSRead read) (SDSWrite write) (SDSNotify notify) tonicEnabledSteps
+tonicActionsForTaskID :: SDSLens TaskId (Map ExprId [UI]) (Map ExprId [UI])
+tonicActionsForTaskID = sdsLens "tonicActionsForTaskID" (const ()) (SDSRead read) (SDSWrite write) (SDSNotify notify) (Just reducer) tonicEnabledSteps
   where
   read :: TaskId (Map TaskId (Map ExprId [UI])) -> MaybeError TaskException (Map ExprId [UI])
   read tid acts
@@ -103,8 +111,10 @@ tonicActionsForTaskID = sdsLens "tonicActionsForTaskID" (const ()) (SDSRead read
                                       Ok oldacts -> oldacts =!= acts
                                       _          -> False
 
-tonicActionsForTaskIDAndExpr :: RWShared (TaskId, ExprId) [UI] [UI]
-tonicActionsForTaskIDAndExpr = sdsLens "tonicActionsForTaskIDAndExpr" (const ()) (SDSRead read) (SDSWrite write) (SDSNotify notify) tonicEnabledSteps
+  reducer p ws = read p ws
+
+tonicActionsForTaskIDAndExpr :: SDSLens (TaskId, ExprId) [UI] [UI]
+tonicActionsForTaskIDAndExpr = sdsLens "tonicActionsForTaskIDAndExpr" (const ()) (SDSRead read) (SDSWrite write) (SDSNotify notify) (Just reducer) tonicEnabledSteps
   where
   read :: (TaskId, ExprId) (Map TaskId (Map ExprId [UI])) -> MaybeError TaskException [UI]
   read (tid, eid) acts
@@ -127,7 +137,9 @@ tonicActionsForTaskIDAndExpr = sdsLens "tonicActionsForTaskIDAndExpr" (const ())
                                       Ok oldacts -> oldacts =!= acts
                                       _          -> False
 
-staticDisplaySettings :: RWShared () StaticDisplaySettings StaticDisplaySettings
+  reducer p ws = read p ws
+
+staticDisplaySettings :: SimpleSDSLens StaticDisplaySettings
 staticDisplaySettings = sdsFocus "staticDisplaySettings" (removeMaybe (Just
                                      { StaticDisplaySettings
                                      | unfold_depth    = 0
@@ -135,10 +147,10 @@ staticDisplaySettings = sdsFocus "staticDisplaySettings" (removeMaybe (Just
                                      , show_comments   = True
                                      }) memoryShare)
 
-queryShare :: RWShared () (Maybe BlueprintQuery) (Maybe BlueprintQuery)
+queryShare :: SimpleSDSLens (Maybe BlueprintQuery)
 queryShare = sdsFocus "queryShare" (removeMaybe (Just Nothing) memoryShare)
 
-dynamicDisplaySettings :: RWShared () DynamicDisplaySettings DynamicDisplaySettings
+dynamicDisplaySettings :: SimpleSDSLens DynamicDisplaySettings
 dynamicDisplaySettings = sdsFocus "dynamicDisplaySettings" (removeMaybe (Just
                                      { DynamicDisplaySettings
                                      | unfold_depth    = 0
@@ -150,7 +162,7 @@ dynamicDisplaySettings = sdsFocus "dynamicDisplaySettings" (removeMaybe (Just
                                      }) memoryShare)
 
 
-paramsForTaskInstance :: RWShared (ModuleName, FuncName, TaskId) [(VarName, Int, Task ())] [(VarName, Int, Task ())]
+paramsForTaskInstance :: SDSLens (ModuleName, FuncName, TaskId) [(VarName, Int, Task ())] [(VarName, Int, Task ())]
 paramsForTaskInstance = sdsTranslate "paramsForTaskInstance" (\t -> t +++> "-paramsForTaskInstance")
                              (memoryStore NS_TONIC_INSTANCES Nothing)
 
@@ -159,7 +171,7 @@ storeTaskOutputViewer tr nid parentTaskId childTaskId iworld // = iworld // TODO
   | nid <> [] && parentTaskId <> TaskId 0 0
     # childFocus             = sdsFocus (parentTaskId, nid) outputForTaskId
     # ((_, n, _, _), iworld) = sdsUnsafeRead childFocus iworld
-    = snd ('DSDS'.write (resultToOutput (n + 1) childTaskId tr) childFocus iworld)
+    = snd ('DSDS'.write (resultToOutput (n + 1) childTaskId tr) childFocus 'DSDS'.EmptyContext iworld)
   | otherwise = iworld
 
 resultToOutput :: !Int !TaskId !(TaskResult a) -> (!TaskId, !Int, !Task (), !TStability) | iTask a

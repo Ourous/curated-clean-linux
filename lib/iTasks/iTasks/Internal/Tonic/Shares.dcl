@@ -6,32 +6,32 @@ from iTasks.UI.Definition import :: UI
 from iTasks.Internal.Tonic.AbsSyn import :: VarName
 from iTasks.Internal.Tonic.Types import :: ModuleName, :: FuncName, :: ClickMeta, :: ExprId, :: TStability, :: TonicRTMap, :: BlueprintInstance, :: StaticDisplaySettings, :: BlueprintQuery, :: DynamicDisplaySettings, :: TaskResult, :: ComputationId
 
-selectedBlueprint :: RWShared () (Maybe ClickMeta) (Maybe ClickMeta)
+selectedBlueprint :: SimpleSDSLens (Maybe ClickMeta)
 
-selectedDetail :: RWShared () (Maybe (Either ClickMeta (ModuleName, FuncName, ComputationId, Int))) (Maybe (Either ClickMeta (ModuleName, FuncName, ComputationId, Int)))
+selectedDetail :: SimpleSDSLens (Maybe (Either ClickMeta (ModuleName, FuncName, ComputationId, Int)))
 
-storedOutputEditors :: RWShared () (Map (TaskId, ExprId) (TaskId, Int, Task (), TStability)) (Map (TaskId, ExprId) (TaskId, Int, Task (), TStability))
+storedOutputEditors :: SimpleSDSLens (Map (TaskId, ExprId) (TaskId, Int, Task (), TStability))
 
-outputForTaskId :: RWShared (TaskId, ExprId) (TaskId, Int, Task (), TStability) (TaskId, Int, Task (), TStability)
+outputForTaskId :: SDSLens (TaskId, ExprId) (TaskId, Int, Task (), TStability) (TaskId, Int, Task (), TStability)
 
-tonicSharedRT :: RWShared () TonicRTMap TonicRTMap
+tonicSharedRT :: SimpleSDSLens TonicRTMap
 
-allTonicInstances :: RWShared TaskId [((ModuleName, FuncName), BlueprintInstance)] ()
+allTonicInstances :: SDSLens TaskId [((ModuleName, FuncName), BlueprintInstance)] ()
 
-tonicInstances :: RWShared (TaskId, ModuleName, FuncName) (Maybe BlueprintInstance) BlueprintInstance
+tonicInstances :: SDSLens (TaskId, ModuleName, FuncName) (Maybe BlueprintInstance) BlueprintInstance
 
-tonicEnabledSteps :: RWShared () (Map TaskId (Map ExprId [UI])) (Map TaskId (Map ExprId [UI]))
+tonicEnabledSteps :: SimpleSDSLens (Map TaskId (Map ExprId [UI]))
 
-tonicActionsForTaskID :: RWShared TaskId (Map ExprId [UI]) (Map ExprId [UI])
+tonicActionsForTaskID :: SDSLens TaskId (Map ExprId [UI]) (Map ExprId [UI])
 
-tonicActionsForTaskIDAndExpr :: RWShared (TaskId, ExprId) [UI] [UI]
+tonicActionsForTaskIDAndExpr :: SDSLens (TaskId, ExprId) [UI] [UI]
 
-staticDisplaySettings :: RWShared () StaticDisplaySettings StaticDisplaySettings
+staticDisplaySettings :: SimpleSDSLens StaticDisplaySettings
 
-queryShare :: RWShared () (Maybe BlueprintQuery) (Maybe BlueprintQuery)
+queryShare :: SimpleSDSLens (Maybe BlueprintQuery)
 
-dynamicDisplaySettings :: RWShared () DynamicDisplaySettings DynamicDisplaySettings
+dynamicDisplaySettings :: SimpleSDSLens DynamicDisplaySettings
 
-paramsForTaskInstance :: RWShared (ModuleName, FuncName, TaskId) [(VarName, Int, Task ())] [(VarName, Int, Task ())]
+paramsForTaskInstance :: SDSLens (ModuleName, FuncName, TaskId) [(VarName, Int, Task ())] [(VarName, Int, Task ())]
 
 storeTaskOutputViewer :: !(TaskResult a) !ExprId !TaskId !TaskId !*IWorld -> *IWorld | iTask a

@@ -53,18 +53,15 @@ mapRWS f m = mapRWST (Identity o f o runIdentity) m
 withRWS :: (r` s -> (r, s)) (RWS r w s a) -> RWS r` w s a
 withRWS f m = withRWST f m
 
-// The RWST monad transformer
-:: RWST r w s m a = RWST (r s -> m (a, s, w))
-
-runRWST :: (RWST r w s m a) r s -> m (a, s, w)
+runRWST :: !(RWST r w s m a) r s -> m (a, s, w)
 runRWST (RWST f) r s = f r s
 
-evalRWST :: (RWST r w s m a) r s -> m (a, w) | Monad m
+evalRWST :: !(RWST r w s m a) r s -> m (a, w) | Monad m
 evalRWST m r s
   =                 runRWST m r s
   >>= \(a, _, w) -> pure (a, w)
 
-execRWST :: (RWST r w s m a) r s -> m (s, w) | Monad m
+execRWST :: !(RWST r w s m a) r s -> m (s, w) | Monad m
 execRWST m r s
   =                  runRWST m r s
   >>= \(_, s`, w) -> pure (s`, w)

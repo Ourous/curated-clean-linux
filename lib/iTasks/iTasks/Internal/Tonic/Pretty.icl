@@ -1,10 +1,7 @@
 implementation module iTasks.Internal.Tonic.Pretty
 
-import StdArray
-import StdBool
-import StdClass
-import StdOverloaded
-import StdString
+
+import StdEnv
 import Data.List
 import iTasks.Internal.Tonic.AbsSyn
 

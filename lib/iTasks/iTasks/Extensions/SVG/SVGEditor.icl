@@ -2,12 +2,13 @@ implementation module iTasks.Extensions.SVG.SVGEditor
 
 import Graphics.Scalable.Internal.Image`
 import iTasks.UI.Definition, iTasks.UI.Editor, iTasks.UI.JS.Encoding
-import StdArray, StdBool, StdEnum, StdInt, StdMisc, StdReal, StdTuple
-from StdFunc import o
+
+import StdEnv
+
 import Data.List, Data.GenEq, Data.Func
 import Data.Error
 import Data.MapCollection
-from Data.Foldable import class Foldable (foldr`)
+import qualified Data.Foldable as DF
 from Data.Map import :: Map, instance Functor (Map k)
 from Data.Set import :: Set, instance == (Set a), instance < (Set a), instance Foldable Set
 import qualified Data.Map as DM
@@ -93,11 +94,11 @@ where
 			| otherwise
 				= (jsNull,jsTrace "Unknown attribute change" world)
 
-	genUI :: !DataPath !(EditMode s) !*VSt -> *(!MaybeErrorString (!UI, !s), !*VSt) | JSEncode{|*|} s
-	genUI dp mode vst = case editModeValue mode of
+	genUI :: !UIAttributes !DataPath !(EditMode s) !*VSt -> *(!MaybeErrorString (!UI, !s), !*VSt) | JSEncode{|*|} s
+	genUI attr dp mode vst = case editModeValue mode of
 		Nothing = (Error "SVG editors cannot be used in enter mode.", vst)
 		Just val
-			# attr = 'DM'.unions [sizeAttr FlexSize FlexSize, valueAttr $ encodeOnServer val]
+			# attr = 'DM'.unions [sizeAttr FlexSize FlexSize, valueAttr $ encodeOnServer val, attr]
 			= (Ok (uia UIComponent attr, val), vst)
 
 	onEdit :: !DataPath !(!DataPath, !s) !s !*VSt -> (!MaybeErrorString (!UIChange, !s), !*VSt)
@@ -267,7 +268,7 @@ where
                        , ("y", "-10000")
                        ]
 	  #! world       = foldl (\world args -> snd ((elem `setAttribute` args) world)) world fontAttrs
-	  #! (ws, world) = foldr` (calcTextLength elem) ('DM'.newMap, world) strs
+	  #! (ws, world) = 'DF'.foldr` (calcTextLength elem) ('DM'.newMap, world) strs
 	  = ('DM'.alter (merge ws) fontdef text_spans, world)
 	where
 		merge :: !(Map String TextSpan) !(Maybe (Map String TextSpan)) -> Maybe (Map String TextSpan)

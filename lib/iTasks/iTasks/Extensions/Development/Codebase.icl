@@ -11,7 +11,7 @@ where
 	toString Dcl = ".dcl"
 	toString Icl = ".icl"
 
-moduleList :: SDS FilePath [(ModuleName,ModuleType)] ()
+moduleList :: SDSSource FilePath [(ModuleName,ModuleType)] ()
 moduleList = worldShare read write
 where
 	read path world = case scanPaths [path] world of
@@ -68,14 +68,14 @@ where
 		moduleName p = replaceSubString {pathSeparator} "." p
 	
 
-moduleDefinition :: SDS (FilePath,ModuleName) [String] [String]
-moduleDefinition = mapReadWrite mapToLines (sdsTranslate "moduleDefinition" (\(p,m) -> modulePath p m "dcl") (removeMaybe (Just "") fileShare))
+moduleDefinition :: SDSLens (FilePath,ModuleName) [String] [String]
+moduleDefinition = mapReadWrite mapToLines Nothing (sdsTranslate "moduleDefinition" (\(p,m) -> modulePath p m "dcl") (removeMaybe (Just "") fileShare))
 
-moduleImplementation :: SDS (FilePath,ModuleName) [String] [String]
-moduleImplementation = mapReadWrite mapToLines (sdsTranslate "moduleImplementation" (\(p,m) -> modulePath p m "icl") (removeMaybe (Just "") fileShare))
+moduleImplementation :: SDSLens (FilePath,ModuleName) [String] [String]
+moduleImplementation = mapReadWrite mapToLines Nothing (sdsTranslate "moduleImplementation" (\(p,m) -> modulePath p m "icl") (removeMaybe (Just "") fileShare))
 
-moduleDocumentation :: SDS (FilePath,ModuleName) [String] [String]
-moduleDocumentation = mapReadWrite mapToLines (sdsTranslate "moduleDocumentation" (\(p,m) -> modulePath p m "md") (removeMaybe (Just "") fileShare))
+moduleDocumentation :: SDSLens (FilePath,ModuleName) [String] [String]
+moduleDocumentation = mapReadWrite mapToLines Nothing (sdsTranslate "moduleDocumentation" (\(p,m) -> modulePath p m "md") (removeMaybe (Just "") fileShare))
 
 mapToLines = (split "\n",\w _ -> Just (join "\n" w))
 

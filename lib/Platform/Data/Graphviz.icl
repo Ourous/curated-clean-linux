@@ -3,7 +3,7 @@
 
 implementation module Data.Graphviz
 
-import StdArray, StdOverloaded, StdOrdList, StdTuple, StdString, StdBool, StdMisc
+import StdEnv
 import Data.Maybe, Data.List
 import Text.GenPrint, Data.GenEq
 

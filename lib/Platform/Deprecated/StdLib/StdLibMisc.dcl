@@ -7,6 +7,7 @@ definition module StdLibMisc
 from StdInt import class +(..), instance + Int, class ~(..), instance ~ Int, 
  	instance - Int, class -(..), bitand;
 from StdArray	import class Array (size, usize, select)
+from StdReal import isFinite
 import StdInt
 
 /**
@@ -36,11 +37,6 @@ instance gMap {!}
 	}
 
 // extensions for StdReal
-
-/**
- * Only not-a-number and the two infinite values are not finite.
- */
-isFinite :: !Real -> Bool
 
 // extensions for StdInt
 

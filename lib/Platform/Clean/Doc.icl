@@ -22,7 +22,7 @@ import Data.List
 import Data.Maybe
 import Data.Tuple
 from Text import <+,
-	class Text(join,split,trim,rtrim,replaceSubString,endsWith),
+	class Text(join,split,trim,rtrim,replaceSubString,endsWith,startsWith),
 	instance Text String, instance Text [Char]
 import Text.Language
 import Text.Parsers.Simple.ParserCombinators
@@ -216,11 +216,18 @@ docBlockToDoc{|PropertyVarInstantiation|} (Left [s]) = case split "=" s of
 	_ -> Left (UnknownError "property var instantiation could not be parsed")
 docBlockToDoc{|PropertyVarInstantiation|} _ = abort "error in docBlockToDoc{|PropertyVarInstantiation|}\n"
 
-docBlockToDoc{|PropertyTestGenerator|} (Left [s]) = case parseType (fromString sig) of
-	Just t -> Right (PropertyTestGenerator t (trimMultiLine imp), [])
-	Nothing -> Left (UnknownError "type could not be parsed")
+docBlockToDoc{|PropertyTestGenerator|} (Left [s])
+| startsWith "list: " sig = case parseType [c \\ c <-: sig & i <- [0..] | i > 4] of
+	Just t  -> Right (PTG_List t imp, [])
+	Nothing -> error
+| otherwise = case parseType (fromString sig) of
+	Just t  -> Right (PTG_Function t imp, [])
+	Nothing -> error
 where
-	[sig:imp] = split "\n" s
+	sig = trim sig`
+	imp = trimMultiLine imp`
+	[sig`:imp`] = split "\n" s
+	error = Left (UnknownError "test generator could not be parsed")
 docBlockToDoc{|PropertyTestGenerator|} _ = abort "error in docBlockToDoc{|PropertyTestGenerator|}\n"
 
 derive docBlockToDoc ModuleDoc, FunctionDoc, ClassMemberDoc, ConstructorDoc,
@@ -242,7 +249,7 @@ where
 	fields = filter ((<>) "description" o fst) fields`
 	desc = lookup "description" fields`
 
-generic docToDocBlock a :: Bool a -> Either [String] DocBlock
+generic docToDocBlock a :: !Bool !a -> Either [String] DocBlock
 docToDocBlock{|String|} True s = Left [s]
 docToDocBlock{|String|} _    _ = abort "error in docToDocBlock{|String|}\n"
 docToDocBlock{|[]|} fx True xs = Left [x \\ Left xs` <- map (fx True) xs, x <- xs`]
@@ -288,7 +295,11 @@ docToDocBlock{|Property|} True (ForAll name args impl) = Left
 docToDocBlock{|Property|} _ _ = abort "error in docToDocBlock{|Property|}\n"
 docToDocBlock{|PropertyVarInstantiation|} True (PropertyVarInstantiation (a,t)) = Left [a +++ " = " <+ t]
 docToDocBlock{|PropertyVarInstantiation|} _    _                                = abort "error in docToDocBlock{|PropertyVarInstantiation|}\n"
-docToDocBlock{|PropertyTestGenerator|} True (PropertyTestGenerator t impl) = Left [t <+ "\n" +++ impl]
+docToDocBlock{|PropertyTestGenerator|} True ptg = Left [t <+ "\n" +++ imp]
+where
+	(t,imp) = case ptg of
+		PTG_Function t imp -> (t,imp)
+		PTG_List t imp     -> (t,imp)
 docToDocBlock{|PropertyTestGenerator|} _    _                              = abort "error in docToDocBlock{|PropertyTestGenerator|}\n"
 
 derive docToDocBlock ModuleDoc, FunctionDoc, ClassMemberDoc, ClassDoc,

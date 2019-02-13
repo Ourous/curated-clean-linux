@@ -1,5 +1,6 @@
 implementation module Data.MapCollection
 
+import StdList
 import Data.List
 from Data.Maybe import :: Maybe (..), fromJust, maybeToList
 from Data.Map import :: Map

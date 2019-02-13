@@ -4,7 +4,7 @@ implementation module Data.Graph.Inductive.Internal.RootPath
 
 import Data.Graph.Inductive.Graph
 import Data.List
-import StdFunc, StdTuple
+import StdFunc, StdTuple, StdInt
 
 :: LRTree a :== [LPath a]
 :: RTree    :== [Path]

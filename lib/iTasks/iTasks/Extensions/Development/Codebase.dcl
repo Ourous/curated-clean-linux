@@ -37,12 +37,12 @@ instance toString Extension
 instance == Extension
 
 //List all modules in a directory on disk
-moduleList :: SDS FilePath [(ModuleName,ModuleType)] ()
+moduleList :: SDSSource FilePath [(ModuleName,ModuleType)] ()
 
 //Access the code and documentation for a module on disk
-moduleDefinition     :: SDS (FilePath,ModuleName) [String] [String]
-moduleImplementation :: SDS (FilePath,ModuleName) [String] [String]
-moduleDocumentation  :: SDS (FilePath,ModuleName) [String] [String]
+moduleDefinition     :: SDSLens (FilePath,ModuleName) [String] [String]
+moduleImplementation :: SDSLens (FilePath,ModuleName) [String] [String]
+moduleDocumentation  :: SDSLens (FilePath,ModuleName) [String] [String]
 
 //Convert a list of modules to a tree for choice tasks
 toModuleSelectTree :: [(ModuleName,ModuleType)] -> [(ChoiceNode)]

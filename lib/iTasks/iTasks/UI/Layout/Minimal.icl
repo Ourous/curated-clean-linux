@@ -3,11 +3,13 @@ implementation module iTasks.UI.Layout.Minimal
 * This module provides a minimal layout rule that only converts all intermediate UI nodes to basic elements (containers and buttons)
 * It does not apply any other transformations.
 */
+import StdEnv
+
 import iTasks.UI.Definition
 import iTasks.UI.Layout
-import StdString, Data.List, Data.Maybe, Text.GenJSON
+import Data.List, Data.Maybe, Text.GenJSON
 import qualified Data.Map as DM
-from Data.Foldable import class Foldable (foldr1)
+import qualified Data.Foldable as DF
 
 minimalSessionLayout :: LayoutRule
 minimalSessionLayout = layoutAny
@@ -17,7 +19,7 @@ layoutAny = sequenceLayouts
 	,layoutSubUIs (SelectByType UIAction) layoutAsButton
 	,removeSubUIs (SelectByType UIEmpty)
 	]
-SelectIntermediateContainers = foldr1 SelectOR
+SelectIntermediateContainers = 'DF'.foldr1 SelectOR
 	(map SelectByType [UIPair,UIRecord,UICons,UIVarCons,UIInteract,UIStep,UIParallel])
 
 layoutAsContainer = sequenceLayouts

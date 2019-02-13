@@ -42,8 +42,22 @@
 .export e_StdString_s+++;11
 .descexp e_StdString_d+++;11 e_StdString_n+++;11 e_StdString_l+++;11 2 0 "+++;11"
 .pb "+++;11"
+.o 3 0
+e_StdString_i+++;11
+	pop_a 1
+	push_array 1
+	push_array 1
+	update_a 1 3
+	update_a 0 2
+	pop_a 2
+.d 2 0
+	jsr s12
+.o 1 0
+	buildh ARRAY 1
+.d 1 0
+	rtn
 .pld
-.a 0 a12
+.ai 0 a12 e_StdString_i+++;11
 .o 2 0
 e_StdString_l+++;11
 	repl_args 1 1
@@ -93,8 +107,20 @@ s12
 .export e_StdString_s%;10
 .descexp e_StdString_d%;10 e_StdString_n%;10 e_StdString_l%;10 2 0 "%;10"
 .pb "%;10"
+.o 2 2 ii
+e_StdString_i%;10
+	pop_a 1
+	push_array 0
+	update_a 0 1
+	pop_a 1
+.d 1 2 ii
+	jsr s11
+.o 1 0
+	buildh ARRAY 1
+.d 1 0
+	rtn
 .pld
-.a 0 a11
+.ai 0 a11 e_StdString_i%;10
 .o 2 0
 e_StdString_l%;10
 	repl_args 1 1
@@ -148,7 +174,16 @@ s11
 .export e_StdString_stoString;9
 .descexp e_StdString_dtoString;9 e_StdString_ntoString;9 e_StdString_ltoString;9 1 0 "toString;9"
 .pb "toString;9"
+.o 2 0
+e_StdString_itoString;9
+	pop_a 1
+	push_array 0
+	update_a 0 1
+	pop_a 1
+.d 1 0
+	jmp s10
 .pld
+.ai 1 _ e_StdString_itoString;9
 .o 2 0
 e_StdString_ltoString;9
 	pop_a 1
@@ -190,7 +225,15 @@ s10
 .export e_StdString_stoString;8
 .descexp e_StdString_dtoString;8 e_StdString_ntoString;8 e_StdString_ltoString;8 1 0 "toString;8"
 .pb "toString;8"
+.o 2 0
+e_StdString_itoString;8
+	pop_a 1
+	pushB_a 0
+	pop_a 1
+.d 0 1 b
+	jmp s9
 .pld
+.ai 1 _ e_StdString_itoString;8
 .o 2 0
 e_StdString_ltoString;8
 	pop_a 1
@@ -233,7 +276,15 @@ s9
 .export e_StdString_stoString;7
 .descexp e_StdString_dtoString;7 e_StdString_ntoString;7 e_StdString_ltoString;7 1 0 "toString;7"
 .pb "toString;7"
+.o 2 0
+e_StdString_itoString;7
+	pop_a 1
+	pushR_a 0
+	pop_a 1
+.d 0 1 r
+	jmp s8
 .pld
+.ai 1 _ e_StdString_itoString;7
 .o 2 0
 e_StdString_ltoString;7
 	pop_a 1
@@ -276,7 +327,15 @@ s8
 .export e_StdString_stoString;6
 .descexp e_StdString_dtoString;6 e_StdString_ntoString;6 e_StdString_ltoString;6 1 0 "toString;6"
 .pb "toString;6"
+.o 2 0
+e_StdString_itoString;6
+	pop_a 1
+	pushC_a 0
+	pop_a 1
+.d 0 1 c
+	jmp s7
 .pld
+.ai 1 _ e_StdString_itoString;6
 .o 2 0
 e_StdString_ltoString;6
 	pop_a 1
@@ -317,7 +376,15 @@ s7
 .export e_StdString_stoString;5
 .descexp e_StdString_dtoString;5 e_StdString_ntoString;5 e_StdString_ltoString;5 1 0 "toString;5"
 .pb "toString;5"
+.o 2 0
+e_StdString_itoString;5
+	pop_a 1
+	pushI_a 0
+	pop_a 1
+.d 0 1 i
+	jmp s6
 .pld
+.ai 1 _ e_StdString_itoString;5
 .o 2 0
 e_StdString_ltoString;5
 	pop_a 1
@@ -360,7 +427,17 @@ s6
 .export e_StdString_sfromString;4
 .descexp e_StdString_dfromString;4 e_StdString_nfromString;4 e_StdString_lfromString;4 1 0 "fromString;4"
 .pb "fromString;4"
+.o 2 0
+e_StdString_ifromString;4
+	pop_a 1
+.d 1 0
+	jsr s5
+.o 1 0
+	buildh ARRAY 1
+.d 1 0
+	rtn
 .pld
+.ai 1 _ e_StdString_ifromString;4
 .o 2 0
 e_StdString_lfromString;4
 	pop_a 1
@@ -402,8 +479,18 @@ s5
 .export e_StdString_s<;3
 .descexp e_StdString_d<;3 e_StdString_n<;3 e_StdString_l<;3 2 0 "<;3"
 .pb "<;3"
+.o 3 0
+e_StdString_i<;3
+	pop_a 1
+	push_array 1
+	push_array 1
+	update_a 1 3
+	update_a 0 2
+	pop_a 2
+.d 2 0
+	jmp s4
 .pld
-.a 0 a4
+.ai 0 a4 e_StdString_i<;3
 .o 2 0
 e_StdString_l<;3
 	repl_args 1 1
@@ -457,8 +544,18 @@ s4
 .export e_StdString_s==;2
 .descexp e_StdString_d==;2 e_StdString_n==;2 e_StdString_l==;2 2 0 "==;2"
 .pb "==;2"
+.o 3 0
+e_StdString_i==;2
+	pop_a 1
+	push_array 1
+	push_array 1
+	update_a 1 3
+	update_a 0 2
+	pop_a 2
+.d 2 0
+	jmp s3
 .pld
-.a 0 a3
+.ai 0 a3 e_StdString_i==;2
 .o 2 0
 e_StdString_l==;2
 	repl_args 1 1

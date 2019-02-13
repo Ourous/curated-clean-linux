@@ -22,9 +22,9 @@ controlLightEditlet = leafEditorToEditor
 	  ,valueFromState = valueFromState
       }
 where
-	genUI dp mode world
+	genUI attr dp mode world
 		# val = fromMaybe LightOff (editModeValue mode)
-		# attr = 'DM'.unions [sizeAttr (ExactSize 20) (ExactSize 20),valueAttr (JSONString (toString (svgLight (color val))))]
+		# attr = 'DM'.unions [sizeAttr (ExactSize 20) (ExactSize 20),valueAttr (JSONString (toString (svgLight (color val)))), attr]
 		= (Ok (uia UIHtmlView attr,val), world)
 
     initUI me world 

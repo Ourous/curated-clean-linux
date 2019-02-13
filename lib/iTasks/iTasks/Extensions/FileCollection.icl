@@ -19,7 +19,7 @@ EXCLUDE_FILE :== "exclude.txt"
 
 //Writes a map of key/value pairs to a directory with one file per key/value
 //It will ignore all files in the directory that don't match the filter
-fileCollection :: FileFilter Bool -> SDS FilePath FileCollection FileCollection
+fileCollection :: FileFilter Bool -> SDSSource FilePath FileCollection FileCollection
 fileCollection isFileInCollection deleteRemovedFiles = worldShare (read isFileInCollection) (write isFileInCollection)
 where
 	read isFileInCollection dir world = case readDirectory dir world of

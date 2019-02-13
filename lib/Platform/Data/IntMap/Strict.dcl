@@ -8,7 +8,7 @@ from StdFunc        import id
 from Text.GenJSON   import generic JSONEncode, generic JSONDecode, :: JSONNode
 from Data.GenEq import generic gEq
 from Data.Monoid    import class Monoid, class Semigroup
-from Data.List import foldr
+from StdList import foldr
 from Data.Functor import class Functor (..)
 from Data.IntMap.Base import :: IntMap (..), :: Mask, :: Prefix, minViewWithKey, maxViewWithKey, empty, lookup, instance == (IntMap a), equal
 

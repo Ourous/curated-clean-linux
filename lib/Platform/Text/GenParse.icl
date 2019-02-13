@@ -8,7 +8,7 @@ import Text
 
 :: StringInput = { si_str :: !String, si_pos :: !Int} 
 
-mkStringInput :: String -> StringInput 
+mkStringInput :: !String -> StringInput
 mkStringInput str = {si_str = str, si_pos = 0}
 
 instance ParseInput StringInput where
@@ -515,7 +515,7 @@ where
 
 //----------------------------------------------------------------------------------		
 
-generic gParse a :: Expr -> Maybe a
+generic gParse a :: !Expr -> Maybe a
 
 gParse{|Int|} (ExprInt x)			= Just x 
 gParse{|Int|} _						= Nothing
@@ -707,21 +707,21 @@ maybeAll [|Just x: mxs]
 
 //----------------------------------------------------------------------------------		
 
-preParseInput :: s -> Expr | ParseInput s
-preParseInput input 
+preParseInput :: !s -> Expr | ParseInput s
+preParseInput input
 	# (expr, s) = preParse {ps_input=input, ps_char = Nothing, ps_tokens = [] }
 	= expr
-	
-preParseString :: String -> Expr
+
+preParseString :: !String -> Expr
 preParseString str = preParseInput {si_pos = 0, si_str = str}
 
-preParseFile :: File -> Expr 
+preParseFile :: !File -> Expr
 preParseFile file = preParseInput file
 
-parseString :: String -> Maybe a | gParse{|*|} a
+parseString :: !String -> Maybe a | gParse{|*|} a
 parseString str = gParse{|*|} (preParseString str)
 
-parseFile :: File -> Maybe a | gParse{|*|} a
+parseFile :: !File -> Maybe a | gParse{|*|} a
 parseFile file = gParse{|*|} (preParseFile file)
 
 //Start = preParseString "{rec_field = A (B1, B2) (C D), rec_field2 = (X,Y)}"

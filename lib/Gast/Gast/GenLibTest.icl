@@ -38,7 +38,10 @@ genShow{|(->)|} 	fa fr	sep p f				rest = ["<function>": rest]
 genShow{|{}|}		fx		sep p xs			rest = ["{" :showList fx [x\\x<-:xs] ["}":rest]]
 genShow{|{!}|}		fx		sep p xs			rest = ["{!":showList fx [x\\x<-:xs] ["}":rest]]
 //genShow{|{#}|}		fx		sep p xs			rest = ["{#":showList fx [x\\x<-:xs] ["}":rest]]
-genShow{|[]|}		f		sep p xs			rest = ["[" :showList f xs ["]":rest]]
+genShow{|[]|}		f		sep p xs			rest = ["[" :showList f xs [ "]":rest]]
+genShow{|[!]|}		f		sep p xs			rest = ["[!":showList f xs [ "]":rest]]
+genShow{|[ !]|}		f		sep p xs			rest = ["[" :showList f xs ["!]":rest]]
+genShow{|[!!]|}		f		sep p xs			rest = ["[!":showList f xs ["!]":rest]]
 genShow{|(,)|}		f1 f2	sep p (x1,x2)		rest = ["(":f1 sep False x1 [",":f2 sep False x2 [")":rest]]]
 genShow{|(,,)|}		f1 f2 f3 sep p (x1,x2,x3)	rest = ["(":f1 sep False x1 [",":f2 sep False x2 [",":f3 sep False x3 [")":rest]]]]
 genShow{|(,,,)|}	f1 f2 f3 f4 sep p (x1,x2,x3,x4) rest
@@ -80,10 +83,10 @@ showChar c
 	'\'' = "\\'"
 	c = toString c
 
-showList :: (.String -> .(.Bool -> .(.a -> .(u:[v:String] -> w:[x:String])))) ![.a] z:[u0:String] -> w0:[x0:String], [w0 <= u,x0 <= v,z w <= w0,u0 x <= x0]
-showList f []		rest = rest
-showList f [x]		rest = f "" False x rest
-showList f [x:xs]	rest = f "" False x [",":showList f xs rest]
+showList :: (String Bool a -> ([String] -> [String])) !(l a) [String] -> [String] | List l a
+showList f [|]		rest = rest
+showList f [|x]		rest = f "" False x rest
+showList f [|x:xs]	rest = f "" False x [",":showList f xs rest]
 
 show :: !a -> [String] | genShow{|*|} a
 show x = genShow{|*|} "" False x []

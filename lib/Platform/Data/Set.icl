@@ -3,6 +3,7 @@ implementation module Data.Set
 import StdClass, StdMisc, StdBool, StdFunc, StdInt, StdTuple
 import Data.Maybe, Data.GenEq, Data.GenLexOrd, Data.Monoid
 from Data.Foldable import class Foldable (..)
+import Data.Func
 import qualified StdList
 from StdList import instance == [a]
 
@@ -21,49 +22,26 @@ instance == (Set a) | == a where
   (==) :: !(Set a) !(Set a) -> Bool | == a
   (==) t1 t2  = (size t1 == size t2) && (toAscList t1 == toAscList t2)
 
-instance < (Set a) | < a where
-  (<) :: !(Set a) !(Set a) -> Bool | < a
-  (<) s1 s2 = compare (toAscList s1) (toAscList s2)
-    where
-    compare :: ![a] ![a] -> Bool | < a
-    compare []     [] = False
-    compare []     _  = True
-    compare [_:_]  [] = False
-    compare [a:as] [b:bs]
-      | a < b     = True
-      | a > b     = False
-      | otherwise = compare as bs
+instance < (Set a) | < a
+where
+	(<) :: !(Set a) !(Set a) -> Bool | < a
+	(<) s1 s2 = compare (toAscList s1) (toAscList s2)
+	where
+		compare :: ![a] ![a] -> Bool | < a
+		compare []     [] = False
+		compare []     _  = True
+		compare [_:_]  [] = False
+		compare [a:as] [b:bs]
+			| a < b     = True
+			| a > b     = False
+			| otherwise = compare as bs
 
 gEq{|Set|} eEq x y = (size x == size y) && gEq{|* -> *|} eEq (toAscList x) (toAscList y)
 gLexOrd{|Set|} eLexOrd x y = gLexOrd{|* -> *|} eLexOrd (toAscList x) (toAscList y)
 
 instance Foldable Set where
-	fold x = foldMap id x
-	foldMap f x = foldr (mappend o f) mempty x
-
-    foldr _ z Tip           = z
-    foldr f z (Bin _ x l r) = foldr f (f x (foldr f z r)) l
-
-	foldr` _ z Tip           = z
-    foldr` f z (Bin _ x l r) = foldr` f (f x (foldr` f z r)) l
-
-    foldl _ z Tip           = z
-    foldl f z (Bin _ x l r) = foldl f (f (foldl f z l) x) r
-
-	foldl` _ z Tip           = z
-    foldl` f z (Bin _ x l r) = foldl` f (f (foldl` f z l) x) r
-
-	foldr1 f (Bin _ x Tip Tip) = x
-    foldr1 f (Bin _ x Tip r)   = foldr f x r
-    foldr1 f (Bin _ x l Tip)   = foldr f x l
-    foldr1 f (Bin _ x l r)     = foldr f (f x (foldr1 f r)) l
-	foldr1 _ Tip               = abort "foldr1 called with Tip\n"
-
-	foldl1 f (Bin _ x Tip Tip) = x
-    foldl1 f (Bin _ x Tip r)   = foldl f x r
-    foldl1 f (Bin _ x l Tip)   = foldl f x l
-    foldl1 f (Bin _ x l r)     = foldl f (f (foldr1 f l) x) r
-	foldl1 _ Tip               = abort "foldl1 called with Tip\n"
+	foldr _ z Tip           = z
+	foldr f z (Bin _ x l r) = foldr f (f x (foldr f z r)) l
 
 /*--------------------------------------------------------------------
  * Query

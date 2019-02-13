@@ -3,7 +3,7 @@ definition module iTasks.WF.Combinators.SDS
 * This module provides task combinators that give tasks access to shared sources
 */
 import iTasks.WF.Definition
-from iTasks.SDS.Definition import :: SDS, :: RWShared, :: Shared
+import iTasks.SDS.Definition
 from System.FilePath import :: FilePath
 
 /**
@@ -12,15 +12,7 @@ from System.FilePath import :: FilePath
 * @param The initial value of the shared variable
 * @param The task which uses the shared variable
 */
-withShared :: !b !((Shared b) -> Task a) -> Task a | iTask a & iTask b
-
-/**
-* Expose a share to be accessable via an URL.
-*
-* @param The share to be exposed
-* @param The task which uses the shared variable
-*/
-exposeShared :: !(RWShared p r w) !(String (RWShared p r w) -> Task a) -> Task a | iTask a & iTask r & iTask w & iTask p
+withShared :: !b !((SimpleSDSLens b) -> Task a) -> Task a | iTask a & iTask b
 
 /**
 * Expose the taskId during execution

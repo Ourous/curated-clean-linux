@@ -93,5 +93,5 @@ httpRequest method uri (Just body) iworld
 	= httpRequest_server method uri body iworld
 
 // For easy override on the client, dont touch it!
-httpRequest_client method url mbBody iworld = undef
+httpRequest_client method url mbBody iworld = abort "REMOTEEEEE"
 

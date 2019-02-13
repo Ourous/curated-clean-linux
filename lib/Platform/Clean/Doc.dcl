@@ -107,12 +107,21 @@ instance docDescription ParamDoc
 :: PropertyVarInstantiation = PropertyVarInstantiation !(!String, !Type)
 
 /**
- * A test generator generates values of some type. The first argument of the
- * constructor is the function type of the generator, for instance
- * `[(k,v)] -> {{Map}} k v`. The second argument is the implementation, which
- * should assume the generator is called `gen` (e.g.: `gen elems = ...`).
+ * A test generator generates values of some type. There are different ways to
+ * write test generators:
+ *
+ * - `PTG_Function`: The first argument is the function type of the generator,
+ *   for instance `[(k,v)] -> {{Map}} k v`. This receives arguments of type
+ *   `[(k,v)]` and transforms them into generated values of type `Map k v`. The
+ *   second argument is the Clean implementation, which should assume the
+ *   generator is called `gen` (e.g.: `gen elems = ...`).
+ * - `PTG_List`: The first argument is the type for which values are to be
+ *   generated (e.g.: `Int`). The second argument is a Clean expression for a
+ *   list of that type (e.g.: `[0..10]`).
  */
-:: PropertyTestGenerator = PropertyTestGenerator !Type !String
+:: PropertyTestGenerator
+	= PTG_Function !Type !String
+	| PTG_List !Type !String
 
 derive gDefault FunctionDoc, Property, PropertyVarInstantiation, PropertyTestGenerator
 
@@ -268,7 +277,7 @@ printDoc :: !d -> String | docToDocBlock{|*|} d
  * The magic for {{`printDoc`}}.
  * @param If true, return a `Left`. If false, return a `Right`.
  */
-generic docToDocBlock d :: Bool d -> Either [String] DocBlock
+generic docToDocBlock d :: !Bool !d -> Either [String] DocBlock
 
 derive docToDocBlock ModuleDoc, FunctionDoc, ClassMemberDoc, ClassDoc,
 	ConstructorDoc, TypeDoc

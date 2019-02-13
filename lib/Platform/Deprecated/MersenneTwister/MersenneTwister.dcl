@@ -18,12 +18,12 @@
 
 definition module MersenneTwister
 
-genRandReal :: Int -> [Real]
+genRandReal :: !Int -> [Real]
 // Generates an infinite list of in [0, 1] uniformly distributed 
 // real pseudorandom numbers. There period is (2^19937)-1.
 // Input any nonzero integer as seed value.
 
-genRandInt :: Int -> [Int]		
+genRandInt :: !Int -> [Int]
 // Generates an infinite list of in [-(2^31), (2^31)-1] uniformly distributed 
 // signed integer pseudorandom numbers. There period is (2^19937)-1.
 // Input any nonzero integer as seed value.

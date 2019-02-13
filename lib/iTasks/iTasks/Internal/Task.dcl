@@ -8,8 +8,9 @@ from iTasks.Internal.Tonic.AbsSyn import :: ExprId (..)
 from iTasks.WF.Tasks.IO import :: ConnectionHandlers
 
 from iTasks.Internal.TaskState			import :: TaskTree
-from iTasks.SDS.Definition import :: SDS, :: RWShared
+import  iTasks.SDS.Definition
 from iTasks.UI.Definition import :: UIChange
+from iTasks.Internal.IWorld import :: ConnectionId
 from Data.Map			import :: Map
 from Data.Maybe         import :: Maybe
 from Data.CircularStack import :: CircularStack
@@ -24,24 +25,15 @@ derive gEditor			Task
 derive gEq				Task
 
 //Low-level tasks that handle network connections
-:: ConnectionTask = ConnectionTask !(ConnectionHandlersIWorld Dynamic Dynamic Dynamic) !(RWShared () Dynamic Dynamic)
+:: ConnectionTask = ConnectionTask !(ConnectionHandlersIWorld Dynamic Dynamic Dynamic) !(SDSLens () Dynamic Dynamic)
 
-//Definition of low-level network interaction
-/*
-:: ConnectionHandlers l r w = 
-    { onConnect         :: !(String r   -> (!MaybeErrorString l, Maybe w, ![String], !Bool))
-    , onData            :: !(String l r -> (!MaybeErrorString l, Maybe w, ![String], !Bool))
-    , onShareChange     :: !(       l r -> (!MaybeErrorString l, Maybe w, ![String], !Bool))
-    , onDisconnect      :: !(       l r -> (!MaybeErrorString l, Maybe w                  ))
-	}
-*/
 //Version of connection handlers with IWorld side-effects that is still necessary for built-in framework handlers
 :: ConnectionHandlersIWorld l r w =
-    { onConnect     :: !(String r   *IWorld -> *(!MaybeErrorString l, Maybe w, ![String], !Bool, !*IWorld))
-    , onData        :: !(String l r *IWorld -> *(!MaybeErrorString l, Maybe w, ![String], !Bool, !*IWorld))
-    , onShareChange :: !(       l r *IWorld -> *(!MaybeErrorString l, Maybe w, ![String], !Bool, !*IWorld))
-    , onTick        :: !(       l r *IWorld -> *(!MaybeErrorString l, Maybe w, ![String], !Bool, !*IWorld))
-    , onDisconnect  :: !(       l r *IWorld -> *(!MaybeErrorString l, Maybe w,                   !*IWorld))
+    { onConnect     :: !(ConnectionId String r   *IWorld -> *(!MaybeErrorString l, Maybe w, ![String], !Bool, !*IWorld))
+    , onData        :: !(			  String l r *IWorld -> *(!MaybeErrorString l, Maybe w, ![String], !Bool, !*IWorld))
+    , onShareChange :: !(                    l r *IWorld -> *(!MaybeErrorString l, Maybe w, ![String], !Bool, !*IWorld))
+    , onTick        :: !(       			 l r *IWorld -> *(!MaybeErrorString l, Maybe w, ![String], !Bool, !*IWorld))
+    , onDisconnect  :: !(       			 l r *IWorld -> *(!MaybeErrorString l, Maybe w,                   !*IWorld))
     }
 
 //Background computation tasks
@@ -50,9 +42,8 @@ derive gEq				Task
 /**
 * Wraps a set of connection handlers and a shared source as a connection task
 */
-wrapConnectionTask :: (ConnectionHandlers l r w) (RWShared () r w) -> ConnectionTask | TC l & TC r & TC w
-wrapIWorldConnectionTask :: (ConnectionHandlersIWorld l r w) (RWShared () r w) -> ConnectionTask | TC l & TC r & TC w
-
+wrapConnectionTask :: (ConnectionHandlers l r w) (sds () r w) -> ConnectionTask | TC l & TC r & TC w & RWShared sds
+wrapIWorldConnectionTask :: (ConnectionHandlersIWorld l r w) (sds () r w) -> ConnectionTask | TC l & TC r & TC w & RWShared sds
 
 /**
 * Create a task that finishes instantly

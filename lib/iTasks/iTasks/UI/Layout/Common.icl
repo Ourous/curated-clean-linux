@@ -1,18 +1,19 @@
 implementation module iTasks.UI.Layout.Common
 
+
+import StdEnv
+
 import iTasks.UI.Layout, iTasks.UI.Layout.Default
 import iTasks.UI.Definition, iTasks.UI.Prompt
 import iTasks.WF.Combinators.Tune
 import iTasks.WF.Combinators.Overloaded
 import Data.List, Text.GenJSON, Data.Maybe, StdString, Data.GenEq
-from Data.Foldable import class Foldable (foldl1)
+import Data.Monoid
 import qualified Data.Map as DM
-import StdBool, _SystemArray
 from Data.Func import $
-from StdFunc import id, const, o, flip, seq
-from StdTuple import uncurry, snd
 from StdListExtensions import foldlSt
 from iTasks.Internal.TaskEval import :: TaskEvalOpts(..), :: TonicOpts
+import qualified Data.Foldable
 import qualified Text as T
 from Text import class Text, instance Text String
 
@@ -194,7 +195,7 @@ where
 insertToolBar :: [String] -> LayoutRule
 insertToolBar actions = sequenceLayouts
 	[insertChildUI 0 (ui UIToolBar)
-	,moveSubUIs (foldl1 SelectOR [SelectByAttribute "actionId" ((==) (JSONString action))\\ action <- actions]) [0] 0
+	,moveSubUIs ('Data.Foldable'.foldl1 SelectOR [SelectByAttribute "actionId" ((==) (JSONString action))\\ action <- actions]) [0] 0
 	,layoutSubUIs (SelectByPath [0]) (layoutSubUIs (SelectByType UIAction) actionToButton)
 	]
 

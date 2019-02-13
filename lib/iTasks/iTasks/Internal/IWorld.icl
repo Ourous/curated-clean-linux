@@ -15,8 +15,8 @@ import Data.Integer
 
 import iTasks.SDS.Combinators.Common
 
-from StdFile import class FileSystem(..)
-from StdFile import instance FileSystem World
+from StdFile import class FileSystem(..), class FileEnv(..), :: Files
+from StdFile import instance FileSystem World, instance FileEnv World
 from StdFunc import const, o, seqList, :: St
 from StdMisc import abort
 from StdOrdList import sortBy
@@ -40,6 +40,8 @@ from Sapl.Target.Flavour import :: Flavour, toFlavour
 from Sapl.Target.CleanFlavour import cleanFlavour
 from Sapl.SaplParser import :: ParserState
 
+from iTasks.SDS.Definition import :: SDSParallel
+from iTasks.SDS.Combinators.Common import toReadOnly
 //The following modules are excluded by the SAPL -> Javascript compiler
 //because they contain functions implemented in ABC code that cannot
 //be compiled to javascript anyway. Handwritten Javascript overrides need
@@ -76,11 +78,11 @@ createIWorld options world
       ,memoryShares         = 'DM'.newMap
       ,readCache            = 'DM'.newMap
       ,writeCache           = 'DM'.newMap
-	  ,exposedShares		= 'DM'.newMap
 	  ,jsCompilerState		= Nothing
 	  ,shutdown				= Nothing
       ,ioTasks              = {done = [], todo = []}
       ,ioStates             = 'DM'.newMap
+      ,sdsEvalStates		= 'DM'.newMap
 	  ,world				= world
       ,resources            = []
       ,random               = genRandInt seed
@@ -116,7 +118,7 @@ determineAppPath world
 destroyIWorld :: !*IWorld -> *World
 destroyIWorld iworld=:{IWorld|world} = world
 
-iworldTimespec :: SDS (ClockParameter Timespec) Timespec Timespec
+iworldTimespec :: SDSSource (ClockParameter Timespec) Timespec Timespec
 iworldTimespec = createReadWriteSDS "IWorld" "timespec" read write
 where
     read _ iworld=:{IWorld|clock} = (Ok clock,iworld)
@@ -138,15 +140,15 @@ where
 	toI x = toInteger x.tv_sec * toInteger 1000000000 + toInteger x.tv_nsec
 	toT x = {tv_sec=toInt (x/toInteger 1000000000), tv_nsec=toInt (x rem toInteger 1000000000)}
 
-iworldTimestamp :: SDS (ClockParameter Timestamp) Timestamp Timestamp
-iworldTimestamp = mapReadWrite (timespecToStamp, const o Just o timestampToSpec)
+iworldTimestamp :: SDSLens (ClockParameter Timestamp) Timestamp Timestamp
+iworldTimestamp = mapReadWrite (timespecToStamp, \w r. Just (timestampToSpec w)) (Just \_ s. Ok (timespecToStamp s)) 
 	$ sdsTranslate "iworldTimestamp translation" (\{start,interval}->{start=timestampToSpec start,interval=timestampToSpec interval}) iworldTimespec
 
-iworldLocalDateTime :: ReadOnlyShared DateTime
+iworldLocalDateTime :: SDSParallel () DateTime ()
 iworldLocalDateTime = SDSParallel (createReadOnlySDS \_ -> iworldLocalDateTime`) (sdsFocus {start=Timestamp 0,interval=Timestamp 1} iworldTimestamp) sdsPar
 where
     // ignore value, but use notifications for 'iworldTimestamp'
-    sdsPar = { SDSParallel
+    sdsPar = { SDSParallelOptions
              | name   = "iworldLocalDateTime"
              , param  = \p -> (p,p)
              , read   = fst
@@ -185,3 +187,12 @@ where
 	sfopen filename mode iworld=:{IWorld|world}
 		# (ok,file,world) = sfopen filename mode world
 		= (ok,file,{IWorld|iworld & world = world})
+
+instance FileEnv IWorld
+where
+	accFiles accfun iworld=:{IWorld|world}
+		# (x, world) = accFiles accfun world
+		= (x, {IWorld | iworld & world=world})
+	appFiles appfun iworld=:{IWorld|world}
+		# world = appFiles appfun world
+		= {IWorld | iworld & world=world}

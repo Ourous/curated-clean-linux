@@ -5,10 +5,13 @@ from Control.Applicative import class pure(pure), class <*>, class Applicative,
 from Control.Monad import class Monad(bind), >>=, class MonadPlus(mzero,mplus)
 from Data.Functor import class Functor
 from Data.Monoid import class Monoid, class Semigroup
-from Data.Maybe import :: Maybe
+from Data.Maybe import :: Maybe(..)
 from StdOverloaded import class +, class one, class *, class zero, class <, class ==
+from Data.List import instance Foldable []
 from StdClass import class Ord
-from StdFunc import flip
+from StdMisc import abort
+from Data.Monoid import :: Endo(Endo), :: Dual(Dual), class Monoid(mempty), class Semigroup(mappend), appEndo, getDual
+from StdFunc import flip, id
 
 /**
  * Ported from Haskell's Data.Foldable by Jurriën Stutterheim 15-08-2014
@@ -40,50 +43,75 @@ class Foldable t where
 	/**
 	 * Combine the elements of a structure using a monoid.
 	 */
-    fold :: !(t m) -> m | Monoid m
+	fold :: !(t m) -> m | Monoid m
+	fold a = foldMap id a
 
 	/**
 	 * Map each element of the structure to a monoid, and combine the results.
 	 */
-    foldMap :: (a -> m) !(t a) -> m | Monoid m
+	foldMap :: (a -> m) !(t a) -> m | Monoid m
+	foldMap f t = foldr (\x->mappend (f x)) mempty t
 
 	/**
 	 * Right-associative fold of a structure.
 	 * `foldr f z = 'StdList'.{{foldr}} f z {{o}} {{toList}}`
 	 */
-    foldr :: (a .b -> .b) .b !(t a) -> .b
+	foldr :: (a .b -> .b) .b !(t a) -> .b
+	foldr f z t = appEndo (foldMap (Endo f) t) z
 
 	/**
 	 * Right-associative fold of a structure, but with strict application of
 	 * the operator.
 	 */
-    foldr` :: (a .b -> .b) !.b !(t a) -> .b
+	foldr` :: (a .b -> .b) !.b !(t a) -> .b
+	foldr` f z0 xs = foldl (\k x z->sapp k (f x z)) (\x.x) xs z0
+	where
+		sapp :: .(.a -> .b) !.a -> .b
+		sapp f x = f x
 
 	/**
 	 * Left-associative fold of a structure.
 	 * `foldl f z = 'StdList'.{{foldl}} f z o {{toList}}`
 	 */
-    foldl :: (.b -> .(a -> .b)) .b !(t a) -> .b
+	foldl :: (.b -> .(a -> .b)) .b !(t a) -> .b
+	foldl f z t = appEndo (getDual (foldMap (\x->Dual (Endo (flip f x))) t)) z
 
 	/**
 	 * Left-associative fold of a structure, but with strict application of the
 	 * operator.
 	 */
-    foldl` :: (.b -> .(a -> .b)) !.b !(t a) -> .b
+	foldl` :: (.b -> .(a -> .b)) !.b !(t a) -> .b
+	foldl` f z0 xs = foldr (\x k z->sapp k (f z x)) (\x.x) xs z0
+	where
+		sapp :: .(.a -> .b) !.a -> .b
+		sapp f x = f x
 
 	/**
 	 * A variant of {{foldr}} that has no base case, and thus may only be
 	 * applied to non-empty structures.
 	 * `foldr1 f = 'Data.List'.{{foldr1}} f o {{toList}}`
 	 */
-    foldr1 :: !(a a -> a) !(t a) -> a
-
+	foldr1 :: !(a a -> a) !(t a) -> a
+	foldr1 f x = case foldr mf Nothing x of
+		Nothing = abort "foldr1: empty structure\n"
+		Just x = x
+	where
+		mf x m = Just (case m of
+			Nothing -> x
+			Just y  -> f x y)
 	/**
 	 * A variant of {{foldl}} that has no base case, and thus may only be
 	 * applied to non-empty structures.
 	 * `foldl1 f = 'Data.List'.{{foldl1}} f o {{toList}}`
 	 */
-    foldl1 :: !(a a -> a) !(t a) -> a
+	foldl1 :: !(a a -> a) !(t a) -> a
+	foldl1 f x = case foldl mf Nothing x of
+		Nothing = abort "foldl1: empty structure\n"
+		Just x = x
+	where
+		mf m y = Just (case m of
+			Nothing -> y
+			Just x  -> f x y)
 
 // TODO Cleanify
 //instance Ix i => Foldable (Array i)

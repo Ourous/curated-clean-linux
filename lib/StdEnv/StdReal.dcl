@@ -57,3 +57,10 @@ instance atanh		Real	//	Arc Hyperbolic Tangent, partial function, only defined i
 //	Additional conversion:
 
 entier			:: !Real		->	Int		//	Convert Real into Int by taking entier
+
+Infinity :== 1E9999
+NaN :== 1E9999+(-1E9999)
+
+isNaN x :== if (x==x) False True
+isInfinity x :== if (abs x==1E9999) True False
+isFinite x :== if (x-x==0.0) True False

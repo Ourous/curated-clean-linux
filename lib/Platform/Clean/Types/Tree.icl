@@ -1,11 +1,9 @@
 implementation module Clean.Types.Tree
 
 import StdBool
-from StdFunc import o
+import StdInt
+import StdFunctions
 import StdOrdList
-import StdOverloaded
-import StdString
-import StdTuple
 
 import Clean.Types
 import Clean.Types.Unify

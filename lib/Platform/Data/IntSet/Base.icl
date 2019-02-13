@@ -88,7 +88,7 @@ import StdInt, StdBool, StdFunc, StdMisc, StdOverloaded, StdClass, StdTuple
 import Data.GenLexOrd
 import Data.Maybe
 import Data.Monoid
-import qualified Data.List
+import qualified StdList
 //import Data.Semigroup
 //import Data.Utils.BitUtil
 //import Data.Utils.StrictFold
@@ -306,7 +306,7 @@ deleteBM _ _ Nil = Nil
 // | The union of a list of sets.
 unions :: [IntSet] -> IntSet
 unions xs
-  = 'Data.List'.foldl union empty xs
+  = 'StdList'.foldl union empty xs
 
 
 // | /O(n+m)/. The union of two sets.
@@ -655,7 +655,7 @@ deleteMax s = (maybe Nil snd o maxView) s
 // for some =:(x,y)=:, =:x \<> y && f x == f y=:
 
 map :: (Key -> Key) IntSet -> IntSet
-map f s = (fromList o 'Data.List'.map f o toList) s
+map f s = (fromList o 'StdList'.map f o toList) s
 
 /* ------------------------------------------------------------------
   Fold
@@ -760,7 +760,7 @@ toDescList s = foldl (\xs x -> [x:xs]) [] s
 // | /O(n*min(n,W))/. Create a set from a list of integers.
 fromList :: [Key] -> IntSet
 fromList xs
-  = 'Data.List'.foldl ins empty xs
+  = 'StdList'.foldl ins empty xs
   where
     ins t x  = insert x t
 

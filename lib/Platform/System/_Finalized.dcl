@@ -39,7 +39,7 @@ definition module System._Finalized
 
 from System._Pointer import :: Pointer
 
-:: Finalized a = Finalized !a !Finalizer
+:: Finalized a = Finalized a !Finalizer
 
 :: Finalizer  = {finalizer_implementation :: !FinalizerT}
 :: FinalizerT = DummyFinalizer !Int !Int !Int

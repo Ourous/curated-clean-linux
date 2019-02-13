@@ -8,3 +8,4 @@ from symbols_in_program import ::Symbol;
 copy_to_string_with_names :: a -> (!*{#Char},!*{#DescInfo},!*{#String});
 copy_from_string_with_names :: !*{#Char} !*{#DescInfo} !*{#String} !{#Symbol} -> (.a,!Int);
 
+make_symbol_name :: !String !String !Int -> String;

@@ -11,7 +11,7 @@ import qualified iTasks.Internal.SDS as SDS
 
 import System.Time, Text, Text.GenJSON, Internet.HTTP, Data.Error
 import System.File, System.FilePath, System.Directory
-import iTasks.Engine 
+import iTasks.Engine
 import iTasks.Internal.Task, iTasks.Internal.TaskState, iTasks.Internal.TaskEval, iTasks.Internal.TaskStore
 import iTasks.UI.Definition, iTasks.Internal.Util, iTasks.Internal.HtmlUtil, iTasks.Internal.IWorld
 import iTasks.SDS.Combinators.Common
@@ -35,7 +35,7 @@ from iTasks.Internal.HttpUtil import http_addRequestData, http_parseArguments
 
 //Opcodes used in websocket frames:
 WS_OP_CONTINUE :== 0x00
-WS_OP_TEXT     :== 0x01 
+WS_OP_TEXT     :== 0x01
 WS_OP_BINARY   :== 0x02
 WS_OP_CLOSE    :== 0x08
 WS_OP_PING     :== 0x09
@@ -62,9 +62,9 @@ wsockReadFrame state=:{WebSockState|cur_frame,message_data} data
 	//Determine payload length (and how many bytes were used to encode it)
 	# (payload_length,ext_payload_length_size) = payloadLen cur_frame
 	//Determine the total expected frame length
-	# frame_length = 2 + ext_payload_length_size + if masked 4 0 + payload_length 
-	//If no full frame is read yet we can stop for now 
-	| size cur_frame < frame_length 
+	# frame_length = 2 + ext_payload_length_size + if masked 4 0 + payload_length
+	//If no full frame is read yet we can stop for now
+	| size cur_frame < frame_length
 		= ({state & cur_frame = cur_frame},[])
 	//Extract the payload
 	# payload = if masked
@@ -76,12 +76,12 @@ wsockReadFrame state=:{WebSockState|cur_frame,message_data} data
 	# state = if (size cur_frame == frame_length)
 					 {state & cur_frame = ""}
 					 {state & cur_frame = cur_frame % (frame_length,size cur_frame)}
-	//Process frame	
+	//Process frame
 	| opcode == WS_OP_CLOSE
 		= (state,[WSClose payload])
 	| opcode == WS_OP_PING
 		= (state,[WSPing payload])
-	| opcode == WS_OP_TEXT 
+	| opcode == WS_OP_TEXT
 		| final = ({state & message_data = []},[WSTextMessage payload])
 		| otherwise = ({state & message_text = True, message_data = [payload]},[])
 	| opcode == WS_OP_BINARY
@@ -90,7 +90,7 @@ wsockReadFrame state=:{WebSockState|cur_frame,message_data} data
 	| opcode == WS_OP_CONTINUE
 		| final = ({state & message_data = []},[(if state.message_text WSTextMessage WSBinMessage) (concat (reverse [payload:state.message_data]))])
 		| otherwise = ({state & message_data = [payload:state.message_data]},[])
-	| otherwise	
+	| otherwise
 		= (state,[])
 where
 	payloadLen data
@@ -109,13 +109,13 @@ wsockControlFrame :: !Int !String -> String
 wsockControlFrame opcode payload = wsockMsgFrame opcode True payload
 
 wsockCloseMsg :: String -> String
-wsockCloseMsg payload = wsockControlFrame WS_OP_CLOSE payload 
+wsockCloseMsg payload = wsockControlFrame WS_OP_CLOSE payload
 
 wsockPongMsg :: String -> String
 wsockPongMsg payload = wsockControlFrame WS_OP_PONG payload
 
 wsockMsgFrame :: !Int !Bool !String -> String
-wsockMsgFrame opcode final payload 
+wsockMsgFrame opcode final payload
 	| num_bytes < 125   = frame num_bytes "" payload
 	| num_bytes < 65536 = frame 126 {toChar (num_bytes >> (8*i)) \\ i <- [1,0]} payload
 	| otherwise         = IF_INT_64_OR_32
@@ -125,15 +125,15 @@ where
 	num_bytes = size payload
 	frame payload_length ext_payload_length payload
 		= {toChar (opcode bitor (if final 0x80 0x00)),toChar payload_length} +++ ext_payload_length +++ payload
-	
+
 wsockTextMsg :: String -> [String]
 wsockTextMsg payload = [wsockMsgFrame WS_OP_TEXT True payload]
 
-httpServer :: !Int !Timespec ![WebService r w] (RWShared () r w) -> ConnectionTask | TC r & TC w
+httpServer :: !Int !Timespec ![WebService r w] (sds () r w) -> ConnectionTask | TC r & TC w & RWShared sds
 httpServer port keepAliveTime requestProcessHandlers sds
     = wrapIWorldConnectionTask {ConnectionHandlersIWorld|onConnect=onConnect, onData=onData, onShareChange=onShareChange, onTick=onTick, onDisconnect=onDisconnect} sds
 where
-    onConnect host r iworld=:{IWorld|world,clock}
+    onConnect connId host r iworld=:{IWorld|world,clock}
         = (Ok (NTIdle host clock),Nothing,[],False,{IWorld|iworld & world = world})
 
     onData data connState=:(NTProcessingRequest request localState) r env
@@ -178,21 +178,21 @@ where
 					//Determine if a  persistent connection was requested
 					# keepalive	= isKeepAlive request
 					// Create a response
-					# (response,mbLocalState,mbW,iworld) = onNewReq request r iworld 
+					# (response,mbLocalState,mbW,iworld) = onNewReq request r iworld
 					//Add keep alive header if necessary
 					# response	= if keepalive {HTTPResponse|response & rsp_headers = [("Connection","Keep-Alive"):response.HTTPResponse.rsp_headers]} response
 					// Encode the response to the HTTP protocol format
 					= case mbLocalState of
-						Nothing	
+						Nothing
 							# reply		= encodeResponse True response
 							| keepalive
 								= (Ok (NTIdle rstate.HttpReqState.request.client_name clock), mbW, [reply], False, iworld)
 							| otherwise
 								= (Ok connState, mbW, [reply], True, iworld)
-						Just localState	
+						Just localState
 							= (Ok (NTProcessingRequest request localState), mbW, [(encodeResponse False response)], False, iworld)
 				| otherwise
-					= (Ok (NTReadingRequest rstate), Nothing, [], False, iworld)		
+					= (Ok (NTReadingRequest rstate), Nothing, [], False, iworld)
 
 	//Close idle connections if the keepalive time has passed
 	onTick connState=:(NTIdle ip t) r iworld=:{IWorld|clock=now}
@@ -230,7 +230,7 @@ where
     onDisconnect connState=:(NTProcessingRequest request localState) r env
 		= case selectHandler request requestProcessHandlers of
 			Nothing = (Ok connState, Nothing, env)
-			Just {WebService | onDisconnect}  
+			Just {WebService | onDisconnect}
 				# (mbW, env) = onDisconnect request r localState env
 				= (Ok connState, mbW, env)
     onDisconnect connState r env = (Ok connState, Nothing, env)
@@ -249,7 +249,7 @@ where
 	    					(addDefault rsp_headers "Content-Length" (toString (size rsp_data)))
 	    					rsp_headers
 	    = toString {HTTPResponse|response & rsp_headers = rsp_headers}
-    where		
+    where
     	addDefault headers hdr val = if (('DL'.lookup hdr headers) =: Nothing) [(hdr,val):headers] headers
 
 :: ChangeQueues :== Map InstanceNo (Queue UIChange)
@@ -282,10 +282,10 @@ where
 			= (errorResponse "Requested service format not available for this task", Nothing, Nothing, iworld)
 
 	dataFun req output data (clientname,state,instances) iworld
-		# (state,events) = wsockAddData state data 
+		# (state,events) = wsockAddData state data
 		# (output,close,instances,iworld) = handleEvents instances [] False events iworld
 		= (output,close,(clientname,state,instances),Nothing,iworld)
-	where	
+	where
 		handleEvents instances output close [] iworld
 			= (output,close,instances,iworld)
 		handleEvents instances output close [e:es] iworld
@@ -317,7 +317,7 @@ where
 									# json = JSONArray [JSONInt commandId, JSONString "exception",JSONObject [("description",JSONString err)]]
 									= (wsockTextMsg (toString json),False, instances, iworld)
 								(Ok (), iworld)
-									# iworld = attachViewport instanceNo iworld 
+									# iworld = attachViewport instanceNo iworld
 									# json = JSONArray [JSONInt commandId, JSONString "attach", JSONObject []]
 									= (wsockTextMsg (toString json),False, [(instanceNo,instanceKey):instances], iworld)
 						_
@@ -335,7 +335,7 @@ where
 								(Ok (), iworld)
 									# iworld = detachViewport instanceNo iworld
 									# json = JSONArray [JSONInt commandId, JSONString "detach", JSONObject []]
-									= ([],False, filter (((<>) instanceNo) o fst) instances, iworld) 
+									= ([],False, filter (((<>) instanceNo) o fst) instances, iworld)
 						_
 							# json = JSONArray [JSONInt commandId, JSONString "exception", JSONObject [("description",JSONString "Missing command parameters")]]
 							= (wsockTextMsg (toString json),False, instances, iworld)
@@ -343,13 +343,13 @@ where
 				(JSONArray [JSONInt commandId, JSONString "ui-event", args=:(JSONObject _)])
 					= case parseEvent args of
 						(Just (instanceNo,event))
-							# iworld = queueEvent instanceNo event iworld 
+							# iworld = queueEvent instanceNo event iworld
 							# json = JSONArray [JSONInt commandId, JSONString "ui-event", JSONObject []]
 							= (wsockTextMsg (toString json), False, instances, iworld)
 						_
 							# json = JSONArray [JSONInt commandId, JSONString "exception", JSONObject [("description",JSONString "Missing event parameters")]]
 							= (wsockTextMsg (toString json),False, instances, iworld)
-				// - Pings 
+				// - Pings
 				(JSONArray [JSONInt commandId, JSONString "ping",_])
 					= case updateInstanceLastIO (map fst instances) iworld of
 						(Error (_,err),iworld)
@@ -358,7 +358,7 @@ where
 						(Ok (),iworld)
 							# json = JSONArray [JSONInt commandId, JSONString "ping", JSONObject []]
 							= (wsockTextMsg (toString json),False, instances, iworld)
-				//Unknown message 
+				//Unknown message
 				e
 					# json = JSONArray [JSONInt 0, JSONString "exception", JSONObject [("description",JSONString "Unknown command")]]
 					= (wsockTextMsg (toString json),False, instances, iworld)
@@ -373,7 +373,7 @@ where
     shareChangeFun _ _ connState iworld = ([], False, connState, Nothing, iworld)
 
     onTick req output (clientname,state,instances) iworld
-		//Check keys 
+		//Check keys
 		# (instances,iworld) = verifyKeys instances iworld
 		//Check for output for all attached instances
 		# (messages, output) = dequeueOutput (map fst instances) output
@@ -394,7 +394,7 @@ where
 	disconnectFun _ _ _ iworld                            = (Nothing, iworld)
 
 	createTaskInstance` req [{WebTask|path,task=WebTaskWrapper task}:taskUrls] iworld
-		| req.HTTPRequest.req_path == uiUrl path = createTaskInstance (task req) 'DM'.newMap iworld
+		| req.HTTPRequest.req_path == uiUrl path = createSessionTaskInstance (task req) 'DM'.newMap iworld
 		| otherwise = createTaskInstance` req taskUrls iworld
 
 	uiUrl matchUrl = (if (endsWith "/" matchUrl) matchUrl (matchUrl +++ "/")) +++ "gui-wsock"
@@ -412,22 +412,22 @@ where
 			(Just x,q) 		= [x:toList q]
 
 	verifyKeys :: [(InstanceNo,String)] *IWorld -> (![(InstanceNo,String)],!*IWorld)
-	verifyKeys instances iworld = filterSt verifyKey instances iworld 
+	verifyKeys instances iworld = filterSt verifyKey instances iworld
 	where
-		verifyKey (instanceNo,viewportKey) iworld = case 'SDS'.read (sdsFocus instanceNo taskInstanceProgress) iworld of
-			(Ok {InstanceProgress|instanceKey},iworld) = (viewportKey == instanceKey,iworld)
+		verifyKey (instanceNo,viewportKey) iworld = case 'SDS'.read (sdsFocus instanceNo taskInstanceProgress) 'SDS'.EmptyContext iworld of
+			(Ok (ReadingDone {InstanceProgress|instanceKey=Just key}),iworld) = (viewportKey == key,iworld)
 			(_,iworld) = (False,iworld)
-	
+
 		filterSt p [] s = ([],s)
 		filterSt p [x:xs] s
-			# (t,s) = p x s	
-			# (xs,s) = filterSt p xs s	
+			# (t,s) = p x s
+			# (xs,s) = filterSt p xs s
 			= (if t [x:xs] xs, s)
 
 	eventsResponse messages
 		= {okResponse &   rsp_headers = [("Content-Type","text/event-stream"),("Cache-Control","no-cache")]
                         , rsp_data = formatMessageEvents messages}
-	
+
 	formatMessageEvents messages = concat (map format messages)
     where
         format (instanceNo,change) = "data: {\"instance\":" +++toString instanceNo+++",\"change\":" +++ toString (encodeUIChange change) +++ "}\n\n"
@@ -436,7 +436,7 @@ where
 //TODO: The upload and download mechanism used here is inherently insecure!!!
 // A smarter scheme that checks up and downloads, based on the current session/task is needed to prevent
 // unauthorized downloading of documents and DDOS uploading.
-	
+
 documentService :: WebService r w
 documentService = { urlMatchPred    = matchFun
                   , completeRequest = True
@@ -487,7 +487,7 @@ createDocumentsFromUploads [(n,u):us] iworld
 
 jsonResponse json
 		= {okResponse & rsp_headers = [("Content-Type","text/json"),("Access-Control-Allow-Origin","*")], rsp_data = toString json}
-	
+
 // Request handler which serves static resources from the application directory,
 // or a system wide default directory if it is not found locally.
 // This request handler is used for serving system wide javascript, css, images, etc...
@@ -504,7 +504,7 @@ where
 	initFun req _ env
 		# (rsp,env) = handleStaticResourceRequest req env
 		= (rsp,Nothing,Nothing,env)
-		
+
 	dataFun _ _ _      s env = ([], True, s, Nothing, env)
     shareChangeFun _ _ s env = ([], True, s, Nothing, env)
     onTick  _ _        s env = ([], True, s, Nothing, env)
@@ -515,7 +515,7 @@ where
 		# filename		   = if (isMember req.HTTPRequest.req_path taskPaths) //Check if one of the published tasks is requested, then serve bootstrap page
 									(webDirPath +++ filePath "/index.html")
 									(webDirPath +++ filePath req.HTTPRequest.req_path)
-		
+
 		# type			   = mimeType filename
        	# (mbInfo,world) = getFileInfo filename world
 		| case mbInfo of (Ok info) = info.directory ; _ = True

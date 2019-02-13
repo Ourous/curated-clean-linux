@@ -35,11 +35,6 @@ instance gMap {!}
 
 :: Either a b  = Left a | Right b
 
-// extensions for StdReal
-
-isFinite :: !Real -> Bool
-	// only not-a-number and the two infinite values are not finite
-
 // extensions for StdInt
 
 roundupToMultiple s m :== (s + (m-1)) bitand (~m)

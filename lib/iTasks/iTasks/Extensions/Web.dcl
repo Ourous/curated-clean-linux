@@ -38,5 +38,5 @@ serveFile :: [FilePath] HTTPRequest -> Task HTTPResponse
 * @gin-title Call web service
 * @gin-icon webservice
 */
-callHTTP	:: !HTTPMethod !URI !String !(HTTPResponse -> (MaybeErrorString a)) -> Task a | iTask a	
+callHTTP	:: !HTTPMethod !URI !String !(HTTPResponse -> (MaybeErrorString a)) -> Task a | iTask a
 callRPCHTTP :: !HTTPMethod !URI ![(String,String)] !(HTTPResponse -> a) -> Task a | iTask a

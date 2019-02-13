@@ -14,7 +14,7 @@ import Data.Error, System.File
 * Initializes a new appender.
 * @return A StringAppender instance
 */
-newAppender :: StringAppender	
+newAppender :: StringAppender
 
 /**
 * Put an arbitrary value (for which toString has an instance) to the end of the stream.
@@ -22,13 +22,13 @@ newAppender :: StringAppender
 * @param The value to be printed
 * @return A StringAppender instance
 */
-append :: !StringAppender a -> StringAppender | toString a
+append :: !StringAppender !a -> StringAppender | toString a
 
 /**
 * Append a list of values to the output stream using a separator string between the elements
 * @param Separator string
 * @param The list of values
-* @param Output stream (StringAppender instance) 
+* @param Output stream (StringAppender instance)
 * @return A StringAppender instance
 */
 joinList :: !String ![a] !StringAppender -> StringAppender | toString a
@@ -46,7 +46,7 @@ intoFile :: !StringAppender !*File -> (!MaybeError FileError (), !*File)
 * (And some basic instances)
 */
 
-instance toString StringAppender	
+instance toString StringAppender
 
 class Appendable a
 where

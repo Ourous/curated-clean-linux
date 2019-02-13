@@ -21,8 +21,8 @@ import Control.Monad
 from Text.Parsers.Simple.Core import :: Parser, :: Error,
 	instance Functor (Parser t), instance pure (Parser t),
 	instance <*> (Parser t), instance Alternative (Parser t),
-	instance Monad (Parser t), parse, pToken, pSepBy, pSepBy1, pList, pSatisfy,
-	pPeek
+	instance Monad (Parser t), pToken, pSepBy, pSepBy1, pList, pSatisfy, pPeek,
+	runParser
 
 (|<<) infixl 1 :: !(m a) !(m b) -> m a | Monad m
 (|<<) ma mb = ma >>= \a -> mb >>= \_ -> pure a
@@ -130,6 +130,8 @@ where
 		<|> parenthised type
 		<|> liftM (\t -> Type t []) ident
 		<|> liftM Uniq (uniq argtype)
+		<|> liftM Uniq (uniq (liftM2 Cons cons  $ some argtype))
+		<|> liftM Uniq (uniq (liftM2 Type ident $ some argtype))
 		<|> liftM (\t -> Type "_#Array" [t]) (braced  (pToken TUnboxed >>| type))
 		<|> liftM (\t -> Type "_!Array" [t]) (braced  (pToken TStrict  >>| type))
 		<|> liftM (\t -> Type "_Array"  [t]) (braced  type)
@@ -212,6 +214,6 @@ parseType :: ![Char] -> Maybe Type
 parseType cs
 # mbTokens = tokenize cs
 | isNothing mbTokens = Nothing
-= case parse type (fromJust mbTokens) of
-	Right t -> Just t
-	_       -> Nothing
+= case [t \\ (t,[]) <- fst $ runParser type (fromJust mbTokens)] of
+	[t:_] -> Just t
+	_     -> Nothing

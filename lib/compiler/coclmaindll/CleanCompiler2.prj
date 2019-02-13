@@ -1,0 +1,4860 @@
+Version:	1.3
+Global
+	Built:	True
+	CodeGen
+		CheckStacks:	False
+		CheckIndexes:	True
+		KeepABC:	False
+		TargetProcessor:	CurrentProcessor
+	Application
+		HeapSize:	16777216
+		StackSize:	1048576
+		ExtraMemory:	12582912
+		IntialHeapSize:	4194304
+		HeapSizeMultiplier:	1280
+		ShowExecutionTime:	False
+		ShowGC:	False
+		ShowStackSize:	False
+		MarkingCollector:	True
+		Profile
+			Memory:	False
+			MemoryMinimumHeapSize:	0
+			Time601:	False
+			Time:	False
+		Output
+			Output:	NoConsole
+			Font:	Monaco
+			FontSize:	9
+			WriteStdErr:	False
+	Project
+		Verbose:	False
+	Link
+		DefaultSystemObjects:	True
+		DefaultLibraries:	True
+		ExtraLibraries
+			Path:	{Project}:main:Mac:CodeGenImportLibrary
+	Paths
+		Path:	{Project}
+		Path:	{Project}:compiler
+		Path:	{Project}:main:Mac
+		Path:	{Project}:main
+		Path:	{Project}:backend
+		Path:	{Project}:backend:Mac
+MainModule
+	Name:	CleanCompiler2
+	Dir:	{Project}:main
+	IclOpen:	False
+	Compiler
+		NeverMemoryProfile:	False
+		NeverTimeProfile:	False
+		StrictnessAnalysis:	True
+		ListTypes:	NoTypes
+		ListAttributes:	False
+		Warnings:	False
+		Verbose:	False
+		ReadableABC:	False
+		ReuseUniqueNodes:	False
+	Dcl
+		Editor
+			TabSize:	4
+			Font:	Monaco
+			FontSize:	9
+			AutoIndent:	True
+		WindowPosition
+			X:	140
+			Y:	70
+			SizeX:	952
+			SizeY:	581
+	DclOpen:	False
+	Icl
+		Editor
+			TabSize:	4
+			Font:	Monaco
+			FontSize:	9
+			AutoIndent:	True
+		WindowPosition
+			X:	140
+			Y:	70
+			SizeX:	952
+			SizeY:	581
+	IclOpen:	False
+	LastModified:	No 0 0 0 0 0 0
+	Dependencies
+		Module:	Clean2AppleEventHandler
+		Module:	CleanCompiler2
+		Module:	CoclSystemDependent
+		Module:	Heap
+		Module:	StdArray
+		Module:	StdBool
+		Module:	StdChar
+		Module:	StdCharList
+		Module:	StdClass
+		Module:	StdEnum
+		Module:	StdEnv
+		Module:	StdFile
+		Module:	StdFunc
+		Module:	StdInt
+		Module:	StdList
+		Module:	StdMisc
+		Module:	StdOrdList
+		Module:	StdOverloaded
+		Module:	StdReal
+		Module:	StdString
+		Module:	StdTuple
+		Module:	_SystemArray
+		Module:	_SystemEnum
+		Module:	_aconcat
+		Module:	cache_variable
+		Module:	checksupport
+		Module:	compile
+		Module:	containers
+		Module:	events
+		Module:	general
+		Module:	hashtable
+		Module:	mac_types
+		Module:	predef
+		Module:	scanner
+		Module:	syntax
+		Module:	typeproperties
+		Module:	utilities
+OtherModules
+	Module
+		Name:	postparse
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 42 10
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdCompare
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	checksupport
+			Module:	compare_constructor
+			Module:	containers
+			Module:	general
+			Module:	genericsupport
+			Module:	hashtable
+			Module:	parse
+			Module:	postparse
+			Module:	predef
+			Module:	scanner
+			Module:	syntax
+			Module:	typeproperties
+			Module:	utilities
+	Module
+		Name:	convertimportedtypes
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 42 10
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	checksupport
+			Module:	containers
+			Module:	convertimportedtypes
+			Module:	general
+			Module:	hashtable
+			Module:	predef
+			Module:	scanner
+			Module:	syntax
+			Module:	trans
+			Module:	transform
+			Module:	typeproperties
+			Module:	utilities
+	Module
+		Name:	generics1
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 42 9
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdCompare
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	analunitypes
+			Module:	check
+			Module:	checksupport
+			Module:	checktypes
+			Module:	compare_constructor
+			Module:	compilerSwitches
+			Module:	containers
+			Module:	general
+			Module:	generics1
+			Module:	genericsupport
+			Module:	hashtable
+			Module:	predef
+			Module:	scanner
+			Module:	syntax
+			Module:	transform
+			Module:	typeproperties
+			Module:	typesupport
+			Module:	unitype
+			Module:	utilities
+	Module
+		Name:	convertDynamics
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 42 7
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	checksupport
+			Module:	compilerSwitches
+			Module:	containers
+			Module:	convertDynamics
+			Module:	convertcases
+			Module:	general
+			Module:	hashtable
+			Module:	predef
+			Module:	scanner
+			Module:	syntax
+			Module:	trans
+			Module:	transform
+			Module:	type_io
+			Module:	type_io_common
+			Module:	typeproperties
+			Module:	utilities
+	Module
+		Name:	convertcases
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 42 7
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdCompare
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	analunitypes
+			Module:	check
+			Module:	checksupport
+			Module:	compare_constructor
+			Module:	containers
+			Module:	convertcases
+			Module:	general
+			Module:	hashtable
+			Module:	predef
+			Module:	scanner
+			Module:	syntax
+			Module:	trans
+			Module:	transform
+			Module:	typeproperties
+			Module:	typesupport
+			Module:	unitype
+			Module:	utilities
+	Module
+		Name:	trans
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 42 6
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdCompare
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	analunitypes
+			Module:	check
+			Module:	checksupport
+			Module:	compare_constructor
+			Module:	containers
+			Module:	general
+			Module:	hashtable
+			Module:	predef
+			Module:	scanner
+			Module:	syntax
+			Module:	trans
+			Module:	transform
+			Module:	type
+			Module:	typeproperties
+			Module:	typesupport
+			Module:	unitype
+			Module:	utilities
+	Module
+		Name:	refmark
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 42 4
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdCompare
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	analunitypes
+			Module:	check
+			Module:	checksupport
+			Module:	compare_constructor
+			Module:	containers
+			Module:	general
+			Module:	hashtable
+			Module:	overloading
+			Module:	predef
+			Module:	refmark
+			Module:	scanner
+			Module:	syntax
+			Module:	transform
+			Module:	typeproperties
+			Module:	typesupport
+			Module:	unitype
+			Module:	utilities
+	Module
+		Name:	explicitimports
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 42 2
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdCompare
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	analunitypes
+			Module:	checksupport
+			Module:	checktypes
+			Module:	compare_constructor
+			Module:	compilerSwitches
+			Module:	containers
+			Module:	explicitimports
+			Module:	general
+			Module:	hashtable
+			Module:	parse
+			Module:	predef
+			Module:	scanner
+			Module:	syntax
+			Module:	transform
+			Module:	typeproperties
+			Module:	typesupport
+			Module:	unitype
+			Module:	utilities
+	Module
+		Name:	comparedefimp
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 42 2
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdCompare
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	checksupport
+			Module:	compare_constructor
+			Module:	comparedefimp
+			Module:	compilerSwitches
+			Module:	containers
+			Module:	general
+			Module:	hashtable
+			Module:	predef
+			Module:	scanner
+			Module:	syntax
+			Module:	typeproperties
+			Module:	utilities
+	Module
+		Name:	checkFunctionBodies
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 42 1
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdCompare
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	analunitypes
+			Module:	check
+			Module:	checkFunctionBodies
+			Module:	checksupport
+			Module:	checktypes
+			Module:	compare_constructor
+			Module:	comparedefimp
+			Module:	compilerSwitches
+			Module:	containers
+			Module:	explicitimports
+			Module:	general
+			Module:	hashtable
+			Module:	parse
+			Module:	predef
+			Module:	scanner
+			Module:	syntax
+			Module:	transform
+			Module:	typeproperties
+			Module:	typesupport
+			Module:	unitype
+			Module:	utilities
+	Module
+		Name:	parse
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 42 3
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	compilerSwitches
+			Module:	containers
+			Module:	general
+			Module:	hashtable
+			Module:	parse
+			Module:	predef
+			Module:	scanner
+			Module:	syntax
+			Module:	typeproperties
+			Module:	utilities
+	Module
+		Name:	type
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 42 4
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdCompare
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	analtypes
+			Module:	analunitypes
+			Module:	check
+			Module:	checksupport
+			Module:	compare_constructor
+			Module:	compilerSwitches
+			Module:	containers
+			Module:	general
+			Module:	genericsupport
+			Module:	hashtable
+			Module:	overloading
+			Module:	predef
+			Module:	refmark
+			Module:	scanner
+			Module:	syntax
+			Module:	transform
+			Module:	type
+			Module:	typeproperties
+			Module:	typesupport
+			Module:	unitype
+			Module:	utilities
+	Module
+		Name:	mergecases
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 57
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdCompare
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	analunitypes
+			Module:	check
+			Module:	checksupport
+			Module:	compare_constructor
+			Module:	containers
+			Module:	general
+			Module:	hashtable
+			Module:	mergecases
+			Module:	predef
+			Module:	scanner
+			Module:	syntax
+			Module:	transform
+			Module:	typeproperties
+			Module:	typesupport
+			Module:	unitype
+			Module:	utilities
+	Module
+		Name:	genericsupport
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 55
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	checksupport
+			Module:	containers
+			Module:	general
+			Module:	genericsupport
+			Module:	hashtable
+			Module:	predef
+			Module:	scanner
+			Module:	syntax
+			Module:	typeproperties
+			Module:	utilities
+	Module
+		Name:	analtypes
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 42 8
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdCompare
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	analtypes
+			Module:	analunitypes
+			Module:	check
+			Module:	checksupport
+			Module:	checktypes
+			Module:	compare_constructor
+			Module:	containers
+			Module:	general
+			Module:	hashtable
+			Module:	predef
+			Module:	scanner
+			Module:	syntax
+			Module:	transform
+			Module:	typeproperties
+			Module:	typesupport
+			Module:	unitype
+			Module:	utilities
+	Module
+		Name:	checktypes
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 55
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdCompare
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	analunitypes
+			Module:	check
+			Module:	checksupport
+			Module:	checktypes
+			Module:	compare_constructor
+			Module:	compilerSwitches
+			Module:	containers
+			Module:	general
+			Module:	genericsupport
+			Module:	hashtable
+			Module:	predef
+			Module:	scanner
+			Module:	syntax
+			Module:	transform
+			Module:	typeproperties
+			Module:	typesupport
+			Module:	unitype
+			Module:	utilities
+	Module
+		Name:	backend
+		Dir:	{Project}:backend
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 42 10
+		Dependencies
+			Module:	StdOverloaded
+			Module:	StdString
+			Module:	backend
+	Module
+		Name:	backendpreprocess
+		Dir:	{Project}:backend
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 54
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	backendpreprocess
+			Module:	backendsupport
+			Module:	checksupport
+			Module:	containers
+			Module:	general
+			Module:	hashtable
+			Module:	predef
+			Module:	scanner
+			Module:	syntax
+			Module:	typeproperties
+			Module:	utilities
+	Module
+		Name:	backendsupport
+		Dir:	{Project}:backend
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 54
+		Dependencies
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	backendsupport
+			Module:	general
+			Module:	utilities
+	Module
+		Name:	backendconvert
+		Dir:	{Project}:backend
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 54
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdCompare
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	analunitypes
+			Module:	backend
+			Module:	backendconvert
+			Module:	backendpreprocess
+			Module:	backendsupport
+			Module:	check
+			Module:	checksupport
+			Module:	compare_constructor
+			Module:	compilerSwitches
+			Module:	containers
+			Module:	frontend
+			Module:	general
+			Module:	hashtable
+			Module:	overloading
+			Module:	predef
+			Module:	scanner
+			Module:	syntax
+			Module:	transform
+			Module:	typeproperties
+			Module:	typesupport
+			Module:	unitype
+			Module:	utilities
+		NeededLibraries
+			Library:	backend_library
+	Module
+		Name:	Version
+		Dir:	{Project}:main
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 53
+		Dependencies
+			Module:	StdBool
+			Module:	StdClass
+			Module:	StdInt
+			Module:	StdOverloaded
+			Module:	Version
+	Module
+		Name:	frontend
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 42 8
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdCompare
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	analtypes
+			Module:	analunitypes
+			Module:	check
+			Module:	checksupport
+			Module:	compare_constructor
+			Module:	compilerSwitches
+			Module:	containers
+			Module:	convertDynamics
+			Module:	convertcases
+			Module:	convertimportedtypes
+			Module:	frontend
+			Module:	general
+			Module:	generics1
+			Module:	hashtable
+			Module:	overloading
+			Module:	parse
+			Module:	postparse
+			Module:	predef
+			Module:	scanner
+			Module:	syntax
+			Module:	trans
+			Module:	transform
+			Module:	type
+			Module:	typeproperties
+			Module:	typesupport
+			Module:	unitype
+			Module:	utilities
+	Module
+		Name:	transform
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 56
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdCompare
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	analunitypes
+			Module:	check
+			Module:	checksupport
+			Module:	compare_constructor
+			Module:	containers
+			Module:	general
+			Module:	hashtable
+			Module:	mergecases
+			Module:	predef
+			Module:	scanner
+			Module:	syntax
+			Module:	transform
+			Module:	typeproperties
+			Module:	typesupport
+			Module:	unitype
+			Module:	utilities
+	Module
+		Name:	overloading
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 42 5
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdCompare
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	analunitypes
+			Module:	check
+			Module:	checksupport
+			Module:	checktypes
+			Module:	compare_constructor
+			Module:	compilerSwitches
+			Module:	containers
+			Module:	convertDynamics
+			Module:	convertcases
+			Module:	general
+			Module:	genericsupport
+			Module:	hashtable
+			Module:	overloading
+			Module:	predef
+			Module:	scanner
+			Module:	syntax
+			Module:	trans
+			Module:	transform
+			Module:	type
+			Module:	type_io_common
+			Module:	typeproperties
+			Module:	typesupport
+			Module:	unitype
+			Module:	utilities
+	Module
+		Name:	check
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 59
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdCompare
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	analunitypes
+			Module:	check
+			Module:	checkFunctionBodies
+			Module:	checksupport
+			Module:	checktypes
+			Module:	compare_constructor
+			Module:	comparedefimp
+			Module:	compilerSwitches
+			Module:	containers
+			Module:	explicitimports
+			Module:	general
+			Module:	genericsupport
+			Module:	hashtable
+			Module:	parse
+			Module:	portToNewSyntax
+			Module:	predef
+			Module:	scanner
+			Module:	syntax
+			Module:	transform
+			Module:	typeproperties
+			Module:	typesupport
+			Module:	unitype
+			Module:	utilities
+	Module
+		Name:	typesupport
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 58
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdCompare
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	analunitypes
+			Module:	check
+			Module:	checksupport
+			Module:	checktypes
+			Module:	compare_constructor
+			Module:	compilerSwitches
+			Module:	containers
+			Module:	general
+			Module:	genericsupport
+			Module:	hashtable
+			Module:	parse
+			Module:	predef
+			Module:	scanner
+			Module:	syntax
+			Module:	transform
+			Module:	typeproperties
+			Module:	typesupport
+			Module:	unitype
+			Module:	utilities
+	Module
+		Name:	unitype
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 57
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdCompare
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	analunitypes
+			Module:	check
+			Module:	checksupport
+			Module:	checktypes
+			Module:	compare_constructor
+			Module:	compilerSwitches
+			Module:	containers
+			Module:	general
+			Module:	hashtable
+			Module:	predef
+			Module:	scanner
+			Module:	syntax
+			Module:	transform
+			Module:	type
+			Module:	typeproperties
+			Module:	typesupport
+			Module:	unitype
+			Module:	utilities
+	Module
+		Name:	analunitypes
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 54
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdCompare
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	analtypes
+			Module:	analunitypes
+			Module:	check
+			Module:	checksupport
+			Module:	checktypes
+			Module:	compare_constructor
+			Module:	containers
+			Module:	general
+			Module:	hashtable
+			Module:	predef
+			Module:	scanner
+			Module:	syntax
+			Module:	transform
+			Module:	typeproperties
+			Module:	typesupport
+			Module:	unitype
+			Module:	utilities
+	Module
+		Name:	backendinterface
+		Dir:	{Project}:backend
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 53
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdCompare
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	Version
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	analunitypes
+			Module:	backend
+			Module:	backendconvert
+			Module:	backendinterface
+			Module:	backendpreprocess
+			Module:	backendsupport
+			Module:	check
+			Module:	checksupport
+			Module:	compare_constructor
+			Module:	containers
+			Module:	frontend
+			Module:	general
+			Module:	hashtable
+			Module:	overloading
+			Module:	predef
+			Module:	scanner
+			Module:	syntax
+			Module:	transform
+			Module:	typeproperties
+			Module:	typesupport
+			Module:	unitype
+			Module:	utilities
+	Module
+		Name:	filesystem
+		Dir:	{Project}:main
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 52
+		Dependencies
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	filesystem
+	Module
+		Name:	portToNewSyntax
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 52
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	checksupport
+			Module:	containers
+			Module:	general
+			Module:	hashtable
+			Module:	portToNewSyntax
+			Module:	predef
+			Module:	scanner
+			Module:	syntax
+			Module:	typeproperties
+			Module:	utilities
+	Module
+		Name:	type_io
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 52
+		Dependencies
+			Module:	CoclSystemDependent
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	checksupport
+			Module:	compare_constructor
+			Module:	containers
+			Module:	general
+			Module:	hashtable
+			Module:	predef
+			Module:	scanner
+			Module:	syntax
+			Module:	type_io
+			Module:	type_io_common
+			Module:	typeproperties
+			Module:	utilities
+	Module
+		Name:	type_io_common
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 51
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	general
+			Module:	scanner
+			Module:	syntax
+			Module:	type_io_common
+			Module:	typeproperties
+	Module
+		Name:	compilerSwitches
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 50
+		Dependencies
+			Module:	compilerSwitches
+	Module
+		Name:	StdCompare
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 51
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdCompare
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	compare_constructor
+			Module:	general
+			Module:	scanner
+			Module:	syntax
+			Module:	typeproperties
+	Module
+		Name:	compare_constructor
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 15 39
+		Dependencies
+			Module:	compare_constructor
+	Module
+		Name:	docommand
+		Dir:	{Project}:main:Mac
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 42 10
+		Dependencies
+			Module:	StdOverloaded
+			Module:	StdString
+			Module:	docommand
+	Module
+		Name:	files
+		Dir:	Clean:CleanPrograms:PowerMacInterface1.1
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	True
+			ReuseUniqueNodes:	True
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 48
+		Dependencies
+			Module:	StdArray
+			Module:	_SystemArray
+			Module:	files
+			Module:	mac_types
+	Module
+		Name:	StdDebug
+		Dir:	Clean:StdEnv
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 48
+		Dependencies
+			Module:	StdBool
+			Module:	StdClass
+			Module:	StdDebug
+			Module:	StdFile
+			Module:	StdMisc
+			Module:	StdOverloaded
+	Module
+		Name:	StdEnv
+		Dir:	Clean:StdEnv
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 50
+		Dependencies
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+	Module
+		Name:	StdBool
+		Dir:	Clean:StdEnv
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	True
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 15 40 31
+		Dependencies
+			Module:	StdBool
+			Module:	StdOverloaded
+	Module
+		Name:	StdOverloaded
+		Dir:	Clean:StdEnv
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 48
+		Dependencies
+			Module:	StdOverloaded
+	Module
+		Name:	StdInt
+		Dir:	Clean:StdEnv
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	True
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 15 40 31
+		Dependencies
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdClass
+			Module:	StdInt
+			Module:	StdMisc
+			Module:	StdOverloaded
+			Module:	_SystemArray
+	Module
+		Name:	StdReal
+		Dir:	Clean:StdEnv
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	True
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 15 40 31
+		Dependencies
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdClass
+			Module:	StdInt
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	_SystemArray
+	Module
+		Name:	StdChar
+		Dir:	Clean:StdEnv
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	True
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 15 40 31
+		Dependencies
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdClass
+			Module:	StdInt
+			Module:	StdOverloaded
+	Module
+		Name:	StdArray
+		Dir:	Clean:StdEnv
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	True
+			ReuseUniqueNodes:	True
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 48
+		Dependencies
+			Module:	StdArray
+			Module:	_SystemArray
+	Module
+		Name:	_SystemArray
+		Dir:	Clean:StdEnv
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 15 40 31
+		Dependencies
+			Module:	_SystemArray
+	Module
+		Name:	StdString
+		Dir:	Clean:StdEnv
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	True
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 15 40 31
+		Dependencies
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdClass
+			Module:	StdEnum
+			Module:	StdInt
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	_SystemArray
+			Module:	_SystemEnum
+	Module
+		Name:	StdFile
+		Dir:	Clean:StdEnv
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	True
+			ReuseUniqueNodes:	True
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 15 40 32
+		Dependencies
+			Module:	StdBool
+			Module:	StdClass
+			Module:	StdFile
+			Module:	StdInt
+			Module:	StdMisc
+			Module:	StdOverloaded
+			Module:	StdString
+	Module
+		Name:	StdClass
+		Dir:	Clean:StdEnv
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 48
+		Dependencies
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdClass
+			Module:	StdInt
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+	Module
+		Name:	StdList
+		Dir:	Clean:StdEnv
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	True
+			ReuseUniqueNodes:	True
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 49
+		Dependencies
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdClass
+			Module:	StdEnum
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	_SystemArray
+			Module:	_SystemEnum
+	Module
+		Name:	StdOrdList
+		Dir:	Clean:StdEnv
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 50
+		Dependencies
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdClass
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+	Module
+		Name:	StdTuple
+		Dir:	Clean:StdEnv
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 50
+		Dependencies
+			Module:	StdBool
+			Module:	StdClass
+			Module:	StdOverloaded
+			Module:	StdTuple
+	Module
+		Name:	StdCharList
+		Dir:	Clean:StdEnv
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 49
+		Dependencies
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdOverloaded
+			Module:	StdReal
+	Module
+		Name:	StdFunc
+		Dir:	Clean:StdEnv
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 49
+		Dependencies
+			Module:	StdBool
+			Module:	StdClass
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdMisc
+			Module:	StdOverloaded
+	Module
+		Name:	StdMisc
+		Dir:	Clean:StdEnv
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	True
+			ReuseUniqueNodes:	True
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 15 40 31
+		Dependencies
+			Module:	StdMisc
+			Module:	StdOverloaded
+			Module:	StdString
+	Module
+		Name:	StdEnum
+		Dir:	Clean:StdEnv
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 49
+		Dependencies
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdClass
+			Module:	StdEnum
+			Module:	StdInt
+			Module:	StdOverloaded
+			Module:	_SystemEnum
+	Module
+		Name:	_SystemEnum
+		Dir:	Clean:StdEnv
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 15 40 31
+		Dependencies
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+	Module
+		Name:	cache_variable
+		Dir:	{Project}:main:Mac
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 48
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	cache_variable
+			Module:	checksupport
+			Module:	compile
+			Module:	containers
+			Module:	general
+			Module:	hashtable
+			Module:	predef
+			Module:	scanner
+			Module:	syntax
+			Module:	typeproperties
+			Module:	utilities
+	Module
+		Name:	compile
+		Dir:	{Project}:main
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 52
+		Dependencies
+			Module:	CoclSystemDependent
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdCompare
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	analunitypes
+			Module:	backendinterface
+			Module:	check
+			Module:	checksupport
+			Module:	compare_constructor
+			Module:	compile
+			Module:	compilerSwitches
+			Module:	containers
+			Module:	filesystem
+			Module:	frontend
+			Module:	general
+			Module:	hashtable
+			Module:	overloading
+			Module:	portToNewSyntax
+			Module:	predef
+			Module:	scanner
+			Module:	syntax
+			Module:	transform
+			Module:	type_io
+			Module:	typeproperties
+			Module:	typesupport
+			Module:	unitype
+			Module:	utilities
+	Module
+		Name:	checksupport
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 52
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	checksupport
+			Module:	compare_constructor
+			Module:	containers
+			Module:	general
+			Module:	hashtable
+			Module:	predef
+			Module:	scanner
+			Module:	syntax
+			Module:	typeproperties
+			Module:	utilities
+	Module
+		Name:	syntax
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 51
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	compare_constructor
+			Module:	compilerSwitches
+			Module:	general
+			Module:	scanner
+			Module:	syntax
+			Module:	typeproperties
+			Module:	utilities
+	Module
+		Name:	scanner
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 50
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdCompare
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	compare_constructor
+			Module:	compilerSwitches
+			Module:	general
+			Module:	scanner
+			Module:	syntax
+			Module:	typeproperties
+			Module:	utilities
+	Module
+		Name:	general
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 49
+		Dependencies
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	general
+	Module
+		Name:	typeproperties
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 50
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdCompare
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	compare_constructor
+			Module:	general
+			Module:	scanner
+			Module:	syntax
+			Module:	typeproperties
+	Module
+		Name:	Heap
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 50
+		Dependencies
+			Module:	Heap
+			Module:	StdBool
+			Module:	StdClass
+			Module:	StdMisc
+			Module:	StdOverloaded
+	Module
+		Name:	predef
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 51
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	general
+			Module:	hashtable
+			Module:	predef
+			Module:	scanner
+			Module:	syntax
+			Module:	type_io_common
+			Module:	typeproperties
+	Module
+		Name:	hashtable
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 51
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdCompare
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	compare_constructor
+			Module:	general
+			Module:	hashtable
+			Module:	predef
+			Module:	scanner
+			Module:	syntax
+			Module:	typeproperties
+	Module
+		Name:	containers
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 50
+		Dependencies
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	containers
+			Module:	general
+			Module:	scanner
+			Module:	syntax
+			Module:	typeproperties
+			Module:	utilities
+	Module
+		Name:	utilities
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 49
+		Dependencies
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	general
+			Module:	utilities
+	Module
+		Name:	_aconcat
+		Dir:	{Project}:compiler
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 49
+		Dependencies
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdClass
+			Module:	StdEnum
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+	Module
+		Name:	CoclSystemDependent
+		Dir:	{Project}:main:Mac
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 48
+		Dependencies
+			Module:	Clean2AppleEventHandler
+			Module:	CoclSystemDependent
+			Module:	Heap
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdCharList
+			Module:	StdClass
+			Module:	StdEnum
+			Module:	StdEnv
+			Module:	StdFile
+			Module:	StdFunc
+			Module:	StdInt
+			Module:	StdList
+			Module:	StdMisc
+			Module:	StdOrdList
+			Module:	StdOverloaded
+			Module:	StdReal
+			Module:	StdString
+			Module:	StdTuple
+			Module:	_SystemArray
+			Module:	_SystemEnum
+			Module:	_aconcat
+			Module:	cache_variable
+			Module:	checksupport
+			Module:	compile
+			Module:	containers
+			Module:	docommand
+			Module:	events
+			Module:	general
+			Module:	hashtable
+			Module:	mac_types
+			Module:	predef
+			Module:	scanner
+			Module:	syntax
+			Module:	typeproperties
+			Module:	utilities
+		NeededObjFiles
+			ObjectFile:	cDirectory.obj
+		NeededLibraries
+			Library:	directory_library
+	Module
+		Name:	Clean2AppleEventHandler
+		Dir:	{Project}:main:Mac
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	False
+			ReuseUniqueNodes:	False
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 48
+		Dependencies
+			Module:	Clean2AppleEventHandler
+			Module:	StdArray
+			Module:	StdBool
+			Module:	StdChar
+			Module:	StdClass
+			Module:	StdDebug
+			Module:	StdFile
+			Module:	StdInt
+			Module:	StdOverloaded
+			Module:	StdString
+			Module:	_SystemArray
+			Module:	events
+			Module:	files
+			Module:	mac_types
+		NeededObjFiles
+			ObjectFile:	cae.obj
+	Module
+		Name:	events
+		Dir:	Clean:CleanPrograms:PowerMacInterface1.1
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	True
+			ReuseUniqueNodes:	True
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 48
+		Dependencies
+			Module:	StdInt
+			Module:	StdOverloaded
+			Module:	events
+			Module:	mac_types
+	Module
+		Name:	mac_types
+		Dir:	Clean:CleanPrograms:PowerMacInterface1.1
+		IclOpen:	False
+		Compiler
+			NeverMemoryProfile:	False
+			NeverTimeProfile:	False
+			StrictnessAnalysis:	True
+			ListTypes:	NoTypes
+			ListAttributes:	False
+			Warnings:	False
+			Verbose:	False
+			ReadableABC:	True
+			ReuseUniqueNodes:	True
+		Dcl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		DclOpen:	False
+		Icl
+			Editor
+				TabSize:	4
+				Font:	Monaco
+				FontSize:	9
+				AutoIndent:	True
+			WindowPosition
+				X:	140
+				Y:	70
+				SizeX:	952
+				SizeY:	581
+		IclOpen:	False
+		LastModified:	Yes 2002 6 17 17 41 48
+		Dependencies
+			Module:	mac_types

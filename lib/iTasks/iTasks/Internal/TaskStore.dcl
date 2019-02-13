@@ -2,7 +2,7 @@ definition module iTasks.Internal.TaskStore
 /**
 * This module provides storage of task instances
 * It contains two types of task instances:
-* Session instances: temporary tasks for each interactive session between a user and the server. 
+* Session instances: temporary tasks for each interactive session between a user and the server.
 * Workflow instances: persistent long-running tasks that may be shared between users and exist between sessions.
 */
 
@@ -17,16 +17,16 @@ from Data.Queue 	import :: Queue
 from System.Time    import :: Timestamp
 
 :: InstanceFilter =
-    { //'Vertical' filters
-      onlyInstanceNo    :: !Maybe [InstanceNo]
-    , notInstanceNo     :: !Maybe [InstanceNo]
-    , onlySession       :: !Maybe Bool
+	{ //'Vertical' filters
+	  onlyInstanceNo    :: !Maybe [InstanceNo]
+	, notInstanceNo     :: !Maybe [InstanceNo]
+	, onlySession       :: !Maybe Bool
 	, matchAttribute 	:: !Maybe (!String,!String)
-      //'Horizontal' filters
-    , includeConstants  :: !Bool
-    , includeProgress   :: !Bool
-    , includeAttributes :: !Bool
-    }
+	  //'Horizontal' filters
+	, includeConstants  :: !Bool
+	, includeProgress   :: !Bool
+	, includeAttributes :: !Bool
+	}
 
 :: InstanceData :== (!InstanceNo,!Maybe InstanceConstants,!Maybe InstanceProgress,!Maybe TaskAttributes)
 
@@ -42,77 +42,76 @@ newDocumentId			:: !*IWorld -> (!DocumentId, !*IWorld)
 //A global index of all task instances is maintained
 
 //This counter is used to ensure unique instance numbers
-nextInstanceNo :: RWShared () Int Int
+nextInstanceNo :: SimpleSDSLens Int
 
 //This index contains all meta-data about the task instances on this engine
-taskInstanceIndex :: RWShared () [TIMeta] [TIMeta]
+taskInstanceIndex :: SimpleSDSLens [TIMeta]
 
 //Task instance state is accessible as shared data sources
-filteredInstanceIndex   :: RWShared InstanceFilter [InstanceData] [InstanceData]
+filteredInstanceIndex   :: SDSLens InstanceFilter [InstanceData] [InstanceData]
 
 //Filtered views on the instance index
-taskInstance            :: RWShared InstanceNo InstanceData InstanceData
-taskInstanceConstants   :: ROShared InstanceNo InstanceConstants
-taskInstanceProgress    :: RWShared InstanceNo InstanceProgress InstanceProgress
-taskInstanceAttributes  :: RWShared InstanceNo TaskAttributes TaskAttributes
+taskInstance            :: SDSLens InstanceNo InstanceData InstanceData
+taskInstanceConstants   :: SDSLens InstanceNo InstanceConstants ()
+taskInstanceProgress    :: SDSLens InstanceNo InstanceProgress InstanceProgress
+taskInstanceAttributes  :: SDSLens InstanceNo TaskAttributes TaskAttributes
 
-topLevelTaskList        :: RWShared TaskListFilter (!TaskId,![TaskListItem a]) [(!TaskId,!TaskAttributes)]
+topLevelTaskList        :: SDSLens TaskListFilter (!TaskId,![TaskListItem a]) [(!TaskId,!TaskAttributes)]
 
-taskInstanceIO 			:: RWShared InstanceNo (Maybe (!String,!Timespec)) (Maybe (!String,!Timespec))
-allInstanceIO           :: RWShared () (Map InstanceNo (!String,!Timespec)) (Map InstanceNo (!String,Timespec)) 
+taskInstanceIO 			:: SDSLens InstanceNo (Maybe (!String,!Timespec)) (Maybe (!String,!Timespec))
+allInstanceIO           :: SimpleSDSLens (Map InstanceNo (!String,Timespec))
 
 //=== Task instance input: ===
 
 //When events are placed in this queue, the engine will re-evaluate the corresponding task instances.
-taskEvents              :: RWShared () (Queue (InstanceNo,Event)) (Queue (InstanceNo,Event))
+taskEvents :: SimpleSDSLens (Queue (InstanceNo,Event))
 
 // === Evaluation state of instances: ===
-taskInstanceReduct		:: RWShared InstanceNo TIReduct TIReduct
-taskInstanceValue       :: RWShared InstanceNo TIValue TIValue
-taskInstanceShares      :: RWShared InstanceNo (Map TaskId DeferredJSON) (Map TaskId DeferredJSON)
-
+taskInstanceReduct      :: SDSLens InstanceNo TIReduct TIReduct
+taskInstanceValue       :: SDSLens InstanceNo TIValue TIValue
+taskInstanceShares      :: SDSLens InstanceNo (Map TaskId DeferredJSON) (Map TaskId DeferredJSON)
 //Filtered views on evaluation state of instances:
 
-//Shared source 
-localShare              			:: RWShared TaskId a a | iTask a
+//Shared source
+localShare              			:: SDSLens TaskId a a | iTask a
 
 //Core parallel task list state structure
-taskInstanceParallelTaskLists       :: RWShared InstanceNo (Map TaskId [ParallelTaskState]) (Map TaskId [ParallelTaskState])
-taskInstanceParallelTaskList        :: RWShared (TaskId,TaskListFilter) [ParallelTaskState] [ParallelTaskState]
+taskInstanceParallelTaskLists       :: SDSLens InstanceNo (Map TaskId [ParallelTaskState]) (Map TaskId [ParallelTaskState])
+taskInstanceParallelTaskList        :: SDSLens (TaskId,TaskListFilter) [ParallelTaskState] [ParallelTaskState]
 
 //Private interface used during evaluation of parallel combinator
-taskInstanceParallelTaskListItem    :: RWShared (TaskId,TaskId,Bool) ParallelTaskState ParallelTaskState
+taskInstanceParallelTaskListItem    :: SDSLens (TaskId,TaskId,Bool) ParallelTaskState ParallelTaskState
 
-taskInstanceEmbeddedTask            :: RWShared TaskId (Task a) (Task a) | iTask a
+taskInstanceEmbeddedTask            :: SDSLens TaskId (Task a) (Task a) | iTask a
 
 //Public interface used by parallel tasks
-parallelTaskList                    :: RWShared (!TaskId,!TaskId,!TaskListFilter) (!TaskId,![TaskListItem a]) [(!TaskId,!TaskAttributes)] | iTask a
+parallelTaskList                    :: SDSSequence (!TaskId,!TaskId,!TaskListFilter) (!TaskId,![TaskListItem a]) [(!TaskId,!TaskAttributes)] | iTask a
 
 //===  Task instance output: ===
 
 //When task instances are evaluated, their output consists of instructions to modify the user interface
 //of that instance to reflect the instance's new state
 
-:: TaskOutputMessage 
+:: TaskOutputMessage
 	= TOUIChange !UIChange
-    | TOException !String
+	| TOException !String
 	| TODetach !InstanceNo
 
 derive gEq TaskOutputMessage
 
 :: TaskOutput :== Queue TaskOutputMessage
 
-taskOutput          :: RWShared () (Map InstanceNo TaskOutput) (Map InstanceNo TaskOutput) 
-taskInstanceOutput	:: RWShared InstanceNo TaskOutput TaskOutput
+taskOutput          :: SimpleSDSLens (Map InstanceNo TaskOutput)
+taskInstanceOutput	:: SDSLens InstanceNo TaskOutput TaskOutput
 
 //=== Access functions: ===
 
-// Create and delete task instances:
 
 createClientTaskInstance :: !(Task a) !String !InstanceNo !*IWorld -> *(!MaybeError TaskException TaskId, !*IWorld) |  iTask a
 
-//Create a task instance
-createTaskInstance :: !(Task a) !TaskAttributes !*IWorld -> (!MaybeError TaskException (!InstanceNo,InstanceKey),!*IWorld) | iTask a
+createStartupTaskInstance :: !(Task a) !TaskAttributes !*IWorld -> (!MaybeError TaskException InstanceNo, !*IWorld) | iTask a
+
+createSessionTaskInstance :: !(Task a) !TaskAttributes !*IWorld -> (!MaybeError TaskException (!InstanceNo,InstanceKey),!*IWorld) | iTask a
 
 /**
 * Create a stored task instance in the task store (lazily without evaluating it)
@@ -147,11 +146,11 @@ deleteTaskInstance	:: !InstanceNo !*IWorld -> *(!MaybeError TaskException (), !*
 * events are applied in FIFO order when the task instance is evaluated
 *
 * By splitting up event queuing and instance evaluation, events can come in asynchronously without
-* the need to directly processing them. 
+* the need to directly processing them.
 */
 queueEvent :: !InstanceNo !Event !*IWorld -> *IWorld
 
-/** 
+/**
 * Convenience function for queueing multiple refresh multiple refresh events at once
 */
 queueRefresh :: ![(!TaskId, !String)] !*IWorld -> *IWorld
@@ -190,7 +189,3 @@ createDocument 			:: !String !String !String !*IWorld -> (!MaybeError FileError 
 loadDocumentContent		:: !DocumentId !*IWorld -> (!Maybe String, !*IWorld)
 loadDocumentMeta		:: !DocumentId !*IWorld -> (!Maybe Document, !*IWorld)
 documentLocation		:: !DocumentId !*IWorld -> (!FilePath,!*IWorld)
-
-//== OBSOLETE ===
-//Access to remote shared data
-exposedShare 	        :: !String -> 	RWShared p r w	    | iTask r & iTask w & TC r & TC w & TC p & JSONEncode{|*|} p

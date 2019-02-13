@@ -7,6 +7,7 @@ import StdClass
 import StdFunctions
 import StdInt
 import StdList
+import StdMisc
 import StdString
 import StdTuple
 
@@ -119,52 +120,52 @@ advance ss = {ss & col=ss.col+1, idx=ss.idx+1}
 scan :: !ScanState -> (![CleanComment], !ScanState)
 scan ss=:{idx}
 | idx >= size ss.input = ([], ss)
-# [c1,c2:_] = [ss.input.[i] \\ i <- [idx..]]
-| c1 == '\r'
-	= scan (advance ss)
-| c1 == '\n'
-	= scan {ss & idx=idx+1, ln=ss.ln+1, col=0}
-| c1 == '/' && c2 == '/' && ss.comment_level == 0
-	# cmnt =
-		{ line      = ss.ln
-		, column    = ss.col
-		, level     = Nothing
-		, content   = ""
-		, multiline = False
-		}
-	# ss = scan_to_newline ss
-	# cmnt & content = ss.input % (idx+2,ss.idx-1)
-	# (cmnts,ss) = scan ss
-	= ([cmnt:cmnts],ss)
-| c1 == '/' && c2 == '*'
-	= scan
-		{ ss & idx=idx+2, col=ss.col+2
-		, comment_level = ss.comment_level+1
-		, comment_idxs  = [(ss.ln, ss.col, idx+2):ss.comment_idxs]
-		}
-| c1 == '*' && c2 == '/' && ss.comment_level > 0
-	# (c_ln,c_col,c_idx) = hd ss.comment_idxs
-	# level = ss.comment_level
-	# cmnt =
-		{ line      = c_ln
-		, column    = c_col
-		, level     = Just level
-		, content   = ss.input % (c_idx, idx-1)
-		, multiline = True
-		}
-	# (cmnts,ss) = scan
-		{ ss & idx=idx+2, col=ss.col+2
-		, comment_level = ss.comment_level-1
-		, comment_idxs  = tl ss.comment_idxs
-		}
-	# (before,after) = span (\c -> isJust c.level && fromJust c.level < level) cmnts
-	= (before ++ [cmnt:after],ss)
-| c1 == '[' && ss.comment_level == 0
-	= scan (skip_list_literal (advance ss))
-| c1 == '"' && ss.comment_level == 0
-	= scan (skip_string_literal '"' (advance ss))
-| otherwise
-	= scan (advance ss)
+| otherwise = case [ss.input.[i] \\ i <- [idx..]] of
+	['\r':_]
+		-> scan (advance ss)
+	['\n':_]
+		-> scan {ss & idx=idx+1, ln=ss.ln+1, col=0}
+	['//':_] | ss.comment_level == 0
+		# cmnt =
+			{ line      = ss.ln
+			, column    = ss.col
+			, level     = Nothing
+			, content   = ""
+			, multiline = False
+			}
+		# ss = scan_to_newline ss
+		# cmnt & content = ss.input % (idx+2,ss.idx-1)
+		# (cmnts,ss) = scan ss
+		-> ([cmnt:cmnts],ss)
+	['/*':_]
+		-> scan
+			{ ss & idx=idx+2, col=ss.col+2
+			, comment_level = ss.comment_level+1
+			, comment_idxs  = [(ss.ln, ss.col, idx+2):ss.comment_idxs]
+			}
+	['*/':_] | ss.comment_level > 0
+		# (c_ln,c_col,c_idx) = hd ss.comment_idxs
+		# level = ss.comment_level
+		# cmnt =
+			{ line      = c_ln
+			, column    = c_col
+			, level     = Just level
+			, content   = ss.input % (c_idx, idx-1)
+			, multiline = True
+			}
+		# (cmnts,ss) = scan
+			{ ss & idx=idx+2, col=ss.col+2
+			, comment_level = ss.comment_level-1
+			, comment_idxs  = tl ss.comment_idxs
+			}
+		# (before,after) = span (\c -> isJust c.level && fromJust c.level < level) cmnts
+		-> (before ++ [cmnt:after],ss)
+	['[':_] | ss.comment_level == 0
+		-> scan (skip_list_literal (advance ss))
+	['"':_] | ss.comment_level == 0
+		-> scan (skip_string_literal '"' (advance ss))
+	_
+		-> scan (advance ss)
 
 scan_to_newline :: !ScanState -> ScanState
 scan_to_newline ss
@@ -265,6 +266,7 @@ where
 	// Compiler cannot figure out the overloading if we call collect from collect directly
 	recurse :: ![CleanComment] !(Maybe CleanComment) !Children !CollectedComments -> (![CleanComment], !Maybe CleanComment, !CollectedComments)
 	recurse cs prev (Children xs) coll = collect cs prev xs coll
+collect _ _ _ _ = abort "internal error in Clean.Parse.Comments.collect\n"
 
 :: Children = E.t: Children ![t] & pos, commentIndex, children t
 
@@ -303,12 +305,15 @@ where
 		PD_Class cd _ -> Just cd.class_pos
 		PD_Instance piam -> Just piam.pim_pi.pi_pos
 		PD_Instances [piam:_] -> Just piam.pim_pi.pi_pos
+		PD_Instances [] -> Nothing
 		PD_Import [pi:_] -> Just pi.import_file_position
+		PD_Import [] -> Nothing
 		PD_ImportedObjects _ -> Nothing
 		PD_ForeignExport _ _ _ _ -> Nothing
 		PD_Generic gd -> Just gd.gen_pos
 		PD_GenericCase gcd _ -> Just gcd.gc_pos
 		PD_Derive [gcd:_] -> Just gcd.gc_pos
+		PD_Derive [] -> Nothing
 		PD_Erroneous -> Nothing
 
 instance pos ParsedSelector where pos ps = Just ps.ps_field_pos

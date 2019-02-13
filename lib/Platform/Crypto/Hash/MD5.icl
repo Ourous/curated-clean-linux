@@ -6,7 +6,7 @@ implementation module Crypto.Hash.MD5
 import StdEnv
 import Data.Tuple, Text, System.FilePath, System.File, Data.Error, Data.Functor
 
-md5 :: String -> String
+md5 :: !String -> String
 md5 msg = toString (md5StringDigest msg)
 
 /* "the values of the integer part of 4294967296 times abs(sin(i))" */
@@ -207,8 +207,8 @@ readResult :: (Int,Int,Int,Int) -> MD5Digest
 readResult (x,y,z,zs)
 	= MD5Digest (join "" [{toChar (i >> (j * 8)) \\ j <- [0..3]} \\ i <- [x,y,z,zs]])
 
-md5StringDigest :: String -> MD5Digest
-md5StringDigest msg 
+md5StringDigest :: !String -> MD5Digest
+md5StringDigest msg
 	# (result,buffer) = computeForString msg (0x67452301,0xefcdab89,0x98badcfe,0x10325476) ((size msg)*8) (createArray 16 0)
 	= result
 
@@ -256,7 +256,7 @@ readS szoveg numberOfBits buffer
 				third	= select text (index*4+2)
 				fourth	= select text (index*4+3)
 
-md5FileDigest :: FilePath *env -> (!MaybeError FileError MD5Digest,!*env) | FileSystem env
+md5FileDigest :: !FilePath !*env -> (!MaybeError FileError MD5Digest,!*env) | FileSystem env
 md5FileDigest path world
 	#!(ok,f,world)= fopen path FReadData world
 	|not ok

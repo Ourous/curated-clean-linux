@@ -157,3 +157,5 @@ sfposition	:: !File -> Int
 
 fshare		:: !*File -> File
 /*	Change a file so that from now it can only be used with sf... operations. */
+
+fflush :: !*File -> (!Bool,!*File)

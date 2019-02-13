@@ -18,7 +18,7 @@ from System.File import :: FileError
 * @param The message for which to compute the digest
 * @return The ascii hex representation of the message digest
 */
-md5 :: String -> String
+md5 :: !String -> String
 
 /**
 * Compute the MD5 digest of a string
@@ -26,7 +26,7 @@ md5 :: String -> String
 * @param The message for which to compute the digest
 * @return The raw 128 bit digest
 */
-md5StringDigest :: String -> MD5Digest
+md5StringDigest :: !String -> MD5Digest
 
 /**
 * Compute the MD5 digest of the contents of a file
@@ -36,7 +36,7 @@ md5StringDigest :: String -> MD5Digest
 * @return The raw 128 bit digest
 * @return The environment
 */
-md5FileDigest :: FilePath *env -> (!MaybeError FileError MD5Digest,!*env) | FileSystem env
+md5FileDigest :: !FilePath !*env -> (!MaybeError FileError MD5Digest,!*env) | FileSystem env
 
 /**
 * Print an MD5 digest as ascii hexadecimal form

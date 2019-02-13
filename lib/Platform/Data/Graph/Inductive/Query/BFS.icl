@@ -3,7 +3,7 @@
 
 implementation module Data.Graph.Inductive.Query.BFS
 
-import StdMisc,StdBool, StdFunc
+import StdMisc,StdBool, StdFunc, StdInt
 import Data.List
 import Data.Maybe
 import Data.Graph.Inductive.Graph

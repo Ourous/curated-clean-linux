@@ -50,10 +50,8 @@ derive gEq				WorkflowTaskContainer
 // Available workflows
 :: WorkflowFolderLabel :== String
 
-workflows				:: Shared [Workflow]
-allowedWorkflows		:: ReadOnlyShared [Workflow]
-workflowByPath			:: !String -> Shared Workflow
-
+workflows :: SDSLens () [Workflow] [Workflow]
+workflowByPath :: !String -> SDSLens () Workflow Workflow
 /**
 * Wraps any task as a workflow with no access restrictions
 *

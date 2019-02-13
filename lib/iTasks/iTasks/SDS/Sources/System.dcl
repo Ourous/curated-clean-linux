@@ -3,7 +3,7 @@ definition module iTasks.SDS.Sources.System
 * This module exposes system information from an itask application
 */
 
-from iTasks.SDS.Definition import :: SDS
+import iTasks.SDS.Definition
 from iTasks.WF.Definition import :: TaskId, :: TaskNo, :: InstanceNo, :: InstanceKey, :: TaskAttributes, :: ValueStatus
 from iTasks.WF.Combinators.Core import :: TaskList, :: SharedTaskList, :: TaskListFilter, :: TaskListItem 
 from iTasks.Extensions.DateTime import :: DateTime, :: Date, :: Time 
@@ -17,7 +17,7 @@ from Data.Maybe import :: Maybe
 //* Types to view the server's internal table of running task instances
 :: TaskInstance =
 	{ instanceNo	    :: !InstanceNo			//* Unique global identification
-    , instanceKey       :: !InstanceKey         //* Random string that a client needs to provide to access the task instance
+    , instanceKey       :: !Maybe InstanceKey   //* Random string that a client needs to provide to access the task instance
     , session           :: !Bool                //* Is this a session
 	, listId            :: !TaskId              //* Reference to parent tasklist
     , build             :: !String              //* Application build version when the instance was created
@@ -29,40 +29,40 @@ from Data.Maybe import :: Maybe
 	}
 
 // Date & time (in task server's local timezone)
-currentDateTime			:: SDS () DateTime ()
-currentTime				:: SDS () Time ()
-currentDate				:: SDS () Date ()
+currentDateTime 		:: SDSParallel () DateTime ()
+currentTime				:: SDSLens () Time ()
+currentDate				:: SDSLens () Date ()
 
 // Date & time (in UTC)
-currentUTCDateTime      :: SDS () DateTime ()
-currentUTCTime          :: SDS () Time ()
-currentUTCDate          :: SDS () Date ()
+currentUTCDateTime      :: SDSLens () DateTime ()
+currentUTCTime          :: SDSLens () Time ()
+currentUTCDate          :: SDSLens () Date ()
 
 //Unix timestamp
-currentTimestamp 		:: SDS () Timestamp ()
-currentTimespec 		:: SDS () Timespec ()
+currentTimestamp 		:: SDSLens () Timestamp ()
+currentTimespec 		:: SDSLens () Timespec ()
 
 // Processes
-topLevelTasks 			:: SharedTaskList () 
+topLevelTasks 			:: SharedTaskList ()
 
-currentSessions 		:: SDS () [TaskListItem ()] ()
-currentProcesses		:: SDS () [TaskListItem ()] ()
+currentSessions 		:: SDSLens () [TaskListItem ()] ()
+currentProcesses		:: SDSLens () [TaskListItem ()] ()
 
 // Session
-currentTopTask			:: SDS () TaskId ()
+currentTopTask :: SDSLens () TaskId ()
 
 //Task instances
-currentTaskInstanceNo           :: SDS () InstanceNo ()
-currentTaskInstanceAttributes   :: SDS () TaskAttributes TaskAttributes
-allTaskInstances                :: SDS () [TaskInstance] ()
-detachedTaskInstances	        :: SDS () [TaskInstance] () //Exclude sessions
-taskInstanceByNo                :: SDS InstanceNo TaskInstance TaskAttributes
-taskInstanceAttributesByNo      :: SDS InstanceNo TaskAttributes TaskAttributes
-taskInstancesByAttribute		:: SDS (!String,!String) [TaskInstance] () //Parameter is (key,value)
+currentTaskInstanceNo           :: SDSSource () InstanceNo ()
+currentTaskInstanceAttributes :: SimpleSDSSequence TaskAttributes
+allTaskInstances                :: SDSLens () [TaskInstance] ()
+detachedTaskInstances	        :: SDSLens () [TaskInstance] () //Exclude sessions
+taskInstanceByNo                :: SDSLens InstanceNo TaskInstance TaskAttributes
+taskInstanceAttributesByNo      :: SDSLens InstanceNo TaskAttributes TaskAttributes
+taskInstancesByAttribute		:: SDSLens (!String,!String) [TaskInstance] () //Parameter is (key,value)
 
 // Application
-applicationName			:: SDS () String ()          // Application name
-applicationVersion      :: SDS () String ()          // Application build identifier
-applicationDirectory	:: SDS () FilePath ()        // Directory in which the applicaton resides
-applicationOptions      :: SDS () EngineOptions ()   //Full engine options
+applicationName			:: SDSSource () String ()         // Application name
+applicationVersion      :: SDSSource () String ()          // Application build identifier
+applicationDirectory	:: SDSSource () FilePath ()       // Directory in which the applicaton resides
+applicationOptions      :: SDSSource () EngineOptions ()   //Full engine options
 

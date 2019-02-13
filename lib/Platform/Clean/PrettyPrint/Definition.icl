@@ -162,9 +162,12 @@ where
 	//|	TGenericFunctionInDictionary !(Global DefinedSymbol) !TypeKind !GlobalIndex /*GenericDict*/
 	//|	TE
 	print st _
-		= abort "UNKNOWN_TYPE"
+		= abort "UNKNOWN Type\n"
 
-instance print ConsVariable where print st (CV tv) = print st tv //TODO
+instance print ConsVariable
+where
+	print st (CV tv) = print st tv
+	print st _ = abort "UNKNOWN ConsVariable\n"
 
 instance print TypeVar where print st {tv_ident} = tv_ident.id_name
 
@@ -312,6 +315,7 @@ instance print TypeKind
 where
 	print st KindConst = print st "*"
 	print st (KindArrow ks) = print st ("*->" :+: ks)
+	print st _ = abort "UNKNOWN TypeKind\n"
 
 // Uniqueness
 instance print AttrInequality

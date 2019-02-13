@@ -25,7 +25,7 @@ from Control.GenBimap import generic bimap, :: Bimap
 */
 :: Editor a =
 	//Generating the initial UI
-	{ genUI :: !DataPath *(EditMode a) *VSt ->
+	{ genUI :: !UIAttributes DataPath *(EditMode a) *VSt ->
 		*(!MaybeErrorString (!UI, !EditState), !*VSt)
 	//React to edit events
 	, onEdit :: !DataPath (!DataPath, !JSONNode) EditState *VSt ->
@@ -43,7 +43,7 @@ from Control.GenBimap import generic bimap, :: Bimap
 */
 :: LeafEditor edit st a =
 	//Generating the initial UI
-	{ genUI :: !DataPath (EditMode a) *VSt ->
+	{ genUI :: !UIAttributes DataPath (EditMode a) *VSt ->
 		*(!MaybeErrorString (!UI, !st), !*VSt)
 	//React to edit events
 	, onEdit :: !DataPath (!DataPath, !edit) st *VSt ->
@@ -69,7 +69,7 @@ leafEditorToEditor_ :: !(Bool st -> [JSONNode]) !(Bool [JSONNode] -> (!Maybe st,
 */
 :: CompoundEditor st a =
 	//Generating the initial UI
-	{ genUI :: !DataPath (EditMode a) *VSt ->
+	{ genUI :: !UIAttributes DataPath (EditMode a) *VSt ->
 		*(!MaybeErrorString (!UI, !st, ![EditState]), !*VSt)
 	//React to edit events
 	, onEdit :: !DataPath (!DataPath, !JSONNode) st [EditState] *VSt ->
@@ -91,7 +91,7 @@ compoundEditorToEditor :: !(CompoundEditor st a) -> Editor a | JSONDecode{|*|}, 
 */
 :: EditorModifierWithState st a =
 	//Generating the initial UI
-	{ genUI :: !DataPath (EditMode a) *VSt ->
+	{ genUI :: !UIAttributes DataPath (EditMode a) *VSt ->
 		*(!MaybeErrorString (!UI, !st, !EditState), !*VSt)
 	//React to edit events
 	, onEdit :: !DataPath (!DataPath, !JSONNode) st EditState *VSt ->
@@ -152,8 +152,8 @@ isCompound :: !EditState -> Bool
 
 //Add client-side initialization to the generation of an initial UI
 withClientSideInit ::
-	((JSObj ()) *JSWorld -> *JSWorld)
-	(DataPath a *VSt -> *(!MaybeErrorString (!UI, !st), !*VSt))
-	DataPath a *VSt ->
+	!((JSObj ()) *JSWorld -> *JSWorld)
+	!(UIAttributes DataPath a *VSt -> *(!MaybeErrorString (!UI, !st), !*VSt))
+	!UIAttributes !DataPath !a !*VSt ->
 		*(!MaybeErrorString (!UI, !st), !*VSt)
 

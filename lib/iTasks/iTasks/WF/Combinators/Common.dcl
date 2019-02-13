@@ -11,7 +11,7 @@ from Data.Either				import :: Either
 
 /**
 * Infix shorthand for step combinator
-* 
+*
 * @param Task: The task for which continuations are defined
 * @param The possible continuations
 * @return The continuation's result
@@ -30,7 +30,7 @@ from Data.Either				import :: Either
 * @param First: The first task to be executed
 * @param Second: The second task, which receives the result of the first task
 * @return The combined task
-* 
+*
 * @gin False
 */
 tbind :: !(Task a) !(a -> Task b) 			-> Task b		| iTask a & iTask b
@@ -41,7 +41,7 @@ tbind :: !(Task a) !(a -> Task b) 			-> Task b		| iTask a & iTask b
 * @param First: The first task to be executed
 * @param Second: The second task, which receives the result of the first task
 * @return The combined task
-* 
+*
 * @gin False
 */
 (>>!) infixl 1 :: !(Task a) !(a -> Task b) -> Task b | iTask a & iTask b
@@ -66,7 +66,7 @@ tbind :: !(Task a) !(a -> Task b) 			-> Task b		| iTask a & iTask b
 *
 * @param First: The first task to be executed
 * @param Second: The second task to be executed
-* 
+*
 * @return The combined task
 *
 * @gin False
@@ -74,7 +74,7 @@ tbind :: !(Task a) !(a -> Task b) 			-> Task b		| iTask a & iTask b
 (>>^) infixl 1 :: !(Task a) (Task b) -> Task a| iTask a & iTask b
 /**
 * Infix shorthand for transform combinator
-* 
+*
 * @param Task: The task on which the transform should be applied
 * @param The transformation function to apply
 * @return The transformed task
@@ -84,7 +84,7 @@ tbind :: !(Task a) !(a -> Task b) 			-> Task b		| iTask a & iTask b
 (@?) infixl 1 :: !(Task a) !((TaskValue a) -> TaskValue b) -> Task b
 /**
 * Infix shorthand for transform combinator which only deals which transforms valid results
-* 
+*
 * @param Task: The task on which the transform should be applied
 * @param The transformation function to apply
 * @return The transformed task
@@ -126,7 +126,7 @@ try 		:: !(Task a) (e -> Task a) 			-> Task a 	| iTask a & iTask, toString e
 *
 * @param Task: The normal task which will possibly raise an exception of any type
 * @param Handler: The exception handling task
-* 
+*
 * @gin-title Catch all exceptions
 * @gin-icon catch
 */
@@ -138,17 +138,17 @@ catchAll	:: !(Task a) (String -> Task a)		-> Task a | iTask a
 *
 * @param The task that could in theory return Nothing
 * @return The result of the task
-* 
+*
 * @gin False
 */
 justdo	:: !(Task (Maybe a)) -> Task a | iTask a
 
 /**
 * Execute the list of tasks one after another.
-* 
+*
 * @param Tasks: The list of tasks to be executed sequentially
 * @return The combined task
-* 
+*
 * @gin-icon sequence
 */
 sequence	:: ![Task a] 						-> Task [a]		| iTask a
@@ -211,7 +211,7 @@ forever task :== foreverSt gDefault{|*|} \_->task
 * @param Right: The right task
 *
 * @return The result of the task that is completed first
-* 
+*
 * @gin False
 */
 (-||-) infixr 3 	:: !(Task a) !(Task a) 	-> Task a 				| iTask a
@@ -223,7 +223,7 @@ forever task :== foreverSt gDefault{|*|} \_->task
 * @param Right: The right task
 *
 * @return The result of the task that is completed first
-* 
+*
 * @gin False
 */
 (||-)  infixr 3		:: !(Task a) !(Task b)	-> Task b				| iTask a & iTask b
@@ -235,19 +235,19 @@ forever task :== foreverSt gDefault{|*|} \_->task
 * @param Right: The right task
 *
 * @return The result of the task that is completed first
-* 
+*
 * @gin False
 */
 (-||)  infixl 3		:: !(Task a) !(Task b)	-> Task a				| iTask a & iTask b
 
-/** 
+/**
 * Group two tasks in parallel that both need to be completed.
 *
 * @param Left: The left task
 * @param Right: The right task
 *
-* @return The results of both tasks 
-* 
+* @return The results of both tasks
+*
 * @gin-parallel True
 * @gin-title Parallel merge (tuple)
 * @gin-icon parallel-merge-tuple
@@ -255,23 +255,23 @@ forever task :== foreverSt gDefault{|*|} \_->task
 (-&&-) infixr 4 	:: !(Task a) !(Task b) 	-> Task (a,b) 			| iTask a & iTask b
 
 /**
-* Feed the result of one task as read-only shared to another 
+* Feed the result of one task as read-only shared to another
 */
-feedForward :: (Task a) ((ReadOnlyShared (Maybe a)) -> Task b) -> Task b | iTask a & iTask b
+feedForward :: (Task a) ((SDSLens () (Maybe a) ()) -> Task b) -> Task b | iTask a & iTask b
 
 //Infix version of feedForward
-(>&>) infixl 1  :: (Task a) ((ReadOnlyShared (Maybe a)) -> Task b) -> Task b | iTask a & iTask b
+(>&>) infixl 1  :: (Task a) ((SDSLens () (Maybe a) ()) -> Task b) -> Task b | iTask a & iTask b
 
 //Same as feedForward, but with the value of the lefthand side
-feedSideways :: (Task a) ((ReadOnlyShared (Maybe a)) -> Task b) -> Task a | iTask a & iTask b
+feedSideways :: (Task a) ((SDSLens () (Maybe a) ()) -> Task b) -> Task a | iTask a & iTask b
 
 //Infix version of feedSideways
-(>&^) infixl 1  :: (Task a) ((ReadOnlyShared (Maybe a)) -> Task b) -> Task a | iTask a & iTask b
+(>&^) infixl 1 :: (Task a) ((SDSLens () (Maybe a) ()) -> Task b) -> Task a | iTask a & iTask b
 
 /**
  * Feed the result of one task as read-only shared to another one and vice versa.
  */
-feedBidirectionally :: !((ReadOnlyShared (Maybe b)) -> Task a) !((ReadOnlyShared (Maybe a)) -> Task b)
+feedBidirectionally :: !((SDSLens () (Maybe b) ()) -> Task a) !((SDSLens () (Maybe a) ()) -> Task b)
                     -> Task (a, b) | iTask a & iTask b
 
 /**
@@ -288,7 +288,7 @@ feedBidirectionally :: !((ReadOnlyShared (Maybe b)) -> Task a) !((ReadOnlyShared
 * @param Tasks: The list of tasks
 *
 * @return The first result
-* 
+*
 * @gin-parallel True
 * @gin-title Take first completed
 * @gin-icon parallel-merge-first
@@ -302,7 +302,7 @@ anyTask				:: ![Task a]			-> Task a				| iTask a
 * @param Tasks: The list of tasks
 *
 * @return The list of results
-* 
+*
 * @gin-parallel True
 * @gin-title Parallel merge (list)
 * @gin-icon parallel-merge-list
@@ -317,10 +317,10 @@ allTasks			:: ![Task a]			-> Task [a]				| iTask a
 * @param Right: The right task
 *
 * @return The result of the first completed task wrapped in an 'Either'.
-* 
+*
 * @gin False
 */
-eitherTask			:: !(Task a) !(Task b) 	-> Task (Either a b)	| iTask a & iTask b	
+eitherTask			:: !(Task a) !(Task b) 	-> Task (Either a b)	| iTask a & iTask b
 
 /**
 * Randomly selects one item from a list.
@@ -335,18 +335,18 @@ randomChoice		:: ![a]										-> Task a				| iTask a
 * Do a task as long while monitoring that a shared state remains unchanged.
 * When the share changes the task is restarted
 */
-whileUnchanged :: !(ReadWriteShared r w) (r -> Task b) -> Task b | iTask r & iTask b
-whileUnchangedWith :: !(r r -> Bool) !(ReadWriteShared r w) (r -> Task b) -> Task b | iTask r & iTask w & iTask b
+whileUnchanged :: !(sds () r w) (r -> Task b) -> Task b | iTask r & iTask b & Registrable sds & TC w
+whileUnchangedWith :: !(r r -> Bool) !(sds () r w) (r -> Task b) -> Task b | iTask r & iTask w & iTask b & Registrable sds
 
 /**
 * Do a task when there is a Just value in the share
 * Do a default task when there is a Nothing value
 */
-withSelection :: (Task c) (a -> Task b) (ReadOnlyShared (Maybe a)) -> Task b | iTask a & iTask b & iTask c
+withSelection :: (Task c) (a -> Task b) (sds () (Maybe a) ()) -> Task b | iTask a & iTask b & iTask c & RWShared sds
 
 /**
 * Append a task to the set of top level tasks
-* 
+*
 */
 appendTopLevelTask :: !TaskAttributes !Bool !(Task a) -> Task TaskId | iTask a
 

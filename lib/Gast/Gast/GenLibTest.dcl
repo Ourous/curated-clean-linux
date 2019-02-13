@@ -20,10 +20,16 @@ import StdClass
 (@@!)infixl 2 :: !(a->b) !a -> b
 
 generic genShow a :: !String !Bool !a ![String] -> [String]
-generic gLess a  :: a a -> Bool
+generic gLess a :: a a -> Bool
 
-derive genShow	Int, Char, Bool, Real, String, UNIT, PAIR, EITHER, OBJECT, CONS of {gcd_name,gcd_arity},RECORD of {grd_name}, FIELD of {gfd_name}, [], (,), (,,), (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,), (,,,,,,,,), (,,,,,,,,,), (->), {}, {!}
-derive gLess    Int, Char, Bool, Real, String, UNIT, PAIR, EITHER, OBJECT, CONS, FIELD, RECORD, [], (,), (,,), (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,), (,,,,,,,,), (,,,,,,,,,) 
+derive genShow Int, Char, Bool, Real, String,
+	UNIT, PAIR, EITHER, OBJECT, CONS of {gcd_name,gcd_arity}, RECORD of {grd_name}, FIELD of {gfd_name},
+	{}, {!}, [], [!], [ !], [!!], (->),
+	(,), (,,), (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,), (,,,,,,,,), (,,,,,,,,,)
+derive gLess Int, Char, Bool, Real, String,
+	UNIT, PAIR, EITHER, OBJECT, CONS, FIELD, RECORD,
+	[],
+	(,), (,,), (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,), (,,,,,,,,), (,,,,,,,,,)
 
 show  :: !a -> [String] | genShow{|*|} a
 show1 :: !a ->  String  | genShow{|*|} a

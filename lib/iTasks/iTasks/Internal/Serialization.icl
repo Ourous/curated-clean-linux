@@ -13,7 +13,7 @@ serialize value = copy_to_string value
 
 deserialize	:: !*String -> MaybeErrorString a
 deserialize str = let (a,_) = (copy_from_string str) in (Ok a)
-				
+
 serializeDynamic :: !Dynamic -> *String
 serializeDynamic dyn = dynamic_to_string dyn
 

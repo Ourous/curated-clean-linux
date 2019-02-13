@@ -13,7 +13,7 @@ from Text.GenJSON import generic JSONEncode, generic JSONDecode, :: JSONNode
 from Data.Maybe import :: Maybe
 from Data.Error import :: MaybeError, :: MaybeErrorString
 from System.FilePath import :: FilePath
-from iTasks.SDS.Definition import :: SDS, :: Shared, :: ReadWriteShared, :: RWShared
+import iTasks.SDS.Definition
 from iTasks.Internal.IWorld import :: IWorld
 from iTasks.WF.Definition import class iTask
 from iTasks.UI.Editor import :: Editor, :: EditState, :: VSt
@@ -47,7 +47,7 @@ derive class iTask StoreReadError
 * @param The namespace in the store
 * @param Optionally a default content to be used on first read. If nothing is given an error will occur when reading before writing.
 */
-memoryStore   :: !StoreNamespace !(Maybe a) -> RWShared StoreName a a | JSONEncode{|*|}, JSONDecode{|*|}, TC a
+memoryStore :: !StoreNamespace !(Maybe a) -> SDSSequence StoreName a a | JSONEncode{|*|}, JSONDecode{|*|}, TC a
 
 /**
 * Extends a fullFileStore with JSON encoding/decoding such that arbitrary values can be stored.
@@ -59,7 +59,7 @@ memoryStore   :: !StoreNamespace !(Maybe a) -> RWShared StoreName a a | JSONEnco
 * @param Automatically reset the the store if an error occurs
 * @param Optionally a default content to be used on first read. If nothing is given an error will occur when reading before writing.
 */
-jsonFileStore :: !StoreNamespace !Bool !Bool !(Maybe a) -> RWShared StoreName a a | JSONEncode{|*|}, JSONDecode{|*|}, TC a
+jsonFileStore :: !StoreNamespace !Bool !Bool !(Maybe a) -> SDSSequence StoreName a a | JSONEncode{|*|}, JSONDecode{|*|}, TC a
 
 /**
 * Deletes the value with given key from the store

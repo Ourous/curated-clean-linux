@@ -12,11 +12,12 @@ import iTasks.WF.Definition
 import iTasks.WF.Tasks.IO
 from   iTasks.WF.Combinators.Core import :: AttachmentStatus
 import iTasks.UI.Editor, iTasks.UI.Editor.Common
+import iTasks.Internal.SDS
 from iTasks.UI.Layout import :: LUI, :: LUIMoves, :: LUIMoveID, :: LUIEffectStage, :: LUINo
 
-from iTasks.Internal.TaskState		import :: TaskTree(..), :: DeferredJSON(..), :: TIMeta(..)
+from iTasks.Internal.TaskState		import :: TaskTree(..), :: DeferredJSON(..), :: TIMeta(..) , :: TIType(..), :: AsyncAction
 from iTasks.Internal.TaskEval         import :: TaskEvalInfo(..)
-from iTasks.SDS.Combinators.Common import toDynamic 
+from iTasks.SDS.Combinators.Common import toDynamic
 from iTasks.Internal.Serialization    import JSONEncode, JSONDecode, dynamicJSONEncode, dynamicJSONDecode
 
 fromJSONOfDeferredJSON :: !DeferredJSON -> Maybe a | TC a & JSONDecode{|*|} a
@@ -29,7 +30,7 @@ fromJSONOfDeferredJSON (DeferredJSONNode json)
 
 make_dynamic v = dynamic v
 
-JSONEncode{|Task|} _ _ tt = [dynamicJSONEncode tt]		
+JSONEncode{|Task|} _ _ tt = [dynamicJSONEncode tt]
 JSONDecode{|Task|} _ _ [tt:c] = (dynamicJSONDecode tt,c)
 JSONDecode{|Task|} _ _ c = (Nothing,c)
 
@@ -43,59 +44,70 @@ gDefault{|Task|} gDefx = Task (\_ -> abort error)
 where
 	error = "Creating default task functions is impossible"
 
-wrapConnectionTask :: (ConnectionHandlers l r w) (RWShared () r w) -> ConnectionTask | TC l & TC r & TC w
-wrapConnectionTask {ConnectionHandlers|onConnect,onData,onShareChange,onDisconnect} sds
-    = ConnectionTask {ConnectionHandlersIWorld|onConnect=onConnect`,onData=onData`,onShareChange=onShareChange`,onTick=onTick`,onDisconnect=onDisconnect`} (toDynamic sds)
+wrapConnectionTask :: (ConnectionHandlers l r w) (sds () r w) -> ConnectionTask | TC l & TC r & TC w & RWShared sds
+wrapConnectionTask ch=:{ConnectionHandlers|onConnect,onData,onShareChange,onDisconnect} sds
+	= ConnectionTask {ConnectionHandlersIWorld|onConnect=onConnect`,onData=onData`,onShareChange=onShareChange`,onTick=onTick`,onDisconnect=onDisconnect`} (toDynamic sds)
 where
-    onConnect` host (r :: r^) env
-        # (mbl, mbw, out, close) = onConnect host r
-        = (toDyn <$> mbl, toDyn <$> mbw, out, close, env)
+	onConnect` connId host (r :: r^) env
+		# (mbl, mbw, out, close) = onConnect connId host r
+		= (toDyn <$> mbl, toDyn <$> mbw, out, close, env)
+	onConnect` _ _ val env = abort ("onConnect does not match with type " +++ toString (typeCodeOfDynamic val))
 
-    onData` data (l :: l^) (r :: r^) env
-        # (mbl, mbw, out, close) = onData data l r
-        = (toDyn <$> mbl, toDyn <$> mbw, out, close, env)
+	onData` data (l :: l^) (r :: r^) env
+		# (mbl, mbw, out, close) = onData data l r
+		= (toDyn <$> mbl, toDyn <$> mbw, out, close, env)
+	onData` _ _ val env = abort ("onData does not match with type " +++ toString (typeCodeOfDynamic val))
 
-    onShareChange` (l :: l^) (r :: r^) env
-        # (mbl, mbw, out, close) = onShareChange l r
-        = (toDyn <$> mbl, toDyn <$> mbw, out, close, env)
+	onShareChange` (l :: l^) (r :: r^) env
+		# (mbl, mbw, out, close) = onShareChange l r
+		= (toDyn <$> mbl, toDyn <$> mbw, out, close, env)
+	onShareChange` l r env = abort ("onShareChange does not match with type l=" +++ toString (typeCodeOfDynamic l) +++ ", r=" +++ toString (typeCodeOfDynamic r) +++ ". Expected l=" +++ toString (typeCodeOfDynamic (dynamic ch)))
 
-    // do nothing
-    onTick` l _ env
-        = (Ok l, Nothing, [], False, env)
+	// do nothing
+	onTick` l _ env
+		= (Ok l, Nothing, [], False, env)
 
-    onDisconnect` (l :: l^) (r :: r^) env
-        # (mbl, mbw) = onDisconnect l r
-        = (toDyn <$> mbl, toDyn <$> mbw, env)
+	onDisconnect` (l :: l^) (r :: r^) env
+		# (mbl, mbw) = onDisconnect l r
+		= (toDyn <$> mbl, toDyn <$> mbw, env)
+	onDisconnect` l r env = abort ("onDisconnect does not match with type l=" +++ toString (typeCodeOfDynamic l) +++ ", r=" +++ toString (typeCodeOfDynamic r))
 
-wrapIWorldConnectionTask :: (ConnectionHandlersIWorld l r w) (RWShared () r w) -> ConnectionTask | TC l & TC r & TC w
+wrapIWorldConnectionTask :: (ConnectionHandlersIWorld l r w) (sds () r w) -> ConnectionTask | TC l & TC r & TC w & RWShared sds
 wrapIWorldConnectionTask {ConnectionHandlersIWorld|onConnect,onData,onShareChange,onTick,onDisconnect} sds
-    = ConnectionTask {ConnectionHandlersIWorld|onConnect=onConnect`,onData=onData`,onShareChange=onShareChange`,onTick=onTick`,onDisconnect=onDisconnect`} (toDynamic sds)
+	= ConnectionTask {ConnectionHandlersIWorld|onConnect=onConnect`,onData=onData`,onShareChange=onShareChange`,onTick=onTick`,onDisconnect=onDisconnect`} (toDynamic sds)
 where
-    onConnect` host (r :: r^) env
-        # (mbl, mbw, out, close, env) = onConnect host r env
-        = (toDyn <$> mbl, toDyn <$> mbw, out, close, env)
+	onConnect` connId host (r :: r^) env
+		# (mbl, mbw, out, close, env) = onConnect connId host r env
+		= (toDyn <$> mbl, toDyn <$> mbw, out, close, env)
 
-    onData` data (l :: l^) (r :: r^) env
-        # (mbl, mbw, out, close, env) = onData data l r env
-        = (toDyn <$> mbl, toDyn <$> mbw, out, close, env)
+	onConnect` _ _ val env = abort ("onConnect does not match with type " +++ toString (typeCodeOfDynamic val))
 
-    onShareChange` (l :: l^) (r :: r^) env
-        # (mbl, mbw, out, close, env) = onShareChange l r env
-        = (toDyn <$> mbl, toDyn <$> mbw, out, close, env)
+	onData` data (l :: l^) (r :: r^) env
+		# (mbl, mbw, out, close, env) = onData data l r env
+		= (toDyn <$> mbl, toDyn <$> mbw, out, close, env)
 
-    onTick` (l :: l^) (r :: r^) env
-        # (mbl, mbw, out, close, env) = onTick l r env
-        = (toDyn <$> mbl, toDyn <$> mbw, out, close, env)
+	onData` _ _ val env = abort ("onData does not match with type " +++ toString (typeCodeOfDynamic val))
 
-    onDisconnect` (l :: l^) (r :: r^) env
-        # (mbl, mbw, env) = onDisconnect l r env
-        = (toDyn <$> mbl, toDyn <$> mbw, env)
+	onShareChange` (l :: l^) (r :: r^) env
+		# (mbl, mbw, out, close, env) = onShareChange l r env
+		= (toDyn <$> mbl, toDyn <$> mbw, out, close, env)
+	onShareChange` l r env = abort ("onShareChange does not match with type l=" +++ toString (typeCodeOfDynamic l) +++ ", r=" +++ toString (typeCodeOfDynamic r))
+
+	onTick` (l :: l^) (r :: r^) env
+		# (mbl, mbw, out, close, env) = onTick l r env
+		= (toDyn <$> mbl, toDyn <$> mbw, out, close, env)
+	onTick` l r env = abort ("onTick does not match with type l=" +++ toString (typeCodeOfDynamic l) +++ ", r=" +++ toString (typeCodeOfDynamic r))
+
+	onDisconnect` (l :: l^) (r :: r^) env
+		# (mbl, mbw, env) = onDisconnect l r env
+		= (toDyn <$> mbl, toDyn <$> mbw, env)
+	onDisconnect` l r env = abort ("onDisconnect does not match with type l=" +++ toString (typeCodeOfDynamic l) +++ ", r=" +++ toString (typeCodeOfDynamic r))
 
 mkInstantTask :: (TaskId *IWorld -> (!MaybeError (Dynamic,String) a,!*IWorld)) -> Task a | iTask a
 mkInstantTask iworldfun = Task (evalOnce iworldfun)
 where
-	evalOnce f event repOpts (TCInit taskId ts) iworld = case f taskId iworld of	
-		(Ok a,iworld)							= (ValueResult (Value a True) {lastEvent=ts,attributes='DM'.newMap,removedTasks=[]} (rep event) (TCStable taskId ts (DeferredJSON a)), iworld)
+	evalOnce f event repOpts (TCInit taskId ts) iworld = case f taskId iworld of
+		(Ok a,iworld)							= (ValueResult (Value a True) {lastEvent=ts,removedTasks=[],attributes='DM'.newMap} (rep event) (TCStable taskId ts (DeferredJSON a)), iworld)
 		(Error e, iworld)					    = (ExceptionResult e, iworld)
 
 	evalOnce f event repOpts state=:(TCStable taskId ts enc) iworld = case fromJSONOfDeferredJSON enc of
@@ -105,5 +117,5 @@ where
 	evalOnce f _ _ (TCDestroy _) iworld	= (DestroyedResult,iworld)
 
 	rep ResetEvent  = ReplaceUI (ui UIEmpty)
-	rep _ 			= NoChange	
+	rep _ 			= NoChange
 

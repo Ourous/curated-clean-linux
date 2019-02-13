@@ -37,6 +37,7 @@ forever           :: !(a b) -> a c | Monad a
 join              :: !(a (a b)) -> a b | Monad a
 zipWithM          :: (.a -> .(.b -> c d)) ![.a] [.b] -> c [d] | Monad c
 foldM             :: (a -> .(b -> c a)) a ![b] -> c a | Monad c
+mapStM            :: (a st -> m (b, st)) ![a] !st -> m (![b], st) | Monad m
 replicateM        :: !.Int (a b) -> a [b] | Monad a
 (>=>) infixr 1    :: u:(.a -> b c) (c -> b d) -> v:(.a -> b d) | Monad b, [v <= u]
 (<=<) infixr 1    :: u:((a -> b c) -> v:(w:(.d -> b a) -> x:(.d -> b c))) | Monad b, [v <= u,x <= w]

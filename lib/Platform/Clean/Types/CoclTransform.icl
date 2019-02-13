@@ -12,7 +12,7 @@ import Control.Monad.State
 import Data.Functor
 from Data.Maybe import :: Maybe (..), instance Functor Maybe,
 	instance pure Maybe, instance <*> Maybe, instance Monad Maybe
-import qualified Data.Map as M
+import qualified Data.Map
 
 import syntax
 import qualified syntax
@@ -123,7 +123,7 @@ strictnessListToBools (StrictList i l) = strictnessListToBools (Strict i) ++ str
 :: TypeDerivState =
 	{ tds_var_index         :: Int
 	, tds_allows_new_idents :: Bool
-	, tds_map               :: 'M'.Map String 'Clean.Types'.Type
+	, tds_map               :: 'Data.Map'.Map String 'Clean.Types'.Type
 	}
 tds_var_index         tds = tds.tds_var_index
 tds_allows_new_idents tds = tds.tds_allows_new_idents
@@ -132,7 +132,7 @@ tds_map               tds = tds.tds_map
 class coclType a :: !a -> StateT TypeDerivState Maybe 'Clean.Types'.Type
 
 store :: !String !'Clean.Types'.Type -> StateT TypeDerivState Maybe 'Clean.Types'.Type
-store id t = modify (\tds -> {tds & tds_map='M'.put id t tds.tds_map}) $> t
+store id t = modify (\tds -> {tds & tds_map='Data.Map'.put id t tds.tds_map}) $> t
 
 allowNewIdents :: !Bool -> StateT TypeDerivState Maybe ()
 allowNewIdents b = modify \tds -> {tds & tds_allows_new_idents=b}
@@ -144,7 +144,7 @@ pdType :: !'syntax'.ParsedDefinition -> Maybe 'Clean.Types'.Type
 pdType pd = evalStateT (coclType pd)
 	{ tds_var_index         = 0
 	, tds_allows_new_idents = True
-	, tds_map               = 'M'.newMap
+	, tds_map               = 'Data.Map'.newMap
 	}
 
 instance coclType 'syntax'.ParsedDefinition
@@ -161,7 +161,7 @@ where
 instance coclType 'syntax'.ParsedExpr
 where
 	coclType (PE_Basic b) = coclType b
-	coclType (PE_Ident id) = gets tds_map >>= \m -> case 'M'.get id.id_name m of
+	coclType (PE_Ident id) = gets tds_map >>= \m -> case 'Data.Map'.get id.id_name m of
 		Nothing -> gets tds_allows_new_idents >>= \allowed -> if allowed
 			(gets tds_var_index >>= \i ->
 				modify (\tds -> {tds & tds_var_index=i+1}) >>|

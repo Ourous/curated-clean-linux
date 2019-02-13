@@ -20,7 +20,7 @@ import qualified System.Directory as SD
 import iTasks
 
 deleteFile :: !FilePath -> Task ()
-deleteFile path = accWorldError ('SF'.deleteFile path) snd 
+deleteFile path = accWorldError ('SF'.deleteFile path) snd
 
 moveFile :: !FilePath !FilePath -> Task ()
 moveFile srcPath dstPath = accWorldError ('SF'.moveFile srcPath dstPath) snd
@@ -32,10 +32,10 @@ copyFile srcPath dstPath = accWorldError (copyFile` srcPath dstPath) id
 copyFile` srcPath dstPath world = case 'SF'.readFile srcPath world of
 	(Error e,world) = (Error e,world)
 	(Ok content,world) = writeFile dstPath content world
-		
+
 createDirectory :: !FilePath !Bool -> Task ()
 createDirectory path False = accWorldError ('SD'.createDirectory path) snd
-createDirectory path True = accWorldError (createWithParents path) id 
+createDirectory path True = accWorldError (createWithParents path) id
 where
 	createWithParents path world = create [] (split {pathSeparator} path) world
 
@@ -47,7 +47,7 @@ where
 		# (exists,world) = 'SF'.fileExists path world
 		| exists = create next rest world //This part exists, continue
 		| otherwise = case 'SD'.createDirectory path world of
-			(Error e,world) = (Error (snd e),world) 
+			(Error e,world) = (Error (snd e),world)
 			(Ok (),world) = create next rest world
 
 deleteDirectory :: !FilePath !Bool -> Task ()
@@ -58,7 +58,7 @@ deleteDirectoryRecursive path world = case 'SD'.readDirectory path world of
 	(Error e,world) = (Error (snd e), world)
 	(Ok content,world) = case deleteContent content world of
 		(Error e,world) = (Error e,world)
-		(Ok (),world) = case 'SD'.removeDirectory path world of 
+		(Ok (),world) = case 'SD'.removeDirectory path world of
 			(Error e,world) = (Error (snd e),world)
 			(Ok (),world) = (Ok (),world)
 where
@@ -67,7 +67,7 @@ where
 	deleteContent ["..":rest] world = deleteContent rest world
 	deleteContent [entry:rest] world = case getFileInfo (path </> entry) world of
 		(Error e,world) = (Error (snd e), world)
-		(Ok {FileInfo|directory},world) 
+		(Ok {FileInfo|directory},world)
 		| directory = case deleteDirectoryRecursive (path </> entry) world of
 			(Error e,world) = (Error e,world)
 			(Ok (),world) = deleteContent rest world
@@ -89,7 +89,7 @@ where
 	copyContent ["..":rest] world = copyContent rest world
 	copyContent [entry:rest] world = case getFileInfo (srcPath </> entry) world of
 		(Error e,world) = (Error (snd e), world)
-		(Ok {FileInfo|directory},world) 
+		(Ok {FileInfo|directory},world)
 			| directory = case copyDirectory` (srcPath </> entry) (dstPath </> entry) world of
 				(Error e,world) = (Error e,world)
 				(Ok (),world) = copyContent rest world

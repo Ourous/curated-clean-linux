@@ -3,7 +3,7 @@ definition module iTasks.WF.Tasks.SDS
 * This module provides the core tasks for accessing shared data sources.
 */
 from iTasks.WF.Definition import :: Task, class iTask
-from iTasks.SDS.Definition import :: ReadWriteShared, :: SDS
+import iTasks.SDS.Definition
 
 from iTasks.UI.Editor import :: Editor
 from iTasks.UI.Editor.Generic import generic gEditor
@@ -29,7 +29,7 @@ instance toString SharedException
 * @gin-title Read shared
 * @gin-icon shared_read
 */
-get :: !(ReadWriteShared a w) -> Task a | iTask a
+get :: !(sds () a w) -> Task a | iTask a & Readable sds & TC w
 
 /**
 * Writes shared data.
@@ -42,7 +42,7 @@ get :: !(ReadWriteShared a w) -> Task a | iTask a
 * @gin-title Write shared
 * @gin-icon shared_update
 */
-set :: !a !(ReadWriteShared r a) -> Task a | iTask a & TC r
+set :: !a !(sds () r a)  -> Task a | iTask a & TC r & Writeable sds
 
 /**
 * Updates shared data in one atomic operation.
@@ -55,7 +55,7 @@ set :: !a !(ReadWriteShared r a) -> Task a | iTask a & TC r
 * @gin-title Update shared
 * @gin-icon shared_update
 */
-upd :: !(r -> w) !(ReadWriteShared r w) -> Task w | iTask r & iTask w
+upd :: !(r -> w) !(sds () r w) -> Task w | iTask r & iTask w & RWShared sds
 
 /**
 * Reads shared data continously
@@ -67,6 +67,6 @@ upd :: !(r -> w) !(ReadWriteShared r w) -> Task w | iTask r & iTask w
 * @gin-title Read shared
 * @gin-icon shared_read
 */
-watch :: !(ReadWriteShared r w) -> Task r | iTask r
+watch :: !(sds () r w) -> Task r | iTask r & TC w & Readable, Registrable sds
 
 

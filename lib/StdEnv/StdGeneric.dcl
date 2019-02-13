@@ -1,9 +1,5 @@
 definition module StdGeneric
 
-// embedding-projection
-:: Bimap a b = { map_to :: .(a -> b), map_from :: .(b -> a) }
-bimapId :: Bimap .a .a
-
 // generic representation
 :: UNIT = UNIT
 :: EITHER a b = LEFT a | RIGHT b
@@ -57,7 +53,7 @@ bimapId :: Bimap .a .a
 getConsPath :: !GenericConsDescriptor -> [ConsPos]
 
 // generic bidirectional mapping
-generic bimap a b :: Bimap .a .b
+generic bimap a b | bimap b a :: .a ->.b
 
 derive bimap c
 derive bimap PAIR
@@ -67,10 +63,13 @@ derive bimap CONS
 derive bimap RECORD
 derive bimap FIELD
 derive bimap (->)
-derive bimap Bimap
 
 // HACK: dictionaries for all generics.
 // It works since all generic classes have only one method and do not inherit 
 // from other classes
 :: GenericDict a = { generic_dict :: !a }
 :: GenericDict0 a = { generic_dict0 :: a }
+
+// embedding-projection
+:: Bimap a b = { map_to :: .(a -> b), map_from :: .(b -> a) }	// deprecated, no longer used
+bimapId :: Bimap .a .a	// deprecated, no longer used

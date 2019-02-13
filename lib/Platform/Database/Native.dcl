@@ -29,7 +29,7 @@ from Text.GenJSON import generic JSONEncode, generic JSONDecode, :: JSONNode
 :: Entry v a =
 	{ value       :: !v
 	, included    :: !Bool
-	, annotations :: ![a]
+	, annotations :: ![!a!]
 	}
 
 instance == Index
@@ -65,17 +65,17 @@ resetDB :: !*(NativeDB v a) -> *NativeDB v a
 /**
  * Return all entries (whether they have been excluded or not).
  */
-allEntries :: !*(NativeDB v a) -> *(![v], !*NativeDB v a)
+allEntries :: !*(NativeDB v a) -> *(![!v!], !*NativeDB v a)
 
 /**
  * Get all entries that are still included, and their annotations.
  */
-getEntries :: !*(NativeDB v a) -> *(![(v, [a])], !*NativeDB v a)
+getEntries :: !*(NativeDB v a) -> *(![!(v, [!a!])!], !*NativeDB v a)
 
 /**
  * Like {{`getEntries`}}, but also returns the indices of the entries.
  */
-getEntriesWithIndices :: !*(NativeDB v a) -> *(![(Index, v, [a])], !*NativeDB v a)
+getEntriesWithIndices :: !*(NativeDB v a) -> *(![!(Index, v, [!a!])!], !*NativeDB v a)
 
 /**
  * An in-place map over all entries (also the excluded ones).
@@ -87,13 +87,13 @@ mapInPlace :: !(Int v -> v) !*(NativeDB v a) -> *(NativeDB v a)
  * should be included and which annotations should be added (if any). Excluded
  * entries are ignored.
  */
-search :: !SearchMode !(v -> (Bool, [a])) !*(NativeDB v a) -> *NativeDB v a
+search :: !SearchMode !(v -> (Bool, [!a!])) !*(NativeDB v a) -> *NativeDB v a
 
 /**
  * Like {{`search`}}, but search for one particular index. The {{`SearchMode`}}
  * is assumed to be {{`AddExcluded`}}.
  */
-searchIndex :: !Index ![a] !*(NativeDB v a) -> *NativeDB v a
+searchIndex :: !Index ![!a!] !*(NativeDB v a) -> *NativeDB v a
 
 /**
  * Exclude an index from the result set.
@@ -103,7 +103,7 @@ unsearchIndex :: !Index !*(NativeDB v a) -> *NativeDB v a
 /**
  * Like {{`search`}}, but search for specific indices.
  */
-searchIndices :: !SearchMode ![(!Index, ![a])] !*(NativeDB v a) -> *NativeDB v a
+searchIndices :: !SearchMode ![(!Index, ![!a!])] !*(NativeDB v a) -> *NativeDB v a
 
 /**
  * Exclude a list of indices.
@@ -111,18 +111,53 @@ searchIndices :: !SearchMode ![(!Index, ![a])] !*(NativeDB v a) -> *NativeDB v a
 unsearchIndices :: ![Index] !*(NativeDB v a) -> *NativeDB v a
 
 /**
+ * Like {{`unsearchIndices`}}, but for an array of indices.
+ */
+unsearchIndices` :: !{#Index} !*(NativeDB v a) -> *NativeDB v a
+
+/**
  * Like {{`searchIndices`}}, but also check on some property.
  * This search always uses the {{`AddExcluded`}} {{`SearchMode`}}.
  */
-searchWithIndices :: !(v -> (Bool, ![a])) ![Index] !*(NativeDB v a) -> *NativeDB v a
+searchWithIndices :: !(v -> (Bool, ![!a!])) ![Index] !*(NativeDB v a) -> *NativeDB v a
 
 /**
- * Get an entry and its annotations.
+ * Like {{`searchWithIndices`}}, but with an array of indices.
+ */
+searchWithIndices` :: !(v -> (Bool, ![!a!])) !{#Index} !*(NativeDB v a) -> *NativeDB v a
+
+/**
+ * Retrieve an entry.
  * Also see {{`getIndices`}}.
  */
-getIndex :: !Index !*(NativeDB v a) -> *(!Entry v a, !*(NativeDB v a))
+getValueByIndex :: !Index !*(NativeDB v a) -> *(!v, !*(NativeDB v a))
+
+/**
+ * Retrieve the annotations of an entry.
+ */
+getAnnotationsByIndex :: !Index !*(NativeDB v a) -> *(![!a!], !*(NativeDB v a))
+
+/**
+ * Check whether an entry is included.
+ */
+isIndexIncluded :: !Index !*(NativeDB v a) -> *(!Bool, !*(NativeDB v a))
 
 /**
  * Like {{`getIndex`}}, but for a list of indices.
  */
-getIndices :: ![Index] !*(NativeDB v a) -> *(![Entry v a], !*(NativeDB v a))
+getIndices :: ![Index] !*(NativeDB v a) -> *(![!Entry v a!], !*(NativeDB v a))
+
+/**
+ * Like {{`getValueByIndex`}}, but for a list of indices.
+ */
+getValuesByIndices :: ![Index] !*(NativeDB v a) -> *(![!v!], !*(NativeDB v a))
+
+/**
+ * Like {{`getIndices`}}, but for an array of indices.
+ */
+getIndices` :: !{#Index} !*(NativeDB v a) -> *(![!Entry v a!], !*(NativeDB v a))
+
+/**
+ * Like {{`getValuesByIndices`}}, but for an array of indices.
+ */
+getValuesByIndices` :: !{#Index} !*(NativeDB v a) -> *(![!v!], !*(NativeDB v a))

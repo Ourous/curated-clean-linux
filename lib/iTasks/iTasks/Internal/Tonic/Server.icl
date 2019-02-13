@@ -17,6 +17,7 @@ import iTasks.Extensions.DateTime
 import iTasks.Internal.Tonic.AbsSyn
 import iTasks.Internal.Tonic.Types
 import iTasks.Internal.Tonic.Images
+from iTasks.Internal.IWorld import :: ConnectionId
 
 :: ViewerSettings =
   { recording         :: Bool
@@ -25,7 +26,7 @@ import iTasks.Internal.Tonic.Images
 
 derive class iTask ViewerSettings
 
-shViewerSettings :: Shared ViewerSettings
+shViewerSettings :: SimpleSDSLens ViewerSettings
 shViewerSettings = sharedStore "shViewerSettings" { recording = True
                                                   , selectedBlueprint = Nothing
                                                   }
@@ -34,13 +35,13 @@ foldT_ :: (a -> Task ()) [a] -> Task ()
 foldT_ f []       = return ()
 foldT_ f [x : xs] = f x >>| foldT_ f xs
 
-liveRunStateShare :: RWShared () TonicGenRTMap TonicGenRTMap
+liveRunStateShare :: SimpleSDSLens TonicGenRTMap
 liveRunStateShare = sharedStore "liveRunStateShare" 'DM'.newMap
 
-recordingsShare :: Shared (Map DateTime [TonicMessage])
+recordingsShare :: SimpleSDSLens (Map DateTime [TonicMessage])
 recordingsShare = sharedStore "recordingsShare" 'DM'.newMap
 
-recordingForDateTimeShare :: ROShared DateTime [TonicMessage]
+recordingForDateTimeShare :: SDSLens DateTime [TonicMessage] ()
 recordingForDateTimeShare = toReadOnly (mapLens "recordingForDateTimeShare" recordingsShare (Just []))
 
 newRTMapFromMessages :: [TonicMessage] -> Task TonicGenRTMap
@@ -112,7 +113,7 @@ showGenBlueprintInstance :: ![TaskAppRenderer] !GenBlueprintInstance
                          -> Task (ActionState (TClickAction, ClickMeta) TonicImageState)
 showGenBlueprintInstance rs bpi selDetail compact depth
   = updateInformation ()
-      [undef /*imageUpdate id (\_ -> mkGenInstanceImage rs bpi selDetail compact) (const id) (const id)  (\_ _ -> Nothing) (const id) */]
+      [abort "huehue" /*imageUpdate id (\_ -> mkGenInstanceImage rs bpi selDetail compact) (const id) (const id)  (\_ _ -> Nothing) (const id) */]
       { ActionState
       | state  = { tis_task    = bpi.gbpi_blueprint
                  , tis_depth   = depth
@@ -160,48 +161,51 @@ flattenRTMap m = flatten (flattenRTMap` ('DM'.toList m))
 
 :: TonicGenRTMap :== Map ComputationId [((ModuleName, FuncName), GenBlueprintInstance)]
 
-saSelectedBlueprint :: Shared (Maybe (ComputationId, BlueprintIdent))
+saSelectedBlueprint :: SimpleSDSLens (Maybe (ComputationId, BlueprintIdent))
 saSelectedBlueprint = sharedStore "saSelectedBlueprint" Nothing
 
 liveStandAloneViewer :: Task ()
-liveStandAloneViewer
-  = allTasks [ updateSharedInformation "Viewer settings" [] shViewerSettings @! ()
+liveStandAloneViewer = allTasks [ updateSharedInformation "Viewer settings" [] shViewerSettings @! ()
              , startViewer @! ()
              ] @! ()
-  where
+where
   startViewer
     =   enterChoiceWithShared "Select blueprint" [] (mapRead (\ts -> 'DL'.concatMap f ts.ts_allMsgs) tonicServerShare)
     >&> withSelection noSel (
-    (\bp -> whileUnchanged (tonicServerShare |+| shViewerSettings)
+    (\bp -> whileUnchanged (tonicServerShare |*| shViewerSettings)
     (\x=:(tms, _) -> (runViewer x -|| forever (viewInformation () [] () >>* [ startAction tms
                                                                             , pauseAction tms
                                                                             , continueAction tms
                                                                             , stopAction tms
                                                                             ])))))
-    where
+  where
     startAction :: TMessageStore -> TaskCont a (Task ())
     startAction {ts_recording} = OnAction (Action "Start new recording") (ifCond (not ts_recording) startTask)
-      where
+    where
       startTask
         =   upd (\ts -> {ts & ts_recording = True, ts_recordingBuffer = []}) tonicServerShare @! ()
+    
     pauseAction :: TMessageStore -> TaskCont a (Task ())
     pauseAction {ts_recording} = OnAction (Action "Pause recording") (ifCond ts_recording stopTask)
-      where
+    where
       stopTask
         =   upd (\ts -> {ts & ts_recording = False}) tonicServerShare @! ()
+    
     continueAction :: TMessageStore -> TaskCont a (Task ())
     continueAction {ts_recording} = OnAction (Action "Continue recording") (ifCond (not ts_recording) stopTask)
-      where
+    where
       stopTask
         =   upd (\ts -> {ts & ts_recording = True}) tonicServerShare @! ()
+    
     stopAction :: TMessageStore -> TaskCont a (Task ())
     stopAction {ts_recording} = OnAction (Action "Pause and save recording") (ifCond ts_recording stopTask)
-      where
+    where
       stopTask
         =           get tonicServerShare
         >>- \ts  -> get currentDateTime
         >>- \cdt -> upd ('DM'.put cdt ts.ts_recordingBuffer) recordingsShare
         >>- \_   -> upd (\ts -> {ts & ts_recording = False}) tonicServerShare @! ()
+    
     refreshAction :: TaskCont a (Task ())
     refreshAction = OnAction (Action "Refresh") (always startViewer)
 
@@ -269,7 +273,7 @@ mkInstance nid tf =
                            , bpr_taskName   = tf.tf_name }
   }
 
-messageArchive :: Shared [TonicMessage]
+messageArchive :: SimpleSDSLens [TonicMessage]
 messageArchive = sharedStore "messageArchive" []
 
 
@@ -281,7 +285,7 @@ messageArchive = sharedStore "messageArchive" []
 
 derive class iTask TMessageStore
 
-tonicServerShare :: Shared TMessageStore
+tonicServerShare :: SimpleSDSLens TMessageStore
 tonicServerShare = sharedStore "tonicServerShare" { TMessageStore
                                                   | ts_recording       = True
                                                   , ts_allMsgs         = []
@@ -301,7 +305,7 @@ acceptAndViewTonicTraces
       ||-
     viewSharedInformation "Logged traces" [] tonicServerShare @! ()
 
-acceptTonicTraces :: !(Shared TMessageStore) -> Task [ServerState]
+acceptTonicTraces :: !(Shared sds TMessageStore) -> Task [ServerState] | RWShared sds
 acceptTonicTraces tonicShare
   = tcplisten 9000 True tonicShare { ConnectionHandlers
                                    | onConnect     = onConnect
@@ -310,9 +314,9 @@ acceptTonicTraces tonicShare
                                    , onDisconnect  = onDisconnect
                                    }
   where
-    onConnect :: String TMessageStore
+    onConnect :: ConnectionId String TMessageStore
               -> (MaybeErrorString ServerState, Maybe TMessageStore, [String], Bool)
-    onConnect host olderMessages
+    onConnect connId host olderMessages
     = ( Ok { oldData = ""
            , clientIp = host}
       , Just olderMessages

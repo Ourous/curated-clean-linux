@@ -1,0 +1,15 @@
+
+CC = gcc
+CFLAGS = -D_WINDOWS_ -DGNU_C -O -fomit-frame-pointer
+
+OBJECTS = \
+	backend.o backendsupport.o buildtree.o checker_2.o checksupport.o \
+	cocl.o codegen1.o codegen2.o codegen3.o codegen.o comparser_2.o \
+	comsupport.o dbprint.o instructions.o optimisations.o \
+	pattern_match_2.o result_state_database.o sa.o scanner_2.o \
+	set_scope_numbers.o settings.o windows_io.o statesgen.o tcsupport_2.o \
+	typeconv_2.o version.o
+
+backend.dll: $(OBJECTS)
+	gcc -shared -o ../backend.dll $(OBJECTS) -static-libgcc ../backend.def
+#	gcc -shared -o ../backend.dll $(OBJECTS) -static-libgcc ../backend.def -Wl,--output-def,backend.output.def -Wl,--out-implib,backend.a

@@ -15,7 +15,7 @@ import Data.Functor
 import Data.List
 import Data.Maybe
 import Data.Tuple
-from Data.Foldable import class Foldable(foldr1)
+import qualified Data.Foldable
 from Text import class Text(join,rpad), instance Text String
 
 instance Alternative (MaybeError [String])
@@ -26,7 +26,7 @@ where
 	(<|>) (Error e) (Error _) = Error e
 	(<|>) (Error _) r = r
 
-showHelpText :: [HelpText] -> String
+showHelpText :: ![HelpText] -> String
 showHelpText help = join "\n" $ map show help
 where
 	maxLeftWidth = maxList $ map leftWidth help
@@ -43,7 +43,7 @@ where
 	show (OperandHelpText var help add) =
 		rpad var (maxLeftWidth + 2) ' ' +++ join "\n  " [help:add]
 
-parseOptions :: (t opts) [String] opts -> MaybeError [String] opts | OptionDescription t
+parseOptions :: !(t opts) ![String] !opts -> MaybeError [String] opts | OptionDescription t
 parseOptions p args opts = parse (optParser p) args defaultState opts
 where
 	defaultState =
@@ -59,7 +59,7 @@ where
 
 instance OptionDescription Option
 where
-	optParser :: (Option opts) -> OptParser opts
+	optParser :: !(Option opts) -> OptParser opts
 	optParser (Flag f upd _) = OptParser \args st opts -> case args of
 		[arg:args] | arg == f -> case st.operands_state of
 			NoOperandsSeenYet -> Just $ (\opts -> (opts,st,args)) <$> upd opts
@@ -89,7 +89,7 @@ where
 		p` (map (\arg -> if (arg == short) long arg) args) st opts
 	optParser (Options ps) = OptParser \args st opts -> case catMaybes [p args st opts \\ p <- optps] of
 		[]  -> Nothing
-		res -> Just (foldr1 (<|>) res)
+		res -> Just ('Data.Foldable'.foldr1 (<|>) res)
 	where
 		optps = [p \\ OptParser p <- map optParser ps]
 	optParser wh=:(WithHelp short p) = OptParser \args st opts -> case args of
@@ -122,7 +122,7 @@ where
 		[OperandHelpText var help add:rest]      -> [OperandHelpText var help (add ++ lines):rest]
 		[]                                       -> []
 
-cleanupHelpText :: [HelpText] -> [HelpText]
+cleanupHelpText :: ![HelpText] -> [HelpText]
 cleanupHelpText [oht=:OptionHelpText opts _ _ _:rest] = [oht:cleanupHelpText $ catMaybes $ map cleanup rest]
 where
 	cleanup :: HelpText -> Maybe HelpText

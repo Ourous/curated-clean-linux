@@ -12,11 +12,8 @@ import iTasks.Internal.Serialization, iTasks.Internal.Generic.Visualization
 import Data.CircularStack
 import Data.Error, Data.Either
 
-derive JSONEncode TIMeta, TIValue, TIReduct, TaskTree, ParallelTaskState, ParallelTaskChange, TaskResult, TaskEvalInfo, TonicOpts, CircularStack
-derive JSONDecode TIMeta, TIValue, TIReduct, TaskTree, ParallelTaskState, ParallelTaskChange, TaskResult, TaskEvalInfo, TonicOpts, CircularStack
-
-derive JSONEncode LUI, LUIChanges, LUIEffects, LUIEffectStage, LUINo, Set
-derive JSONDecode LUI, LUIChanges, LUIEffects, LUIEffectStage, LUINo, Set
+derive JSONEncode TIMeta, TIType, TIValue, TIReduct, TaskTree, ParallelTaskState, ParallelTaskChange, TaskResult, TaskEvalInfo, TonicOpts, CircularStack, AsyncAction
+derive JSONDecode TIMeta, TIType, TIValue, TIReduct, TaskTree, ParallelTaskState, ParallelTaskChange, TaskResult, TaskEvalInfo, TonicOpts, CircularStack, AsyncAction
 
 instance toString DeferredJSON where
     toString (DeferredJSON x)        = toString $ toJSON x
@@ -45,16 +42,15 @@ gText{|DeferredJSON|} f djson = gText{|*|} f $ toJSON <$> djson
 
 taskIdFromTaskTree :: TaskTree -> MaybeError TaskException TaskId
 taskIdFromTaskTree (TCInit          taskId _)         = Ok taskId
+taskIdFromTaskTree (TCAwait 		_ taskId _ _ )    = Ok taskId
 taskIdFromTaskTree (TCBasic         taskId _ _ _)     = Ok taskId
 taskIdFromTaskTree (TCInteract      taskId _ _ _ _ _) = Ok taskId
 taskIdFromTaskTree (TCStep          taskId _ _)       = Ok taskId
 taskIdFromTaskTree (TCParallel      taskId _ _ _)     = Ok taskId
 taskIdFromTaskTree (TCShared        taskId _ _)       = Ok taskId
 taskIdFromTaskTree (TCAttach        taskId _ _ _ _)   = Ok taskId
-taskIdFromTaskTree (TCExposedShared taskId _ _ _)     = Ok taskId
 taskIdFromTaskTree (TCStable        taskId _ _)       = Ok taskId
 taskIdFromTaskTree (TCLayout        _ tt)             = taskIdFromTaskTree tt
 taskIdFromTaskTree (TCAttribute     taskId _ _)       = Ok taskId
 taskIdFromTaskTree (TCNop)                            = Error (exception "Unable to obtain TaskId from TaskTree (TCNop)")
 taskIdFromTaskTree (TCDestroy       tt)               = taskIdFromTaskTree tt
-

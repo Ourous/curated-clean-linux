@@ -15,25 +15,27 @@ import iTasks.Internal.Serialization
 import System.FilePath
 import StdTuple, StdFunc, StdArray, StdBool, StdChar, StdInt, StdString
 
-sharedDynamicStore :: !String !a -> SDS () a a | TC a
+sharedDynamicStore :: !String !a -> SimpleSDSLens a | TC a
 sharedDynamicStore storeId defaultV
-	= mapReadWriteError (read, write) (sharedStore storeId (dynamic defaultV))
+	= mapReadWriteError (read, write) (Just reducer) (sharedStore storeId (dynamic defaultV))
 where
 	read (r :: a^) = r
 	read x = Error (exception "Dynamic types mismatched?")
 
 	write _ w = Ok (Just (dynamic w))
 
-sharedStore :: !String !a -> SDS () a a | JSONEncode{|*|}, JSONDecode{|*|}, TC a
+	reducer p d = read d
+
+sharedStore :: !String !a -> SimpleSDSLens a | JSONEncode{|*|}, JSONDecode{|*|}, TC a
 sharedStore storeId defaultV
 	= sdsFocus storeId (storeShare NS_APPLICATION_SHARES True InJSONFile (Just defaultV))
 
-storeNamespaces :: SDS () [String] ()
+storeNamespaces :: SDSSource () [String] ()
 storeNamespaces = createReadOnlySDS read
 where
     read () iworld = listStoreNamespaces iworld
 
-storeNames :: SDS String [String] ()
+storeNames :: SDSSource String [String] ()
 storeNames = createReadOnlySDSError read
 where
     read namespace iworld = case listStoreNames namespace iworld of
@@ -47,7 +49,7 @@ where
 
 derive class iTask StorageType
 
-storeShare :: !String !Bool !StorageType !(Maybe a) -> (SDS String a a) | JSONEncode{|*|}, JSONDecode{|*|}, TC a
+storeShare :: !String !Bool !StorageType !(Maybe a) -> (SDSSequence String a a) | JSONEncode{|*|}, JSONDecode{|*|}, TC a
 storeShare namespace versionSpecific prefType defaultV = sdsSequence "storeShare"
 	(\key -> ())
 	//Compute the filepath in the store from the key
@@ -61,7 +63,7 @@ storeShare namespace versionSpecific prefType defaultV = sdsSequence "storeShare
 	applicationOptions
 	(storageLocation defaultV)
 
-blobStoreShare :: !String !Bool !(Maybe {#Char}) -> SDS String {#Char} {#Char}
+blobStoreShare :: !String !Bool !(Maybe {#Char}) -> SDSSequence String {#Char} {#Char}
 blobStoreShare namespace versionSpecific defaultV = sdsSequence "storeShare"
 	(\key -> ())
 	(\key {storeDirPath,appVersion} -> storeDirPath </> namespace </> (if versionSpecific (appVersion </> safeName key) (safeName key)))
@@ -71,7 +73,7 @@ blobStoreShare namespace versionSpecific defaultV = sdsSequence "storeShare"
 	applicationOptions
 	(removeMaybe defaultV fileShare)
 
-storageLocation :: !(Maybe a) -> SDS (FilePath,StorageType) a a | JSONEncode{|*|}, JSONDecode{|*|}, TC a
+storageLocation :: !(Maybe a) -> SDSSelect (FilePath,StorageType) a a | JSONEncode{|*|}, JSONDecode{|*|}, TC a
 storageLocation defaultV = sdsSelect "storageLocation" choice
 	(SDSNotifyConst (\_ _ -> const (const False))) (SDSNotifyConst (\_ _ -> const (const False)))
 	(memoryLoc defaultV) (fileLoc defaultV)
@@ -85,13 +87,13 @@ where
 		choice (path,InJSONFile) = Left (addExtension path "json")
 		choice (path,_ )         = Right (addExtension path "bin")
 
-	memoryLoc :: !(Maybe a) -> SDS FilePath a a | JSONEncode{|*|}, JSONDecode{|*|}, TC a
+	memoryLoc :: !(Maybe a) -> SDSLens FilePath a a | JSONEncode{|*|}, JSONDecode{|*|}, TC a
 	memoryLoc defaultV = removeMaybe defaultV memoryShare
 
-	jsonLoc :: !(Maybe a) -> SDS FilePath a a | JSONEncode{|*|}, JSONDecode{|*|}, TC a
+	jsonLoc :: !(Maybe a) -> SDSLens FilePath a a | JSONEncode{|*|}, JSONDecode{|*|}, TC a
 	jsonLoc defaultV = removeMaybe defaultV (sdsCache (\_ _ _ w -> (Just w,WriteDelayed)) jsonFileShare)
 
-	graphLoc :: !(Maybe a) -> SDS FilePath a a | JSONEncode{|*|}, JSONDecode{|*|}, TC a
+	graphLoc :: !(Maybe a) -> SDSLens FilePath a a | JSONEncode{|*|}, JSONDecode{|*|}, TC a
 	graphLoc  defaultV = removeMaybe defaultV (sdsCache (\_ _ _ w -> (Just w,WriteDelayed)) graphFileShare)
 
 //Utility function to make sure we don't use names that escape the file path
@@ -104,4 +106,13 @@ where
 		| i == len	= n
 		| isAlphanum s.[i] || s.[i] == '-'  = copy (i + 1) {n & [i] = s.[i]}
 							                = copy (i + 1) {n & [i] = '_'}
+
+remoteShare :: (sds p r w) SDSShareOptions -> SDSRemoteSource p r w | RWShared sds
+remoteShare sds opts = SDSRemoteSource sds Nothing opts
+
+remoteService :: (WebServiceShareOptions p r w) -> SDSRemoteService p r w
+remoteService opts = SDSRemoteService Nothing opts
+
+debugShare :: String (sds p r w) -> SDSDebug p r w | RWShared sds
+debugShare name sds = SDSDebug name sds
 

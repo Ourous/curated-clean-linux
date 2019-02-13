@@ -1,6 +1,6 @@
 implementation module Text.Unicode.Encodings.UTF8
 
-import StdFunc, StdBool
+import StdFunc, StdBool, StdInt
 import Data.Word8, Data.List
 
 from Text.Unicode.UChar import instance fromInt UChar, instance toInt UChar

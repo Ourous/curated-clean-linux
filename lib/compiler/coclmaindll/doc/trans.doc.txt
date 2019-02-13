@@ -1,0 +1,711 @@
+This file contains documentation of the transformation phase.
+
+Contents
+  - Overview
+  - The analysation phase
+  - The transformation phase
+      - Overview
+      - Generating a new function
+  - Status
+
+Originally the transformation phase was designed to solve three tasks:
+ - specialisation of overloaded functions (in the following just
+   "overloading specialisation"):
+ - inlining of higher order arguments in functions that are
+   defined locally in a macro (Nijmegen slang: "fold optimalisation")
+ - deforestation
+
+All these optimisations have some things in common (more or less): they
+are all a kind of specialisation. Specialisation involves creating new
+versions of functions. That's why it was decided to implement one algorithm
+that can handle all three optimalisations at the same time.
+We call this algorithm the "fusion" algorithm.
+
+Overview
+********
+
+In fact there are two phases involved: 
+ - the analysation phase
+ - the transformation phase
+
+Goal of the analysys is to assign two properties to each icl function argument
+(or: function argument position): The consumer classification (::Int)
+and the linearity (::Bool). These values are returned by analyseGroups in the
+{! ConsClasses} value. Furtheron so called "active" cases are marked as such (these
+markings are stored in the ExpressionHeap). The consumer classification can be
+one of these four values:
+
+  cPassive: 
+    if none of the following
+  cActive: 
+    Only these function arguments can be specialized. The
+    variable ("x" below) appears at least in one of the following positions:
+      - x.member (record selection: could be overloading specialised)
+      - x @ ... (higher order app: fold optimalisation)
+      - case x of .. (could be deforested)
+      - in a call to a function that's also cActive in that argument
+  cAccumulating: 
+    function argument can't be specialized because there
+    is a recursive call where the argument is not a variable, which
+    could lead into non termination of that algorithm.
+  cVarOfMultimatchCase:
+    A multimatch case is a case where one constructor could match
+    twice, e.g.:
+
+      g x = case x of
+              Cons h t | p1 h -> t
+              Cons h t | p2 h -> t
+
+    Such cases were exluded from deforestation in a first
+    approximation because they were difficult to handle (e.g. linearity
+    analysys)
+
+The linearity classification indicates, well, whether a function argument
+is used linearily. Only linear variables can be substituted with expressions
+(otherwise work could be duplicated).
+
+The transformation phase uses this information to generate new functions.
+The transformation algorithm will run over all icl functions, beginning
+with the leafs of the component tree. For every icl function he will run
+through the body expression (postorder!) and when he finds a function
+appliation that can be specialised
+he will do so (if the function wasn't specialised in that way already).
+
+The criteria to specialize a function "f" in an argument "A" are the following:
+  - f must be cActive in that argument.
+  - A must be an application
+  - If A is an application of a dictionary constructor: YEAH, go for it!
+  - If A is a curried application and f is defined as a local macro function:
+    YEAH!!!
+  - If A is a function application (g E1 .. En) and f is linear in that
+    argument: YEAH! Deforest! Cut all trees.  
+Otherwise nothing happens.
+
+E.g. if (f E1 (g E2 E3) E4) meets the above condition then a new function
+f_g will be created and that function application will become
+
+  f_g E1 E2 E3 E4  (if g is a function)
+  f_g E1 E4        (if g is a dictionary constructor) (it's not always that simple)
+
+f is called the _consumer_ and g the _producer_.
+
+Of course a new type for f_g has to be derived.
+
+How is f_g created? In case g was
+  - a dictionary:the formal argument in f is substituted the dictionary application
+  - a curried function: the formal (higher order) argument in f is substituted
+    with "g"
+  - an uncurried function: the formal argument in f is substituted with the
+    _body_ of g.
+
+
+The analysation phase
+*********************
+
+The analysys happens component wise, beginning with the leafs.
+
+The fundamental function here is the consumerRequirements class whose
+instances run through an expression. It's main data structure it is working
+on is the *ConsClassSubst:=={#Int}. Each variable that is used in a function
+that is currently analysed is assigned a number. This number is an index into
+the ConsClassSubst array. So the ConsClassSubst assigns a consumer classification
+to every variable. The classification process reminds on typing. If an array
+element is negative then the corresponding variable currently has been assigned
+to one of the four classifications:
+
+  cPassive              :== -1
+  cActive               :== -2
+  cAccumulating         :== -3
+  cVarOfMultimatchCase  :== -4
+
+If it is non negative (say i) then this states that the classification is the same
+as the variable which corresponds to i.
+
+The instances of consumerRequirements return a boolean that indicates whether
+the expression is unsafe, e.g. in
+
+  case x of
+    Cons h t -> case p h of True -> t
+    ... 
+
+(assumed that these cases result from patterns and guards) the
+consumerRequirements instance would return True for the inner case,
+because this case could fail so that control would GOTO the outer case.
+In this case the boolean would be used to classify x as 
+cVarOfMultimatchCase.
+
+The ai_cur_ref_counts field of the AnalyseInfo record is used to
+determine the linearity of all variables, the arguments and the local
+variables.
+
+The ai_cases_of_vars_for_function field of the AnalyseInfo record 
+accumulates all cases of which the case_expr is a variable. At the end
+of analyzing a component the case_info_ptr is marked (in function
+set_case_expr_info) with an EEI_ActiveCase tag, if the corresponding
+variable is active. So after the analysation phase every case is
+either "active" or not.
+
+The information whether a case is active is stored with the
+case_info_ptr. But there is already type information stored in the
+ExpressionHeap. For every case the case_info_ptr points to an 
+EI_CaseType entry. For every "let" expression the let_info_ptr
+points to an EI_LetType entry. These entries assign the variables
+that are introduced by a pattern or let bind a type. This information
+is needed for lifting (also in the following phases). So I invented
+the EI_Extended constructor which allows to store several independent
+pieces of information for one pointer. At the end of the transformation
+phase the original heap contents has to be restored again
+(function "cleanup_attributes") (the advantages of functional
+programming shine through here very clearly).
+
+The transformation phase
+************************
+
+The transformation phase - Overview
+************************^^^^^^^^^^^
+
+There are two basic transformations that are applied for deforestation
+(overloading specialisation and the fold optimalisation are just simple
+inlining!):
+
+ - The "case in case" transformation:
+
+     case (case x of
+             P1 -> A1
+             P2 -> A2)
+       P3 -> A3
+       P4 -> A4
+   
+   transforms into
+
+     case x of
+       P1 -> case A1 of
+               P3 -> A3
+               P4 -> A4
+       P2 -> case A2 of
+               P3 -> A3
+               P4 -> A4
+       
+   This happens in function lift_case. Note that this transformation
+   duplicates code.
+
+ - The "match" transformation:
+
+     case (Cons A1 A2) of
+       Cons h t -> A3
+       ..
+
+   transforms into
+
+     let h=A1
+         t=A2
+     in A3
+
+   If "h" or "t" are used linearily in A3 the can be inlined, too.
+   The match transformation reduces the amount of code (all the other patterns).
+   Note that this transformation is only valid, if the case is not
+   a multimatch case 
+
+Let's consider some examples first:
+
+  sum l =
+    case l of
+      Nil -> 0
+      Cons h t -> +I h (sum t) // +I: plus on integers
+
+  every_second toggle l2 =
+    case l2 of
+      Cons h2 t2
+          -> case toggle of
+               True -> Cons h2 (every_second (not toggle) t2)
+               False -> (every_second (not toggle) t2)
+      Nil -> Nil
+
+The analysys phase will assign l (the argument of sum) "cActive" and "linear".
+"cActive" because 
+ - the recursive call has a variable (t) as argument (in case of a
+   non variable it would be cAccumulating)
+ - l is used as a case_expression (case l of) (otherwise it would be cPassive
+   or cVarOfMultiMatchCase
+ - the case is not a multimatch case
+"linear" because l appears only once
+
+The case in the sum function will be marked as "active case of 'sum' in 'l'":
+
+  sum l =
+    case<*sum*> l of ...
+
+Indeed, sum is a typical list consumer!
+
+The arguments of every_second are classified as:
+ - toggle:cAccumulating, because there is a recursive call (in fact two)
+     with a non variable argument (not toggle).
+ - l2: cActive (for the same reasons as "l" in function sum)
+
+Now if we transform the following function
+
+  Start = sum (every_second True [42,42,42])
+
+we see that we have an uncurried function application in the active
+consumer position of sum. We fuse these two functions by replacing
+"l" in sum with the body of every_second (happens in "generateFunction"):
+
+  Start = sum_every_second True [42,42,42]
+
+  sum_every_second toggle l2 =
+    case<*sum*> (case l2 of
+                   Cons h2 t2
+                    -> case toggle of
+                         True -> Cons h2 (every_second (not toggle) t2)
+                         False -> (every_second (not toggle) t2)
+                   Nil -> Nil) of
+      Nil -> 0
+      Cons h t -> +I h (sum t)
+
+This newly generated function will be stored in the FunctionHeap.
+
+Now we transform sum_every_second. First we apply the case in case
+transformation. 
+
+  sum_every_second toggle l2 =
+    case l2 of
+      Cons h2 t2
+          -> case<*sum*> (case toggle of
+                            True -> Cons h2 (every_second (not toggle) t2)
+                            False -> (every_second (not toggle) t2))
+               Nil -> 0
+               Cons h t -> +I h (sum t)
+      Nil -> case<*sum*> Nil of
+               Nil -> 0
+               Cons h t -> +I h (sum t)
+
+Now we apply the case in case transformation once more in the
+Cons case and in the Nil case we do the match:
+
+  sum_every_second toggle l2 =
+    case l2 of
+      Cons h2 t2
+        -> case toggle of
+             True  -> case<*sum*> Cons h2 (every_second (not toggle) t2) of
+                        Nil -> 0
+                        Cons h t -> +I h (sum t)
+             False -> case<*sum*> every_second (not toggle) t2 of
+                        Nil -> 0
+                        Cons h t -> +I h (sum t)
+      Nil -> 0
+
+Finally we apply the match in the True case and we do the FOLD step:
+
+  sum_every_second toggle l2 =
+    case l2 of
+      Cons h2 t2
+        -> case toggle of
+             True  -> +I h2 (sum (every_second (not toggle) t2))
+             False -> sum_every_second (not toggle) t2
+      Nil -> 0
+
+The fold step can be applied, because we know that this particular
+case is the root case of the sum function, hence 
+
+  case<*sum*> every_second (not toggle) t2 of
+    Nil -> 0
+    Cons h t -> +I h (sum t)
+
+is equivalent to 
+
+  sum (every_second (not toggle) t2)
+
+which in turn is known to be specialised already:
+
+  sum_every_second (not toggle) t2
+
+So we can apply the fold step, if the root case comes together with the
+producer again. What do we do when during transformation a non-root case
+comes together with the producer? Answer: We generate a new function.
+Comment: This is bullshit. It would be better to generate functions for
+_all_ non root cases in a seperate phase before,
+because currently after the transformation
+phase (while interfacing with the backend) this is done anyway! BTW, the 
+every_second function has no non root case.
+
+Generating a new function would be necessary in the following case:
+
+  consumer l = 
+    1 + (case l of
+           Cons h t -> h + consumer t
+           Nil -> 0)
+
+  filter p l2 =
+    case l2 of
+      Nil -> Nil 
+      Cons h2 t2 -> case p @ h2 of
+                      True -> Cons h2 (filter p t2)
+                      False -> filter p t2
+
+Fusing these two would proceed like follows:
+
+  consumer_filter p l2 =
+    1 + (case<*consumer*> (case l2 of
+                             Nil -> Nil 
+                             Cons h2 t2 -> case p h2 of
+                                             True -> Cons h2 (filter p t2)
+                                             False -> filter p t2) of
+           Cons h t -> h + consumer t
+           Nil      -> 0 )
+
+  consumer_filter p l2 =
+    1 + (case l2 of
+           Nil        -> case<*consumer*> Nil of
+                           Cons h t -> h + consumer t
+                           Nil      -> 0
+           Cons h2 t2 -> case<*consumer*> (case p h2 of
+                                             True -> Cons h2 (filter p t2)
+                                             False -> filter p t2) of
+                           Cons h t -> h + consumer t
+                           Nil      -> 0) 
+
+  consumer_filter p l2 =
+    1 + (case l2 of
+           Nil        -> 0
+           Cons h2 t2 -> case p h2 of
+                           True  -> case<*consumer*> Cons h2 (filter p t2)
+                                      Cons h t -> h + consumer t
+                                      Nil      -> 0
+                           False -> case<*consumer*> filter p t2 of
+                                      Cons h t -> h + consumer t
+                                      Nil      -> 0) 
+
+  consumer_filter p l2 =
+    1 + (case l2 of
+           Nil        -> 0
+           Cons h2 t2 -> case p h2 of
+                           True  -> h2 + (consumer_filter p t2)
+                           False -> case<*consumer*> filter p t2 of
+                                      Cons h t -> h + consumer t
+                                      Nil      -> 0) 
+
+Now we should _not_ apply the fold step like
+
+  consumer_filter p l2 =
+    1 + (case l2 of
+           Nil        -> 0
+           Cons h2 t2 -> case p h2 of
+                           True  -> h2 + (consumer_filter p t2)
+                           False -> consumer_filter p t2
+
+Then (consumer_filter isPositive [-1]) would evaluate to 2 while
+(consumer (filter isPositive [-1])) would evaluate to 1!
+
+Instead we do so as if consumer was defined like
+
+  consumer l = 1 + (consumer_case l)
+  consumer_case l = case l of
+                      Cons h t -> h + consumer t
+                      Nil -> 0
+
+Now we can do the fold step. So the result would be
+
+  consumer_filter p l2  = 1+(consumer_case_filter p l2)
+  consumer_case_filter p l2
+    = case l2 of
+           Nil        -> 0
+           Cons h2 t2 -> case p h2 of
+                           True  -> h2 + (consumer_filter p t2)
+                           False -> consumer_case_filter p t2
+
+The additional functions that are generated for non root cases
+are created in function "generate_case_function".
+
+To finish this overview I give an example for fold optimalisation:
+
+  foldl f l init =
+    case l of Nil -> init
+              Cons h t -> foldl f t (f @ h init)
+
+  Start = foldl (+) [] 0
+
+Classification:
+   foldl f:(cActive, not linear) l:(cActive, linear) init:(cAccumulating, linear)
+
+The first arg is active because it appears on the RHS of @.
+
+I don't fuse the constructor []! (Sjaak does -> code explosion)
+
+But I specialize in the first arg. Being not linear doesn't matter
+for higher order arguments, because there is no calculation 
+duplicated (same with dictionaries)
+
+  foldl_plus l init =
+    case l of Nil -> init
+              Cons h t -> foldl_plus t (h + init)
+
+  Start = foldl_plus [] 0
+
+And I give example for overloading specialisation
+
+The programmer writes:
+
+  gimme_da_first :: (a e) -> e | Array a e
+  gimme_da_first a = a.[0]
+
+  gimme_a_strict_array :: {!Int}
+  gimme_a_strict_array = {42}
+  
+  Start = gimme_da_first gimme_a_strict_array
+
+The compiler makes from this while typing:
+
+  :: ArrayDictionary a e =
+      { select :: (a e) Int -> e
+      , update :: (a e) Int e -> (a e)
+      , size   :: (a e) -> Int
+      ..  
+
+  gimme_da_first :: (ArrayDictionary a e) (a e) -> e
+  gimme_da_first dictionary a = dictionary.select @ a 0
+
+  Start = gimme_da_first { select = strictArraySelect, update=strictArrayUpdate,
+                           size = strictArraySize .. }
+                         gimme_a_strict_array
+
+We see that the first dictionary argument of "gimme_da_first" is classified as
+a consumer (cActive because of the selection and even linear). So we fuse
+"gimme_da_first" with the record constructor:
+
+  gimme_da_first_StrictArray :: {!e} -> e
+  gimme_da_first_StrictArray a = strictArraySelect a 0
+
+  Start = gimme_da_first_StrictArray gimme_a_strict_array
+
+In this example we can see very clear that through fusion (be it 
+overloading specialisation, deforestation or fold optimalisation) the type
+of the newly created function has become specialised, too. In this case
+for (a e) the a has been substituted with {!} yielding {!e}
+
+This happens by unifying the producer's result type with the type of the
+argument of the producer. In this case we unify
+
+       (ArrayDictionary {!} e) // producer { select = strictArraySelect, ...
+  with (ArrayDictionary a   e) // consumer gimme_da_first  
+  
+yielding the substitution a->{!}
+
+
+The transformation phase - Generating a new function
+************************^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The function "generateFunction" is called when a function is specialised.
+
+As the important parameters it gets the consumers function definition, the
+classification of it's arguments and an array "prods" that contains a producer
+description for each consumer argument. So generateFunction indeed
+specialises one consumer with possibly multiple producers. A producer
+description of type "Producer" indicates, whether the producer is a
+dictionary, a curried application or a function.
+
+First some trouble with types happens. As stated before we have to apply
+type unification. Therefore we reuse the infrastructure from the typing
+phase. Unfortunately this infrastructure makes certain assumptions about
+the given types for which some work has to be done to fulfill them.
+
+The unification algorithm assumes type variables in "integer form" (TempV) 
+instead of "pointer form" (TV). Furtheron we have to take care about
+uniqueness information. We have to add propagation information (see function
+"add_propagation_attributes). This will transform a type
+
+  consumer :: [*{Int}] -> Int
+
+into
+
+  consumer :: *[*{Int}] -> Int
+
+After giving every involved type variable a number we create an initial
+type variable substitution "subst". This array assigns every type variable
+(number) a type. With every producer this substitution can be further specialised.
+
+The "determine_args" function is the called. To explain what this function
+does here is an example (I write (List a) instead of [a]):
+
+  consumer :: (List a) (List b) (a, b) -> (Int, Int, Int)
+  consumer x y z = (case x of ..., case y of ..., fun0 z z z)
+
+  producer :: (List c) T2 -> (List Int)
+  producer1 a b = fun1 a b
+
+  producer2 :: T3 -> (List Real)
+  producer2 c = fun2 c
+  
+Our application is:
+
+  Start = consumer (producer1 E1 E2) (producer E3) E4
+
+Because we are generating a new functions all variables in that function
+should be fresh. The generated function should look like this:
+ 
+  consumer` a1 b1 c1 z1 = (case fun1 a1 b1 of ..., case fun2 c1 of ..., fun0 z1 z1 z1)
+
+The RHS expression is later created by calling the "unfold" function. "unfold" substitutes
+all local variables of a expression with fresh ones, but the free variables (here x, y and z)
+are replaced with an expression on which the free variable has been bound before.
+So determine_args establishes the following bindings (stored in the var_heap):
+
+  x -> fun1 a1 b1
+  y -> fun2 c1
+  z -> z1
+
+As it's first result value determine_args delivers the new function args: [a1, b1, c1, z1]
+
+What about the types of these arguments? The second result value of determine args
+is an array whose elements either contain the producers argument types or (in case there
+was no producer for that argument) the consumers original type. This would be in the
+upper example:
+
+  {[List c, T2],[T3],[(a, b)]}
+
+But the following type would be wrong:
+
+  consumer` :: (List c) T2 T3 (a, b) -> (Int, Int, Int)
+
+The right type is
+
+  consumer` :: (List c1) T2 T3 (Int, Real) -> (Int, Int, Int) // c1 "fresh"
+
+Fortunately we can infer this type correctly because "determine_args" corrects
+our type variable substitution "subst" with every producer. So the 
+substitution would look like this
+
+  a -> Int      // from producer1
+  b -> Real     // from producer2
+  c -> c1       // fresh
+
+Furtheron determine_args also accumulates uniqueness requirements: inequalities between
+attributed types. Later the inference of the attributes of the type of the generated
+function happens like in the typing phase: the (attribute less) substitution is lifted
+and attribute coercions are derived from the expanded uniqueness requirements,
+the coercion graph is partitionated, unused attribute variables are removed.
+
+Finally, the "integer" type representation is again copied into a "pointer" type
+representation.
+
+After we have let "unfold" create the RHS of our new function, we of course transform
+it.
+
+There is a lot of type information stored in the ExpressionHeap. This information has
+to be kept up to date when creating the RHS expression. Especially the type
+information for case and let expressions has to be refreshened and specialized.
+E.g. when in the upper original consumer for some local variable the polymorph
+type "a" was stored then this should be "Int" in the specialized consumer`.
+
+Status  (June 2001)
+******
+
+The following issues are suboptimal:
+
+- The algorithm does not terminate, e.g. when transforming:
+
+    zipWith f l1 l2 :== [f e1 e2 \\ e1<-l1 & e2<-l2]
+
+    l = [1 : zipWith (+) [1] l]
+
+    t [] = []
+    t [e:l] = [e: t l]
+
+  Start = t l
+
+  One could try to find criteria that ensure that fusion will terminate. Alternatively
+  one could also decide while fusing, whether this fusion should be aborted using
+  ad hoc methods (e.g. a counter that counts keeps track of the recursion depth, or
+  whatever). It can be quite nice if a compiler is known to terminate always.
+
+- It is possible that through fusion some functions can get unused. Imagine a function
+  that is called only once. When this call is specialised the original won't be
+  called anymore. But this superflous function still remains in the functions array,
+  doesn't get garbage collected and is further processed (e.g. in the convertcases
+  phase). One could infer the components once more after the transformation phase
+  to deal with that issue.
+
+- Local definitions don't get inlined, e.g. let "c" be a consumer and "p" a producer.
+  The follwing would be fused:
+
+    c p
+
+  while the following would not:
+
+    let pp = p in c pp
+
+  This could be improved.
+
+- Only two functions are fused together, but a third one is not getting involved.
+  E.g. when fusing the follwing:
+
+    i x = x
+    producer x = i [x:producer x]
+    consumer l = case l of ...
+
+  the algorithm stops at
+
+    consumer_producer x = case (i [x:producer x]) of
+
+- Multimatch cases are ignored (see above). The compiler generates lots of
+  multimatch cases (I remember the zip2 function).
+
+- Only function arguments get deforested, but not e.g. the following
+
+    case [] of [] -> 1
+
+The following are real bugs:
+
+- Strict expressions get optimised away although they shouldn't
+    
+    :: T = C !Int
+    producer = C (abort "ABORT")
+    consumer x = case x of C _ -> 1
+    Start = consumer producer
+
+  fusion result:
+
+    Start = consumer_producer
+    consumer_producer = 1
+  
+  (no abort)
+
+- It can happen that while fusing one sees that a case will never match:
+
+    producer = []
+    consumer [_:_] = 1
+    Start = consumer producer
+
+  fusion result:
+
+    Start = consumer_producer
+    consumer_producer = <never_matching_case>
+
+- Deforestation should better be done _after_ strictness analysys. Look at:
+
+    consumer :: ![a] -> [Int]
+    consumer l
+      = [case l of
+          [] -> 0
+          [_:t] -> 1
+        ]
+
+    producer = undef
+
+    Start = consumer producer
+
+  In this case "consumer" and "producer" may not be fused here although this
+  happens with the current implementation. The problem here is that the
+  argument of "consumer" has been made artificially strict. Possible solutions:
+  - VERBIEDEN!!!!
+    Never fuse consumer arguments that have been marked strict.
+  - If a consumer argument has been marked strict, ensure that it is indeed
+    strict. Therefore one has to reason about strictness of expressions.
+    A primitive strictness analysys could be part of the transformation
+    phase (prima!).
+
+- The algorithm makes no distinction between cases that come from patterns/guards
+  and cases that were specified by the programmer. The algorithm assumes that no
+  case was specified by the programmer. I think two places where this leads into
+  wrong results are:
+  - the second return value of the consumerRequirements class
+  - the removeNeverMatchingSubcases function

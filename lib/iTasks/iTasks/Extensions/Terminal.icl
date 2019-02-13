@@ -7,8 +7,6 @@ from Data.Func import $
 import iTasks
 import Text.Terminal.VT100
 
-import StdDebug
-
 import StdArray
 runProcessInteractive :: !VT100Settings !FilePath ![String] !(Maybe FilePath) -> Task Int
 runProcessInteractive vt100 fp args wd =

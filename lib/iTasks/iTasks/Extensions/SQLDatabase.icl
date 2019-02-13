@@ -11,7 +11,7 @@ import qualified Data.Map
 derive class iTask SQLDatabaseDef, SQLDatabase, SQLValue, SQLTime, SQLDate, SQLTable, SQLColumn, SQLColumnType
 
 sqlShare :: String (A.*cur: p *cur -> *(MaybeErrorString r,*cur) | SQLCursor cur)
-                   (A.*cur: p w *cur -> *(MaybeErrorString (), *cur) | SQLCursor cur) -> RWShared (SQLDatabaseDef,p) r w
+                   (A.*cur: p w *cur -> *(MaybeErrorString (), *cur) | SQLCursor cur) -> SDSSource (SQLDatabaseDef,p) r w
 sqlShare name readFun writeFun = createReadWriteSDS "SQLShares" name (readFunSQL readFun) (writeFunSQL writeFun)
 
 readFunSQL :: (A.*cur: p *cur -> *(MaybeErrorString r,*cur) | SQLCursor cur) (SQLDatabaseDef,p) *IWorld -> (!MaybeError TaskException r,!*IWorld)
@@ -115,7 +115,7 @@ execDelete query values cur
 sqlExecuteSelect :: SQLDatabaseDef SQLStatement ![SQLValue] -> Task [SQLRow]
 sqlExecuteSelect db query values = sqlExecute db [] (execSelect query values)
 
-sqlSelectShare :: String SQLStatement ![SQLValue] -> ROShared SQLDatabaseDef [SQLRow]
+sqlSelectShare :: String SQLStatement ![SQLValue] -> SDSLens SQLDatabaseDef [SQLRow] ()
 sqlSelectShare name query values = sdsTranslate "sqlSelectShare" (\db -> (db,())) (createReadWriteSDS "SQLShares" name (readFunSQL readFun) write)
 where
     readFun () cur
@@ -126,7 +126,7 @@ where
         = (Ok rows,cur)
     write _ () iworld = (Ok (const (const True)),iworld)
 		
-sqlTables :: ROShared SQLDatabaseDef [SQLTableName]
+sqlTables :: SDSSource SQLDatabaseDef [SQLTableName] ()
 sqlTables = createReadOnlySDSError read
 where
     read (MySQLDatabase db) iworld
@@ -149,7 +149,7 @@ where
 				# iworld            = cacheResource (SQLiteResource path (cur, con, cxt)) iworld
 				= (Ok tables,iworld)
 
-sqlTableDefinition :: ROShared (SQLDatabaseDef,SQLTableName) SQLTable
+sqlTableDefinition :: SDSSource (SQLDatabaseDef,SQLTableName) SQLTable ()
 sqlTableDefinition = createReadOnlySDSError read
 where
     read (MySQLDatabase db,tablename) iworld

@@ -6,7 +6,7 @@ import System.OS
 
 CPM_EXE :== IF_POSIX_OR_WINDOWS "bin/cpm" "Tools\\cpm.exe"
 
-cpmExecutable :: ROShared () FilePath
+cpmExecutable :: SDSSource () FilePath ()
 cpmExecutable = createReadOnlySDSError read
 where
 	read _ iworld=:{IWorld|world} = case getEnvironmentVariable "CLEAN_HOME" world of

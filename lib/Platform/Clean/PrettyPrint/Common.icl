@@ -27,7 +27,7 @@ where
 	print st ip=:{import_symbols=ImportSymbolsOnly ids,import_qualified=NotQualified}
 		= print st ("from " :+: ip.import_module :+: " import " :+: join st ", " ids)
 	print st ip=:{import_symbols=ImportSymbolsOnly _}
-		= abort "UNKNOWN: ImportSymbolsOnly with Qualified"
+		= abort "UNKNOWN: ImportSymbolsOnly with Qualified\n"
 	print st ip=:{import_symbols=ImportSymbolsAll}
 		= print st ("import " :+: q :+: ip.import_module :+: as_)
 	where
@@ -37,6 +37,8 @@ where
 		as_	= case ip.import_qualified of
 			(QualifiedAs name) = " as " :+: name
 			_                  = PrintNil
+	print st ip=:{import_symbols=ImportSymbolsAllSomeQualified _}
+		= abort "UNKNOWN: ImportSymbolsAllSomeQualified\n"
 
 instance print ImportDeclaration
 where

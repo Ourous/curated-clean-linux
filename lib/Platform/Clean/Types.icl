@@ -1,24 +1,64 @@
 implementation module Clean.Types
 
-from StdOverloaded import class ==(..), class length(..)
+import StdBool
 from StdClass import class Eq
+from StdFunc import o, id
 import StdList
 import StdMisc
-import StdTuple
+from StdOverloaded import class ==(..), class length(..)
 from StdString import instance == {#Char}
-import StdBool
-from StdFunc import o, id
+import StdTuple
 
 from Data.Func import $
 import Data.Functor
-import Data.GenEq
 import Data.List
 import Data.Maybe
 
-derive gEq Type, TypeRestriction, Kind
+instance == Type
+where
+	== a b = case a of
+		Type t args -> case b of
+			Type t` args` -> t==t` && args==args`
+			_             -> False
+		Func is r tc -> case b of
+			Func is` r` tc` -> is==is` && r==r` && tc==tc`
+			_               -> False
+		Var tv -> case b of
+			Var tv` -> tv==tv`
+			_       -> False
+		Cons tv args -> case b of
+			Cons tv` args` -> tv==tv` && args==args`
+			_              -> False
+		Uniq t -> case b of
+			Uniq t` -> t==t`
+			_       -> False
+		Forall vs t tc -> case b of
+			Forall vs` t` tc` -> vs==vs` && t==t` && tc==tc`
+			_                 -> False
+		Arrow mt -> case b of
+			Arrow mt` -> mt==mt`
+			_         -> False
+		Strict t -> case b of
+			Strict t` -> t==t`
+			_         -> False
 
-instance == Type where == a b = a === b
-instance == TypeRestriction where == a b = a === b
+instance == TypeRestriction
+where
+	== a b = case a of
+		Instance cls ts -> case b of
+			Instance cls` ts` -> cls==cls` && ts==ts`
+			_                 -> False
+		Derivation gen t -> case b of
+			Derivation gen` t` -> gen==gen` && t==t`
+			_                  -> False
+
+instance == Kind
+where
+	== a b = case a of
+		KStar -> b=:KStar
+		KArrow a b -> case b of
+			KArrow a` b` -> a==a` && b==b`
+			_            -> False
 
 subtypes :: !Type -> [Type]
 subtypes t=:(Type s ts) = removeDup [t : flatten (map subtypes ts)]

@@ -4,6 +4,7 @@ import StdList, StdInt, StdString, StdGeneric, StdArray
 import Text, System.OS
 from Data.Map import toList, toAscList, foldrWithKey, :: Map
 import Data.List
+from Data.Foldable import minimum, maximum
 
 //Provides a generic pretty printer for easier debugging
 generic gPrettyTrace a :: Int a -> [String]

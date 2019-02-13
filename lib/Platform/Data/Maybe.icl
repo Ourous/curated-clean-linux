@@ -8,10 +8,11 @@ import Data.Functor
 import Data.Monoid
 import Data.Func
 from Data.Foldable import class Foldable(..)
-from Data.Traversable import class Traversable(traverse)
+from Data.Traversable import class Traversable(..)
 import qualified Data.Traversable
 import Control.Applicative
-import Control.Monad, Control.Monad.Trans
+from Control.Monad import class Monad(..)
+import Control.Monad.Trans
 import Data.GenEq
 
 instance Functor Maybe where fmap f m = mapMaybe f m
@@ -88,9 +89,6 @@ instance Traversable Maybe
 where
 	traverse _ Nothing = pure Nothing
 	traverse f (Just x) = Just <$> f x
-	sequenceA f = traverse id f
-	mapM f x = unwrapMonad (traverse (WrapMonad o f) x)
-	sequence x = 'Data.Traversable'.mapM id x
 
 derive gEq Maybe
 
@@ -150,4 +148,4 @@ instance Monad (MaybeT m) | Monad m where
 instance MonadTrans MaybeT
 where
 	liftT :: !(a b) -> MaybeT a b | Monad a
-	liftT m = MaybeT $ liftM Just m
+	liftT m = MaybeT $ Just <$> m

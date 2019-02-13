@@ -1,20 +1,26 @@
 implementation module Data.Map
 
-from StdBool import &&, ||
-from StdFunc import id, flip, o, const, seq
-from StdTuple import snd
-from StdMisc import abort, undef
-import StdString, StdTuple
-from Data.GenEq import generic gEq
-import Data.Maybe, Text.GenJSON, Data.GenLexOrd
-from Data.Set import :: Set
-import Data.Monoid, Data.Functor, Control.Applicative
-import Data.List, Data.Either
-from Data.Foldable import class Foldable
-from Data.Traversable import class Traversable
+import StdClass
+import StdBool
+import StdFunctions
+import StdOverloaded
+import StdMisc
+import StdInt
+import StdString
+import StdTuple
+
+import Data.Either
+import Data.GenLexOrd
+import Data.Maybe
+import Data.Monoid
+import Data.Functor
+import Data.List
+import Control.Applicative
 import Control.Monad
+import Text.GenJSON
 
 import qualified Data.Set
+from Data.Set import :: Set
 
 // Ported from Haskell`s Data.Map by Jurriën Stutterheim, 10-09-2014
 

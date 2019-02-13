@@ -4,6 +4,7 @@ import iTasks.SDS.Definition
 import iTasks.Internal.SDS
 import iTasks.Internal.IWorld
 import iTasks.Internal.Serialization
+import iTasks.Internal.Util
 import System.FilePath, System.Directory, System.File
 import Text, Text.GenJSON
 import StdFile, StdTuple, StdArray, StdBool, StdList, StdString
@@ -12,16 +13,16 @@ import qualified Data.Map as DM
 from StdFunc import const
 from iTasks.Internal.Task import exception
 
-constShare :: !a -> SDS p a ()
+constShare :: !a -> SDSSource p a ()
 constShare v = createReadOnlySDS (\_ env -> (v, env))
 
-nullShare :: SDS p () a
+nullShare :: SDSSource p () a
 nullShare = createReadWriteSDS "_core_" "nullShare" (\_ env -> (Ok (), env)) (\_ _ env -> (Ok (const (const False)), env))
 
-unitShare :: SDS () () ()
+unitShare :: SimpleSDSSource ()
 unitShare = nullShare
 
-worldShare :: (p *World -> *(MaybeErrorString r,*World)) (p w *World -> *(MaybeErrorString (),*World)) -> SDS p r w
+worldShare :: (p *World -> *(MaybeErrorString r,*World)) (p w *World -> *(MaybeErrorString (),*World)) -> SDSSource p r w
 worldShare read write = createReadWriteSDS "_core_" "worldShare" read` write`
 where
 	read` p iworld=:{IWorld|world} = case read p world of
@@ -33,13 +34,16 @@ where
 		(Error e,world) = (Error (exception e), {IWorld|iworld & world = world})
 
 // Random source
-randomInt :: SDS () Int ()
+randomInt :: SDSSource () Int ()
 randomInt = createReadOnlySDS randomInt
 where
 	randomInt () iworld=:{IWorld|random=[i:is]}
 		= (i, {IWorld|iworld & random = is})
 
-memoryShare :: SDS String (Maybe a) (Maybe a) | TC a
+randomString :: SDSSource Int String ()
+randomString = createReadOnlySDS generateRandomString
+
+memoryShare :: SDSSource String (Maybe a) (Maybe a) | TC a
 memoryShare = createReadWriteSDS "_core_" "memoryShare" read write
 where
 	read key iworld=:{IWorld|memoryShares}
@@ -53,14 +57,14 @@ where
 	write key Nothing iworld=:{IWorld|memoryShares}
        = (Ok (const ((===) key)),{IWorld|iworld & memoryShares = 'DM'.del key memoryShares})
 
-fileShare :: SDS FilePath (Maybe String) (Maybe String)
+fileShare :: SDSSource FilePath (Maybe String) (Maybe String)
 fileShare = createReadWriteSDS "_core_" "fileShare" (fileRead fromFile) (fileWrite toFile)
 where
 	fromFile path content = Ok content
 
 	toFile path content = content
 
-jsonFileShare :: SDS FilePath (Maybe a) (Maybe a) | JSONEncode{|*|}, JSONDecode{|*|} a
+jsonFileShare :: SDSSource FilePath (Maybe a) (Maybe a) | JSONEncode{|*|}, JSONDecode{|*|} a
 jsonFileShare = createReadWriteSDS "_core_" "jsonFileShare" (fileRead fromFile) (fileWrite toFile)
 where
 	fromFile path content = case fromJSON (fromString content) of
@@ -70,7 +74,7 @@ where
 	toFile path content = toString (toJSON content)
 
 // Share that maps to a file that holds a serialized graph representation of the value
-graphFileShare :: SDS FilePath (Maybe a) (Maybe a)
+graphFileShare :: SDSSource FilePath (Maybe a) (Maybe a)
 graphFileShare = createReadWriteSDS "_core_" "graphFileShare" (fileRead fromFile) (fileWrite toFile)
 where
 	fromFile path content = case deserialize {c \\ c <-: content} of
@@ -130,7 +134,7 @@ where
 		| isError res = (False,world) //Can't create the directory
 		= create next rest world //Created the directory, continue
 
-directoryListing :: SDS FilePath [String] ()
+directoryListing :: SDSSource FilePath [String] ()
 directoryListing = createReadOnlySDSError read
 where
 	read path iworld = case readDirectory path iworld of

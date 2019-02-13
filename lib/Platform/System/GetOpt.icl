@@ -1,7 +1,8 @@
 implementation module System.GetOpt
 
 import StdEnv, Text, Data.Maybe, Data.Either
-from Data.List import maximum, isnull, find, concatMap, unzip3, zipWith3
+from Data.Foldable import maximum
+from Data.List import isnull, find, concatMap, unzip3, zipWith3, instance Foldable []
 
 :: OptKind a                    // kind of cmd line arg (internal use only):
    = Opt       a                //    an option

@@ -1,7 +1,7 @@
 implementation module Data.Tuple
 
-from StdFunc import id, o
-from StdMisc import abort
+import StdFunc
+import StdMisc
 import Data.Bifunctor
 import Data.Functor
 import Data.Maybe
@@ -38,8 +38,25 @@ instance Functor ((,) a)
 where
 	fmap f (x, y) = (x, f y)
 
+instance Functor ((,,) a b)
+where
+	fmap f (x, y, z) = (x, y, f z)
+
+instance Functor ((,,,) a b c)
+where
+	fmap f (x, y, z, a) = (x, y, z, f a)
+
+instance Functor ((,,,,) a b c d)
+where
+	fmap f (x, y, z, a, b) = (x, y, z, a, f b)
+
+instance Functor ((,,,,,) a b c d e)
+where
+	fmap f (x, y, z, a, b, c) = (x, y, z, a, b, f c)
+
 instance Semigroup (a, b) | Semigroup a & Semigroup b
 where
+	mappend :: !(a,b) !(a,b) -> (a,b) | Semigroup a & Semigroup b
 	mappend (a1, b1) (a2, b2)  = (mappend a1 a2, mappend b1 b2)
 
 instance Monoid (a, b) | Monoid a & Monoid b
@@ -48,6 +65,7 @@ where
 
 instance Semigroup (a, b, c) | Semigroup a & Semigroup b & Semigroup c
 where
+	mappend :: !(a,b,c) !(a,b,c) -> (a,b,c) | Semigroup a & Semigroup b & Semigroup c
 	mappend (a1, b1, c1) (a2, b2, c2)  = (mappend a1 a2, mappend b1 b2, mappend c1 c2)
 
 instance Monoid (a, b, c) | Monoid a & Monoid b & Monoid c
@@ -56,6 +74,7 @@ where
 
 instance Semigroup (a, b, c, d) | Semigroup a & Semigroup b & Semigroup c & Semigroup d
 where
+	mappend :: !(a,b,c,d) !(a,b,c,d) -> (a,b,c,d) | Semigroup a & Semigroup b & Semigroup c & Semigroup d
 	mappend (a1, b1, c1, d1) (a2, b2, c2, d2)  = (mappend a1 a2, mappend b1 b2, mappend c1 c2, mappend d1 d2)
 
 instance Monoid (a, b, c, d) | Monoid a & Monoid b & Monoid c & Monoid d
@@ -64,6 +83,7 @@ where
 
 instance Semigroup (a, b, c, d, e) | Semigroup a & Semigroup b & Semigroup c & Semigroup d & Semigroup e
 where
+	mappend :: !(a,b,c,d,e) !(a,b,c,d,e) -> (a,b,c,d,e) | Semigroup a & Semigroup b & Semigroup c & Semigroup d & Semigroup e
 	mappend (a1, b1, c1, d1, e1) (a2, b2, c2, d2, e2)  = (mappend a1 a2, mappend b1 b2, mappend c1 c2, mappend d1 d2, mappend e1 e2)
 
 instance Monoid (a, b, c, d, e) | Monoid a & Monoid b & Monoid c & Monoid d & Monoid e
@@ -72,9 +92,11 @@ where
 
 instance Foldable ((,) a)
 where
+	foldMap :: !(a -> b) !(c,a) -> b | Monoid b
 	foldMap f (_, y) = f y
 	fold x = foldMap id x
 
+	foldr :: !(a -> .b -> .b) .b !(c,a) -> .b
 	foldr f z (_, y) = f y z
 	foldr` f z0 xs = foldl f` id xs z0
 	where f` k x z = k (f x z)
@@ -92,31 +114,21 @@ where
 
 instance Traversable ((,) a)
 where
-	traverse f (x, y) = (\x y -> (x, y)) x <$> f y
-	sequenceA f = traverse id f
-	mapM f x = unwrapMonad (traverse (WrapMonad o f) x)
-	sequence x = mapM id x
+	traverse :: !(a -> b c) !(d,a) -> b (d,c) | Applicative b
+	traverse f (x, y) = tuple x <$> f y
 
 instance Bifunctor (,)
 where
 	bifmap f g t = let (a, b) = t in (f a, g b)
-	first f d = bifmap f id d
-	second g d = bifmap id g d
 
 instance Bifunctor ((,,) x)
 where
 	bifmap f g t = let (x, a, b) = t in (x, f a, g b)
-	first f d = bifmap f id d
-	second g d = bifmap id g d
 
 instance Bifunctor ((,,,) x y)
 where
 	bifmap f g t = let (x, y, a, b) = t in (x, y, f a, g b)
-	first f d = bifmap f id d
-	second g d = bifmap id g d
 
 instance Bifunctor ((,,,,) x y z)
 where
 	bifmap f g t = let (x, y, z, a, b) = t in (x, y, z, f a, g b)
-	first f d = bifmap f id d
-	second g d = bifmap id g d

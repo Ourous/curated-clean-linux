@@ -16,6 +16,7 @@ instance Array {#} Int where
 		{
 			select INT 0 1
 		}
+	uselect	:: !u:{# Int} !Int -> *(!Int, !u:{# Int})
 	uselect arr index =
 		code
 		{
@@ -33,16 +34,19 @@ instance Array {#} Int where
 			push_a 0
 			push_arraysize INT 0 1
 		}
+	update :: !*{# e:Int} !Int !e:Int -> *{# e:Int}	
 	update arr index el =
 		code
 		{	
 			update INT 0 1
 		}
+	createArray :: !Int !Int -> *{# Int}
 	createArray size el =
 		code
 		{	
 			create_array INT 0 1
-		}		
+		}
+	replace :: !*{# e:Int} !Int !e:Int -> *(!e:Int, !*{# e:Int})
 	replace arr index el =
 		code
 		{	
@@ -60,6 +64,7 @@ instance Array {#} Char where
 		{
 			select CHAR 0 1
 		}
+	uselect :: !u:{# Char} !Int -> *(!Char, !u:{# Char})
 	uselect arr index =
 		code
 		{
@@ -77,16 +82,19 @@ instance Array {#} Char where
 			push_a 0
 			push_arraysize CHAR 0 1
 		}
+	update :: !*{# e:Char} !Int !e:Char -> *{# e:Char}
 	update arr index el =
 		code
 		{	
 			update CHAR 0 1
 		}
+	createArray :: !Int !Char -> *{# Char}
 	createArray size el =
 		code
 		{	
 			create_array CHAR 0 1
 		}		
+	replace :: !*{# e:Char} !Int !e:Char -> *(!e:Char, !*{# e:Char})
 	replace arr index el =
 		code
 		{	
@@ -104,6 +112,7 @@ instance Array {#} Real where
 		{
 			select REAL 0 1
 		}
+	uselect :: !u:{# Real} !Int -> *(!Real, !u:{# Real})
 	uselect arr index =
 		code
 		{
@@ -121,16 +130,19 @@ instance Array {#} Real where
 			push_a 0
 			push_arraysize REAL 0 1
 		}
+	update :: !*{# e:Real} !Int !e:Real -> *{# e:Real}
 	update arr index el =
 		code
 		{	
 			update REAL 0 1
 		}
+	createArray :: !Int !Real -> *{# Real}
 	createArray size el =
 		code
 		{	
 			create_array REAL 0 1
 		}		
+	replace :: !*{# e:Real} !Int !e:Real -> *(!e:Real, !*{# e:Real})
 	replace arr index el =
 		code
 		{	
@@ -148,6 +160,7 @@ instance Array {#} Bool where
 		{
 			select BOOL 0 1
 		}
+	uselect :: !u:{# Bool} !Int -> *(!Bool, !u:{# Bool})
 	uselect arr index =
 		code
 		{
@@ -165,16 +178,19 @@ instance Array {#} Bool where
 			push_a 0
 			push_arraysize BOOL 0 1
 		}
+	update :: !*{# e:Bool} !Int !e:Bool -> *{# e:Bool}
 	update arr index el =
 		code
 		{	
 			update BOOL 0 1
 		}
+	createArray :: !Int !Bool -> *{# Bool}
 	createArray size el =
 		code
 		{	
 			create_array BOOL 0 1
 		}		
+	replace :: !*{# e:Bool} !Int !e:Bool -> *(!e:Bool, !*{# e:Bool})
 	replace arr index el =
 		code
 		{	
@@ -192,6 +208,7 @@ instance Array {#} {#.a} where
 		{
 			select _ 1 0
 		}
+	uselect :: !u:{#{#.a}} !Int -> *(!{#.a},!u:{#{#.a}})
 	uselect arr index =
 		code
 		{
@@ -209,16 +226,19 @@ instance Array {#} {#.a} where
 			push_a 0
 			push_arraysize _ 1 0
 		}
+	update :: !*{#u:{#.a}} !Int !u:{#.a} -> *{#u:{#.a}}
 	update arr index el =
 		code
 		{	
 			update _ 1 0
 		}
+	createArray :: !Int !{#.a} -> *{# {#.a}}
 	createArray size el =
 		code
 		{	
 			create_array _ 1 0
-		}		
+		}
+	replace :: !*{#u:{#.a}} !Int !u:{#.a} -> *(!u:{#.a},!*{#u:{#.a}})
 	replace arr index el =
 		code
 		{	
@@ -236,6 +256,7 @@ instance Array {#} {!.a} where
 		{
 			select _ 1 0
 		}
+	uselect :: !u:{#{!.a}} !Int -> *(!{!.a},!u:{#{!.a}})
 	uselect arr index =
 		code
 		{
@@ -253,16 +274,19 @@ instance Array {#} {!.a} where
 			push_a 0
 			push_arraysize _ 1 0
 		}
+	update :: !*{#u:{!.a}} !Int !u:{!.a} -> *{#u:{!.a}}
 	update arr index el =
 		code
 		{	
 			update _ 1 0
 		}
+	createArray :: !Int !{!.a} -> *{# {!.a}}
 	createArray size el =
 		code
 		{	
 			create_array _ 1 0
-		}		
+		}
+	replace :: !*{#u:{!.a}} !Int !u:{!.a} -> *(!u:{!.a},!*{#u:{!.a}})
 	replace arr index el =
 		code
 		{	
@@ -280,6 +304,7 @@ instance Array {#} {.a} where
 		{
 			select _ 1 0
 		}
+	uselect :: !u:{#{.a}} !Int -> *(!{.a},!u:{#{.a}})
 	uselect arr index =
 		code
 		{
@@ -297,16 +322,19 @@ instance Array {#} {.a} where
 			push_a 0
 			push_arraysize _ 1 0
 		}
+	update :: !*{#u:{.a}} !Int !u:{.a} -> *{#u:{.a}}
 	update arr index el =
 		code
 		{	
 			update _ 1 0
 		}
+	createArray :: !Int !{.a} -> *{# {.a}}
 	createArray size el =
 		code
 		{	
 			create_array _ 1 0
-		}		
+		}
+	replace :: !*{#u:{.a}} !Int !u:{.a} -> *(!u:{.a},!*{#u:{.a}})
 	replace arr index el =
 		code
 		{	
@@ -328,6 +356,7 @@ instance Array {#} a where
 		.o 0 0
 			halt
 		}
+	uselect :: !u:{# e} !Int -> *(!e, !u:{# e})
 	uselect arr index =
 		code
 		{
@@ -355,6 +384,7 @@ instance Array {#} a where
 		.o 0 0
 			halt
 		}
+	update :: !*{# .e} !Int !.e -> *{# .e}
 	update arr index el =
 		code
 		{
@@ -364,6 +394,7 @@ instance Array {#} a where
 		.o 0 0
 			halt
 		}
+	createArray :: !Int !e -> *{# e}
 	createArray size el =
 		code
 		{
@@ -373,6 +404,7 @@ instance Array {#} a where
 		.o 0 0
 			halt
 		}		
+	replace :: !*{# .e} !Int !.e -> *(!.e, !*{# .e})
 	replace arr index el =
 		code
 		{
@@ -398,6 +430,7 @@ instance Array {!} a where
 		{
 			select _ 1 0
 		}
+	uselect :: !u:{! e} !Int -> *(!e, !u:{! e})
 	uselect arr index =
 		code
 		{
@@ -415,16 +448,19 @@ instance Array {!} a where
 			push_a 0
 			push_arraysize _ 1 0
 		}
+	update :: !*{! .e} !Int !.e -> *{! .e}
 	update arr index el =
 		code
 		{	
 			update _ 1 0
 		}
+	createArray :: !Int !e -> *{! e}
 	createArray size el =
 		code
 		{	
 			create_array _ 1 0
 		}		
+	replace :: !*{! .e} !Int !.e -> *(!.e, !*{! .e})
 	replace arr index el =
 		code
 		{	
