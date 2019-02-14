@@ -3,7 +3,6 @@
 # script based on Dennis's bash wizardry at https://github.com/TryItOnline/tiosetup
 
 OWNDIR="$(cd "$(dirname "$0")"; pwd)"
-echo $OWNDIR
 if [[ ! -z "$1" ]]; then
 	TARGET="$(cd "$(dirname "$1")"; pwd)/$(basename "$1")"
 	if [[ "$TARGET" == "$OWNDIR" ]]; then
@@ -19,7 +18,6 @@ if [[ ! -z "$1" ]]; then
 	rm -rf "$CLEAN_HOME"
 	cp -r . "$CLEAN_HOME"
 elif [[ ! -z "$CLEAN_HOME" ]]; then
-	echo $CLEAN_HOME
 	if [[ "$CLEAN_HOME" == "$OWNDIR" ]]; then
 		echo "Repeating Clean setup and pre-compilation on existing installation"
 	else
