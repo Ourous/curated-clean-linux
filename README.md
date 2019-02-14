@@ -5,6 +5,8 @@ Curated Clean is based off of the nightly Clean builds found at ftp://ftp.cs.ru.
 
 Currently, it is composed of:
 
+	12 May 2018:
+		lib/Generics
 	13 February 2019:
 		gitlab.science.ru.nl/clean-compiler-and-rts -> lib/compiler
 
@@ -14,7 +16,12 @@ All other contents are from:
 
 With these changes made to allow compilation:
 
-	Currently none
+	Specializations for UNIT added to several modules in the Generics library
+
+Known errors:
+
+	Several modules in the Generics library no longer compile without nontrivial modification, using the equivalent modules in Platform is reccomended
+	Clean.PrettyPrint appears to depend on code present in a version of the compiler source not generally available
 
 Below follows Clean's official `README.md`:
 

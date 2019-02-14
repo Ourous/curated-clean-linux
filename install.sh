@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# script based on Dennis's bash wizardry at https://github.com/TryItOnline/tiosetup
+
 if [[ ! -z "$1" ]]; then
 	if [[ "$1" == "$PWD" ]]; then
 		echo "Cannot install to current directory. Try running without arguments" >&2
