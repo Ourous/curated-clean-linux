@@ -3,6 +3,7 @@
 # script based on Dennis's bash wizardry at https://github.com/TryItOnline/tiosetup
 
 OWNDIR="$(cd "$(dirname "$0")"; pwd)"
+
 if [[ ! -z "$1" ]]; then
 	TARGET="$(cd "$(dirname "$1")"; pwd)/$(basename "$1")"
 	if [[ "$TARGET" == "$OWNDIR" ]]; then
@@ -29,15 +30,15 @@ fi
 if [[ ! -z "$CLEAN_HOME" ]]; then
 	if [[ ":$PATH:" != *":$CLEAN_HOME/bin:"* ]]; then
 		echo "Consider adding $CLEAN_HOME/bin to your PATH"
-		PATH=$CLEAN_HOME/bin:$PATH
 	fi
-	echo "Performing Clean setup and pre-compilation"
+	printf 'Performing Clean setup and pre-compilation'
 else
 	echo "CLEAN_HOME needs to be set to the final install location for Clean to work properly"
-	echo "Performing Clean setup and pre-compilation in-place"
-	export CLEAN_HOME=$MYDIR
+	printf 'Performing Clean setup and pre-compilation in-place'
+	export CLEAN_HOME=$OWNDIR
 fi
 
+PATH=$CLEAN_HOME/bin:$PATH
 
 err=0
 trap 'err=1' ERR
