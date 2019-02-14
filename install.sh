@@ -2,20 +2,24 @@
 
 # script based on Dennis's bash wizardry at https://github.com/TryItOnline/tiosetup
 
+OWNDIR="$(cd "$(dirname "$0")"; pwd)/$(basename "$0")"
+
 if [[ ! -z "$1" ]]; then
-	if [[ "$1" == "$PWD" ]]; then
+	TARGET="$(cd "$(dirname "$1")"; pwd)/$(basename "$1")"
+	if [[ "$TARGET" == "$OWNDIR" ]]; then
 		echo "Cannot install to current directory. Try running without arguments" >&2
 		exit 1
 	fi
-	echo "Installing Clean to $1"
-	if [ "$CLEAN_HOME" != "$1" ]; then
-		echo "CLEAN_HOME needs to be set to $1 for Clean to work properly"
+	exit 1
+	echo "Installing Clean to $TARGET"
+	if [[ "$CLEAN_HOME" != "$TARGET" ]]; then
+		echo "CLEAN_HOME needs to be set to $TARGET for Clean to work properly"
 	fi
-	export CLEAN_HOME=$1
+	export CLEAN_HOME=$TARGET
 	rm -rf "$CLEAN_HOME"
 	cp -r . "$CLEAN_HOME"
 elif [[ ! -z "$CLEAN_HOME" ]]; then
-	if [[ "$CLEAN_HOME" == "$PWD" ]]; then
+	if [[ "$CLEAN_HOME" == "$MYDIR" ]]; then
 		echo "Repeating Clean setup and pre-compilation on existing installation"
 	else
 		echo "Replacing existing Clean installation located in $CLEAN_HOME"
@@ -33,7 +37,7 @@ if [[ ! -z "$CLEAN_HOME" ]]; then
 else
 	echo "CLEAN_HOME needs to be set to the final install location for Clean to work properly"
 	echo "Performing Clean setup and pre-compilation in-place"
-	export CLEAN_HOME=$PWD
+	export CLEAN_HOME=$MYDIR
 fi
 
 
