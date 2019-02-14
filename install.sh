@@ -9,7 +9,6 @@ if [[ ! -z "$1" ]]; then
 		echo "Cannot install to current directory. Try running without arguments" >&2
 		exit 1
 	fi
-	exit 1
 	echo "Installing Clean to $TARGET"
 	if [[ "$CLEAN_HOME" != "$TARGET" ]]; then
 		echo "CLEAN_HOME needs to be set to $TARGET for Clean to work properly"
