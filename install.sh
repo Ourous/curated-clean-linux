@@ -60,7 +60,7 @@ while
 				f=${f%.*}
 				f=${f//\//.}
 				printf 'module main\nimport %s\nStart = ""\n' $f > main.icl
-				clm -dynamics -IL Dynamics -IL Gast -IL GraphCopy -IL Generics -IL Platform -IL Sapl -IL TCPIP -IL ArgEnv -IL StdLib -IL Directory -IL compiler -IL compiler/frontend -IL compiler/backend -IL compiler/main -IL compiler/main/Unix main -o main.out
+				clm -dynamics -IL Dynamics -IL Gast -IL GraphCopy -IL Generics -IL Platform -IL Sapl -IL TCPIP -IL ArgEnv -IL StdLib -IL Directory -IL compiler -IL compiler/frontend -IL compiler/backend -IL compiler/main -IL compiler/main/Unix -IL CleanRegex main -o main.out
 			done
 			rm {.,Clean\ System\ Files}/main.*
 			cd ..

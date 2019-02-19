@@ -9,6 +9,8 @@ Currently, it is composed of:
 		lib/Generics
 	13 February 2019:
 		gitlab.science.ru.nl/clean-compiler-and-rts -> lib/compiler
+	19 February 2019:
+		gitlab.science.ru.nl/cstaps/CleanRegex -> lib/CleanRegex
 
 All other contents are from:
 

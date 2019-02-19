@@ -1,0 +1,3 @@
+[submodule "lib/CleanRegex"]
+	path = lib/CleanRegex
+	url = https://gitlab.science.ru.nl/cstaps/CleanRegex
