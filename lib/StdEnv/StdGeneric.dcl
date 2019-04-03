@@ -25,6 +25,7 @@ definition module StdGeneric
 	, gcd_type_def	:: GenericTypeDefDescriptor // type def of the constructor
 	, gcd_type 		:: GenType					// type of the constructor
 	, gcd_index 	:: Int						// index of the contructor in the type def
+	, gcd_strict_arguments :: Int				// do not use, temporarily added
 	}
 :: GenConsPrio = GenConsNoPrio | GenConsPrio GenConsAssoc Int
 :: GenConsAssoc = GenConsAssocNone | GenConsAssocLeft | GenConsAssocRight   	
@@ -35,6 +36,7 @@ definition module StdGeneric
 	, grd_type_arity:: Int 						// arity of the type
 	, grd_type 		:: GenType					// type of the constructor
 	, grd_fields 	:: [String]
+	, grd_strict_fields :: Int					// do not use, temporarily added
 	}
 
 :: GenericFieldDescriptor = 
