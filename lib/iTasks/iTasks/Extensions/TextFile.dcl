@@ -1,7 +1,8 @@
 definition module iTasks.Extensions.TextFile
 
 import iTasks
-from System.FilePath import :: FilePath
+from System.FilePath            import :: FilePath
+from iTasks.Extensions.Document import :: Document
 
 /**
 * Import the content of  a text file on the server's filesystem.
@@ -14,6 +15,16 @@ from System.FilePath import :: FilePath
 * @gin-icon page_white_text
 */
 importTextFile		:: !FilePath -> Task String
+
+/**
+* Import the content of a text file document.
+*
+* @param Document: The document to import
+*
+* @return The imported content
+* @throws FileException
+*/
+importTextDocument :: !Document -> Task String
 
 /**
 * Export a string as text file to the server's filesystem.

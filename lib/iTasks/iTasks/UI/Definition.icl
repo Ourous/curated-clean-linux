@@ -3,6 +3,7 @@ implementation module iTasks.UI.Definition
 import StdEnv
 import Text.GenJSON, Data.GenEq, Text.HTML, Text, Data.Maybe
 from Data.Map import :: Map (..)
+import Data.Map.GenJSON
 from Data.Functor import class Functor(..)
 import qualified Data.Map as DM
 import qualified Data.List as DL

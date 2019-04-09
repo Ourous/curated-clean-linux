@@ -21,6 +21,7 @@ import iTasks.Internal.TaskEval
 import iTasks.Internal.IWorld
 import qualified Data.Set as Set
 import qualified Data.Map as Map
+import Data.Map.GenJSON
 import Text
 
 /** hostname, connection on which to send the reply, accumulated data received **/
@@ -65,6 +66,7 @@ where
     	, onShareChange = onShareChange
     	, onTick = onTick
     	, onDisconnect = onDisconnect
+    	, onDestroy = \s iw->(Ok s, [], iw)
 		}
 
 	reevaluateShares :: !{#Symbol} !TaskId ![(ConnectionId, (Bool, String, String))] *IWorld -> (MaybeErrorString [(ConnectionId, (Bool, String, String))], *IWorld)

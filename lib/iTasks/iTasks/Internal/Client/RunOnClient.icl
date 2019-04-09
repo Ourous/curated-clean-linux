@@ -132,6 +132,7 @@ createClientIWorld serverURL currentInstance
 						, autoLayout = True
 						, timeout = Just 100
 						, distributed = False
+						, maxEvents = 5
 						, sdsPort = 9090
 	                    , webDirPath  = locundef "webDirectory"
 	                    , storeDirPath = locundef "dataDirectory"

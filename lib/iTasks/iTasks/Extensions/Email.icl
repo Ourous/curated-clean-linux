@@ -4,7 +4,7 @@ import Text
 
 sendEmail :: ![EmailOpt] !String !String !String !String -> Task ()
 sendEmail opts subject body sender recipient
-	= tcpconnect server port (constShare ()) {ConnectionHandlers|onConnect=onConnect,whileConnected=whileConnected,onDisconnect=onDisconnect}
+	= tcpconnect server port (constShare ()) {ConnectionHandlers|onConnect=onConnect,whileConnected=whileConnected,onDisconnect=onDisconnect,onDestroy= \s->(Ok s, [])}
 	@! ()
 where
 	server 	= getServerOpt opts

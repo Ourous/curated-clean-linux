@@ -9,6 +9,13 @@ importTextFile :: !FilePath -> Task String
 importTextFile filename = mkInstantTask eval
 where
 	eval taskId iworld = fileTaskRead taskId filename readAll iworld
+
+importTextDocument :: !Document -> Task String
+importTextDocument {Document|documentId} = mkInstantTask eval
+where
+	eval taskId iworld
+		# (filename,iworld) = documentLocation documentId iworld
+		= fileTaskRead taskId filename readAll iworld
 	
 exportTextFile :: !FilePath !String -> Task String
 exportTextFile filename content = mkInstantTask eval

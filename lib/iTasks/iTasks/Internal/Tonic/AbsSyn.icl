@@ -3,6 +3,7 @@ implementation module iTasks.Internal.Tonic.AbsSyn
 import Text.GenJSON, Data.Maybe
 from Data.GenEq import generic gEq
 from Data.Map import :: Map
+import Data.Map.GenJSON
 import qualified Data.Map as DM
 import StdBool, StdList, StdTuple
 from StdOverloaded import class == (..)

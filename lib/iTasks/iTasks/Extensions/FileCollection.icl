@@ -10,6 +10,7 @@ import iTasks.Internal.Util
 import StdFile
 from Data.Map import :: Map
 import qualified Data.Map as DM
+import Data.Map.GenJSON
 import Data.Error, Data.Functor, Data.Maybe, Text
 import System.Directory, System.File, System.FilePath, System.OS
 

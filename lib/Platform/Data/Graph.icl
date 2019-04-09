@@ -8,7 +8,7 @@ from StdList import ++, filter, hd, isEmpty, isMember, map, reverse, tl,
 import StdOrdList
 import StdTuple
 
-import Data.Map
+import Data.Map, Data.Map.GenJSON
 import Data.Maybe
 import Data.Functor
 import Text.GenJSON

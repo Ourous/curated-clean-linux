@@ -8,10 +8,12 @@ from Text.HTML import instance toString HtmlTag
 from iTasks.UI.Editor.Common import diffChildren, :: ChildUpdate (..)
 from StdArray import class Array(uselect), instance Array {} a
 
-LEAFLET_JS         :== "/leaflet-1.3.4/leaflet.js"
-LEAFLET_JS_WINDOW  :== "leaflet-window.js"
-LEAFLET_CSS        :== "/leaflet-1.3.4/leaflet.css"
-LEAFLET_CSS_WINDOW :== "leaflet-window.css"
+LEAFLET_JS           :== "/leaflet-1.3.4/leaflet.js"
+LEAFLET_JS_WINDOW    :== "leaflet-window.js"
+// https://github.com/Leaflet/Leaflet.Editable
+LEAFLET_JS_EDITABLE  :== "Leaflet.Editable.js"
+LEAFLET_CSS          :== "/leaflet-1.3.4/leaflet.css"
+LEAFLET_CSS_WINDOW   :== "leaflet-window.css"
 
 :: IconOptions =
     { iconUrl   :: !String
@@ -20,6 +22,7 @@ LEAFLET_CSS_WINDOW :== "leaflet-window.css"
 :: MapOptions =
     { attributionControl    :: !Bool
     , zoomControl           :: !Bool
+    , editable              :: !Bool
     }
 :: CursorOptions =
     { color     :: !String
@@ -29,11 +32,19 @@ LEAFLET_CSS_WINDOW :== "leaflet-window.css"
 
 derive JSONEncode IconOptions
 
-derive JSEncode LeafletEdit, LeafletBounds, LeafletLatLng, LeafletObjectID
-derive JSDecode LeafletEdit, LeafletBounds, LeafletLatLng, LeafletObjectID
+derive JSEncode LeafletEdit, LeafletBounds, LeafletLatLng, LeafletObjectID, LeafletObjectUpdate
+derive JSDecode LeafletEdit, LeafletBounds, LeafletLatLng, LeafletObjectID, LeafletObjectUpdate
 
 CURSOR_OPTIONS  :== {color = "#00f", opacity = 1.0, radius = 3}
-MAP_OPTIONS     :== {attributionControl = False, zoomControl = True}
+MAP_OPTIONS     :== {attributionControl = False, zoomControl = True, editable = True}
+
+leafletObjectIdOf :: !LeafletObject -> LeafletObjectID
+leafletObjectIdOf (Marker m)    = m.markerId
+leafletObjectIdOf (Polyline p)  = p.polylineId
+leafletObjectIdOf (Polygon p)   = p.polygonId
+leafletObjectIdOf (Circle c)    = c.circleId
+leafletObjectIdOf (Rectangle r) = r.rectangleId
+leafletObjectIdOf (Window w)    = w.windowId
 
 :: LeafletEdit
     //Perspective
@@ -45,6 +56,13 @@ MAP_OPTIONS     :== {attributionControl = False, zoomControl = True}
     | LDSelectMarker    !LeafletObjectID
     //Updating windows
     | LDRemoveWindow    !LeafletObjectID
+    | LDUpdateObject    !LeafletObjectID !LeafletObjectUpdate
+
+:: LeafletObjectUpdate
+	= UpdatePolyline  ![LeafletLatLng]
+	| UpdatePolygon   ![LeafletLatLng]
+	| UpdateCircle    !LeafletLatLng !Real
+	| UpdateRectangle !LeafletBounds
 
 openStreetMapTiles :: String
 openStreetMapTiles = "http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -85,6 +103,8 @@ where
                           in uia UIData dataMap`
 	encodeUI (Polyline o) = let (JSONObject attr) = toJSON o in uia UIData ('DM'.fromList [("type",JSONString "polyline"):attr])
 	encodeUI (Polygon o) = let (JSONObject attr) = toJSON o in uia UIData ('DM'.fromList [("type",JSONString "polygon") : attr])
+	encodeUI (Circle o) = let (JSONObject attr) = toJSON o in uia UIData ('DM'.fromList [("type",JSONString "circle"): attr])
+	encodeUI (Rectangle o) = let (JSONObject attr) = toJSON o in uia UIData ('DM'.fromList [("type",JSONString "rectangle") : attr])
     encodeUI (Window o) = let (JSONObject attr) = toJSON o
                               dataMap = 'DM'.fromList [("type",JSONString "window"): attr]
                               // translate HtmlTag to HTML code
@@ -101,6 +121,7 @@ where
             # world = addCSSFromUrl LEAFLET_CSS world
             # world = addCSSFromUrl LEAFLET_CSS_WINDOW world
             # world = addJSFromUrl LEAFLET_JS Nothing world
+            # world = addJSFromUrl LEAFLET_JS_EDITABLE Nothing world
             # world = addJSFromUrl LEAFLET_JS_WINDOW (Just jsInitDOM) world
 			= world
 		| otherwise
@@ -264,13 +285,16 @@ where
 		# (lng,world)     = .? (obj .# "lng") world
 		= ({LeafletLatLng|lat=jsValToReal lat,lng=jsValToReal lng}, world)
 
-    getMapBounds mapObj env
-        # (bounds,env)      = (mapObj .# "getBounds" .$ ()) env
+	toBounds bounds env
         # (sw,env)          = (bounds .# "getSouthWest" .$ ()) env
         # (ne,env)          = (bounds .# "getNorthEast" .$ ()) env
 		# (swpos,env)       = toLatLng sw env
 		# (nepos,env)       = toLatLng ne env
         = ({southWest=swpos,northEast=nepos},env)
+
+    getMapBounds mapObj env
+        # (bounds,env)      = (mapObj .# "getBounds" .$ ()) env
+		= toBounds bounds env
 
 	getMapZoom mapObj world
 		# (zoom,world) = (mapObj .# "getZoom" .$ ()) world
@@ -337,11 +361,13 @@ where
 	createMapObject viewMode me mapObj l object world
 		# (type,world) = .? (object .# "attributes.type") world
 		= case jsValToString type of
-			"marker"   = createMarker            me mapObj l object world
-			"polyline" = createPolyline          me mapObj l object world
-			"polygon"  = createPolygon           me mapObj l object world
-            "window"   = createWindow   viewMode me mapObj l object world
-			_ 		   = world
+			"marker"    = createMarker            me mapObj l object world
+			"polyline"  = createPolyline          me mapObj l object world
+			"polygon"   = createPolygon           me mapObj l object world
+			"circle"    = createCircle            me mapObj l object world
+			"rectangle" = createRectangle         me mapObj l object world
+            "window"    = createWindow   viewMode me mapObj l object world
+			_ 		    = world
 
 	createMarker me mapObj l object world
         # (markerId,world)    = .? (object .# "attributes.markerId") world
@@ -392,46 +418,123 @@ where
 	
 	createPolyline me mapObj l object world 
 		//Set options
-        # (options,world)     = jsEmptyObject world
-        # (style,world)       = .? (object .# "attributes.style") world
-        # world               = forall (applyLineStyle options) style world
-		# (points,world)      = .? (object .# "attributes.points") world
-        # (layer,world)       = (l .# "polyline" .$ (points ,options)) world
-        # (_,world)           = (layer .# "addTo" .$ (toJSArg mapObj)) world
-		# world               = (object .# "layer" .= layer) world
-		= world
-
-	createPolygon me mapObj l object world 
-		//Set options
-        # (options,world)     = jsEmptyObject world
+		# (options,world)     = jsEmptyObject world
 		# (style,world)       = .? (object .# "attributes.style") world
-        # world               = forall (applyStyle options) style world
+		# world               = forall (applyLineStyle options) style world
 		# (points,world)      = .? (object .# "attributes.points") world
-        # (layer,world)       = (l .# "polygon" .$ (points ,options)) world
-        # (_,world)           = (layer .# "addTo" .$ (toJSArg mapObj)) world
+		# (layer,world)       = (l .# "polyline" .$ (points ,options)) world
+		# (_,world)           = (layer .# "addTo" .$ (toJSArg mapObj)) world
+		# world               = enableEdit "polylineId" me mapObj layer object getUpdate world
 		# world               = (object .# "layer" .= layer) world
 		= world
-    where
-        applyStyle options _ style world
-            # (styleType, world) = .? (style .# 0) world
-            # styleType = jsValToString styleType
-            | styleType == "Style"
-                # (directStyle, world) = .? (style .# 1) world
-                # (directStyleType, world) = .? (directStyle .# 0) world
-                # (directStyleVal, world)  = .? (directStyle .# 1) world
-                # directStyleType = jsValToString directStyleType
-                | directStyleType == "PolygonLineStrokeColor" = (options .# "color"       .= directStyleVal) world
-                | directStyleType == "PolygonLineStrokeWidth" = (options .# "weight"      .= directStyleVal) world
-                | directStyleType == "PolygonLineOpacity"     = (options .# "opacity"     .= directStyleVal) world
-                | directStyleType == "PolygonLineDashArray"   = (options .# "dashArray"   .= directStyleVal) world
-                | directStyleType == "PolygonNoFill"          = (options .# "fill"        .= False)          world
-                | directStyleType == "PolygonFillColor"       = (options .# "fillColor"   .= directStyleVal) world
-                | directStyleType == "PolygonFillOpacity"     = (options .# "fillOpacity" .= directStyleVal) world
-                = abort "unknown style"
-            | styleType == "Class"
-                # (cls, world) = .? (style .# 1) world
-                = (options .# "className" .= cls) world
-            = abort "unknown style"
+	where
+		getUpdate layer world
+			# (points, world) = (layer .# "getLatLngs" .$ ()) world
+			# (points, world) = fromJSArray points id world
+			# (points, world) = foldl (\(res, world) point = appFst (\latLng -> [latLng: res]) $ toLatLng point world)
+			                          ([], world)
+			                          points
+			= (UpdatePolyline $ reverse points, world)
+
+	createPolygon me mapObj l object world
+		//Set options
+		# (options,world)     = jsEmptyObject world
+		# (style,world)       = .? (object .# "attributes.style") world
+		# world               = forall (applyAreaStyle options) style world
+		# (points,world)      = .? (object .# "attributes.points") world
+		# (layer,world)       = (l .# "polygon" .$ (points ,options)) world
+		# (_,world)           = (layer .# "addTo" .$ (toJSArg mapObj)) world
+		# world               = enableEdit "polygonId" me mapObj layer object getUpdate world
+		# world               = (object .# "layer" .= layer) world
+		= world
+	where
+		getUpdate layer world
+			# (points, world) = (layer .# "getLatLngs" .$ ()) world
+			# (points, world) = .? (points .# 0) world
+			# (points, world) = fromJSArray points id world
+			# (points, world) = foldl (\(res, world) point = appFst (\latLng -> [latLng: res]) $ toLatLng point world)
+			                          ([], world)
+			                          points
+			= (UpdatePolygon $ reverse points, world)
+
+	createCircle me mapObj l object world
+		//Set options
+		# (options,world)     = jsEmptyObject world
+		# (style,world)       = .? (object .# "attributes.style") world
+		# world               = forall (applyAreaStyle options) style world
+		# (center,world)      = .? (object .# "attributes.center") world
+		# (radius,world)      = .? (object .# "attributes.radius") world
+		# world               = (options .# "radius" .= radius) world
+		# (layer,world)       = (l .# "circle" .$ (center, options)) world
+		# (_,world)           = (layer .# "addTo" .$ (toJSArg mapObj)) world
+		# world               = enableEdit "circleId" me mapObj layer object getUpdate world
+		# world               = (object .# "layer" .= layer) world
+		= world
+	where
+		getUpdate layer world
+			# (radius,   world) = (layer .# "getRadius" .$ ()) world
+			# (center,   world) = (layer .# "getLatLng" .$ ()) world
+			# (center,   world) = toLatLng center world
+			= (UpdateCircle center $ jsValToReal radius, world)
+
+	createRectangle me mapObj l object world
+		//Set options
+		# (options,world)     = jsEmptyObject world
+		# (style,world)       = .? (object .# "attributes.style") world
+		# world               = forall (applyAreaStyle options) style world
+		# (sw,world)          = .? (object .# "attributes.bounds.southWest") world
+		# (ne,world)          = .? (object .# "attributes.bounds.northEast") world
+		# (layer,world)       = (l .# "rectangle" .$ ([sw, ne], options)) world
+		# (_,world)           = (layer .# "addTo" .$ (toJSArg mapObj)) world
+		# world               = enableEdit "rectangleId" me mapObj layer object getUpdate world
+		# world               = (object .# "layer" .= layer) world
+		= world
+	where
+		getUpdate layer world
+			# (bounds, world) = (layer .# "getBounds" .$ ()) world
+			# (bounds, world) = toBounds bounds world
+			= (UpdateRectangle bounds, world)
+
+	enableEdit idFieldName me mapObj layer object getUpdate world
+		# (isEditable,world)  = .? (object .# "attributes.editable") world
+		| not $ jsValToBool isEditable = world
+		# (_, world)  = (layer .# "enableEdit" .$ ()) world
+		# (cb, world) = jsWrapFun (onEditing layer) world
+		# (_, world)  = (layer .# "addEventListener" .$ ("editable:vertex:dragend", cb)) world
+		# (_, world)  = (layer .# "addEventListener" .$ ("editable:vertex:new",     cb)) world
+		# (_, world)  = (layer .# "addEventListener" .$ ("editable:vertex:deleted", cb)) world
+		= world
+	where
+		onEditing layer _ world
+			# (update,   world) = getUpdate layer world
+			# (objectId, world) = .? (object .# "attributes." +++ idFieldName) world
+			# (edit,     world)
+				= encodeOnClient [LDUpdateObject (LeafletObjectID (jsValToString objectId)) update] world
+			# (taskId,   world) = .? (me .# "attributes.taskId") world
+			# (editorId, world) = .? (me .# "attributes.editorId") world
+			# (_,        world) = ((me .# "doEditEvent") .$ (taskId, editorId, edit)) world
+			= (jsNull,   world)
+
+	applyAreaStyle options _ style world
+		# (styleType, world) = .? (style .# 0) world
+		# styleType = jsValToString styleType
+		| styleType == "Style"
+			# (directStyle, world) = .? (style .# 1) world
+			# (directStyleType, world) = .? (directStyle .# 0) world
+			# (directStyleVal, world)  = .? (directStyle .# 1) world
+			# directStyleType = jsValToString directStyleType
+			| directStyleType == "AreaLineStrokeColor" = (options .# "color"       .= directStyleVal) world
+			| directStyleType == "AreaLineStrokeWidth" = (options .# "weight"      .= directStyleVal) world
+			| directStyleType == "AreaLineOpacity"     = (options .# "opacity"     .= directStyleVal) world
+			| directStyleType == "AreaLineDashArray"   = (options .# "dashArray"   .= directStyleVal) world
+			| directStyleType == "AreaNoFill"          = (options .# "fill"        .= False)          world
+			| directStyleType == "AreaFillColor"       = (options .# "fillColor"   .= directStyleVal) world
+			| directStyleType == "AreaFillOpacity"     = (options .# "fillOpacity" .= directStyleVal) world
+			= abort "unknown style"
+		| styleType == "Class"
+			# (cls, world) = .? (style .# 1) world
+			= (options .# "className" .= cls) world
+		= abort "unknown style"
 
     createWindow viewMode me mapObj l object world
         # (layer,world)      = l .# "window" .$ () $ world
@@ -514,9 +617,9 @@ where
 	onEdit dp ([], diffs) m vst = (Ok (NoChange, foldl app m diffs), vst)
 	where
 		app m (LDSetZoom zoom)          = {LeafletMap|m & perspective = {m.perspective & zoom = zoom}}
-		app m (LDSetCenter center)      = {LeafletMap|m & perspective = {m.perspective & center = center}}
+		app m (LDSetCenter center)      = {LeafletMap|m & perspective = {LeafletPerspective| m.perspective & center = center}}
 		app m (LDSetCursor cursor)      = {LeafletMap|m & perspective = {m.perspective & cursor = Just cursor}}
-		app m (LDSetBounds bounds)      = {LeafletMap|m & perspective = {m.perspective & bounds = Just bounds}}
+		app m (LDSetBounds bounds)      = {LeafletMap|m & perspective = {LeafletPerspective| m.perspective & bounds = Just bounds}}
 		app m (LDSelectMarker markerId) = {LeafletMap|m & objects = map (sel markerId) m.LeafletMap.objects}
 		where
 			sel x (Marker m=:{LeafletMarker|markerId}) = Marker {LeafletMarker|m & selected = markerId === x}
@@ -525,6 +628,19 @@ where
         where
             notToRemove (Window {windowId}) = windowId =!= idToRemove
             notToRemove _                   = True
+		app m (LDUpdateObject objectId upd) = {LeafletMap|m & objects = withUpdatedObject <$> m.LeafletMap.objects}
+		where
+			withUpdatedObject :: !LeafletObject -> LeafletObject
+			withUpdatedObject obj | leafletObjectIdOf obj === objectId = case (obj, upd) of
+				(Polyline polyline, UpdatePolyline points)
+					= Polyline {LeafletPolyline| polyline & points = points}
+				(Polygon polygon, UpdatePolygon points)
+					= Polygon {LeafletPolygon| polygon & points = points}
+				(Circle circle, UpdateCircle center radius)
+					= Circle {LeafletCircle| circle & center = center, radius = radius}
+				(Rectangle rect, UpdateRectangle bounds)
+					= Rectangle {LeafletRectangle| rect & bounds = bounds}
+			withUpdatedObject obj = obj
 		app m _ = m
 	onEdit _ _ msk ust = (Ok (NoChange,msk),ust)
 
@@ -585,4 +701,4 @@ derive gDefault   LeafletLatLng
 derive gEq        LeafletMap, LeafletPerspective
 derive gText      LeafletMap, LeafletPerspective, LeafletLatLng
 derive gEditor    LeafletPerspective, LeafletLatLng
-derive class iTask LeafletIcon, LeafletBounds, LeafletObject, LeafletMarker, LeafletPolyline, LeafletPolygon, LeafletEdit, LeafletWindow, LeafletWindowPos, LeafletLineStyle, LeafletStyleDef, LeafletPolygonStyle, LeafletObjectID, CSSClass, LeafletIconID
+derive class iTask LeafletIcon, LeafletBounds, LeafletObject, LeafletMarker, LeafletPolyline, LeafletPolygon, LeafletEdit, LeafletWindow, LeafletWindowPos, LeafletLineStyle, LeafletStyleDef, LeafletAreaStyle, LeafletObjectID, CSSClass, LeafletIconID, LeafletCircle, LeafletObjectUpdate, LeafletRectangle

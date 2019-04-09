@@ -12,7 +12,7 @@ from Text.GenJSON				            import :: JSONNode
 from iTasks.Engine                      import :: EngineOptions
 from iTasks.UI.Definition				import :: UI, :: UIType
 from iTasks.Internal.TaskState		import :: ParallelTaskState, :: TIMeta, :: DeferredJSON
-from iTasks.Internal.Task             import :: ConnectionTask, :: BackgroundTask
+from iTasks.Internal.Task             import :: ConnectionTask
 from iTasks.Internal.TaskEval         import :: TaskTime
 
 from iTasks.WF.Definition import :: TaskValue, :: Event, :: TaskId, :: InstanceNo, :: TaskNo, :: TaskException
@@ -78,7 +78,6 @@ CLEAN_HOME_VAR	:== "CLEAN_HOME"
 :: *IOTaskInstance
     = ListenerInstance        !ListenerInstanceOpts !*TCP_Listener
     | ConnectionInstance      !ConnectionInstanceOpts !*TCP_DuplexChannel
-    | BackgroundInstance      !BackgroundInstanceOpts !BackgroundTask
 
 :: ListenerInstanceOpts =
     { taskId                :: !TaskId          //Reference to the task that created the listener
@@ -95,12 +94,6 @@ CLEAN_HOME_VAR	:== "CLEAN_HOME"
     }
 
 :: ConnectionId             :== Int
-
-:: BackgroundInstanceOpts =
-    { bgInstId              :: !BackgroundTaskId
-    }
-
-:: BackgroundTaskId         :== Int
 
 :: IOStates :== Map TaskId IOState
 :: IOState

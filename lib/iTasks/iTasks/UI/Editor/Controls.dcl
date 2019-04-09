@@ -124,7 +124,9 @@ tree          :: Editor ([ChoiceNode], [Int])
  */
 withConstantChoices :: !choices !(Editor (!choices, ![Int])) -> Editor [Int]
 
-fieldComponent :: !UIType !(Maybe a) -> Editor a | JSONDecode{|*|}, JSONEncode{|*|}, gEq{|*|} a & JSDecode{|*|} a
+fieldComponent
+	:: !UIType !(Maybe a) !(UIAttributes a -> Bool) -> Editor a
+	| JSONDecode{|*|}, JSONEncode{|*|}, gEq{|*|} a & JSDecode{|*|} a
 
 //Convenient types for describing the values of grids and trees
 :: ChoiceText =

@@ -4,6 +4,7 @@ definition module iTasks.Extensions.Admin.UserAdmin
 */
 import iTasks
 import iTasks.Extensions.User
+from iTasks.Extensions.Document import :: Document
 
 :: UserAccount			=
 	{ credentials	:: !Credentials
@@ -88,12 +89,15 @@ deleteUser			:: !UserId -> Task ()
 * Browse and manage the existing users
 */
 manageUsers			:: Task ()
+
+createUserFlow :: Task ()
+updateUserFlow :: UserId -> Task StoredUserAccount
+changePasswordFlow :: !UserId -> Task StoredUserAccount
+deleteUserFlow :: UserId -> Task StoredUserAccount
+importUserFileFlow :: Task ()
+exportUserFileFlow :: Task Document
+
 /**
 * Create set of user names handy for giving demo's: alice, bob, carol, ...
 */
 importDemoUsersFlow :: Task [UserAccount]
-
-
-
-
-

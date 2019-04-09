@@ -2,7 +2,7 @@ implementation module iTasks.UI.Editor.Controls
 
 import StdEnv
 import iTasks.UI.Definition, iTasks.UI.Editor
-import Data.GenEq, Data.Error, Text.GenJSON, Text.HTML, Data.Func, Data.Functor, Data.Tuple, Data.List, Data.Maybe
+import Data.GenEq, Data.Error, Text.GenJSON, Text.HTML, Data.Func, Data.Functor, Data.Tuple, Data.List, Data.Maybe, Data.Map.GenJSON
 import qualified Data.Map as DM
 
 import iTasks.UI.Definition
@@ -11,31 +11,42 @@ import iTasks.UI.Editor.Modifiers
 disableOnView e = selectByMode (e <<@ enabledAttr False) e e
 
 textField :: Editor String
-textField = fieldComponent UITextField Nothing
+textField = fieldComponent UITextField (Just "") isValidString
 
 textArea :: Editor String
-textArea = fieldComponent UITextArea Nothing
+textArea = fieldComponent UITextArea (Just "") isValidString
 
 passwordField :: Editor String
-passwordField = fieldComponent UIPasswordField Nothing
+passwordField = fieldComponent UIPasswordField (Just "") isValidString
+
+isValidString :: !UIAttributes !String -> Bool
+isValidString attrs str
+	= lStr >= getLengthAttr 0 "minlength" && lStr <= getLengthAttr lStr "maxlength"
+where
+	getLengthAttr :: !Int !String -> Int
+	getLengthAttr default attr = case 'DM'.get attr attrs of
+		Just (JSONInt l) = l
+		_                = default
+
+	lStr = size str
 
 integerField :: Editor Int
-integerField = fieldComponent UIIntegerField Nothing
+integerField = fieldComponent UIIntegerField Nothing (\_ _ -> True)
 
 decimalField :: Editor Real
-decimalField = fieldComponent UIDecimalField Nothing
+decimalField = fieldComponent UIDecimalField Nothing (\_ _ -> True)
 
 documentField :: Editor (!String,!String,!String,!String,!Int)
-documentField = fieldComponent UIDocumentField Nothing
+documentField = fieldComponent UIDocumentField Nothing (\_ _ -> True)
 
 checkBox :: Editor Bool
-checkBox = fieldComponent UICheckbox $ Just False
+checkBox = fieldComponent UICheckbox (Just False) (\_ _ -> True)
 
 slider :: Editor Int
-slider = fieldComponent UISlider Nothing
+slider = fieldComponent UISlider Nothing (\_ _ -> True)
 
 button :: Editor Bool
-button = fieldComponent UIButton Nothing
+button = fieldComponent UIButton Nothing (\_ _ -> True)
 
 label :: Editor String
 label = viewComponent textAttr UILabel
@@ -109,30 +120,36 @@ where
 	editModeFor other = other
 
 //Field like components for which simply knowing the UI type is sufficient
-fieldComponent :: !UIType !(Maybe a) -> Editor a | JSONDecode{|*|}, JSONEncode{|*|}, gEq{|*|} a & JSDecode{|*|} a
-fieldComponent type mbEditModeInitValue = disableOnView $ editorWithJSONEncode (leafEditorToEditor o leafEditor)
+fieldComponent
+	:: !UIType !(Maybe a) !(UIAttributes a -> Bool) -> Editor a
+	| JSONDecode{|*|}, JSONEncode{|*|}, gEq{|*|} a & JSDecode{|*|} a
+fieldComponent type mbEditModeInitValue isValid = disableOnView $ editorWithJSONEncode (leafEditorToEditor o leafEditor)
 where 
 	leafEditor toJSON =
 		{LeafEditor|genUI=genUI toJSON,onEdit=onEdit,onRefresh=onRefresh toJSON,valueFromState=valueFromState}
 
 	genUI toJSON attr dp mode vst=:{VSt|taskId,optional}
 		# mbVal   = maybe mbEditModeInitValue Just $ editModeValue mode
-		# jsonVal = maybe JSONNull toJSON mbVal
+		# mbVal   = maybe Nothing (\val -> if (isValid attr val) (Just val) Nothing) mbVal
 		# attr    = 'DM'.unions [ optionalAttr optional
 		                        , taskIdAttr taskId
 		                        , editorIdAttr $ editorId dp
-		                        , valueAttr jsonVal
+		                        , valueAttr $ maybe JSONNull toJSON mbVal
 		                        , attr
 		                        ]
-		= (Ok (uia type attr, mbVal), vst)
+		= (Ok (uia type attr, (mbVal, attr)), vst)
 
-	onEdit _ (_, mbVal) _ vst = (Ok (NoChange, mbVal), vst)
+	onEdit _ (_, mbVal) (_, attrs) vst = (Ok (NoChange, (mbVal`, attrs)), vst)
+	where
+		mbVal` = case mbVal of
+			Just val | isValid attrs val = Just val
+			_                            = Nothing
 
-	onRefresh toJSON dp new mbOld vst
-		| mbOld === Just new = (Ok (NoChange, mbOld), vst)
-		| otherwise          = (Ok (ChangeUI [SetAttribute "value" (toJSON new)] [], Just new), vst)
+	onRefresh toJSON dp new (mbOld, attrs) vst
+		| mbOld === Just new = (Ok (NoChange, (mbOld, attrs)), vst)
+		| otherwise          = (Ok (ChangeUI [SetAttribute "value" (toJSON new)] [], (if (isValid attrs new) (Just new) Nothing, attrs)), vst)
 
-	valueFromState mbVal = mbVal
+	valueFromState (mbVal, _) = mbVal
 
 	editorWithJSONEncode :: !((a -> JSONNode) -> Editor a) -> Editor a | JSONEncode{|*|} a
 	editorWithJSONEncode genFunc = genFunc toJSON

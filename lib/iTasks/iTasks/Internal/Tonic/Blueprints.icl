@@ -20,6 +20,7 @@ import iTasks.Internal.TaskEval
 import iTasks.Internal.Task
 from StdFunc import seq
 import qualified Data.Map as DM
+import Data.Map.GenJSON
 import System.File, StdFile
 import StdArray
 import System.Directory, System.FilePath

@@ -64,40 +64,9 @@ get_thunk_arity_64 a = code {
 	load_si32 -4
 }
 
-get_thunk_descriptor a :== IF_INT_64_OR_32 (get_thunk_descriptor_64_platform a) (get_thunk_descriptor_32_platform a);
-
-get_thunk_descriptor_32_platform :: !Int -> Int;
-get_thunk_descriptor_32_platform a = if (is_using_desc_relative_to_array == 0) (get_thunk_descriptor_32 a) (get_thunk_descriptor_32_PIC a);
-
-get_thunk_descriptor_64_platform :: !Int -> Int;
-get_thunk_descriptor_64_platform a = if (not isMacOS) (get_thunk_descriptor_64 a) (get_thunk_descriptor_64_MacOS a);
-
-get_thunk_descriptor_64 :: !Int -> Int;
-get_thunk_descriptor_64 a = code {
-	load_si32 -8
-}
-
-get_thunk_descriptor_64_MacOS :: !Int -> Int;
-get_thunk_descriptor_64_MacOS a = code {
-	push_b 0
-	load_si32 -8
-	addI
-	pushI -8
-	addI
-}
-
-get_thunk_descriptor_32 :: !Int -> Int;
-get_thunk_descriptor_32 a = code {
-	load_i -8
-}
-
-get_thunk_descriptor_32_PIC :: !Int -> Int;
-get_thunk_descriptor_32_PIC a = code {
-	push_b 0
-	load_i -8
-	addI
-	pushI -8
-	addI
+get_thunk_descriptor :: !Int -> Int;
+get_thunk_descriptor a = code inline {
+	get_thunk_desc
 }
 
 is_Int_D :: !Int -> Bool;
@@ -135,20 +104,10 @@ is_Array_D d = code inline {
 	eq_desc_b ARRAY 1
 }
 
-// The c function is_using_desc_relative_to_array is defined in copy_graph_to_string.c
-// the function returns 1 if positions are relative to _ARRAY_ and 0 when not.
-is_using_desc_relative_to_array :: Int;
-is_using_desc_relative_to_array = code {
-	ccall is_using_desc_relative_to_array ":I"
+desc_arity_offset :: Int;
+desc_arity_offset = code inline {
+	get_desc_arity_offset
 }
-
-size_element_descriptor_currying :: Int;
-size_element_descriptor_currying = code {
-	ccall size_element_descriptor_currying ":I"
-}
-
-isMacOS :: Bool;
-isMacOS = size_element_descriptor_currying == 16;
 
 get_array_D :: !{#Int} -> Int;
 get_array_D a = code {
@@ -156,10 +115,11 @@ get_array_D a = code {
 	pop_a 1
 }
 
-get_DESC_D :: !a -> Int;
-get_DESC_D a = code {
-	pushD_a 0
-	pop_a 1	
+// The c function is_using_desc_relative_to_array is defined in copy_graph_to_string.c
+// the function returns 1 if positions are relative to _ARRAY_ and 0 when not.
+is_using_desc_relative_to_array :: Int;
+is_using_desc_relative_to_array = code {
+	ccall is_using_desc_relative_to_array ":I"
 }
 
 get_D_name :: !Int -> {#Char};
@@ -169,37 +129,14 @@ get_D_name d = code {
 	.o 1 0
 }
 
-get_D_cons_module d :== IF_INT_64_OR_32 (get_D_cons_module_64_platform d) (get_D_cons_module_32 d);
-
-get_D_cons_module_32 :: !Int -> Int;
-get_D_cons_module_32 d = code {
+get_D_cons_module :: !Int -> Int;
+get_D_cons_module d = code {
 	push_b 0
 	load_si16 0
-	addI
-	load_i 6
-}
-
-get_D_cons_module_64_platform :: !Int -> Int;
-get_D_cons_module_64_platform d = if (not isMacOS) (get_D_cons_module_64 d) (get_D_cons_module_64_MacOS d);
-
-get_D_cons_module_64 :: !Int -> Int;
-get_D_cons_module_64 d = code {
-	push_b 0
-	load_si16 0
-	addI
-	load_si32 6
-}
-
-get_D_cons_module_64_MacOS :: !Int -> Int;
-get_D_cons_module_64_MacOS d = code {
-	push_b 0
-	load_si16 0
-	addI
-	push_b 0
-	load_si32 6
 	addI
 	pushI 6
 	addI
+	load_module_name
 }
 
 get_D_cons_flag d :== IF_INT_64_OR_32 (get_D_cons_flag_64 d) (get_D_cons_flag_32 d);
@@ -226,28 +163,11 @@ get_record_type_char a i = code {
 	load_ui8 2
 }
 
-get_D_record_module d :== IF_INT_64_OR_32 (get_D_record_module_64_platform d) (get_D_record_module_32 d);
-
-get_D_record_module_32 :: !Int -> Int;
-get_D_record_module_32 d = code {
-	load_i -10
-}
-
-get_D_record_module_64_platform :: !Int -> Int;
-get_D_record_module_64_platform d = if (not isMacOS) (get_D_record_module_64 d) (get_D_record_module_64_MacOS d);
-
-get_D_record_module_64 :: !Int -> Int;
-get_D_record_module_64 d = code {
-	load_si32 -10
-}
-
-get_D_record_module_64_MacOS :: !Int -> Int;
-get_D_record_module_64_MacOS d = code {
-	push_b 0
-	load_si32 -10
-	addI
+get_D_record_module :: !Int -> Int;
+get_D_record_module d = code {
 	pushI -10
 	addI
+	load_module_name
 }
 
 get_module_name_size a :== IF_INT_64_OR_32 (get_module_name_size_64 a) (get_module_name_size_32 a);
@@ -500,7 +420,7 @@ get_module desc
 
 :: DescInfo = {di_prefix_arity_and_mod :: !Int, di_name :: !{#Char}};
 
-info_of_desc_and_mod {desc,desc_mod_n} array_desc
+info_of_desc_and_mod {desc,desc_mod_n}
 	| desc bitand 2==0
 		# arity = get_thunk_arity desc;
 		# desc = get_thunk_descriptor desc;	
@@ -618,7 +538,7 @@ replace_descs_by_desc_numbers_and_build_desc_tree i s n_descs array_desc desc_tr
 		#! d = get_D_from_string s (i+IF_INT_64_OR_32 16 8);
 		| d==0
 			= replace_descs_by_desc_numbers_and_build_desc_tree (i+(IF_INT_64_OR_32 24 12)) s n_descs array_desc desc_tree;
-		# d = d+array_desc;
+		# d=d+array_desc;
 		# (s,n_descs,desc_tree) = store_desc_n_and_add_desc d (i+IF_INT_64_OR_32 16 8) s n_descs desc_tree;
 		#! l = get_D_from_string s (i+IF_INT_64_OR_32 8 4);
         | is_Int_D d
@@ -694,14 +614,14 @@ make_mod_array n_mods mod_tree
 
 copy_to_string_with_names :: a -> (!*{#Char},!*{#DescInfo},!*{#String});
 copy_to_string_with_names g
-	# array_desc = if (is_using_desc_relative_to_array == 1) (get_array_D {} - 2) 0;
+	# array_desc = if (is_using_desc_relative_to_array==1) (get_array_D {} - 2) 0;
 	# s = copy_to_string g;
 	# (s,n_descs,desc_tree) = replace_descs_by_desc_numbers_and_build_desc_tree 0 s 0 array_desc EmptyDescOrModTree;
 	# desc_a = make_desc_array n_descs desc_tree;
 	# (desc_a,n_mods,mod_tree) = make_module_tree desc_a;
 	# mod_a = make_mod_array n_mods mod_tree;
 	# mod_s_a = {#get_module_name mod \\ mod<-:mod_a};
-	# desc_s_a = {#info_of_desc_and_mod desc_and_mod array_desc \\ desc_and_mod <-:desc_a};
+	# desc_s_a = {#info_of_desc_and_mod desc_and_mod \\ desc_and_mod <-:desc_a};
 	= (s,desc_s_a,mod_s_a);
 
 lookup_symbol_value {di_prefix_arity_and_mod,di_name} mod_a symbols
@@ -723,7 +643,7 @@ lookup_symbol_value {di_prefix_arity_and_mod,di_name} mod_a symbols
 		| symbol_value== -1
 			= abort ("lookup_desc_info not found "+++symbol_name); 
 			# arity = prefix_n - PREFIX_D;
-			= symbol_value+(arity*size_element_descriptor_currying)+2;
+			= symbol_value+(arity*desc_arity_offset)+2;
 
 lookup_symbol_values desc_info_a mod_a symbols
 	= {#lookup_symbol_value desc_info mod_a symbols \\ desc_info <-: desc_info_a};
@@ -739,7 +659,7 @@ replace_desc_numbers_by_descs i s symbol_a symbol_offset array_desc
 		= replace_desc_numbers_by_descs (i+IF_INT_64_OR_32 8 4) s symbol_a symbol_offset array_desc;
 	# desc = symbol_a.[desc-1];
 	# desc=desc+symbol_offset;
-	# s=store_int_in_string s i (desc - array_desc);
+	# s=store_int_in_string s i (desc-array_desc);
 	| desc bitand 2==0
 		# d = get_thunk_n_non_pointers desc;
 		= replace_desc_numbers_by_descs (i+(IF_INT_64_OR_32 8 4)+(d<<(IF_INT_64_OR_32 3 2))) s symbol_a symbol_offset array_desc;
@@ -777,10 +697,14 @@ replace_desc_numbers_by_descs i s symbol_a symbol_offset array_desc
 
 copy_from_string_with_names :: !*{#Char} !*{#DescInfo} !*{#String} !{#Symbol} -> (.a,!Int);
 copy_from_string_with_names s desc_s_a mod_s_a symbols
-	# symbol_offset = if (is_using_desc_relative_to_array == 1) (((get_array_D {}) - (get_symbol_value "__ARRAY__" symbols)) - 2) 0;
-	# array_desc = if (is_using_desc_relative_to_array == 1) ((get_array_D {} - 2)) 0;
 	# symbol_a = lookup_symbol_values desc_s_a mod_s_a symbols;
-	# s = replace_desc_numbers_by_descs 0 s symbol_a symbol_offset array_desc;
-	= copy_from_string s;
-
+	| is_using_desc_relative_to_array==1
+		# array_desc = get_array_D {} - 2;
+		# symbol_offset = array_desc - get_symbol_value "__ARRAY__" symbols;
+		# s = replace_desc_numbers_by_descs 0 s symbol_a symbol_offset array_desc;
+		= copy_from_string s;
+		# array_desc = 0;
+		# symbol_offset = 0;
+		# s = replace_desc_numbers_by_descs 0 s symbol_a symbol_offset array_desc;
+		= copy_from_string s;
 

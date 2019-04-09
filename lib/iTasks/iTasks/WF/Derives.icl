@@ -8,6 +8,7 @@ import iTasks.Internal.IWorld
 
 import Data.Either
 import Data.Error
+import Data.Map.GenJSON
 import System.Time
 import Text.HTML
 import Text.GenJSON

@@ -20,6 +20,11 @@ copy_to_string g = code {
 	.o 1 0
 }
 
+desc_arity_offset :: Int;
+desc_arity_offset = code inline {
+	get_desc_arity_offset
+}
+
 get_array_D :: !{#Int} -> Int;
 get_array_D a = code {
 	pushD_a 0
@@ -31,11 +36,6 @@ get_array_D a = code {
 is_using_desc_relative_to_array :: Int;
 is_using_desc_relative_to_array = code {
 	ccall is_using_desc_relative_to_array ":I"
-}
-
-size_element_descriptor_currying :: Int;
-size_element_descriptor_currying = code {
-	ccall size_element_descriptor_currying ":I"
 }
 
 get_D_from_string s i :== IF_INT_64_OR_32 (get_D_from_string_64 s i) (get_D_from_string_32 s i);
@@ -131,64 +131,21 @@ get_D_name d = code {
 	.o 1 0
 }
 
-isMacOS :: Bool;
-isMacOS = size_element_descriptor_currying == 16;
-
-get_D_cons_module d :== IF_INT_64_OR_32 (get_D_cons_module_64_platform d) (get_D_cons_module_32 d);
-
-get_D_cons_module_32 :: !Int -> Int;
-get_D_cons_module_32 d = code {
+get_D_cons_module :: !Int -> Int;
+get_D_cons_module d = code {
 	push_b 0
 	load_si16 0
-	addI
-	load_i 6
-}
-
-get_D_cons_module_64_platform :: !Int -> Int;
-get_D_cons_module_64_platform d = if (not isMacOS) (get_D_cons_module_64 d) (get_D_cons_module_64_MacOS d);
-
-get_D_cons_module_64 :: !Int -> Int;
-get_D_cons_module_64 d = code {
-	push_b 0
-	load_si16 0
-	addI
-	load_si32 6
-}
-
-get_D_cons_module_64_MacOS :: !Int -> Int;
-get_D_cons_module_64_MacOS d = code {
-	push_b 0
-	load_si16 0
-	addI
-	push_b 0
-	load_si32 6
 	addI
 	pushI 6
 	addI
+	load_module_name
 }
 
-get_D_record_module d :== IF_INT_64_OR_32 (get_D_record_module_64_platform d) (get_D_record_module_32 d);
-
-get_D_record_module_32 :: !Int -> Int;
-get_D_record_module_32 d = code {
-	load_i -10
-}
-
-get_D_record_module_64_platform :: !Int -> Int;
-get_D_record_module_64_platform d = if (not isMacOS) (get_D_record_module_64 d) (get_D_record_module_64_MacOS d);
-
-get_D_record_module_64 :: !Int -> Int;
-get_D_record_module_64 d = code {
-	load_si32 -10
-}
-
-get_D_record_module_64_MacOS :: !Int -> Int;
-get_D_record_module_64_MacOS d = code {
-	push_b 0
-	load_si32 -10
-	addI
+get_D_record_module :: !Int -> Int;
+get_D_record_module d = code {
 	pushI -10
 	addI
+	load_module_name
 }
 
 get_module_name_size a :== IF_INT_64_OR_32 (get_module_name_size_64 a) (get_module_name_size_32 a);
@@ -306,7 +263,7 @@ get_module d
 	| arity < 256
 		| is__Cons_D d
 			= 0;
-		| is__Tuple_D (d-arity*size_element_descriptor_currying)
+		| is__Tuple_D (d-arity*desc_arity_offset)
 			= 0;
 			= get_D_cons_module d;
 		= get_D_record_module d;
@@ -512,7 +469,7 @@ info_of_desc_and_mod {desc,desc_mod_n} desc_tree
 	| arity < 256
 		| is__Cons_D desc
 			= ":";
-		| is__Tuple_D (desc-arity*size_element_descriptor_currying)
+		| is__Tuple_D (desc-arity*desc_arity_offset)
 			= {'t',arity_to_char arity};
 		= {'C',arity_to_char arity,arity_to_char (get_D_arity desc),toChar (desc_mod_n),toChar (desc_mod_n>>8)}
 			+++get_D_name desc+++"\0";
@@ -566,8 +523,8 @@ graph_to_string_with_descriptor_and_module_table :: !a -> (!{#Char},!{#{#Char}},
 graph_to_string_with_descriptor_and_module_table g
 	# g = eval_all_nodes g;
 	# s = copy_to_string g;
-	# array_desc = if (is_using_desc_relative_to_array == 1) (get_array_D {} - 2) 0;
-	# (s,n_descs,desc_tree) = replace_descs_by_desc_numbers_and_build_desc_tree 0 s 0 array_desc EmptyDescOrModTree
+	# array_desc = if (is_using_desc_relative_to_array==1) (get_array_D {} - 2) 0;
+	# (s,n_descs,desc_tree) = replace_descs_by_desc_numbers_and_build_desc_tree 0 s 0 array_desc EmptyDescOrModTree;
 	# desc_a = make_desc_array n_descs desc_tree;
 	# (desc_a,n_mods,mod_tree) = make_module_tree desc_a;
 	# mod_a = make_mod_array n_mods mod_tree;

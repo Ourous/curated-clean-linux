@@ -31,6 +31,8 @@ onData data (Left acc) _ = (Ok (Left (acc ++ [data])), Nothing, [], False)
 
 onShareChange acc _ = (Ok acc, Nothing, [], False)
 
+onDestroy s = (Ok s, [])
+
 queueSDSRequest :: !(SDSRequest p r w) !String !Int !TaskId !{#Symbol} !*IWorld -> (!MaybeError TaskException ConnectionId, !*IWorld) | TC r
 queueSDSRequest req host port taskId symbols iworld
 = case addConnection taskId host port connectionTask iworld of
@@ -43,7 +45,8 @@ where
 	handlers _ = {ConnectionHandlers| onConnect = onConnect req,
 		onData = onData,
 		onShareChange = onShareChange,
-		onDisconnect = onDisconnect}
+		onDisconnect = onDisconnect,
+		onDestroy = onDestroy}
 
 	onDisconnect (Left acc) _
 	# textResponse = concat acc
@@ -61,7 +64,8 @@ where
 	handlers _ = {ConnectionHandlers| onConnect = onConnect req,
 		onData = onData,
 		onShareChange = onShareChange,
-		onDisconnect = onDisconnect}
+		onDisconnect = onDisconnect,
+		onDestroy=onDestroy}
 
 	onDisconnect (Left acc) _
 	# textResponse = concat acc
@@ -79,7 +83,8 @@ where
 	handlers req = {ConnectionHandlers| onConnect = onConnect req,
 		onData = onData,
 		onShareChange = onShareChange,
-		onDisconnect = onDisconnect}
+		onDisconnect = onDisconnect,
+		onDestroy = onDestroy}
 
 	onDisconnect (Left acc) _
 	# textResponse = concat acc
@@ -98,7 +103,8 @@ where
 	handlers req = {ConnectionHandlers| onConnect = onConnect,
 		onData = onData,
 		onShareChange = onShareChange,
-		onDisconnect = onDisconnect}
+		onDisconnect = onDisconnect,
+		onDestroy = onDestroy}
 
 	onConnect _ _ _
 	# req = createRequest p
@@ -127,7 +133,8 @@ where
 	handlers = {ConnectionHandlers| onConnect = onConnect,
 		onData = onData,
 		onShareChange = onShareChange,
-		onDisconnect = onDisconnect}
+		onDisconnect = onDisconnect,
+		onDestroy = onDestroy}
 
 	onConnect connId _ _	= (Ok (Nothing, []), Nothing, [createMessage p +++ "\n"], False)
 
@@ -160,6 +167,7 @@ where
 				, onData 		= onData
 				, onShareChange = onShareChange
 				, onDisconnect 	= onDisconnect
+				, onDestroy  	= onDestroy
 				}
 	onConnect connId _ _
 	# req = toWriteRequest p w
@@ -191,7 +199,8 @@ where
 	handlers = {ConnectionHandlers| onConnect = onConnect,
 		onData = onData,
 		onShareChange = onShareChange,
-		onDisconnect = onDisconnect}
+		onDisconnect = onDisconnect,
+		onDestroy = onDestroy}
 
 	onConnect connId _ _	= (Ok (Left ""), Nothing, [toWriteMessage p w +++ "\n"], False)
 

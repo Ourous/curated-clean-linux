@@ -1,6 +1,7 @@
 implementation module iTasks.Internal.Tonic.Shares
 
 import qualified Data.Map as DM
+import Data.Map.GenJSON
 import qualified iTasks.Internal.SDS as DSDS
 import Data.Error
 import iTasks.Internal.Tonic.AbsSyn

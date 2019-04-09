@@ -3,6 +3,7 @@ implementation module iTasks.Internal.Distributed.Instance
 import iTasks
 from Text import class Text, instance Text String
 import qualified Data.Map as DM
+import Data.Map.GenJSON
 import qualified Text as T
 import Text.Encodings.Base64
 import iTasks.Extensions.Distributed._Formatter
@@ -87,6 +88,7 @@ instanceServer port domain = tcplisten port True instanceServerShared {Connectio
 	, onData		= onData
 	, onShareChange		= onShareChange
 	, onDisconnect 		= onDisconnect
+	, onDestroy= \s->(Ok s, [])
 	} -|| (instanceClient` "127.0.0.1" port domain True) -|| (process instanceServerShared) @! ()
 where
 	onConnect :: ConnectionId String InstanceServerShare -> (MaybeErrorString InstanceServerState, Maybe InstanceServerShare, [String], Bool)
@@ -471,6 +473,7 @@ where
                                                       , onData         = onData
 						      , onShareChange  = onShareChange
                                                       , onDisconnect   = onDisconnect
+                                                      , onDestroy      = \s->(Ok s, [])
                                                       } @! Nothing)
                 -||- (viewInformation () [] () >>* [OnAction (Action "reset") (always (return Nothing))])
 

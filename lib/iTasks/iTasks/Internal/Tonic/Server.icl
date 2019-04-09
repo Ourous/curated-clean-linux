@@ -4,6 +4,7 @@ import iTasks
 from Text import class Text, instance Text String
 import qualified Text as T
 import qualified Data.Map as DM
+import Data.Map.GenJSON
 from Data.Map import :: Map
 import qualified Data.IntMap.Strict as DIS
 import qualified Data.List as DL
@@ -204,7 +205,7 @@ where
         =           get tonicServerShare
         >>- \ts  -> get currentDateTime
         >>- \cdt -> upd ('DM'.put cdt ts.ts_recordingBuffer) recordingsShare
-        >>- \_   -> upd (\ts -> {ts & ts_recording = False}) tonicServerShare @! ()
+        >-|         upd (\ts -> {ts & ts_recording = False}) tonicServerShare @! ()
     
     refreshAction :: TaskCont a (Task ())
     refreshAction = OnAction (Action "Refresh") (always startViewer)
@@ -312,6 +313,7 @@ acceptTonicTraces tonicShare
                                    , onData        = onData
                                    , onShareChange = onShareChange
                                    , onDisconnect  = onDisconnect
+                                   , onDestroy     = onDestroy
                                    }
   where
     onConnect :: ConnectionId String TMessageStore
@@ -352,3 +354,4 @@ acceptTonicTraces tonicShare
     onDisconnect st lines
         = (Ok st, Just lines)
 
+	onDestroy st = (Ok st, [])

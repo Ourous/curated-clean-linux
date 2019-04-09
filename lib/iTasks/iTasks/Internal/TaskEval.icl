@@ -67,9 +67,15 @@ processEvents max iworld
 					(Error msg,iworld=:{IWorld|world})
 						= (Ok (),{IWorld|iworld & world = world})
 
-//Evaluate a single task instance
 evalTaskInstance :: !InstanceNo !Event !*IWorld -> (!MaybeErrorString (TaskValue DeferredJSON),!*IWorld)
-evalTaskInstance instanceNo event iworld
+evalTaskInstance instanceNo event iworld = evalTaskInstance` instanceNo event False iworld
+
+destroyTaskInstance :: !InstanceNo !*IWorld -> (!MaybeErrorString (TaskValue DeferredJSON),!*IWorld)
+destroyTaskInstance instanceNo iworld = evalTaskInstance` instanceNo ResetEvent True iworld
+
+//Evaluate a single task instance
+evalTaskInstance` :: !InstanceNo !Event !Bool !*IWorld -> (!MaybeErrorString (TaskValue DeferredJSON),!*IWorld)
+evalTaskInstance` instanceNo event destroy iworld
 	# iworld            = mbResetUIState instanceNo event iworld
 	# (res,iworld)      = evalTaskInstance` instanceNo event iworld
 	= (res,iworld)
@@ -103,7 +109,7 @@ where
 										, nextTaskNo = oldReduct.TIReduct.nextTaskNo
 										}}
 	//Apply task's eval function and take updated nextTaskId from iworld
-	# (newResult,iworld=:{current})	= eval event {mkEvalOpts & tonicOpts = tonicRedOpts} tree iworld
+	# (newResult,iworld=:{current})	= eval event {mkEvalOpts & tonicOpts = tonicRedOpts} (if destroy (TCDestroy tree) tree) iworld
 	# tree                      = case newResult of
 		(ValueResult _ _ _ newTree)  = newTree
 		_                            = tree
@@ -127,14 +133,15 @@ where
 												//FIXME: Don't write the full reduct (all parallel shares are triggered then!)
 			//Store update value
 			# newValue                  = case newResult of
-				(ValueResult val _ _ _)     = TIValue val
-				(ExceptionResult (e,str))   = TIException e str
+				ValueResult val _ _ _     = TIValue val
+				ExceptionResult (e,str)   = TIException e str
+				DestroyedResult           = TIValue NoValue
 			# (mbErr,iworld)            = if deleted (Ok WritingDone,iworld) ((write newValue (sdsFocus instanceNo taskInstanceValue) EmptyContext iworld))
 			= case mbErr of
 				Error (e,description) = exitWithException instanceNo description iworld
 				Ok _
 					= case newResult of
-						(ValueResult value _ change _)
+						ValueResult value _ change _
 							| deleted
 								= (Ok value,iworld)
 							//Only queue UI changes if something interesting is changed
@@ -143,8 +150,10 @@ where
 								change
 									# iworld = queueUIChange instanceNo change iworld
 									= (Ok value, iworld)
-						(ExceptionResult (e,description))
+						ExceptionResult (e,description)
 							= exitWithException instanceNo description iworld
+						DestroyedResult
+							= (Ok NoValue, iworld)
 
 	exitWithException instanceNo description iworld
 		# iworld = queueException instanceNo description iworld

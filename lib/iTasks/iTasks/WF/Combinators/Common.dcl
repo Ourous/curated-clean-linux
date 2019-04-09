@@ -54,6 +54,16 @@ tbind :: !(Task a) !(a -> Task b) 			-> Task b		| iTask a & iTask b
 */
 (>>-) infixl 1 :: !(Task a) !(a -> Task b) -> Task b | iTask a & iTask b
 /**
+* Combines two tasks sequentially but continues only when the first task has a stable value.
+*
+* @param First: The first task to be executed
+* @param Second: The second task
+* @return The combined task
+* @type (Task a) (Task b) -> Task b | iTask a & iTask b
+*/
+(>-|) infixl 1
+(>-|) x y :== x >>- \_ -> y
+/**
 * Combines two tasks sequentially but continues only when the first task has a value.
 *
 * @param First: The first task to be executed
@@ -336,7 +346,7 @@ randomChoice		:: ![a]										-> Task a				| iTask a
 * When the share changes the task is restarted
 */
 whileUnchanged :: !(sds () r w) (r -> Task b) -> Task b | iTask r & iTask b & Registrable sds & TC w
-whileUnchangedWith :: !(r r -> Bool) !(sds () r w) (r -> Task b) -> Task b | iTask r & iTask w & iTask b & Registrable sds
+whileUnchangedWith :: !(r r -> Bool) !(sds () r w) (r -> Task b) -> Task b | iTask r & TC w & iTask b & Registrable sds
 
 /**
 * Do a task when there is a Just value in the share

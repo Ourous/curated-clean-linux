@@ -13,9 +13,10 @@ from Data.Error import :: MaybeError, :: MaybeErrorString
 
 :: ConnectionHandlers l r w =
     { onConnect         :: !(ConnectionId String   r -> (!MaybeErrorString l, Maybe w, ![String], !Bool))
-    , onData            :: !(			  String l r -> (!MaybeErrorString l, Maybe w, ![String], !Bool))
+    , onData            :: !(             String l r -> (!MaybeErrorString l, Maybe w, ![String], !Bool))
     , onShareChange     :: !(                    l r -> (!MaybeErrorString l, Maybe w, ![String], !Bool))
-    , onDisconnect      :: !(       		     l r -> (!MaybeErrorString l, Maybe w                  ))
+    , onDisconnect      :: !(                    l r -> (!MaybeErrorString l, Maybe w                  ))
+    , onDestroy         :: !(                    l   -> (!MaybeErrorString l,          ![String]       ))
 	}
 
 /**

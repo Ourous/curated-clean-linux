@@ -205,7 +205,7 @@ where
 	(-) t1 t2
 		# tv_nsec = t1.tv_nsec - t2.tv_nsec
 		| tv_nsec < 0
-			= {tv_sec = t1.tv_sec - t2.tv_sec - 1, tv_nsec = 1000000000 - tv_nsec}
+			= {tv_sec = t1.tv_sec - t2.tv_sec - 1, tv_nsec = 1000000000 + tv_nsec}
 			= {tv_sec = t1.tv_sec - t2.tv_sec,     tv_nsec = tv_nsec}
 
 instance zero Timespec

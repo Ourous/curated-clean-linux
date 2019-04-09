@@ -19,7 +19,7 @@ derive gEq EndEvent, FailReason, FailedAssertion, CounterExample, Relation
 compileTestModule :: CleanModuleName -> Task EndEvent
 compileTestModule (path,name)
 	=           copyFile prjDefaultPath prjPath
-	>>- \_   -> get cpmExecutable
+	>-|         get cpmExecutable
 	>>- \cpm -> runWithOutput cpm [prjPath] Nothing //Build the test
 	@   \(c,o) -> if (passed c o) 
 			{name = testName, event = Passed, message = join "" o}

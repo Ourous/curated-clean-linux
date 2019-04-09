@@ -1,6 +1,6 @@
 implementation module Data.Either
 
-from StdEnv import flip, id, o, const
+from StdEnv import flip, id, o, const, class == (..)
 from StdMisc import abort
 import Control.Applicative
 import Data.Monoid
@@ -11,6 +11,11 @@ from Data.Foldable import class Foldable(foldMap,foldl,foldr)
 from Data.Traversable import class Traversable(..)
 import Data.Bifunctor
 import Data.GenEq
+
+instance == (Either a b) | == a & == b where
+	== (Left x)  (Left y)  = x == y
+	== (Right x) (Right y) = x == y
+	== _         _         = False
 
 instance Functor (Either a) where
 	fmap f (Left l)  = Left l

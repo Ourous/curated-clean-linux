@@ -45,8 +45,8 @@ where
 	error = "Creating default task functions is impossible"
 
 wrapConnectionTask :: (ConnectionHandlers l r w) (sds () r w) -> ConnectionTask | TC l & TC r & TC w & RWShared sds
-wrapConnectionTask ch=:{ConnectionHandlers|onConnect,onData,onShareChange,onDisconnect} sds
-	= ConnectionTask {ConnectionHandlersIWorld|onConnect=onConnect`,onData=onData`,onShareChange=onShareChange`,onTick=onTick`,onDisconnect=onDisconnect`} (toDynamic sds)
+wrapConnectionTask ch=:{ConnectionHandlers|onConnect,onData,onShareChange,onDisconnect,onDestroy} sds
+	= ConnectionTask {ConnectionHandlersIWorld|onConnect=onConnect`,onData=onData`,onShareChange=onShareChange`,onTick=onTick`,onDisconnect=onDisconnect`,onDestroy=onDestroy`} (toDynamic sds)
 where
 	onConnect` connId host (r :: r^) env
 		# (mbl, mbw, out, close) = onConnect connId host r
@@ -71,10 +71,14 @@ where
 		# (mbl, mbw) = onDisconnect l r
 		= (toDyn <$> mbl, toDyn <$> mbw, env)
 	onDisconnect` l r env = abort ("onDisconnect does not match with type l=" +++ toString (typeCodeOfDynamic l) +++ ", r=" +++ toString (typeCodeOfDynamic r))
+	onDestroy` (l :: l^) env
+		# (mbl, out) = onDestroy l
+		= (toDyn <$> mbl, out, env)
+	onDestroy` l env = abort ("onDestroy does not match with type l=" +++ toString (typeCodeOfDynamic l))
 
 wrapIWorldConnectionTask :: (ConnectionHandlersIWorld l r w) (sds () r w) -> ConnectionTask | TC l & TC r & TC w & RWShared sds
-wrapIWorldConnectionTask {ConnectionHandlersIWorld|onConnect,onData,onShareChange,onTick,onDisconnect} sds
-	= ConnectionTask {ConnectionHandlersIWorld|onConnect=onConnect`,onData=onData`,onShareChange=onShareChange`,onTick=onTick`,onDisconnect=onDisconnect`} (toDynamic sds)
+wrapIWorldConnectionTask {ConnectionHandlersIWorld|onConnect,onData,onShareChange,onTick,onDisconnect,onDestroy} sds
+	= ConnectionTask {ConnectionHandlersIWorld|onConnect=onConnect`,onData=onData`,onShareChange=onShareChange`,onTick=onTick`,onDisconnect=onDisconnect`,onDestroy=onDestroy`} (toDynamic sds)
 where
 	onConnect` connId host (r :: r^) env
 		# (mbl, mbw, out, close, env) = onConnect connId host r env
@@ -102,6 +106,10 @@ where
 		# (mbl, mbw, env) = onDisconnect l r env
 		= (toDyn <$> mbl, toDyn <$> mbw, env)
 	onDisconnect` l r env = abort ("onDisconnect does not match with type l=" +++ toString (typeCodeOfDynamic l) +++ ", r=" +++ toString (typeCodeOfDynamic r))
+	onDestroy` (l :: l^) env
+		# (mbl, out, env) = onDestroy l env
+		= (toDyn <$> mbl, out, env)
+	onDestroy` l env = abort ("onDestroy does not match with type l=" +++ toString (typeCodeOfDynamic l))
 
 mkInstantTask :: (TaskId *IWorld -> (!MaybeError (Dynamic,String) a,!*IWorld)) -> Task a | iTask a
 mkInstantTask iworldfun = Task (evalOnce iworldfun)

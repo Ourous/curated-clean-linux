@@ -131,7 +131,7 @@ wsockTextMsg payload = [wsockMsgFrame WS_OP_TEXT True payload]
 
 httpServer :: !Int !Timespec ![WebService r w] (sds () r w) -> ConnectionTask | TC r & TC w & RWShared sds
 httpServer port keepAliveTime requestProcessHandlers sds
-    = wrapIWorldConnectionTask {ConnectionHandlersIWorld|onConnect=onConnect, onData=onData, onShareChange=onShareChange, onTick=onTick, onDisconnect=onDisconnect} sds
+    = wrapIWorldConnectionTask {ConnectionHandlersIWorld|onConnect=onConnect, onData=onData, onShareChange=onShareChange, onTick=onTick, onDisconnect=onDisconnect, onDestroy=onDestroy} sds
 where
     onConnect connId host r iworld=:{IWorld|world,clock}
         = (Ok (NTIdle host clock),Nothing,[],False,{IWorld|iworld & world = world})
@@ -234,6 +234,8 @@ where
 				# (mbW, env) = onDisconnect request r localState env
 				= (Ok connState, mbW, env)
     onDisconnect connState r env = (Ok connState, Nothing, env)
+
+	onDestroy s iw = (Ok s, [], iw)
 
 	selectHandler req [] = Nothing
 	selectHandler req [h:hs]

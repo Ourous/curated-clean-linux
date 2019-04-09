@@ -1,6 +1,7 @@
 definition module iTasks.Internal.TaskServer
 
-import iTasks.Internal.SDS
+from iTasks.Internal.IWorld import :: ConnectionId
+from iTasks.Internal.SDS import :: SDSSource
 
 from Data.Maybe 		import :: Maybe
 from StdFile			import class FileSystem
@@ -9,16 +10,17 @@ from Internet.HTTP		import :: HTTPRequest, :: HTTPResponse
 from System.FilePath    import :: FilePath
 
 from Data.Error               import :: MaybeError
+from Data.Map                 import :: Map
 from iTasks.WF.Definition     import :: TaskId
 from iTasks.Internal.IWorld	  import :: IWorld
 from iTasks.Internal.Task     import :: ConnectionTask, :: TaskException
 from iTasks.Internal.IWorld   import :: IWorld, :: IOStates, :: IOState
-from iTasks.Internal.IWorld	  import :: IWorld, :: BackgroundTaskId
-from iTasks.Internal.Task     import :: ConnectionTask, :: BackgroundTask, :: TaskException
+from iTasks.Internal.IWorld	  import :: IWorld
+from iTasks.Internal.Task     import :: ConnectionTask, :: TaskException
 from iTasks.Engine            import :: StartupTask
 
 //Core task server loop
-serve :: ![StartupTask] ![(!Int,!ConnectionTask)] ![BackgroundTask] (*IWorld -> (!Maybe Timeout,!*IWorld)) *IWorld -> *IWorld
+serve :: ![StartupTask] ![(!Int,!ConnectionTask)] (*IWorld -> (!Maybe Timeout,!*IWorld)) *IWorld -> *IWorld
 
 //Dynamically add a listener
 addListener :: !TaskId !Int !Bool !(ConnectionTask) !*IWorld -> (!MaybeError TaskException (),!*IWorld)
@@ -26,10 +28,7 @@ addListener :: !TaskId !Int !Bool !(ConnectionTask) !*IWorld -> (!MaybeError Tas
 //Dynamically add a connection
 addConnection :: !TaskId !String !Int !ConnectionTask !*IWorld -> (!MaybeError TaskException (ConnectionId, Dynamic),!*IWorld)
 
-//Dynamically add a background task
-addBackgroundTask :: !BackgroundTask !*IWorld -> (!MaybeError TaskException BackgroundTaskId,!*IWorld)
-
-//Dynamically remove a background task
-removeBackgroundTask :: !BackgroundTaskId !*IWorld -> (!MaybeError TaskException (),!*IWorld)
-
 ioStateString :: !IOStates -> String
+
+//Ticks every time the server loops once
+tick :: SDSSource () () ()

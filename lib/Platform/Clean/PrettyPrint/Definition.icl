@@ -286,8 +286,8 @@ where
 		= print st ds_ident
 	print st (TCGeneric {gtc_generic,gtc_kind})
 		= print st (gtc_generic.glob_object.ds_ident.id_name :+: "{|" :+: gtc_kind :+: "|}")
-	print st _
-		= abort "UNKNOWN_TCCLASS"
+	print st (TCQualifiedIdent id name)
+		= print st ("'" :+: id :+: "'." :+: name)
 
 instance print ParsedInstanceAndMembers
 where

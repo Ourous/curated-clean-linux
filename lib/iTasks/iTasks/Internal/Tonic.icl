@@ -30,6 +30,7 @@ import StdArray
 import System.Directory, System.FilePath, Data.Func, Data.Functor, Data.List
 import qualified Data.Map as DM
 from Data.Map import instance Functor (Map a)
+import Data.Map.GenJSON
 from Data.Set import :: Set
 import qualified Data.Set as DS
 import qualified Data.Foldable as DF

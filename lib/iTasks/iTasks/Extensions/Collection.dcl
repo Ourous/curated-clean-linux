@@ -15,7 +15,7 @@ import iTasks
 *
 * @return	The last selection
 */
-manageCollection :: !String (c -> i) (Shared [c]) -> Task (Maybe i) | iTask c & iTask i
+manageCollection :: !String (c -> i) (Shared sds [c]) -> Task (Maybe i) | iTask c & iTask i & RWShared sds
 
 /**
 * Configurable collection management task.
@@ -31,13 +31,13 @@ manageCollection :: !String (c -> i) (Shared [c]) -> Task (Maybe i) | iTask c & 
 * @return	The last selection 
 */
 manageCollectionWith ::
-	((Shared [c]) (c -> i) -> Task i)											//Make selection
-	((Shared [c]) ((Shared [c]) i -> Shared (Maybe c)) (Maybe i) -> Task a)		//Use selection
+	((Shared sdsc [c]) (c -> i) -> Task i)											//Make selection
+	((Shared sdsc [c]) ((Shared sdsc [c]) i -> Shared sdss (Maybe c)) (Maybe i) -> Task a)		//Use selection
 	[TaskCont i (Task (Maybe i))]												//Actions
 	(c -> i)																	//Identification function
-	((Shared [c]) i -> Shared (Maybe c))										//Item share function
-	(Shared [c])																//Shared collection
-	-> Task (Maybe i) | iTask c & iTask i & iTask a
+	((Shared sdsc [c]) i -> Shared sdss (Maybe c))						    //Item share function
+	(Shared sdsc [c])																//Shared collection
+	-> Task (Maybe i) | iTask c & iTask i & iTask a & RWShared sdsc & RWShared sdss
 
 /**
 * Create an item share by looking up an item identified by an identitication function
@@ -46,25 +46,25 @@ manageCollectionWith ::
 * @param	Shared collection
 * @param	Item identification
 */
-itemShare :: (c -> i) (Shared [c]) i -> Shared (Maybe c) | gEq{|*|} i & gEq{|*|} c
+itemShare :: (c -> i) (Shared sds [c]) i -> Shared SDSLens (Maybe c) | iTask i & iTask c & RWShared sds
 /**
 * Select an item from a shared collection and project the selection on another shared state
 *
 */
-selectItem :: !d (Shared [c]) (c -> i) -> Task i | toPrompt d & iTask c & iTask i
+selectItem :: !d (Shared sds [c]) (c -> i) -> Task i | toPrompt d & iTask c & iTask i & RWShared sds
 /**
 * View an item in the collection (without actions)
 */
-viewItem :: !d (Shared [c]) ((Shared [c]) i -> Shared (Maybe c)) (Maybe i) -> Task (Maybe i) | toPrompt d & iTask c & iTask i
+viewItem :: !d (Shared sdsc [c]) ((Shared sdsc [c]) i -> Shared sdss (Maybe c)) (Maybe i) -> Task (Maybe i) | toPrompt d & iTask c & iTask i & RWShared sdsc & RWShared sdss
 /**
 * Add an item to the collection
 */
-addItem :: !d (Shared [c]) (c -> i) -> Task (Maybe i) | toPrompt d & iTask i & iTask c
+addItem :: !d (Shared sds [c]) (c -> i) -> Task (Maybe i) | toPrompt d & iTask i & iTask c & RWShared sds
 /**
 * Edit an item in the collection
 */
-editItem :: !d (Shared [c]) ((Shared [c]) i -> Shared (Maybe c)) (c -> i) i -> Task (Maybe i) | toPrompt d & iTask c & iTask i
+editItem :: !d (Shared sdsc [c]) ((Shared sdsc [c]) i -> Shared sdss (Maybe c)) (c -> i) i -> Task (Maybe i) | toPrompt d & iTask c & iTask i & RWShared sdsc & RWShared sdss
 /**
 * Delete an item from the collection
 */
-deleteItem :: !d (Shared [c]) ((Shared [c]) i -> Shared (Maybe c)) (c -> i) i -> Task (Maybe i) | toPrompt d & iTask c & iTask i
+deleteItem :: !d (Shared sdsc [c]) ((Shared sdsc [c]) i -> Shared sdss (Maybe c)) (c -> i) i -> Task (Maybe i) | toPrompt d & iTask c & iTask i & RWShared sdsc & RWShared sdss

@@ -4,7 +4,7 @@ import iTasks
 /*
 * General purpose management task for a collection of data
 */
-manageCollection :: !String (c -> i) (Shared [c]) -> Task (Maybe i) | iTask c & iTask i
+manageCollection :: !String (c -> i) (Shared sds [c]) -> Task (Maybe i) | iTask c & iTask i & RWShared sds
 manageCollection itemname identify collection
 	= manageCollectionWith (selectItem ()) (viewItem (Title ("Details of " +++ itemname)))
 		[OnAction ActionNew (always (addItem (Title ("Add " +++ itemname)) collection identify))
@@ -18,13 +18,13 @@ manageCollection itemname identify collection
 * Customizable management task for a collection of data
 */
 manageCollectionWith ::
-	((Shared [c]) (c -> i) -> Task i)											//Make selection
-	((Shared [c]) ((Shared [c]) i -> Shared (Maybe c)) (Maybe i) -> Task a)		//Use selection
+	((Shared sdsc [c]) (c -> i) -> Task i)											//Make selection
+	((Shared sdsc [c]) ((Shared sdsc [c]) i -> Shared sdss (Maybe c)) (Maybe i) -> Task a)		//Use selection
 	[TaskCont i (Task (Maybe i))]												//Actions
 	(c -> i)																	//Identification function
-	((Shared [c]) i -> Shared (Maybe c))										//Item share function
-	(Shared [c])																//Shared collection
-	-> Task (Maybe i) | iTask c & iTask i & iTask a
+	((Shared sdsc [c]) i -> Shared sdss (Maybe c))						    //Item share function
+	(Shared sdsc [c])																//Shared collection
+	-> Task (Maybe i) | iTask c & iTask i & iTask a & RWShared sdsc & RWShared sdss
 manageCollectionWith makeSelection useSelection selectionActions identify itemShare collection
 	=	feedForward (makeSelection collection identify)
 		( \mbSel -> 
@@ -36,8 +36,8 @@ where
 	onlyJust (Value (Just x) s)	= Value x s
 	onlyJust _					= NoValue
 
-itemShare :: (c -> i) (Shared [c]) i -> Shared (Maybe c) | gEq{|*|} i & gEq{|*|} c
-itemShare identify collection i = mapReadWrite (toItem,fromItem) collection
+itemShare :: (c -> i) (Shared sds [c]) i -> Shared SDSLens (Maybe c) | iTask i & iTask c & RWShared sds
+itemShare identify collection i = mapReadWrite (toItem,fromItem) Nothing collection
 where
 	toItem l	= case [c \\ c <- l | identify c === i] of
 		[c]		= Just c
@@ -46,22 +46,22 @@ where
 	fromItem Nothing l 		= Just l
 	fromItem (Just c`) l	= Just [if (identify c === i) c` c \\ c <- l]
 
-selectItem :: !d (Shared [c]) (c -> i) -> Task i | toPrompt d & iTask c & iTask i
+selectItem :: !d (Shared sds [c]) (c -> i) -> Task i | toPrompt d & iTask c & iTask i & RWShared sds
 selectItem desc collection identify
-	=	enterChoiceWithSharedAs desc [] collection identify
+	=	enterChoiceWithSharedAs desc [ChooseFromGrid id] collection identify
 
-viewItem :: !d (Shared [c]) ((Shared [c]) i -> Shared (Maybe c)) (Maybe i) -> Task (Maybe i) | toPrompt d & iTask c & iTask i
+viewItem :: !d (Shared sdsc [c]) ((Shared sdsc [c]) i -> Shared sdss (Maybe c)) (Maybe i) -> Task (Maybe i) | toPrompt d & iTask c & iTask i & RWShared sdsc & RWShared sdss
 viewItem desc collection itemShare Nothing	= viewInformation desc [] "Make a selection first..." @ const Nothing
 viewItem desc collection itemShare (Just i)	= viewSharedInformation desc [] (itemShare collection i) @ const (Just i)
 
-addItem :: !d (Shared [c]) (c -> i) -> Task (Maybe i) | toPrompt d & iTask i & iTask c
+addItem :: !d (Shared sds [c]) (c -> i) -> Task (Maybe i) | toPrompt d & iTask i & iTask c & RWShared sds
 addItem desc collection identify
 	=	enterInformation desc []
 	>>*	[OnAction ActionCancel (always (return Nothing))
 		,OnAction ActionOk (hasValue (\item -> upd (\l -> l ++ [item]) collection >>| return (Just (identify item))))
 		]
 
-editItem :: !d (Shared [c]) ((Shared [c]) i -> Shared (Maybe c)) (c -> i) i -> Task (Maybe i) | toPrompt d & iTask c & iTask i
+editItem :: !d (Shared sdsc [c]) ((Shared sdsc [c]) i -> Shared sdss (Maybe c)) (c -> i) i -> Task (Maybe i) | toPrompt d & iTask c & iTask i & RWShared sdsc & RWShared sdss
 editItem desc collection itemShare identify i
 	=	get (itemShare collection i)
 	>>= \mbItem -> case mbItem of
@@ -74,7 +74,7 @@ editItem desc collection itemShare identify i
 												 ))
 							]
 
-deleteItem :: !d (Shared [c]) ((Shared [c]) i -> Shared (Maybe c)) (c -> i) i -> Task (Maybe i) | toPrompt d & iTask c & iTask i
+deleteItem :: !d (Shared sdsc [c]) ((Shared sdsc [c]) i -> Shared sdss (Maybe c)) (c -> i) i -> Task (Maybe i) | toPrompt d & iTask c & iTask i & RWShared sdsc & RWShared sdss
 deleteItem desc collection itemShare identify i
 	=	viewSharedInformation desc [] (itemShare collection i)
 	>>*	[OnAction ActionNo (always (return Nothing))

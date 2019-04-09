@@ -23,6 +23,7 @@ import iTasks.WF.Combinators.Tune
 import iTasks.Extensions.Document
 
 import qualified Data.Map as DM
+import Data.Map.GenJSON
 import qualified Data.Set as DS
 import qualified Data.Queue as DQ
 from Data.Queue import :: Queue(..)
@@ -196,8 +197,9 @@ where
 	toJSONTask (Task eval) = Task eval`
 	where
 		eval` event repOpts tree iworld = case eval event repOpts tree iworld of
-			(ValueResult val ts rep tree,iworld)	= (ValueResult (fmap DeferredJSON val) ts rep tree, iworld)
-			(ExceptionResult e,iworld)			    = (ExceptionResult e,iworld)
+			(ValueResult val ts rep tree,iworld) = (ValueResult (fmap DeferredJSON val) ts rep tree, iworld)
+			(ExceptionResult e,iworld)           = (ExceptionResult e,iworld)
+			(DestroyedResult,iworld)             = (DestroyedResult,iworld)
 
 replaceTaskInstance :: !InstanceNo !(Task a) *IWorld -> (!MaybeError TaskException (), !*IWorld) | iTask a
 replaceTaskInstance instanceNo task iworld=:{options={appVersion},current={taskTime}}
@@ -211,6 +213,8 @@ replaceTaskInstance instanceNo task iworld=:{options={appVersion},current={taskT
 
 deleteTaskInstance	:: !InstanceNo !*IWorld -> *(!MaybeError TaskException (), !*IWorld)
 deleteTaskInstance instanceNo iworld=:{IWorld|options={EngineOptions|persistTasks}}
+	# (mbe, iworld)   = destroyTaskInstance instanceNo iworld
+	| isError mbe = (Error $ exception $ fromError mbe, iworld)
 	//Delete in administration
 	# (mbe,iworld)    = 'SDS'.modify (\is -> [i \\ i=:(no,_,_,_) <- is | no <> instanceNo]) (sdsFocus defaultValue filteredInstanceIndex) 'SDS'.EmptyContext iworld
 	| mbe =: (Error _) = (toME mbe,iworld)

@@ -20,8 +20,6 @@ exported_clean_symbol :: !Int !{#Char} -> Bool;
 exported_clean_symbol i s
 	| i==0
 		= False;
-	| s.[i]=='\0'
-		= False;
 	| s.[i]=='e' && s.[i+1]=='_' && s.[i+2]=='_'
 		= True;
 	| s.[i]=='_' && s.[i+1]=='_'
@@ -48,10 +46,10 @@ exported_clean_symbol i s
 		| s.[i+2]=='T' && s.[i+3]=='u' && s.[i+4]=='p' && s.[i+5]=='l' && s.[i+6]=='e' && s.[i+7]=='\0'
 			= True;
 			= False;
-	| s.[i]=='I' && s.[i+1]=='N' && s.[i+2]=='T' && s.[i+3]=='\0'
+	| IF_INT_64_OR_32
+		(s.[i]=='d' && s.[i+1]=='I' && s.[i+2]=='N' && s.[i+3]=='T' && s.[i+4]=='\0')
+		(s.[i]=='I' && s.[i+1]=='N' && s.[i+2]=='T' && s.[i+3]=='\0')
 		= True;
-        | s.[i]=='d' && s.[i+1]=='I' && s.[i+2]=='N' && s.[i+3]=='T' && s.[i+4]=='\0'
-                = True;	
 	| s.[i]=='C' && s.[i+1]=='H' && s.[i+2]=='A' && s.[i+3]=='R' && s.[i+4]=='\0'
 		= True;
 	| s.[i]=='R' && s.[i+1]=='E' && s.[i+2]=='A' && s.[i+3]=='L' && s.[i+4]=='\0'
@@ -84,6 +82,16 @@ skip_to_null_char i s
 string_from_string_table i s
 	# e = skip_to_null_char i s;
 	= s % (i,e-1);
+
+freadi64 :: !*File -> (!Bool,!Int,!*File);
+freadi64 exe_file
+	# (ok, i1, exe_file) = freadi exe_file;
+	| not ok
+		= (False, 0, exe_file);
+	# (ok, i2, exe_file) = freadi exe_file;
+	| not ok
+		= (False, 0, exe_file);
+	= (True, (i2 << 32) + i1, exe_file);
 
 read_section_headers :: !Int !Int !SectionHeaders !*File -> (!SectionHeaders,!*File);
 read_section_headers section_n n_section_headers section_headers exe_file
@@ -125,7 +133,8 @@ read_symbol_table32 symbol_n symbol_table_size string_table symbols exe_file
 			= read_symbol_table32 (symbol_n+1) symbol_table_size string_table symbols exe_file;
 		# object = i3 bitand 0xf;
 		  bind = (i3>>4) bitand 0xf;
-		| (object==1 /*OBJECT*/ || object==2 /*FUNC*/ || object==0 /*NOTYPE*/) // bind==1 /* GLOBAL */
+		| (object==1 /*OBJECT*/ || object==2 /*FUNC*/ || object==0 /*NOTYPE*/) &&
+		  bind==1 /* GLOBAL */
 			# symbol_name = string_from_string_table i0 string_table;
 			# symbols = [(symbol_name,i1):symbols];
 			= read_symbol_table32 (symbol_n+1) symbol_table_size string_table symbols exe_file;
@@ -142,21 +151,13 @@ read_symbol_table64 symbol_n symbol_table_size string_table symbols exe_file
 			= read_symbol_table64 (symbol_n+1) symbol_table_size string_table symbols exe_file;
 		# object = i1 bitand 0xf;
 		  bind = (i1>>4) bitand 0xf;
-		| (object==1 /*OBJECT*/ || object==2 /*FUNC*/ || object==0 /*NOTYPE*/) // bind==1 /* GLOBAL */
+		| (object==1 /*OBJECT*/ || object==2 /*FUNC*/ || object==0 /*NOTYPE*/) &&
+		  bind==1 /* GLOBAL */
 			# symbol_name = string_from_string_table st_name string_table;
 			# symbols = [(symbol_name,st_value):symbols];
 			= read_symbol_table64 (symbol_n+1) symbol_table_size string_table symbols exe_file;
 		= read_symbol_table64 (symbol_n+1) symbol_table_size string_table symbols exe_file;
 	= (symbols,exe_file);
-
-freadi64 exe_file
-	# (ok, i1, exe_file) = freadi exe_file;
-	| not ok
-		= (False, 0, exe_file);
-	# (ok, i2, exe_file) = freadi exe_file;
-	| not ok
-		= (False, 0, exe_file);
-	= (True, (i2 << 32) + i1, exe_file);
 
 read_symbols :: !{#Char} !*Files -> (!{#Symbol},!*Files);
 read_symbols file_name files
@@ -202,8 +203,8 @@ read_symbols file_name files
 	# (string_table,exe_file) = freads exe_file section_headers.string_table_size;
 	| size string_table<>section_headers.string_table_size
 		= abort "reading symbol table failed";
-	# section_n = 0;
-	# offset = section_headers.symbol_table_offset;
+	# section_n = section_headers.first_non_local_symbol;
+	# offset = section_headers.symbol_table_offset + (IF_INT_64_OR_32 (section_n*24) (section_n<<4));
 	# (ok,exe_file) = fseek exe_file offset FSeekSet;
 	| not ok
 		= abort "fseek failed";

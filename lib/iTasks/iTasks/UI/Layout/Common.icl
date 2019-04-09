@@ -1,6 +1,5 @@
 implementation module iTasks.UI.Layout.Common
 
-
 import StdEnv
 
 import iTasks.UI.Layout, iTasks.UI.Layout.Default
@@ -10,6 +9,7 @@ import iTasks.WF.Combinators.Overloaded
 import Data.List, Text.GenJSON, Data.Maybe, StdString, Data.GenEq
 import Data.Monoid
 import qualified Data.Map as DM
+import Data.Map.GenJSON
 from Data.Func import $
 from StdListExtensions import foldlSt
 from iTasks.Internal.TaskEval import :: TaskEvalOpts(..), :: TonicOpts

@@ -456,7 +456,6 @@ charIndexBackwards :: !String !Int !Char -> (!Bool,!Int)
 charIndexBackwards s i char
 	| i == (-1)
 		= (False,size s)
-		
 		| s.[i] == char
 			= (True,i)
 			= charIndexBackwards s (i-1) char

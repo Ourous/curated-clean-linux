@@ -788,11 +788,11 @@ termCodeIf cond_expr true_expr false_expr s a
 	| inline cond_expr && inline true_expr && inline false_expr && 
 	  not (isJust s.cs_intrfunc && (isTailRecursive (fromJust s.cs_intrfunc) true_expr || isTailRecursive (fromJust s.cs_intrfunc) false_expr))
 	    = a <++ "(" <++ forceTermCoder cond_expr {s & cs_intrfunc = Nothing} <++ "?" 
-	        <++ forceTermCoder true_expr {s & cs_incaseexpr = True} <++ ":" <++ forceTermCoder false_expr {s & cs_incaseexpr = True} <++ ")"
+	        <++ forceTermCoder true_expr s <++ ":" <++ forceTermCoder false_expr s <++ ")"
 
 termCodeIf cond_expr texpr fexpr s a
 	    = a <++ "if(" <++ forceTermCoder cond_expr {s & cs_intrfunc = Nothing} <++ "){" 
-	        <++ callWrapper texpr {s & cs_incaseexpr = True} <++ "}else{" <++ callWrapper fexpr {s & cs_incaseexpr = True} <++ "}"
+	        <++ callWrapper texpr s <++ "}else{" <++ callWrapper fexpr s <++ "}"
 	
 generateJS :: !Flavour !Bool !String !(Maybe ParserState) -> MaybeErrorString (StringAppender, ParserState)
 generateJS f tramp saplsrc mbPst

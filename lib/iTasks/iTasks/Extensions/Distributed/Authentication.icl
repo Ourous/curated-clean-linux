@@ -38,6 +38,7 @@ authServer port = tcplisten port True authServerShare {ConnectionHandlers
 	, onData		= onData
 	, onShareChange		= onShareChange
 	, onDisconnect 		= onDisconnect
+	, onDestroy         = \s->(Ok s, [])
 	} -|| (process authServerShare) @! ()
 where
 	onConnect :: ConnectionId String AuthShare -> (MaybeErrorString AuthServerState, Maybe AuthShare, [String], Bool)
@@ -134,6 +135,7 @@ where
                         , onData	 = onData
 			, onShareChange  = onShareChange
                         , onDisconnect   = onDisconnect
+                        , onDestroy      = \s->(Ok s, [])
                         }) @? taskResult)
 		>>- \(resps,_) -> case resps of
 					[resp:_]  -> return (fromJSON (fromString (base64Decode resp)))

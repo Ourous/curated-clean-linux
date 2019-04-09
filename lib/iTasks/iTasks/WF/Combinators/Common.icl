@@ -104,7 +104,7 @@ sequence tasks = foreverStIf
 foreverStIf :: (a -> Bool) a !(a -> Task a) -> Task a | iTask a
 foreverStIf pred st t = parallel [(Embedded, par st Nothing)] [] @? fromParValue
 where
-	par st (Just tid) tlist = removeTask tid tlist >>- \_->par st Nothing tlist
+	par st (Just tid) tlist = removeTask tid tlist >-| par st Nothing tlist
 	par st Nothing tlist
 		| not (pred st) = treturn st
 		= step
@@ -236,7 +236,7 @@ instance toString ShareChanged where toString ShareChanged = "Share changed exce
 onlyJust (Value (Just x) s) = Value x s
 onlyJust _                  = NoValue
 
-whileUnchangedWith :: !(r r -> Bool) !(sds () r w) (r -> Task b) -> Task b | iTask r & iTask w & iTask b & Registrable sds
+whileUnchangedWith :: !(r r -> Bool) !(sds () r w) (r -> Task b) -> Task b | iTask r & TC w & iTask b & Registrable sds
 whileUnchangedWith eq share task
 	= 	((get share >>= \val -> (wait () (eq val) share <<@ NoUserInterface @ const Nothing) -||- (task val @ Just)) <! isJust)
 	@?	onlyJust
@@ -251,7 +251,7 @@ compute :: !String a -> Task a | iTask a
 compute s a = enterInformation s [EnterUsing id ed] >>~ \_->return a
 where
 	ed :: Editor Bool
-	ed = fieldComponent UILoader Nothing
+	ed = fieldComponent UILoader Nothing (\_ _ -> True)
 
 valToMaybe :: (TaskValue a) -> Maybe a
 valToMaybe (Value v _)  = Just v

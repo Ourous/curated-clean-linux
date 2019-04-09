@@ -69,12 +69,12 @@ from Data.Maybe		import :: Maybe (..)
 from StdOverloaded	import class ==, class <
 from StdBool        import not
 from StdFunc        import id
-from Text.GenJSON      import generic JSONEncode, generic JSONDecode, :: JSONNode
 from Data.GenEq import generic gEq
 from Data.GenLexOrd import generic gLexOrd, :: LexOrd
 from Data.Monoid    import class Monoid, class Semigroup
 import qualified StdList
 from Data.Functor import class Functor (..)
+from Data.Set import :: Set
 from StdOverloaded import class < (..)
 import StdClass
 
@@ -111,6 +111,7 @@ import StdClass
   | Tip
 
 instance Monoid (Map k v) | < k
+instance Semigroup (Map k v) | < k
 
 instance == (Map k v) | Eq k  & Eq v
 instance <  (Map k v) | Ord k & Ord v
@@ -124,6 +125,7 @@ instance <  (Map k v) | Ord k & Ord v
  *   mapSize m == 0 <==> null m
  * @property equivalence with newMap: A.m :: Map k v:
  *   m == newMap <==> null m
+ * @complexity O(1)
  */
 null mp :== case mp of
               Tip -> True
@@ -134,11 +136,13 @@ null mp :== case mp of
  * @result An empty map
  * @property is null:
  *   null newMap
+ * @complexity O(1)
  */
 newMap      :: w:(Map k u:v), [ w <= u]
 
 /**
  * Create a Map with one element.
+ * @complexity O(1)
  */
 singleton   :: !k !v -> Map k v
 
@@ -162,6 +166,7 @@ mapSize     :: !(Map k v) -> Int
  *     integrity m`
  *   where
  *     m` = put k v m
+ * @complexity O(log n)
  */
 put :: !k !a !(Map k a) -> Map k a | < k
 
@@ -173,6 +178,7 @@ put :: !k !a !(Map k a) -> Map k a | < k
  * @param The key to look for
  * @param The orginal mapping
  * @result When found, the value at the key position, if not: Nothing
+ * @complexity O(log n)
  */
 get k m :== get` k m
   where
@@ -268,11 +274,22 @@ toAscList m :== foldrWithKey (\k x xs -> [(k,x):xs]) [] m
  *     integrity m
  *   where
  *     m = fromList elems
+ * @complexity O(n*log n)
  */
 fromList :: !u:[v:(!a, !b)] -> Map a b | == a & < a, [u <= v]
 
-derive JSONEncode Map
-derive JSONDecode Map
+/**
+ * The keys of all keys of a map.
+ * @complexity log(n)
+ */
+keysSet :: !(Map k a) -> Set k
+
+/**
+ * Build a map from a set of keys and a function which for each key computes its value.
+ * @complexity log(n)
+ */
+fromSet :: !(k -> a) !(Set k) -> Map k a
+
 derive gEq Map
 derive gLexOrd Map
 
@@ -280,6 +297,7 @@ derive gLexOrd Map
  * Check if a key exists in a Map.
  * @property correctness: A.k :: k; m :: Map k v:
  *   member k m <==> isMember k (keys m)
+ * @complexity O(log n)
  */
 member :: !k !(Map k a) -> Bool | < k
 
@@ -296,6 +314,7 @@ notMember k m :== not (member k m)
  * Aborts when the element is not found.
  * @property correctness: A.k :: k; v :: v; m :: Map k v:
  *   find k (put k v m) =.= v
+ * @complexity O(log n)
  */
 find :: !k !(Map k a) -> a | < k
 
@@ -309,6 +328,7 @@ find :: !k !(Map k a) -> a | < k
  *   findWithDefault default k (put k v m) =.= v /\
  *     findWithDefault default k (del k m) =.= default
  *   where default = gDefault{|*|}
+ * @complexity O(log n)
  */
 findWithDefault :: !a !k !(Map k a) -> a | < k
 
@@ -322,6 +342,7 @@ findWithDefault :: !a !k !(Map k a) -> a | < k
  *   case [k \\ (k,v`) <- toList m | v == v`] of
  *     []    -> findKey v m =.= Nothing
  *     [k:_] -> findKey v m =.= Just k
+ * @complexity O(n)
  */
 findKey :: !a !(Map k a) -> Maybe k | == a
 
@@ -334,6 +355,7 @@ findKey :: !a !(Map k a) -> Maybe k | == a
  *   case [k \\ (k,v) <- toList m | pred p v] of
  *     []    -> findKeyWith (pred p) m =.= Nothing
  *     [k:_] -> findKeyWith (pred p) m =.= Just k
+ * @complexity O(n)
  */
 findKeyWith :: !(a -> Bool) !(Map k a) -> Maybe k
 
@@ -348,6 +370,7 @@ findKeyWith :: !(a -> Bool) !(Map k a) -> Maybe k
  *     Nothing -> findKeyWithDefault default v m =.= default
  *     Just k  -> findKeyWithDefault default v m =.= k
  *   where default = gDefault{|*|}
+ * @complexity O(n)
  */
 findKeyWithDefault :: !k !a !(Map k a) -> k | == a
 
@@ -362,6 +385,7 @@ findKeyWithDefault :: !k !a !(Map k a) -> k | == a
  *     Nothing -> findKeyWithDefaultWith (pred p) default m =.= default
  *     Just k  -> findKeyWithDefaultWith (pred p) default m =.= k
  *   where default = gDefault{|*|}
+ * @complexity O(n)
  */
 findKeyWithDefaultWith :: !(a -> Bool) !k !(Map k a) -> k
 

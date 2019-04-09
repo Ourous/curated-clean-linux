@@ -1,44 +1,35 @@
 implementation module iTasks.Engine
 
-import StdMisc, StdArray, StdList, StdOrdList, StdTuple, StdChar, StdFile, StdBool, StdEnum
+import Data.Func
+import Data.Functor
+import Data.Queue
+import Internet.HTTP
+import StdEnv
+import System.CommandLine
+import System.Directory
+import System.File
+import System.FilePath
+import System.GetOpt
+import System.OS
+import Text
+import iTasks.Internal.Distributed.Symbols
+import iTasks.Internal.EngineTasks
+import iTasks.Internal.IWorld
+import iTasks.Internal.SDS
+import iTasks.Internal.SDSService
+import iTasks.Internal.TaskServer
+import iTasks.Internal.TaskStore
+import iTasks.Internal.Util
+import iTasks.SDS.Sources.System
 import iTasks.WF.Combinators.Common
+import iTasks.WF.Definition
+import iTasks.WF.Tasks.SDS
 import iTasks.WF.Tasks.System
 
-import StdInt, StdChar, StdString
-from StdFunc import o, seqList, ::St, const, id
-
-import tcp
-import Internet.HTTP, System.GetOpt, Data.Func, Data.Functor
-
-from Data.Map import :: Map
-from Data.Queue import :: Queue(..)
-from Data.Set import :: Set, newSet
-
 import qualified Data.Map as DM
-from System.OS import IF_POSIX_OR_WINDOWS, OS_NEWLINE, IF_WINDOWS
 
-import Data.List, Data.Error, Data.Func, Data.Tuple, Math.Random, Text
-import System.Time, System.CommandLine, System.Environment, System.OSError, System.File, System.FilePath, System.Directory
-
-import iTasks.Internal.Util, iTasks.Internal.HtmlUtil
-import iTasks.Internal.IWorld, iTasks.Internal.WebService, iTasks.Internal.SDSService
-import qualified iTasks.Internal.SDS as SDS
-import iTasks.UI.Layout, iTasks.UI.Layout.Default
-
-from iTasks.WF.Tasks.SDS import get
-from iTasks.WF.Combinators.Tune import class tune(..), instance tune ApplyLayout Task, :: ApplyLayout(..)
-from iTasks.SDS.Combinators.Common import sdsFocus
-from iTasks.SDS.Sources.System import applicationOptions
-
-import iTasks.Internal.IWorld, iTasks.Internal.TaskEval, iTasks.Internal.TaskStore
-import iTasks.Internal.Util
-import iTasks.Internal.TaskServer
-import iTasks.Internal.EngineTasks
-import iTasks.Internal.Distributed.Symbols
-
-from Sapl.Linker.LazyLinker import generateLoaderState, :: LoaderStateExt
-from Sapl.Linker.SaplLinkerShared import :: SkipSet
-from Sapl.Target.Flavour import :: Flavour, toFlavour
+from TCPIP import :: Timeout
+from StdFunc import :: St, seqList
 
 MAX_EVENTS 		        :== 5
 
@@ -49,23 +40,30 @@ doTasks startable world = doTasksWithOptions defaultEngineCLIOptions startable w
 
 doTasksWithOptions :: ([String] EngineOptions -> MaybeError [String] EngineOptions) a !*World -> *World | Startable a
 doTasksWithOptions initFun startable world
-	# (cli,world)			= getCommandLine world
-	# (options,world)       = defaultEngineOptions world
-	# mbOptions             = initFun cli options
-	| mbOptions =:(Error _) = show (fromError mbOptions) world
-	# options               = fromOk mbOptions
-	# iworld				= createIWorld options world
-	# (res,iworld) 			= initJSCompilerState iworld
-	| res =:(Error _) 		= show ["Fatal error: " +++ fromError res] (destroyIWorld iworld)
-	# (symbolsResult, iworld) = initSymbolsShare options.distributed options.appName iworld
+	# (cli,world)                = getCommandLine world
+	# (options,world)            = defaultEngineOptions world
+	# mbOptions                  = initFun cli options
+	| mbOptions =:(Error _)      = show (fromError mbOptions) world
+	# options                    = fromOk mbOptions
+	# iworld                     = createIWorld options world
+	# (res,iworld)               = initJSCompilerState iworld
+	| res =:(Error _)            = show ["Fatal error: " +++ fromError res] (destroyIWorld iworld)
+	# (symbolsResult, iworld)    = initSymbolsShare options.distributed options.appName iworld
 	| symbolsResult =: (Error _) = show ["Error reading symbols while required: " +++ fromError symbolsResult] (destroyIWorld iworld)
-	# iworld				= serve (startupTasks options) (tcpTasks options.serverPort options.keepaliveTime)
-	                                engineTasks (timeout options.timeout) iworld
+	# iworld                     = serve (startupTasks options) (tcpTasks options.serverPort options.keepaliveTime) (timeout options.timeout) iworld
 	= destroyIWorld iworld
 where
     webTasks = [t \\ WebTask t <- toStartable startable]
-	startupTasks {distributed, sdsPort} = (if distributed [case onStartup (sdsServiceTask sdsPort) of StartupTask t = t;] []) ++ [t \\ StartupTask t <- toStartable startable]
-	hasWebTasks = not (webTasks =: [])
+	startupTasks {distributed, sdsPort}
+		//If distributed, start sds service task
+		=  (if distributed [startTask (sdsServiceTask sdsPort)] [])
+		++ [startTask flushWritesWhenIdle
+		//If there no webtasks, stop when stable, otherwise cleanup old sessions
+		   ,startTask if (webTasks =: []) stopOnStable removeOutdatedSessions
+		//Start all startup tasks
+		   :[t \\ StartupTask t <- toStartable startable]]
+
+	startTask t = {StartupTask|attributes=defaultValue,task=TaskWrapper t}
 
 	initSymbolsShare False _ iworld = (Ok (), iworld)
 	initSymbolsShare True appName iworld = case storeSymbols (IF_WINDOWS (appName +++ ".exe") appName) iworld of
@@ -77,16 +75,6 @@ where
 		| webTasks =: [] = []
 		| otherwise
 			= [(serverPort,httpServer serverPort keepaliveTime (engineWebService webTasks) taskOutput)]
-
-	engineTasks =
- 		[BackgroundTask updateClock,
- 		 BackgroundTask (processEvents MAX_EVENTS)
-		:if (webTasks =: [])
-			[BackgroundTask stopOnStable]
-			[BackgroundTask removeOutdatedSessions
-		 	,BackgroundTask flushWritesWhenIdle
-			]
-		]
 
 	// The iTasks engine consist of a set of HTTP Web services
 	engineWebService :: [WebTask] -> [WebService (Map InstanceNo TaskOutput) (Map InstanceNo TaskOutput)]
@@ -114,7 +102,7 @@ defaultEngineCLIOptions [argv0:argv] defaults
 where
 	opts :: [OptDescr ((Maybe EngineOptions) -> Maybe EngineOptions)]
 	opts =
-		[ Option ['?'] ["help"] (NoArg $ const Nothing)
+		[ Option ['?'] ["help"] (NoArg (\_->Nothing))
 			"Display this message"
 		, Option ['p'] ["port"] (ReqArg (\p->fmap \o->{o & serverPort=toInt p}) "PORT")
 			("Specify the HTTP port (default: " +++ toString defaults.serverPort +++ ")")
@@ -122,6 +110,8 @@ where
 			"Specify the timeout in ms (default: 500)\nIf not given, use an indefinite timeout."
 		, Option [] ["keepalive"] (ReqArg (\p->fmap \o->{o & keepaliveTime={tv_sec=toInt p,tv_nsec=0}}) "SECONDS")
 			"Specify the keepalive time in seconds (default: 300)"
+		, Option [] ["maxevents"] (ReqArg (\p->fmap \o->{o & maxEvents=toInt p}) "NUM")
+			"Specify the maximum number of events to process per loop (default: 5)"
 		, Option [] ["sessiontime"] (ReqArg (\p->fmap \o->{o & sessionTime={tv_sec=toInt p,tv_nsec=0}}) "SECONDS")
 			"Specify the expiry time for a session in seconds (default: 60)"
 		, Option [] ["autolayout"] (NoArg (fmap \o->{o & autoLayout=True}))
@@ -208,22 +198,23 @@ defaultEngineOptions world
 	# appDir             = takeDirectory appPath
 	# appName            = (dropExtension o dropDirectory) appPath
 	# options =
-		{ appName			= appName
-		, appPath			= appPath
-		, appVersion        = appVersion
-		, serverPort		= IF_POSIX_OR_WINDOWS 8080 80
-        , serverUrl         = "http://localhost/"
-		, keepaliveTime     = {tv_sec=300,tv_nsec=0} // 5 minutes
-		, sessionTime       = {tv_sec=60,tv_nsec=0}  // 1 minute, (the client pings every 10 seconds by default)
-        , persistTasks      = False
-		, autoLayout        = True
-		, distributed       = False
-		, sdsPort			= 9090
-		, timeout			= Just 500
-		, webDirPath 		= appDir </> appName +++ "-www"
-		, storeDirPath      = appDir </> appName +++ "-data" </> "stores"
-		, tempDirPath       = appDir </> appName +++ "-data" </> "tmp"
-		, saplDirPath 	    = appDir </> appName +++ "-sapl"
+		{ appName        = appName
+		, appPath        = appPath
+		, appVersion     = appVersion
+		, serverPort     = IF_POSIX_OR_WINDOWS 8080 80
+		, serverUrl      = "http://localhost/"
+		, keepaliveTime  = {tv_sec=300,tv_nsec=0} // 5 minutes
+		, sessionTime    = {tv_sec=60,tv_nsec=0}  // 1 minute, (the client pings every 10 seconds by default)
+		, persistTasks   = False
+		, autoLayout     = True
+		, distributed    = False
+		, maxEvents      = 5
+		, sdsPort        = 9090
+		, timeout        = Nothing//Just 500
+		, webDirPath     = appDir </> appName +++ "-www"
+		, storeDirPath   = appDir </> appName +++ "-data" </> "stores"
+		, tempDirPath    = appDir </> appName +++ "-data" </> "tmp"
+		, saplDirPath    = appDir </> appName +++ "-sapl"
 		}
 	= (options,world)
 
@@ -256,3 +247,29 @@ determineAppVersion appPath world
 	# version           = strfTime "%Y%m%d-%H%M%S" tm
 	= (version,world)
 
+timeout :: !(Maybe Timeout) !*IWorld -> (!Maybe Timeout,!*IWorld)
+timeout mt iworld = case read taskEvents EmptyContext iworld of
+	//No events
+	(Ok (ReadingDone (Queue [] [])),iworld=:{sdsNotifyRequests,world})
+		# (ts, world) = nsTime world
+		= ( minListBy lesser [mt:flatten (map (getTimeoutFromClock ts) ('DM'.elems sdsNotifyRequests))]
+		  , {iworld & world = world})
+	(Ok (ReadingDone (Queue _ _)), iworld)               = (Just 0,iworld)   //There are still events, don't wait
+	(Error _,iworld)            = (Just 500,iworld) //Keep retrying, but not too fast
+where
+	lesser (Just x) (Just y) = x < y
+	lesser (Just _) Nothing  = True
+	lesser _        _        = False
+
+	getTimeoutFromClock :: Timespec (Map SDSNotifyRequest Timespec) -> [Maybe Timeout]
+	getTimeoutFromClock now requests = map getTimeoutFromClock` ('DM'.toList requests)
+	where
+		getTimeoutFromClock` :: (!SDSNotifyRequest, !Timespec) -> Maybe Timeout
+		getTimeoutFromClock` (snr=:{cmpParam=(ts :: ClockParameter Timespec)}, reqTimespec)
+			| startsWith "$IWorld:timespec$" snr.reqSDSId && ts.interval <> zero
+				# fire = iworldTimespecNextFire now reqTimespec ts
+				= Just (max 0 (toMs fire - toMs now))
+			= mt
+		getTimeoutFromClock` _ = mt
+
+	toMs x = x.tv_sec * 1000 + x.tv_nsec / 1000000

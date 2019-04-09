@@ -15,6 +15,7 @@ deviceRequest request close
 		, onData	 = onData
 		, onShareChange  = onShareChange
 		, onDisconnect   = onDisconnect
+		, onDestroy= \s->(Ok s, [])
 		} 
 	>>= \{DeviceRequestState|result} -> return result            
 where

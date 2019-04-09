@@ -14,6 +14,7 @@ import iTasks.UI.Definition
 import iTasks.Extensions.DateTime
 from StdFunc import seq
 import qualified Data.Map as DM
+import Data.Map.GenJSON
 from Data.Map import instance Functor (Map a)
 from Control.Monad import `b`, class Monad(bind)
 import qualified iTasks.Internal.SDS as DSDS
