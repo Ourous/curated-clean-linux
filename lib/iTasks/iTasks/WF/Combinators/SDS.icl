@@ -17,13 +17,23 @@ from Data.Func import mapSt
 
 import StdTuple, StdArray, StdList, StdString
 import Text, Text.GenJSON
-import Data.Maybe, Data.Error
+import Data.Maybe, Data.Error, Data.Functor
 import System.Directory, System.File, System.FilePath, Data.Error, System.OSError
 import qualified Data.Map as DM
 
 withShared :: !b !((SimpleSDSLens b) -> Task a) -> Task a | iTask a & iTask b
 withShared initial stask = Task eval
 where
+	eval DestroyEvent evalOpts (TCShared taskId=:(TaskId instanceNo _) ts treea) iworld //First destroy inner task, then remove shared state
+		# (Task evala) = stask (sdsFocus taskId localShare)
+		# (resa,iworld) = evala DestroyEvent (extendCallTrace taskId evalOpts) treea iworld
+        //Remove share from reduct
+        # (e,iworld) = modify (fmap ('DM'.del taskId)) (sdsFocus instanceNo taskInstanceShares) EmptyContext iworld
+        | isError e = (ExceptionResult (fromError e), iworld)
+		= (resa,iworld)
+	eval DestroyEvent _ _ iworld
+		= (DestroyedResult,iworld)
+
 	eval event evalOpts (TCInit taskId ts) iworld
         # (taskIda,iworld)  = getNextTaskId iworld
         # (e,iworld)        = write (initial) (sdsFocus taskId localShare) EmptyContext iworld
@@ -44,16 +54,6 @@ where
 				= (ValueResult (Value stable val) info rep (TCShared taskId info.TaskEvalInfo.lastEvent ntreea),iworld)
 			ExceptionResult e   = (ExceptionResult e,iworld)
 
-	eval event evalOpts (TCDestroy (TCShared taskId=:(TaskId instanceNo _) ts treea)) iworld //First destroy inner task, then remove shared state
-		# (Task evala) = stask (sdsFocus taskId localShare)
-		# (resa,iworld)
-            = evala event (extendCallTrace taskId evalOpts) (TCDestroy treea) iworld
-        //Remove share from reduct
-        # (e,iworld) = modify ('DM'.del taskId) (sdsFocus instanceNo taskInstanceShares) EmptyContext iworld
-        | isError e
-            = (ExceptionResult (fromError e), iworld)
-		= (resa,iworld)
-
 	eval _ _ _ iworld
 		= (ExceptionResult (exception "Corrupt task state in withShared"), iworld)
 
@@ -69,10 +69,20 @@ withTaskId (Task eval) = Task eval`
         (ExceptionResult te, iworld) -> (ExceptionResult te, iworld)
         (DestroyedResult, iworld) -> (DestroyedResult, iworld)
 
-import StdMisc
 withTemporaryDirectory :: (FilePath -> Task a) -> Task a | iTask a
-withTemporaryDirectory taskfun = undef
+withTemporaryDirectory taskfun = Task eval
 where
+	eval DestroyEvent evalOpts (TCShared taskId ts treea) iworld=:{options={appVersion,tempDirPath}} //First destroy inner task
+		# tmpDir 		= tempDirPath </> (appVersion +++ "-" +++ toString taskId +++ "-tmpdir")
+		# (Task evala)	= taskfun tmpDir
+		# (resa,iworld)	= evala DestroyEvent evalOpts treea iworld
+		# (merr, world) = recursiveDelete tmpDir iworld.world
+		# iworld        = {iworld & world = world}
+		| isError merr  = (ExceptionResult (exception (fromError merr)), iworld)
+		= (resa,iworld)
+	eval DestroyEvent _ _ iworld
+		= (DestroyedResult,iworld)
+
 	eval event evalOpts (TCInit taskId ts) iworld=:{options={appVersion,tempDirPath}}
 		# tmpDir 			= tempDirPath </> (appVersion +++ "-" +++ toString taskId +++ "-tmpdir")
 		# (taskIda,iworld=:{world})	= getNextTaskId iworld
@@ -100,15 +110,6 @@ where
 				# info = {TaskEvalInfo|info & lastEvent = max ts info.TaskEvalInfo.lastEvent}
 				= (ValueResult value info rep (TCShared taskId info.TaskEvalInfo.lastEvent ntreea),{IWorld|iworld & world = world})
 			ExceptionResult e = (ExceptionResult e,{IWorld|iworld & world = world})
-
-	eval event evalOpts (TCDestroy (TCShared taskId ts treea)) iworld=:{options={appVersion,tempDirPath}} //First destroy inner task
-		# tmpDir 		= tempDirPath </> (appVersion +++ "-" +++ toString taskId +++ "-tmpdir")
-		# (Task evala)	= taskfun tmpDir
-		# (resa,iworld)	= evala event evalOpts (TCDestroy treea) iworld
-		# (merr, world) = recursiveDelete tmpDir iworld.world
-		# iworld        = {iworld & world = world}
-		| isError merr  = (ExceptionResult (exception (fromError merr)), iworld)
-		= (resa,iworld)
 
 	eval _ _ _ iworld
 		= (ExceptionResult (exception "Corrupt task state in withShared"), iworld)

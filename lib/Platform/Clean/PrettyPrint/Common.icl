@@ -45,27 +45,24 @@ where
 	print st (ID_Function f)
 		= print st f
 	print st (ID_Class c mems)
-		= print st ("class " :+: c :+: mems`)
-	where
-		mems` = case mems of
-			(Yes [])   = "(..)"
-			(Yes mems) = "(" +++ join st "," mems +++ ")"
-			_          = ""
+		= print st ("class " :+: c :+: ('(',mems,')'))
 	print st (ID_Type t conses)
-		= print st (":: " :+: t :+: conses`)
-	where
-		conses` = case conses of
-			(Yes [])     = "(..)"
-			(Yes conses) = "(" +++ join st "," conses +++ ")"
-			_            = ""
+		= print st (":: " :+: t :+: ('(',conses,')'))
 	print st (ID_Record t fields)
-		= print st (":: " :+: t :+: fields`)
-	where
-		fields` = case fields of
-			(Yes [])     = "{..}"
-			(Yes fields) = "{" +++ join st "," fields +++ "}"
-			_            = ""
+		= print st (":: " :+: t :+: ('{',fields,'}'))
 	print st (ID_Instance cls _ (ts, tcs))
 		= print st (cls :+: join_start st " " ts :+: if (isEmpty tcs) "" (" | " +++ join st " & " tcs))
 	print st (ID_Generic id _)
 		= print st ("generic " :+: id)
+
+instance print (Char, ImportBelongings, Char)
+where
+	print st (_,IB_None,_) = ""
+	print st (open,IB_Idents [],close) = {#open,'.','.',close}
+	print st (open,IB_Idents is,close) = print st ({#open} :+: join st "," is :+: {#close})
+	print st (open,IB_IdentsAndOptIdents is opts,close) =
+		print st ({#open} :+: join st ","
+			[print st (i :+: if addparens "()" "")
+				\\ i <- is++opts
+				 & addparens <- repeatn (length is) False++repeat True]
+		:+: {#close})

@@ -53,7 +53,7 @@ currentTopTask :: SDSLens () TaskId ()
 
 //Task instances
 currentTaskInstanceNo           :: SDSSource () InstanceNo ()
-currentTaskInstanceAttributes :: SimpleSDSSequence TaskAttributes
+currentTaskInstanceAttributes   :: SimpleSDSSequence TaskAttributes
 allTaskInstances                :: SDSLens () [TaskInstance] ()
 detachedTaskInstances	        :: SDSLens () [TaskInstance] () //Exclude sessions
 taskInstanceByNo                :: SDSLens InstanceNo TaskInstance TaskAttributes

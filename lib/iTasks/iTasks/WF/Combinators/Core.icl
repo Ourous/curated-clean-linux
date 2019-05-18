@@ -5,16 +5,16 @@ import iTasks.UI.Definition
 import iTasks.SDS.Definition
 
 import iTasks.Engine
+import iTasks.Internal.DynamicUtil
 import iTasks.Internal.Task
 import iTasks.Internal.TaskState
 import iTasks.Internal.TaskStore
 import iTasks.Internal.TaskEval
 import iTasks.Internal.IWorld
 import iTasks.Internal.Tonic.Shares
-import iTasks.Internal.Client.Override
 import iTasks.Internal.AsyncSDS
 
-from iTasks.SDS.Combinators.Common import sdsFocus, sdsSplit, sdsTranslate, toReadOnly, mapRead, mapReadWriteError, mapSingle
+from iTasks.SDS.Combinators.Common import sdsFocus, sdsSplit, sdsTranslate, toReadOnly, mapRead, mapReadWriteError, mapSingle, removeMaybe
 import iTasks.WF.Combinators.Common
 from iTasks.Internal.SDS import write, read, readRegister, modify
 
@@ -103,8 +103,22 @@ removeDupBy _ [] = []
 step` :: !(Task a) ((Maybe a) -> (Maybe b)) [TaskCont a (Task b)] -> Task b | TC a & JSONDecode{|*|} a & JSONEncode{|*|} a
 step` (Task evala) lhsValFun conts = Task eval
 where
-	eval event evalOpts (TCInit taskId ts) iworld
+	//Cleanup
+    eval DestroyEvent evalOpts (TCInit _ _) iworld
+        = (DestroyedResult,iworld) //Removed before first evaluation...
 
+	eval DestroyEvent evalOpts (TCStep taskId ts (Left (treea,_))) iworld
+		= case evala DestroyEvent (extendCallTrace taskId evalOpts) treea iworld of
+			(DestroyedResult,iworld)		= (DestroyedResult,iworld)
+			(ExceptionResult e,iworld)	    = (ExceptionResult e,iworld)
+			(ValueResult _ _ _ _,iworld)	= (ExceptionResult (exception "Destroy failed in step"),iworld)
+
+	eval DestroyEvent evalOpts (TCStep taskId ts (Right (enca,sel,treeb))) iworld
+		= case restoreTaskB sel enca of
+			Just (Task evalb)	= evalb DestroyEvent (extendCallTrace taskId evalOpts) treeb iworld
+			Nothing				= (ExceptionResult (exception "Corrupt task value in step"), iworld)
+
+	eval event evalOpts (TCInit taskId ts) iworld
 		# (taskIda,iworld)	= getNextTaskId iworld
 		= eval event evalOpts (TCStep taskId ts (Left (TCInit taskIda ts,[]))) iworld
 
@@ -132,7 +146,7 @@ where
 				# iworld	= case mbTreeA of
 					Nothing		= iworld
 					//TODO: Check for exceptions during cleanup
-					Just treea	= snd (evala ResetEvent (extendCallTrace taskId evalOpts) (TCDestroy treea) iworld)
+					Just treea	= snd (evala DestroyEvent (extendCallTrace taskId evalOpts) treea iworld)
 				# (taskIdb,iworld)	= getNextTaskId iworld
 				# (resb,iworld)		= evalb ResetEvent (extendCallTrace taskId evalOpts) (TCInit taskIdb lastEvent) iworld
 				= case resb of
@@ -155,21 +169,6 @@ where
 					ExceptionResult e = (ExceptionResult e, iworld)
 			Nothing
 				= (ExceptionResult (exception "Corrupt task value in step"), iworld)
-
-	//Cleanup
-    eval event evalOpts (TCDestroy (TCInit _ _)) iworld
-        = (DestroyedResult,iworld) //Removed before first evaluation...
-
-	eval event evalOpts (TCDestroy (TCStep taskId ts (Left (treea,_)))) iworld
-		= case evala event (extendCallTrace taskId evalOpts) (TCDestroy treea) iworld of
-			(DestroyedResult,iworld)		= (DestroyedResult,iworld)
-			(ExceptionResult e,iworld)	    = (ExceptionResult e,iworld)
-			(ValueResult _ _ _ _,iworld)	= (ExceptionResult (exception "Destroy failed in step"),iworld)
-
-	eval event evalOpts (TCDestroy (TCStep taskId ts (Right (enca,sel,treeb)))) iworld
-		= case restoreTaskB sel enca of
-			Just (Task evalb)	= evalb event (extendCallTrace taskId evalOpts) (TCDestroy treeb) iworld
-			Nothing				= (ExceptionResult (exception "Corrupt task value in step"), iworld)
 
 	//Incorrect state
 	eval event _ state iworld
@@ -265,8 +264,12 @@ where
 parallel :: ![(!ParallelTaskType,!ParallelTask a)] [TaskCont [(!Int,!TaskValue a)] (!ParallelTaskType,!ParallelTask a)] -> Task [(!Int,!TaskValue a)] | iTask a
 parallel initTasks conts = Task eval
 where
+    //Cleanup
+    eval DestroyEvent evalOpts (TCParallel taskId ts taskTrees _) iworld
+		= destroyParallelTasks taskId ('DM'.fromList taskTrees) iworld
+
     //Create initial task list
-    eval event evalOpts (TCInit taskId ts) iworld=:{IWorld|current}
+    eval event evalOpts (TCInit taskId ts) iworld
       //Create the states for the initial tasks
       = case initParallelTasks (setParallel taskId (extendCallTrace taskId evalOpts)) taskId 0 initTasks iworld of
           (Ok (taskList,embeddedTasks),iworld)
@@ -314,10 +317,6 @@ where
 		exceptionResult :: (TaskResult [(!Int,!TaskValue a)]) TaskException -> (TaskResult [(!Int,!TaskValue a)])
 		exceptionResult DestroyedResult e = ExceptionResult e
 		exceptionResult (ExceptionResult _) e = ExceptionResult e
-
-    //Cleanup
-    eval event evalOpts ttree=:(TCDestroy (TCParallel taskId ts taskTrees _)) iworld=:{current}
-		= destroyParallelTasks taskId ('DM'.fromList taskTrees) iworld
 
     //Fallback
     eval _ _ _ iworld
@@ -482,15 +481,15 @@ evalEmbeddedParallelTask listId taskTrees event evalOpts
 				}
 			}
 		//Evaluate new branches with a reset event
-        # (result,iworld) = evala (if newBranch ResetEvent event)
+		# (result,iworld) = evala (if newBranch ResetEvent event)
 			(setParallel listId (extendCallTrace taskId evalOpts)) tree iworld
 		//Tonic hook
-        # iworld = if (evalOpts.tonicOpts.captureParallel
-				   		&& evalOpts.tonicOpts.currBlueprintExprId <> []
-				   		&& evalOpts.tonicOpts.currBlueprintTaskId <> TaskId 0 0)
-				      		(storeTaskOutputViewer result evalOpts.tonicOpts.currBlueprintExprId
+		# iworld = if (evalOpts.tonicOpts.captureParallel
+						&& evalOpts.tonicOpts.currBlueprintExprId <> []
+						&& evalOpts.tonicOpts.currBlueprintTaskId <> TaskId 0 0)
+							(storeTaskOutputViewer result evalOpts.tonicOpts.currBlueprintExprId
 								evalOpts.tonicOpts.currBlueprintTaskId taskId iworld)
-                      		iworld
+							iworld
         = case result of
             //If an exception occured, check if we can handle it at this level
             ExceptionResult e
@@ -530,7 +529,7 @@ where
 
 //Retrieve result of detached parallel task
 evalDetachedParallelTask listId taskTrees event evalOpts {ParallelTaskState|taskId=taskId=:(TaskId instanceNo _),detached=True} iworld
-    = case readRegister listId (sdsFocus instanceNo taskInstanceValue) iworld of
+    = case readRegister listId (sdsFocus instanceNo (removeMaybe Nothing taskInstanceValue)) iworld of
         (Error e,iworld)
             = (Error e,iworld)
         (Ok (ReadingDone (TIException dyn msg)),iworld)
@@ -557,7 +556,7 @@ destroyParallelTasks listId=:(TaskId instanceNo _) taskTrees iworld
 			//1. Destroy all child tasks (`result` is always `DestroyedResult` but passed to solve overloading
 			# (result,exceptions,iworld) = foldl (destroyParallelTask listId taskTrees) (DestroyedResult,[],iworld) taskStates
 			//2. Remove the (shared) tasklist
-			# (exceptions,iworld) = case modify (\m -> 'DM'.del listId m)
+			# (exceptions,iworld) = case modify (fmap (\m -> 'DM'.del listId m))
 			                             (sdsFocus instanceNo taskInstanceParallelTaskLists) EmptyContext iworld of
 				(Ok (ModifyingDone _),iworld) = (exceptions,iworld)
 				(Error e,iworld) = ([e:exceptions],iworld)
@@ -582,19 +581,19 @@ destroyEmbeddedParallelTask :: TaskId TaskId (Map TaskId TaskTree) *IWorld -> *(
 destroyEmbeddedParallelTask listId=:(TaskId instanceNo _) taskId taskTrees iworld=:{current={taskTime}}
 	// In this fuction we continue as much as possible, even when we encounter exceptions
 	// The returned taskresult is always `DestroyedResult` but is needed to solve overloading
-	// Evaluate with a TCDestroy state to destroy subtasks
+	// Evaluate with a DestroyEvent to destroy subtasks
 	# (errs,destroyResult,iworld) = case read (sdsFocus taskId taskInstanceEmbeddedTask) EmptyContext iworld of
 		(Error e,iworld) = ([e],DestroyedResult,iworld)
 		(Ok (ReadingDone (Task eval)),iworld)
     		# taskTree = fromMaybe (TCInit taskId taskTime) ('DM'.get taskId taskTrees)
-			= case eval ResetEvent {mkEvalOpts & noUI = True} (TCDestroy taskTree) iworld of
+			= case eval DestroyEvent {mkEvalOpts & noUI = True} taskTree iworld of
 				(res=:(DestroyedResult),iworld) = ([],res,iworld)
 				(res=:(ExceptionResult e),iworld) = ([e],DestroyedResult,iworld)
 				(res,iworld) = ([exception "destroyEmbeddedParallelTask: unexpected result"],DestroyedResult,iworld)
 	// 2. Remove the task tree
 	# taskTrees = 'DM'.del taskId taskTrees
 	// 3. Remove the task evaluation function
-	# (errs,iworld) = case modify (\(r=:{TIReduct|tasks}) -> {TIReduct|r & tasks = 'DM'.del taskId tasks})
+	# (errs,iworld) = case modify (fmap (\(r=:{TIReduct|tasks}) -> {TIReduct|r & tasks = 'DM'.del taskId tasks}))
 	                              (sdsFocus instanceNo taskInstanceReduct) EmptyContext iworld of
 		(Error e,iworld) = ([e:errs],iworld)
 		(Ok (ModifyingDone _),iworld) = (errs,iworld)
@@ -727,6 +726,8 @@ where
 removeTask :: !TaskId !(SharedTaskList a) -> Task () | TC a
 removeTask removeId=:(TaskId instanceNo taskNo) slist = Task eval
 where
+    eval DestroyEvent _ _ iworld = (DestroyedResult,iworld)
+
     eval event evalOpts (TCInit taskId ts) iworld
         # (mbListId,iworld) = readListId slist iworld
         | mbListId =:(Error _) = (ExceptionResult (fromError mbListId),iworld)
@@ -750,8 +751,6 @@ where
             = (ValueResult (Value () True) {lastEvent=ts,attributes='DM'.newMap,removedTasks=[(listId,removeId)]} (rep event) (TCStable taskId ts (DeferredJSONNode JSONNull)), iworld)
     eval event evalOpts state=:(TCStable taskId ts _) iworld
         = (ValueResult (Value () True) {lastEvent=ts,attributes='DM'.newMap,removedTasks=[]} (rep event) state, iworld)
-    eval event _ (TCDestroy _) iworld
-        = (DestroyedResult,iworld)
 
 	rep ResetEvent = ReplaceUI (ui UIEmpty)
 	rep _          = NoChange
@@ -766,6 +765,8 @@ where
 replaceTask :: !TaskId !(ParallelTask a) !(SharedTaskList a) -> Task () | iTask a
 replaceTask replaceId=:(TaskId instanceNo taskNo) parTask slist = Task eval
 where
+    eval DestroyEvent _ _ iworld
+        = (DestroyedResult,iworld)
 	eval event evalOpts (TCInit taskId ts) iworld
         # (mbListId,iworld) = readListId slist iworld
         | mbListId =:(Error _) = (ExceptionResult (fromError mbListId),iworld)
@@ -793,8 +794,6 @@ where
             = (ValueResult (Value () True) {lastEvent=ts,attributes='DM'.newMap,removedTasks=[]} (rep event) (TCStable taskId ts (DeferredJSONNode JSONNull)), iworld)
     eval event evalOpts state=:(TCStable taskId ts _) iworld
         = (ValueResult (Value () True) {lastEvent=ts,attributes='DM'.newMap,removedTasks=[]} (rep event) state, iworld)
-    eval _ _ (TCDestroy _) iworld
-        = (DestroyedResult,iworld)
 
 	rep ResetEvent = ReplaceUI (ui UIEmpty)
 	rep _          = NoChange
@@ -821,6 +820,16 @@ where
 attach :: !InstanceNo !Bool -> Task AttachmentStatus
 attach instanceNo steal = Task eval
 where
+	eval DestroyEvent evalOpts ttree=:(TCAttach taskId _ _ _ _) iworld
+		# iworld = clearTaskSDSRegistrations ('DS'.singleton $ fromOk $ taskIdFromTaskTree ttree) iworld
+		# (_,iworld)	    = modify release (sdsFocus instanceNo taskInstanceProgress) EmptyContext iworld
+        = (DestroyedResult,iworld)
+	where
+		release progress=:{InstanceProgress|attachedTo=[t:_]}
+			| t == taskId = {InstanceProgress|progress & attachedTo=[]} //Only release if the instance is still attached to this 'attach' task
+						  = progress
+		release progress = progress
+
 	eval event evalOpts (TCInit taskId ts) iworld=:{current={attachmentChain}}
 		# (mbConstants,iworld)		= read (sdsFocus instanceNo taskInstanceConstants) EmptyContext iworld
 		| mbConstants =: (Error _)  = (ExceptionResult (fromError mbConstants),iworld)
@@ -857,16 +866,6 @@ where
 		# stable = (curStatus =: ASDeleted) || (curStatus =: ASExcepted _)
 		= (ValueResult (Value curStatus stable) {TaskEvalInfo|lastEvent=ts,attributes='DM'.newMap,removedTasks=[]} change (TCAttach taskId ts curStatus build instanceKey), iworld)
 
-	eval event evalOpts ttree=:(TCDestroy (TCAttach taskId _ _ _ _)) iworld
-		# iworld = clearTaskSDSRegistrations ('DS'.singleton $ fromOk $ taskIdFromTaskTree ttree) iworld
-		# (_,iworld)	    = modify release (sdsFocus instanceNo taskInstanceProgress) EmptyContext iworld
-        = (DestroyedResult,iworld)
-	where
-		release progress=:{InstanceProgress|attachedTo=[t:_]}
-			| t == taskId = {InstanceProgress|progress & attachedTo=[]} //Only release if the instance is still attached to this 'attach' task
-						  = progress
-		release progress = progress
-
 	determineUIChange event curStatus prevStatus instanceNo instanceKey
 		| curStatus === prevStatus && not (event =: ResetEvent) = NoChange
 		| curStatus =: (ASInUse _)    = ReplaceUI inuse
@@ -884,7 +883,7 @@ withCleanupHook patch (Task orig)
 	= appendTopLevelTask 'DM'.newMap False patch
 	>>- Task o eval
 where
-	eval tosignal ev opts tree=:(TCDestroy _) iw
-		# (tr, iw) = orig ev opts tree iw
+	eval tosignal DestroyEvent opts tree iw
+		# (tr, iw) = orig DestroyEvent opts tree iw
 		= (tr, queueRefresh [(tosignal, "Cleanup")] iw)
 	eval tosignal ev opts tree iw = orig ev opts tree iw

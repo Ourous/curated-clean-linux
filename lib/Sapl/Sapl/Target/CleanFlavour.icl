@@ -6,6 +6,8 @@ cleanFlavour = fromFlavourRep {
    fun_prefix="__",
    options=["enableStrictnessPropagation"],
    bifs=[
+      {sapl_fun="inf",arity=0,data_cons=Nothing,ext_fun=Just "_inf",inline_exp=Just "Infinity"},
+      {sapl_fun="#INF",arity=0,data_cons=Nothing,ext_fun=Just "_inf",inline_exp=Just "Infinity"},
       {sapl_fun="addI",arity=2,data_cons=Nothing,ext_fun=Just "_add",inline_exp=Just ":!1: + :!2:"},
       {sapl_fun="addR",arity=2,data_cons=Nothing,ext_fun=Just "_add",inline_exp=Just ":!1: + :!2:"},
       {sapl_fun="subI",arity=2,data_cons=Nothing,ext_fun=Just "_sub",inline_exp=Just ":!1: - :!2:"},

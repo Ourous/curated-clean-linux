@@ -1,4 +1,4 @@
-.comp 920 0001100110100
+.comp 920 0001100100100
 .start _nostart_
 .depend "StdInt"
 .depend "_SystemArray"
@@ -45,7 +45,7 @@
 .impdesc d_S.6
 .implab n_S.6 ea_S.6
 .implab _driver
-.desc0 d61 0 "Files"
+.desc0 d51 0 "Files"
 .export e_StdFile_rFileSystem;
 .record e_StdFile_rFileSystem; aaaa 4 0 "FileSystem;"
 .pb "FileSystem;"
@@ -533,7 +533,7 @@ e_StdFile_eaappFiles;36
 e_StdFile_sappFiles;36
 .o 3 0
 s37
-	buildh d61 0
+	buildh d51 0
 	push_a 0
 	push_a 2
 	update_a 1 3
@@ -608,7 +608,7 @@ ea36
 e_StdFile_saccFiles;35
 .o 2 0
 s36
-	buildh d61 0
+	buildh d51 0
 	push_a 0
 	push_a 2
 	update_a 1 3

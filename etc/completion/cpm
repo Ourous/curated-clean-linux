@@ -1,0 +1,115 @@
+# bash completion for cpm
+# Author: Mart Lubbers
+# Date: 2018-07-17
+#
+# Todo
+# - support --envs=filename
+# - create completion for module
+# - create completion for environment
+# - test on non-linux
+_set_opts="-generic_fusion -ngeneric_fusion -dynamics -ndynamics -descexl -ndescexl -b -nr -nc -sc"
+
+_targets()
+{
+	sed 's/EnvironmentName:[[:space:]]*//;t;d' | tr -d '\n'
+}
+
+_paths()
+{
+	sed 's/\[\([[:digit:]]\)\].*/\1/;t;d' | tr -d '\n'
+}
+
+_cpm()
+{
+	local arg cur prev words cword split
+
+	# Require bash completion
+	_init_completion || return
+	_get_first_arg
+	_get_comp_words_by_ref
+
+	# subcommand or project file
+	if [[ -z "${arg}" ]]
+	then
+		COMPREPLY=( $(compgen -W "environment project module make" -- ${cur}) )
+		_filedir prj
+	else 
+		case "${arg}" in
+		*.prj)
+			COMPREPLY=( $(compgen -W "--force" -- ${cur}) )
+			;;
+		make)
+			;;
+		project)
+			# Not even a project file is selected
+			if [[ "$cword" = 2 ]]
+			then
+				_filedir prj
+			# A project file is selected
+			elif [[ "$cword" = 3 ]]
+			then
+				COMPREPLY=( $(compgen -W "create show build path root target exec set" -- ${cur}) )
+			# A project command is selected
+			elif [[ "$cword" -ge 4 ]]
+			then
+				case "${words[3]}" in
+					build)
+						COMPREPLY=( $(compgen -W "--force --envs" -- ${cur}) )
+						;;
+					path)
+						# No path command set yet
+						if [[ "$cword" = 4 ]]
+						then
+							COMPREPLY=( $(compgen -W "add list remove move" -- ${cur}) )
+						# Path command is set
+						elif [[ "$cword" -ge 5 ]]
+						then
+							case "${words[4]}" in
+								add)
+									_filedir -d
+									;;
+								list)
+									;;
+								remove)
+									COMPREPLY=( $(compgen -W "$("${words[0]}" project "${words[2]}" path list | _paths)" -- ${cur}) )
+									;;
+								move)
+									if [[ "$cword" = 5 ]]
+									then
+										COMPREPLY=( $(compgen -W "$("${words[0]}" project "${words[2]}" path list | _paths)" -- ${cur}) )
+									elif [[ "$cword" = 6 ]]
+									then
+										COMPREPLY=( $(compgen -W "up down top bottom" -- ${cur}) )
+									fi
+									;;
+							esac
+						fi
+						;;
+					root)
+						COMPREPLY=( $(compgen -W ". .. ... .... ....." -- ${cur}) )
+						;;
+					target)
+						COMPREPLY=( $(compgen -W "$(_targets < "$CLEAN_HOME/etc/IDEEnvs")" -- ${cur}) )
+						;;
+					set)
+						COMPREPLY=( $(compgen -W "$_set_opts" -- ${cur}) )
+						;;
+					exec)
+						;;
+					create)
+						;;
+					show)
+						;;
+					main)
+						_filedir
+						;;
+				esac
+			fi
+			;;
+		module)
+			;;
+		environment)
+			;;
+		esac
+	fi
+} && complete -F _cpm cpm

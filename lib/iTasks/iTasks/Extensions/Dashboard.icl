@@ -1,8 +1,8 @@
 implementation module iTasks.Extensions.Dashboard
 import iTasks
-import iTasks.UI.Editor, iTasks.UI.Definition, iTasks.UI.JS.Interface
+import iTasks.UI.Editor, iTasks.UI.Definition, iTasks.UI.JavaScript
 import qualified Data.Map as DM, Data.Error
-import Text.HTML, StdMisc, Data.Func
+import Text.HTML, StdMisc, StdArray, Data.Func
 
 derive JSONEncode ControlLight
 derive JSONDecode ControlLight
@@ -28,21 +28,21 @@ where
 		= (Ok (uia UIHtmlView attr,val), world)
 
     initUI me world 
-		# (jsOnAttributeChange,world) = jsWrapFun (onAttributeChange me) world
+		# (jsOnAttributeChange,world) = jsWrapFun (onAttributeChange me) me world
 		# world = (me .# "onAttributeChange" .= jsOnAttributeChange) world
 		= world
 
 	valueFromState s = Just s
 
-	onAttributeChange me args world
-		| jsArgToString (args !! 0) == "diff"
-			# (color, world) = fromJSArray (toJSVal (args !! 1)) id world
-			# (svgEl,world)    = .? (me .# "domEl" .# "children" .# 0) world
-			# (lightEl,world)  = .? (svgEl .# "children" .# 1) world
+	onAttributeChange me {[0]=name,[1]=value} world = case jsValToString name of
+		Just "diff"
+			# (color, world) = jsValToList` value id world
+			# (svgEl,world)    = me .# "domEl" .# "children" .# 0 .? world
+			# (lightEl,world)  = svgEl .# "children" .# 1 .? world
 			# (_,world)        = (lightEl .# "setAttribute" .$ ("fill",color)) world //Just update the color
-			= (jsNull,world)
-		| otherwise
-			= (jsNull,jsTrace "Unknown attribute change" world)
+			= world
+		_
+			= jsTrace "Unknown attribute change" world
 
     color LightOnGreen  = "green"
     color LightOnRed    = "red"

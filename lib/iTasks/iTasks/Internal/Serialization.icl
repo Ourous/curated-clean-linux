@@ -8,6 +8,12 @@ import Data.Error
 import Text.GenJSON
 import Data.Maybe
 
+import ABC.Interpreter
+
+import iTasks.Engine
+import iTasks.Internal.IWorld
+import iTasks.UI.Editor
+
 serialize :: !a -> *String
 serialize value = copy_to_string value
 
@@ -45,3 +51,5 @@ dynamicJSONDecode :: !JSONNode -> Maybe a
 dynamicJSONDecode (JSONArray [JSONString "_DYNAMICENCODE_",JSONString str]) = Just (fst (copy_from_string (base64URLDecode str)))
 dynamicJSONDecode _					= Nothing
 
+serializeForClient :: f !*VSt -> *(!String, !*VSt)
+serializeForClient f vst=:{VSt| abcInterpreterEnv} = (serialize_for_prelinked_interpretation f abcInterpreterEnv, vst)

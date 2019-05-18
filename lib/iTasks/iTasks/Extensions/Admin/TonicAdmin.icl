@@ -20,7 +20,6 @@ from Control.Monad import `b`, class Monad(bind)
 import qualified iTasks.Internal.SDS as DSDS
 import Data.List
 from iTasks.Extensions.SVG.SVGEditor import fromSVGEditor, :: SVGEditor {..}
-import iTasks.UI.JS.Encoding
 from Data.IntMap.Strict import :: IntMap
 import qualified Data.IntMap.Strict as DIS
 import Data.Maybe
@@ -34,9 +33,6 @@ derive gText Set
 derive gDefault Set
 derive JSONEncode Set
 derive JSONDecode Set
-
-derive JSEncode ActionState, TClickAction, ClickMeta, TonicImageState, BlueprintRef, TonicFunc, TExpr, TPriority, TLit, TAssoc
-derive JSDecode ActionState, TClickAction, ClickMeta, TonicImageState, BlueprintRef, TonicFunc, TExpr, TPriority, TLit, TAssoc
 
 tonic :: Task ()
 tonic = tonicDashboard []
@@ -63,7 +59,7 @@ tonicStaticBrowser rs
                >&> withSelection noModuleSelection (
       \mn       -> getModule mn
   >>- \tm       -> tonicBrowseWithModule allbps rs navstack tm
-         )) <<@ ArrangeWithSideBar 0 LeftSide 200 True
+         )) <<@ ArrangeWithSideBar 0 LeftSide True
          )) ) @! ()
   where
   selectModule      = getTonicModules >>- enterChoice "Select a module" [ChooseFromDropdown id]
@@ -84,7 +80,7 @@ tonicBrowseWithModule allbps rs navstack tm
                                                    , bpr_taskName   = tt.tf_name
                                                    } tm tt sett.StaticDisplaySettings.unfold_depth sett.StaticDisplaySettings.display_compact @! ()))
                (getTonicFunc tm tn)
-     )) <<@ ArrangeWithSideBar 0 LeftSide 200 True
+     )) <<@ ArrangeWithSideBar 0 LeftSide True
         @! ()
   where
   selectTask tm   = enterChoice "Select task" [ChooseFromDropdown id] (getTasks tm)
@@ -290,7 +286,7 @@ where
                                (Title "Active blueprint instances")
                                [ChooseFromGrid customView]
                                (mapRead (\(trt, q) -> filterActiveTasks q (flattenRTMap trt)) (tonicSharedRT |*| queryShare))
-                               setTaskId selectedBlueprint <<@ ArrangeWithSideBar 0 TopSide 175 True
+                               setTaskId selectedBlueprint <<@ ArrangeWithSideBar 0 TopSide True
   where
     setTaskId x = { click_origin_mbbpident  = Nothing
                   , click_origin_mbnodeId   = Nothing

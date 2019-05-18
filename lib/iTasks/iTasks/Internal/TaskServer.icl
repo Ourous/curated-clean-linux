@@ -6,6 +6,7 @@ import Data.Tuple
 import StdEnv
 import System.CommandLine
 import System.Time
+import System.Signal
 import TCPIP
 import Text
 import iTasks.Engine
@@ -31,6 +32,7 @@ serve its cts determineTimeout iworld
 
 init :: ![StartupTask] ![(!Int,!ConnectionTask)] !*IWorld -> *IWorld
 init its cts iworld
+	# iworld = installSignalHandlers iworld
 	// Check if the initial tasks have been added already
 	# iworld = createInitialInstances its iworld
 	// All persistent task instances should receive a reset event to continue their work
@@ -67,13 +69,23 @@ where
 		# opts = {ListenerInstanceOpts|taskId=TaskId 0 0, port=port, connectionTask=ct, removeOnClose = True}
 		= (ListenerInstance opts (fromJust mbListener),world)
 
+	installSignalHandlers iworld=:{signalHandlers,world}
+		= case signalInstall SIGTERM world of
+			(Error (_, e), world) = abort ("Couldn't install SIGTERM: " +++ e)
+			(Ok h1, world) = case signalInstall SIGINT world of
+				(Error (_, e), world) = abort ("Couldn't install SIGINT: " +++ e)
+				(Ok h2, world) = {iworld & signalHandlers=[h1,h2:signalHandlers], world=world}
+
 loop :: !(*IWorld -> (!Maybe Timeout,!*IWorld)) !*IWorld -> *IWorld
-loop determineTimeout iworld=:{ioTasks,sdsNotifyRequests}
+loop determineTimeout iworld=:{ioTasks,sdsNotifyRequests,signalHandlers}
 	// Also put all done tasks at the end of the todo list, as the previous event handling may have yielded new tasks.
 	# (mbTimeout,iworld=:{IWorld|ioTasks={todo},world}) = determineTimeout {iworld & ioTasks = {done=[], todo = ioTasks.todo ++ (reverse ioTasks.done)}}
 	//Check which mainloop tasks have data available
 	# (todo,chList,world) = select mbTimeout todo world
-	# (merr, iworld) = updateClock {iworld & ioTasks = {done=[],todo=todo}, world = world}
+	# iworld = {iworld & ioTasks = {done=[],todo=todo}, world = world}
+	# (hadsig, iworld) = hadSignal iworld
+	| hadsig = halt 1 iworld
+	# (merr, iworld) = updateClock iworld
 	| merr=:(Error _) = abort "Error updating clock\n"
 	// Write ticker
 	# (merr, iworld=:{options}) = write () tick EmptyContext iworld
@@ -89,6 +101,18 @@ loop determineTimeout iworld=:{ioTasks,sdsNotifyRequests}
 	= case shutdown of
 		(Just exitCode) = halt exitCode iworld
 		_               = loop determineTimeout iworld
+where
+	pollSignalHandlers [] world = (False, [], world)
+	pollSignalHandlers [h:hs] world = case signalPoll h world of
+		(Error e, h, world) = abort "Error polling signal handler" //Shouldn't occur
+		(Ok s, h, world)
+			# (stop, hs, world) = pollSignalHandlers hs world
+			= (stop || s, [h:hs], world)
+
+	hadSignal iworld=:{signalHandlers,world}
+		# (hadsig, signalHandlers, world) = pollSignalHandlers signalHandlers world
+		# iworld = {iworld & signalHandlers=signalHandlers, world=world}
+		= (hadsig, iworld)
 
 select :: (Maybe Timeout) *[IOTaskInstance] *World -> (!*[IOTaskInstance],![(Int,SelectResult)],!*World)
 select mbTimeout mlInstances world

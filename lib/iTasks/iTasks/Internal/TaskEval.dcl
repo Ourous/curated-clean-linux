@@ -73,17 +73,6 @@ processEvents :: !Int *IWorld -> *(!MaybeError TaskException (), !*IWorld)
 */
 evalTaskInstance :: !InstanceNo !Event !*IWorld -> (!MaybeErrorString (TaskValue DeferredJSON),!*IWorld)
 
-/**
- * Destroys a task instance.
- *
- * @param The instance id
- * @param The IWorld state
- *
- * @return The result of the targeted main task or an error
- * @return The IWorld state
- */
-destroyTaskInstance :: !InstanceNo !*IWorld -> (!MaybeErrorString (TaskValue DeferredJSON),!*IWorld)
-
 //Update the I/O information for task instances
 updateInstanceLastIO        ::          ![InstanceNo]       !*IWorld -> *(!MaybeError TaskException (), !*IWorld)
 updateInstanceConnect       :: !String  ![InstanceNo]       !*IWorld -> *(!MaybeError TaskException (), !*IWorld)

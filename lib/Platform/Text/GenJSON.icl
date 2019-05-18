@@ -19,7 +19,7 @@ sizeOf (JSONNull)       = 4
 sizeOf (JSONBool True)  = 4
 sizeOf (JSONBool False) = 5
 sizeOf (JSONInt x)      = size (toString x)
-sizeOf (JSONReal x)     = size (toString x)
+sizeOf (JSONReal x)     = size (jsonRealtoString x)
 //For strings we need to allocate extra size for the enclosing double quotes and the escaping of special characters
 sizeOf (JSONString x)   = size x + 2 + sizeOfEscapeChars x
 //For arrays we need to allocate extra size for the enclosing brackets and comma's
@@ -59,7 +59,7 @@ copyNode start (JSONInt x) buffer
   #! s = toString x
   = (start + size s, copyChars start (size s) s buffer)
 copyNode start (JSONReal x) buffer
-  #! s = toString x
+  #! s = jsonRealtoString x
   = (start + size s, copyChars start (size s) s buffer)
 copyNode start (JSONString s) buffer
   #! (start,buffer)	= (start + 1, {buffer & [start] = '"'})
@@ -163,7 +163,7 @@ where
 	(<<<) f (JSONBool True)     = f <<< "true"
 	(<<<) f (JSONBool False)    = f <<< "false"
 	(<<<) f (JSONInt i)         = f <<< toString i
-	(<<<) f (JSONReal r)        = f <<< toString r
+	(<<<) f (JSONReal r)        = f <<< jsonRealtoString r
 	(<<<) f (JSONString s)      = f <<< '"' <<< jsonEscape s <<< '"'
 	(<<<) f (JSONArray nodes)   = printNodes nodes (f <<< "[") <<< "]"
 	where
@@ -272,11 +272,11 @@ where
 				= (JSONReal r, offset)
 			| offset+1<size input && IsDigit input.[offset+1]
 				= parse_real_with_exponent (offset+2) numberOffset input
-			| offset+2<size input && input.[offset+1]=='-' && IsDigit input.[offset+2]
+			| offset+2<size input && (input.[offset+1]=='-' || input.[offset+1] == '+') && IsDigit input.[offset+2]
 				= parse_real_with_exponent (offset+3) numberOffset input
-				#! r = toReal (input % (numberOffset,offset-1))
-				= (JSONReal r, offset)
-	
+			#! r = toReal (input % (numberOffset,offset-1))
+			= (JSONReal r, offset)
+		
 		parse_real_with_exponent :: !Int !Int !{#Char} -> (!JSONNode,!Int)
 		parse_real_with_exponent offset numberOffset input
 			| offset>=size input
@@ -511,6 +511,7 @@ generic JSONDecode t :: !Bool ![JSONNode] -> (!Maybe t, ![JSONNode])
 JSONDecode{|Int|} _ [JSONInt i:xs]		= (Just i, xs)
 JSONDecode{|Int|} _ l					= (Nothing, l)
 
+JSONDecode{|Real|} _ [JSONNull:xs]		= (Just NaN, xs)
 JSONDecode{|Real|} _ [JSONReal r:xs]	= (Just r, xs)
 JSONDecode{|Real|} _ [JSONInt i:xs]		= (Just (toReal i), xs)
 JSONDecode{|Real|} _ l					= (Nothing, l)
@@ -786,9 +787,17 @@ where
 	pretty JSONNull 			= string "null"
 	pretty (JSONBool x)			= string (if x "true" "false")
 	pretty (JSONInt x)			= string (toString x)
-	pretty (JSONReal x)			= string (toString x)
+	pretty (JSONReal x)			= string (jsonRealtoString x)
 	pretty (JSONString x)		= dquotes (string (jsonEscape x))
 	pretty (JSONArray nodes)	= list (map pretty nodes)
 	pretty (JSONObject attr)	= encloseSep lbrace rbrace comma [dquotes (string label) <-> colon <-> pretty val \\ (label,val) <- attr]
 	pretty (JSONRaw x)			= string x
 	pretty JSONError			= string "null"
+
+jsonRealtoString :: !Real -> String
+jsonRealtoString x
+	| isInfinity x
+		| x < 0.0 = "-1.e+9999"
+		= "1.e+9999"
+	| isNaN x = toString JSONNull
+	= toString x

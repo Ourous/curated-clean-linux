@@ -133,8 +133,12 @@ httpServer :: !Int !Timespec ![WebService r w] (sds () r w) -> ConnectionTask | 
 httpServer port keepAliveTime requestProcessHandlers sds
     = wrapIWorldConnectionTask {ConnectionHandlersIWorld|onConnect=onConnect, onData=onData, onShareChange=onShareChange, onTick=onTick, onDisconnect=onDisconnect, onDestroy=onDestroy} sds
 where
-    onConnect connId host r iworld=:{IWorld|world,clock}
-        = (Ok (NTIdle host clock),Nothing,[],False,{IWorld|iworld & world = world})
+    onConnect connId host r iworld=:{IWorld|world,clock,options={allowedHosts}}
+		| allowedHosts =: [] || isMember host allowedHosts
+			= (Ok (NTIdle host clock),Nothing,[],False,{IWorld|iworld & world = world})
+		| otherwise
+			//Close the connection immediately if the remote host is not in the whitelist
+			= (Ok (NTIdle host clock),Nothing,[],True,{IWorld|iworld & world = world})
 
     onData data connState=:(NTProcessingRequest request localState) r env
         //Select handler based on request path
@@ -513,10 +517,13 @@ where
 	lostFun _ _        s env = (Nothing, env)
 
 	handleStaticResourceRequest :: !HTTPRequest *IWorld -> (!HTTPResponse,!*IWorld)
-	handleStaticResourceRequest req iworld=:{IWorld|options={webDirPath},world}
-		# filename		   = if (isMember req.HTTPRequest.req_path taskPaths) //Check if one of the published tasks is requested, then serve bootstrap page
-									(webDirPath +++ filePath "/index.html")
-									(webDirPath +++ filePath req.HTTPRequest.req_path)
+	handleStaticResourceRequest req iworld=:{IWorld|options={webDirPath,byteCodePath},world}
+		# filename = case isMember req.HTTPRequest.req_path taskPaths of //Check if one of the published tasks is requested, then serve bootstrap page
+			True
+				-> webDirPath +++ filePath "/index.html"
+				-> if (req.HTTPRequest.req_path=="/js/app.pbc")
+					((byteCodePath % (0,size byteCodePath-3)) +++ "pbc")
+					(webDirPath +++ filePath req.HTTPRequest.req_path)
 
 		# type			   = mimeType filename
        	# (mbInfo,world) = getFileInfo filename world

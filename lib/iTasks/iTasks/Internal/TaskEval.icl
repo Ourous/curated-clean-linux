@@ -19,7 +19,6 @@ from iTasks.SDS.Combinators.Common      import sdsFocus, >*|, mapReadWrite, mapR
 from StdFunc import const, o
 import qualified Data.CircularStack as DCS
 from Data.CircularStack import :: CircularStack
-from iTasks.Internal.Tonic.AbsSyn import :: ExprId (..)
 
 derive gEq TIMeta, TIType
 
@@ -49,7 +48,6 @@ extendCallTrace taskId repOpts=:{TaskEvalOpts|tonicOpts = {callTrace = xs}}
 		| taskId == topTaskId = repOpts
 	  _ = {repOpts & tonicOpts = {repOpts.tonicOpts & callTrace = 'DCS'.push taskId repOpts.tonicOpts.callTrace}}
 
-
 getNextTaskId :: *IWorld -> (!TaskId,!*IWorld)
 getNextTaskId iworld=:{current=current=:{TaskEvalState|taskInstance,nextTaskNo}}
 	= (TaskId taskInstance nextTaskNo, {IWorld|iworld & current = {TaskEvalState|current & nextTaskNo = nextTaskNo + 1}})
@@ -68,88 +66,80 @@ processEvents max iworld
 						= (Ok (),{IWorld|iworld & world = world})
 
 evalTaskInstance :: !InstanceNo !Event !*IWorld -> (!MaybeErrorString (TaskValue DeferredJSON),!*IWorld)
-evalTaskInstance instanceNo event iworld = evalTaskInstance` instanceNo event False iworld
-
-destroyTaskInstance :: !InstanceNo !*IWorld -> (!MaybeErrorString (TaskValue DeferredJSON),!*IWorld)
-destroyTaskInstance instanceNo iworld = evalTaskInstance` instanceNo ResetEvent True iworld
-
-//Evaluate a single task instance
-evalTaskInstance` :: !InstanceNo !Event !Bool !*IWorld -> (!MaybeErrorString (TaskValue DeferredJSON),!*IWorld)
-evalTaskInstance` instanceNo event destroy iworld
+evalTaskInstance instanceNo event iworld
 	# iworld            = mbResetUIState instanceNo event iworld
-	# (res,iworld)      = evalTaskInstance` instanceNo event iworld
+	# (res,iworld)      = evalTaskInstance` instanceNo event (event =: DestroyEvent) iworld
 	= (res,iworld)
 where
-	evalTaskInstance` instanceNo event iworld=:{clock,current}
-	# (constants, iworld)       = 'SDS'.read (sdsFocus instanceNo taskInstanceConstants) EmptyContext iworld
-	| isError constants         = exitWithException instanceNo ((\(Error (e,msg)) -> msg) constants) iworld
-	# constants=:{InstanceConstants|type} = directResult (fromOk constants)
-	# (oldReduct, iworld)		= 'SDS'.read (sdsFocus instanceNo taskInstanceReduct) EmptyContext iworld
-	| isError oldReduct			= exitWithException instanceNo ((\(Error (e,msg)) -> msg) oldReduct) iworld
-	# oldReduct=:{TIReduct|task=Task eval,tree,nextTaskNo=curNextTaskNo,nextTaskTime,tasks,tonicRedOpts} = directResult (fromOk oldReduct)
-	# (oldProgress,iworld)      = 'SDS'.read (sdsFocus instanceNo taskInstanceProgress) EmptyContext iworld
-	| isError oldProgress       = exitWithException instanceNo ((\(Error (e,msg)) -> msg) oldProgress) iworld
-	# oldProgress=:{InstanceProgress|value,attachedTo} = directResult (fromOk oldProgress)
+	evalTaskInstance` instanceNo event destroy iworld=:{clock,current}
+	// Read the task reduct. If it does not exist, the task has been deleted.
+	# (curReduct, iworld)		= 'SDS'.read (sdsFocus instanceNo taskInstanceReduct) EmptyContext iworld
+	| isError curReduct			= exitWithException instanceNo ((\(Error (e,msg)) -> msg) curReduct) iworld
+	# curReduct = directResult (fromOk curReduct)
+	| curReduct =: Nothing      = exitWithException instanceNo ("Task instance does not exist" <+++ instanceNo) iworld
+	# curReduct=:{TIReduct|task=Task eval,tree,nextTaskNo=curNextTaskNo,nextTaskTime,tasks,tonicRedOpts} = fromJust curReduct
+	// Determine the task type (startup,session,local) 
+	# (type,iworld)             = determineInstanceType instanceNo iworld
+	// Determine the progress of the instance
+	# (curProgress=:{InstanceProgress|value,attachedTo},iworld) = determineInstanceProgress instanceNo iworld
 	//Check exception
 	| value =: (Exception _)
 		# (Exception description) = value
 		= exitWithException instanceNo description iworld
-	//Eval instance
+	//Evaluate instance
     # (currentSession,currentAttachment) = case (type,attachedTo) of
         (SessionInstance,_)                       = (Just instanceNo,[])
         (_,[])                                    = (Nothing,[])
         (_,attachment=:[TaskId sessionNo _:_])    = (Just sessionNo,attachment)
 	//Update current process id & eval stack in iworld
-	# taskId					= TaskId instanceNo 0
-	# iworld					= {iworld & current =
-										{ taskInstance = instanceNo
-										, sessionInstance = currentSession
-										, attachmentChain = currentAttachment
-															, taskTime = oldReduct.TIReduct.nextTaskTime
-										, nextTaskNo = oldReduct.TIReduct.nextTaskNo
-										}}
+	# taskId = TaskId instanceNo 0
+	# iworld = 
+		{iworld & current =
+			{ taskInstance = instanceNo
+			, sessionInstance = currentSession
+			, attachmentChain = currentAttachment
+			, taskTime = curReduct.TIReduct.nextTaskTime
+			, nextTaskNo = curReduct.TIReduct.nextTaskNo
+		}}
 	//Apply task's eval function and take updated nextTaskId from iworld
-	# (newResult,iworld=:{current})	= eval event {mkEvalOpts & tonicOpts = tonicRedOpts} (if destroy (TCDestroy tree) tree) iworld
-	# tree                      = case newResult of
+	# (newResult,iworld=:{current})	= eval event {mkEvalOpts & tonicOpts = tonicRedOpts} tree iworld
+	# tree = case newResult of
 		(ValueResult _ _ _ newTree)  = newTree
 		_                            = tree
+	# destroyed = newResult =: DestroyedResult
 	//Reset necessary 'current' values in iworld
 	# iworld = {IWorld|iworld & current = {TaskEvalState|current & taskInstance = 0}}
-	// Check if instance was deleted by trying to reread the instance constants share
-	# (deleted,iworld) = appFst isError (read (sdsFocus instanceNo taskInstanceConstants) EmptyContext iworld)
 	// Write the updated progress
-	# (mbErr,iworld) = if (updateProgress clock newResult oldProgress === oldProgress)
+	# (mbErr,iworld) = if (destroyed || updateProgress clock newResult curProgress === curProgress)
 		(Ok (),iworld)	//Only update progress when something changed
 		(case (modify (updateProgress clock newResult) (sdsFocus instanceNo taskInstanceProgress) EmptyContext iworld) of
 		  (Error e, iworld) = (Error e, iworld)
 		  (Ok _, iworld) = (Ok (), iworld) )
 	= case mbErr of
 		Error (e,description)           = exitWithException instanceNo description iworld
-		Ok _
-			//Store updated reduct
+		Ok ()
+			//Store or remove reduct
 			# (nextTaskNo,iworld)		= getNextTaskNo iworld
-			# (_,iworld)                = (modify (\r -> {TIReduct|r & tree = tree, nextTaskNo = nextTaskNo, nextTaskTime = nextTaskTime + 1})
-												(sdsFocus instanceNo taskInstanceReduct) EmptyContext iworld)
-												//FIXME: Don't write the full reduct (all parallel shares are triggered then!)
-			//Store update value
+			# (_,iworld)                =
+				 (modify (maybe Nothing (\r -> if destroyed Nothing (Just {TIReduct|r & tree = tree, nextTaskNo = nextTaskNo, nextTaskTime = nextTaskTime + 1})))
+					(sdsFocus instanceNo taskInstanceReduct) EmptyContext iworld)
+					//FIXME: Don't write the full reduct (all parallel shares are triggered then!)
+			//Store or delete value
 			# newValue                  = case newResult of
-				ValueResult val _ _ _     = TIValue val
-				ExceptionResult (e,str)   = TIException e str
-				DestroyedResult           = TIValue NoValue
-			# (mbErr,iworld)            = if deleted (Ok WritingDone,iworld) ((write newValue (sdsFocus instanceNo taskInstanceValue) EmptyContext iworld))
+				ValueResult val _ _ _     = Just (TIValue val)
+				ExceptionResult (e,str)   = Just (TIException e str)
+				DestroyedResult           = Nothing
+			# (mbErr,iworld) = write newValue (sdsFocus instanceNo taskInstanceValue) EmptyContext iworld
 			= case mbErr of
 				Error (e,description) = exitWithException instanceNo description iworld
 				Ok _
 					= case newResult of
 						ValueResult value _ change _
-							| deleted
-								= (Ok value,iworld)
-							//Only queue UI changes if something interesting is changed
-							= case compactUIChange change of
+							| destroyed = (Ok value,iworld)
+							| otherwise = case compactUIChange change of
+								//Only queue UI changes if something interesting is changed
 								NoChange = (Ok value,iworld)
-								change
-									# iworld = queueUIChange instanceNo change iworld
-									= (Ok value, iworld)
+								change   = (Ok value, queueUIChange instanceNo change iworld)
 						ExceptionResult (e,description)
 							= exitWithException instanceNo description iworld
 						DestroyedResult
@@ -159,15 +149,27 @@ where
 		# iworld = queueException instanceNo description iworld
 		= (Error description, iworld)
 
-	getNextTaskNo iworld=:{IWorld|current={TaskEvalState|nextTaskNo}}	    = (nextTaskNo,iworld)
+	determineInstanceType instanceNo iworld
+		# (constants, iworld) = 'SDS'.read (sdsFocus instanceNo taskInstanceConstants) EmptyContext iworld
+		| isError constants = (SessionInstance,iworld)
+		# {InstanceConstants|type} = directResult (fromOk constants)
+		= (type,iworld)
+
+	determineInstanceProgress instanceNo iworld
+		# (progress,iworld)      = 'SDS'.read (sdsFocus instanceNo taskInstanceProgress) EmptyContext iworld
+		| isOk progress	= (directResult (fromOk progress),iworld)
+		| otherwise     = ({InstanceProgress|value=Unstable,instanceKey=Nothing,attachedTo=[],firstEvent=Nothing,lastEvent=Nothing},iworld)
+
+	getNextTaskNo iworld=:{IWorld|current={TaskEvalState|nextTaskNo}} = (nextTaskNo,iworld)
 
 	updateProgress now result progress
 		# attachedTo = case progress.InstanceProgress.attachedTo of //Release temporary attachment after first evaluation
 			(Just (_,[]))   = Nothing
 			attachment      = attachment
-		# progress = {InstanceProgress|progress
-					 &firstEvent = Just (fromMaybe now progress.InstanceProgress.firstEvent)
-					 ,lastEvent = Just now
+		# progress = {InstanceProgress
+                     | progress
+					 & firstEvent = Just (fromMaybe now progress.InstanceProgress.firstEvent)
+					 , lastEvent = Just now
 					 }
 		= case result of
 			(ExceptionResult (_,msg))             = {InstanceProgress|progress & value = Exception msg}
@@ -176,13 +178,22 @@ where
 
 	mbResetUIState instanceNo ResetEvent iworld
 		# (_,iworld) = write 'DQ'.newQueue (sdsFocus instanceNo taskInstanceOutput) EmptyContext iworld
-		//Remove all js compiler state for this instance
-		# iworld=:{jsCompilerState=jsCompilerState} = iworld
-		# jsCompilerState = fmap (\state -> {state & skipMap = 'DM'.del instanceNo state.skipMap}) jsCompilerState
-		# iworld = {iworld & jsCompilerState = jsCompilerState}
 		= iworld
 
 	mbResetUIState _ _ iworld = iworld
+/*
+	//TODO: Move remove to Taskeval after a destroy
+	//Delete all states on disk
+	# (mbe,iworld)    = 'SDS'.write Nothing (sdsFocus instanceNo taskInstanceReduct) 'SDS'.EmptyContext iworld
+	| mbe =: (Error _) = (toWE mbe,iworld)
+	# (mbe,iworld)    = 'SDS'.write Nothing (sdsFocus instanceNo taskInstanceValue) 'SDS'.EmptyContext iworld
+	| mbe =: (Error _) = (toWE mbe,iworld)
+	# (mbe,iworld)    = 'SDS'.write Nothing (sdsFocus instanceNo taskInstanceShares) 'SDS'.EmptyContext iworld
+	| mbe =: (Error _) = (toWE mbe,iworld)
+	# (mbe,iworld)    = 'SDS'.write Nothing (sdsFocus instanceNo taskInstanceParallelTaskLists) 'SDS'.EmptyContext iworld
+	| mbe =: (Error _) = (toWE mbe,iworld)
+	= (Ok (),iworld)
+*/
 
 updateInstanceLastIO ::![InstanceNo] !*IWorld -> *(!MaybeError TaskException (), !*IWorld)
 updateInstanceLastIO [] iworld = (Ok (),iworld)

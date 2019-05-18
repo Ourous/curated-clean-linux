@@ -53,4 +53,3 @@ taskIdFromTaskTree (TCStable        taskId _ _)       = Ok taskId
 taskIdFromTaskTree (TCLayout        _ tt)             = taskIdFromTaskTree tt
 taskIdFromTaskTree (TCAttribute     taskId _ _)       = Ok taskId
 taskIdFromTaskTree (TCNop)                            = Error (exception "Unable to obtain TaskId from TaskTree (TCNop)")
-taskIdFromTaskTree (TCDestroy       tt)               = taskIdFromTaskTree tt

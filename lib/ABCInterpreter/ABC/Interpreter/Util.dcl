@@ -9,6 +9,7 @@ from _SystemArray import class Array
 from StdMaybe import :: Maybe
 from symbols_in_program import :: Symbol
 
+ensure_interpreter_init :: Bool
 parse :: !{#Symbol} !String -> Maybe Int
 new_parser :: !{#Symbol} -> Int
 new_string_char_provider :: !String -> Int

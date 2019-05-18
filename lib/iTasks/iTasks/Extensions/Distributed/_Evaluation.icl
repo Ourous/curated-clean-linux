@@ -1,7 +1,7 @@
 implementation module iTasks.Extensions.Distributed._Evaluation
 
-from iTasks.WF.Definition import :: Task(..), :: Event(ResetEvent), :: TaskEvalOpts, class iTask, :: TaskResult(..), :: TaskException, :: TaskValue(..), :: Stability, :: InstanceNo, :: TaskId
-from iTasks.Internal.TaskState import :: TaskTree(TCInit,TCDestroy)
+from iTasks.WF.Definition import :: Task(..), :: Event(ResetEvent,DestroyEvent), :: TaskEvalOpts, class iTask, :: TaskResult(..), :: TaskException, :: TaskValue(..), :: Stability, :: InstanceNo, :: TaskId
+from iTasks.Internal.TaskState import :: TaskTree(TCInit)
 import iTasks.Internal.TaskEval
 import iTasks.UI.Definition
 from iTasks.WF.Combinators.Common import @!, @?, whileUnchanged, ||-
@@ -47,14 +47,14 @@ proxyTask :: (Shared sds (TaskValue a)) (*IWorld -> *IWorld) -> (Task a) | iTask
 proxyTask value_share onDestroy = Task (eval value_share)
 where
     eval :: (Shared sds (TaskValue a)) Event TaskEvalOpts TaskTree *IWorld -> *(!TaskResult a, !*IWorld) | iTask a & RWShared sds
+    eval value_share DestroyEvent repAs _ iworld
+            # iworld = onDestroy iworld
+            = (DestroyedResult,iworld)
     eval value_share event evalOpts tree=:(TCInit taskId ts) iworld
             # (val,iworld)  = readRegister taskId value_share iworld
             = case val of
                   Ok (ReadingDone val)            = (ValueResult val {TaskEvalInfo|lastEvent=ts,removedTasks=[],attributes=newMap} (rep event) tree, iworld)
                   Error e           = (ExceptionResult e,iworld)
-    eval value_share event repAs (TCDestroy _) iworld
-            # iworld = onDestroy iworld
-            = (DestroyedResult,iworld)
 
     rep ResetEvent = ReplaceUI (ui UIEmpty)
     rep _          = NoChange

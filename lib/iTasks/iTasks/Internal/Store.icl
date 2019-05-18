@@ -7,11 +7,10 @@ import Data.Maybe, Data.Functor, Data.Error
 import System.File, System.Directory, System.OSError, System.FilePath
 import Text, Text.GenJSON, iTasks.Internal.Serialization
 
-import iTasks.Internal.Client.JSStore
 import iTasks.Internal.SDS
 
 from iTasks.Engine import :: EngineOptions(..)
-from iTasks.Internal.IWorld		import :: IWorld {options,onClient,memoryShares,world}, :: Resource
+from iTasks.Internal.IWorld		import :: IWorld {options,memoryShares,world}, :: Resource
 from iTasks.Internal.Task		    import exception
 from iTasks.Internal.TaskState		import :: DeferredJSON(..)
 from iTasks.Internal.TaskEval import :: TaskTime
@@ -30,26 +29,7 @@ import iTasks.SDS.Combinators.Common
 from System.Time 					import :: Timestamp(..), instance < Timestamp, instance toInt Timestamp
 from Data.GenEq import generic gEq
 
-instance toString StoreReadError
-where
-    toString (StoreReadMissingError name)      = "Stored data not in store: " +++ name
-    toString (StoreReadDataError name)         = "Failed to read store data: " +++ name
-    toString (StoreReadTypeError name)         = "Stored data is of incorrect type: " +++ name
-    toString (StoreReadBuildVersionError name) = "Stored data contains functions from an older executable that can no longer be evaluated: " +++ name
-
-derive class iTask StoreReadError
-
-//Temporary memory storage
-memoryStore :: !StoreNamespace !(Maybe a) -> SDSSequence StoreName a a | JSONEncode{|*|}, JSONDecode{|*|}, TC a
-memoryStore namespace defaultV = storeShare namespace False InMemory defaultV
-
-//Convenient derived store which checks version
-jsonFileStore :: !StoreNamespace !Bool !Bool !(Maybe a) -> SDSSequence StoreName a a | JSONEncode{|*|}, JSONDecode{|*|}, TC a
-jsonFileStore namespace check reset defaultV = storeShare namespace True InJSONFile defaultV
-
 deleteValue :: !StoreNamespace !StoreName !*IWorld -> *(MaybeErrorString (),*IWorld)
-deleteValue namespace delKey iworld=:{onClient=True}
-	= (Ok (), jsDeleteValue namespace delKey iworld)
 deleteValue namespace delKey iworld = deleteValues` namespace delKey (==) filterFuncDisk iworld
 where
 	// compare key with filename without extension

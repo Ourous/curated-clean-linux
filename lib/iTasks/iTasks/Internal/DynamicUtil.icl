@@ -2,6 +2,7 @@ implementation module iTasks.Internal.DynamicUtil
 
 import _SystemDynamic
 import Data.Maybe, Text.GenJSON
+import iTasks.WF.Definition
 
 :: MyTypeCodeConstructor = E.a: { my_tcc_cons :: !a }
 
@@ -87,3 +88,11 @@ JSONDecode{|TypeCode|} ts = (Nothing, ts)
 toDyn :: a -> Dynamic | TC a
 toDyn x = dynamic x
 
+cast :: a -> b | TC a & TC b
+cast a = case toDyn a of (a::b^) -> a
+
+cast_to_TaskValue :: a -> TaskValue b | TC a & TC b
+cast_to_TaskValue a = case toDyn a of (a::TaskValue b^) -> a
+
+unwrapTask :: Dynamic -> Task a | TC a
+unwrapTask (task :: Task a^) = task

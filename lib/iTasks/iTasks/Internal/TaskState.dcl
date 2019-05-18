@@ -76,7 +76,6 @@ derive JSONDecode TIMeta, TIType, TIReduct, TaskTree
 	| TCLayout        !(!LUI,!LUIMoves) !TaskTree
 	| TCAttribute     !TaskId !String !TaskTree
 	| TCNop
-	| TCDestroy       !TaskTree //Marks a task state as garbage that must be destroyed (TODO: replace by explicit event)
 
 taskIdFromTaskTree :: TaskTree -> MaybeError TaskException TaskId
 

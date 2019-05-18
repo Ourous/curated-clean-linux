@@ -287,6 +287,25 @@ tonicWrapTaskBody` mn tn args cases t=:(Task eval)
 		Ok mod -> eval` mod event evalOpts taskTree iworld
 		_      -> eval event (resetInhOpts (setBlueprintInfo evalOpts)) taskTree iworld
 
+  eval` _ DestroyEvent evalOpts=:{tonicOpts = tonicOpts=:{currBlueprintTaskId, currBlueprintModuleName, currBlueprintFuncName}} taskTree iworld
+	# (tr, iworld) = eval DestroyEvent (resetInhOpts (setBlueprintInfo evalOpts)) taskTree iworld
+	= (tr, okSt iworld logTaskEnd (taskIdFromTaskTree taskTree))
+	where
+	logTaskEnd currTaskId iworld
+	  # (mbpref, iworld) = 'DSDS'.read (sdsFocus (currTaskId, mn, tn) tonicInstances) EmptyContext iworld
+	  = case mbpref of
+		  Ok (ReadingDone (Just bpi))
+			 # (currDateTime, iworld) = iworldLocalDateTime` iworld
+			 # oldActive        = 'DM'.union ('DM'.fromList [(nid, tid) \\ (tid, nid) <- concatMap 'DIS'.elems ('DM'.elems bpi.bpi_activeNodes)])
+											 bpi.bpi_previouslyActive
+			 # (_, iworld)      = 'DSDS'.write { bpi
+											   & bpi_endTime          = Just currDateTime
+											   , bpi_previouslyActive = oldActive
+											   , bpi_activeNodes      = 'DM'.newMap
+											   } (sdsFocus (currTaskId, mn, tn) tonicInstances) EmptyContext iworld
+			 = iworld
+		  _  = iworld
+
   eval` mod event evalOpts=:{tonicOpts={callTrace, currBlueprintTaskId}} taskTree=:(TCInit currTaskId=:(TaskId instanceNo _) _) iworld
 	# iworld = updateInstance iworld
 	= eval event (resetInhOpts (setBPTaskId currTaskId (setBlueprintInfo evalOpts))) taskTree iworld
@@ -321,25 +340,6 @@ tonicWrapTaskBody` mn tn args cases t=:(Task eval)
 		  # (_, iworld)      = 'DSDS'.write args (sdsFocus (mn, tn, currTaskId) paramsForTaskInstance) EmptyContext iworld
 		  = iworld
 		_ = iworld
-
-  eval` _ event evalOpts=:{tonicOpts = tonicOpts=:{currBlueprintTaskId, currBlueprintModuleName, currBlueprintFuncName}} taskTree=:(TCDestroy _) iworld
-	# (tr, iworld) = eval event (resetInhOpts (setBlueprintInfo evalOpts)) taskTree iworld
-	= (tr, okSt iworld logTaskEnd (taskIdFromTaskTree taskTree))
-	where
-	logTaskEnd currTaskId iworld
-	  # (mbpref, iworld) = 'DSDS'.read (sdsFocus (currTaskId, mn, tn) tonicInstances) EmptyContext iworld
-	  = case mbpref of
-		  Ok (ReadingDone (Just bpi))
-			 # (currDateTime, iworld) = iworldLocalDateTime` iworld
-			 # oldActive        = 'DM'.union ('DM'.fromList [(nid, tid) \\ (tid, nid) <- concatMap 'DIS'.elems ('DM'.elems bpi.bpi_activeNodes)])
-											 bpi.bpi_previouslyActive
-			 # (_, iworld)      = 'DSDS'.write { bpi
-											   & bpi_endTime          = Just currDateTime
-											   , bpi_previouslyActive = oldActive
-											   , bpi_activeNodes      = 'DM'.newMap
-											   } (sdsFocus (currTaskId, mn, tn) tonicInstances) EmptyContext iworld
-			 = iworld
-		  _  = iworld
 
   eval` _ event evalOpts taskTree=:(TCStable currTaskId _ _) iworld
 	# (tr, iworld) = eval event (resetInhOpts (setBPTaskId currTaskId (setBlueprintInfo evalOpts))) taskTree iworld
@@ -502,6 +502,9 @@ tonicWrapApp` mn fn nid cases t=:(Task eval)
 					}
 	  }
 
+  eval` DestroyEvent evalOpts taskTree iworld
+	= eval DestroyEvent evalOpts taskTree iworld
+
   // TODO Double check focusses (foci?)
   eval` event evalOpts=:{TaskEvalOpts|tonicOpts = tonicOpts=:{currBlueprintTaskId, currBlueprintModuleName, currBlueprintFuncName}} taskTree=:(TCInit childTaskId=:(TaskId childInstanceNo _) _) iworld
 	# (mParentBP, iworld) = 'DSDS'.read (sdsFocus (currBlueprintTaskId, currBlueprintModuleName, currBlueprintFuncName) tonicInstances) EmptyContext iworld
@@ -587,8 +590,6 @@ tonicWrapApp` mn fn nid cases t=:(Task eval)
   eval` event evalOpts taskTree=:TCNop iworld
 	= eval event evalOpts taskTree iworld
 
-  eval` event evalOpts taskTree=:(TCDestroy _) iworld
-	= eval event evalOpts taskTree iworld
 
   eval` event evalOpts taskTree iworld
 	= case taskIdFromTaskTree taskTree of

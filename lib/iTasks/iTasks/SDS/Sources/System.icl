@@ -50,14 +50,14 @@ currentSessions :: SDSLens () [TaskListItem ()] ()
 currentSessions
     = mapRead (map toTaskListItem) (toReadOnly (sdsFocus filter filteredInstanceIndex))
 where
-    filter = {InstanceFilter|onlyInstanceNo=Nothing,notInstanceNo=Nothing,onlySession=Just True,matchAttribute=Nothing
+    filter = {InstanceFilter|onlyInstanceNo=Nothing,notInstanceNo=Nothing,includeSessions=True,includeDetached=False,includeStartup=False,matchAttribute=Nothing
              ,includeConstants=True,includeProgress=True,includeAttributes=True}
 
 currentProcesses :: SDSLens () [TaskListItem ()] ()
 currentProcesses
     = mapRead (map toTaskListItem) (toReadOnly (sdsFocus filter filteredInstanceIndex))
 where
-    filter = {InstanceFilter|onlyInstanceNo=Nothing,notInstanceNo=Nothing,onlySession=Just False,matchAttribute=Nothing
+    filter = {InstanceFilter|onlyInstanceNo=Nothing,notInstanceNo=Nothing,includeSessions=False,includeDetached=True,includeStartup=False,matchAttribute=Nothing
              ,includeConstants=True,includeProgress=True,includeAttributes=True}
 
 toTaskListItem :: !InstanceData -> TaskListItem a
@@ -93,14 +93,14 @@ currentTaskInstanceAttributes
 allTaskInstances :: SDSLens () [TaskInstance] ()
 allTaskInstances
     = (sdsProject (SDSLensRead readInstances) (SDSBlindWrite \_. Ok Nothing) Nothing
-       (sdsFocus {InstanceFilter|onlyInstanceNo=Nothing,notInstanceNo=Nothing,onlySession=Nothing,matchAttribute=Nothing,includeConstants=True,includeProgress=True,includeAttributes=True} filteredInstanceIndex))
+       (sdsFocus {InstanceFilter|onlyInstanceNo=Nothing,notInstanceNo=Nothing,includeSessions=True,includeDetached=True,includeStartup=True,matchAttribute=Nothing,includeConstants=True,includeProgress=True,includeAttributes=True} filteredInstanceIndex))
 where
     readInstances is = Ok (map taskInstanceFromInstanceData is)
 
 detachedTaskInstances :: SDSLens () [TaskInstance] ()
 detachedTaskInstances
     =  (sdsProject (SDSLensRead readInstances) (SDSBlindWrite \_. Ok Nothing) Nothing
-       (sdsFocus {InstanceFilter|onlyInstanceNo=Nothing,notInstanceNo=Nothing,onlySession=Just False,matchAttribute=Nothing,includeConstants=True,includeProgress=True,includeAttributes=True} filteredInstanceIndex))
+       (sdsFocus {InstanceFilter|onlyInstanceNo=Nothing,notInstanceNo=Nothing,includeSessions=False,includeDetached=True,includeStartup=False,matchAttribute=Nothing,includeConstants=True,includeProgress=True,includeAttributes=True} filteredInstanceIndex))
 where
     readInstances is = Ok (map taskInstanceFromInstanceData is)
 
@@ -109,7 +109,7 @@ taskInstanceByNo
     = sdsProject (SDSLensRead readItem) (SDSLensWrite writeItem) Nothing
       (sdsTranslate "taskInstanceByNo" filter filteredInstanceIndex)
 where
-    filter no = {InstanceFilter|onlyInstanceNo=Just [no],notInstanceNo=Nothing,onlySession=Nothing,matchAttribute=Nothing,includeConstants=True,includeProgress=True,includeAttributes=True}
+    filter no = {InstanceFilter|onlyInstanceNo=Just [no],notInstanceNo=Nothing,includeSessions=True,includeDetached=True,includeStartup=True,matchAttribute=Nothing,includeConstants=True,includeProgress=True,includeAttributes=True}
 
     readItem [i]    = Ok (taskInstanceFromInstanceData i)
     readItem _      = Error (exception "Task instance not found")
@@ -122,7 +122,7 @@ taskInstanceAttributesByNo
     = sdsProject (SDSLensRead readItem) (SDSLensWrite writeItem) Nothing
       (sdsTranslate "taskInstanceAttributesByNo" filter filteredInstanceIndex)
 where
-    filter no = {InstanceFilter|onlyInstanceNo=Just [no],notInstanceNo=Nothing,onlySession=Nothing,matchAttribute=Nothing,includeConstants=False,includeProgress=False,includeAttributes=True}
+    filter no = {InstanceFilter|onlyInstanceNo=Just [no],notInstanceNo=Nothing,includeSessions=True,includeDetached=True,includeStartup=True,matchAttribute=Nothing,includeConstants=False,includeProgress=False,includeAttributes=True}
 
     readItem [(_,_,_,Just a)]    = Ok a
     readItem _      = Error (exception "Task instance not found")
@@ -134,7 +134,7 @@ taskInstancesByAttribute :: SDSLens (!String,!String) [TaskInstance] ()
 taskInstancesByAttribute
     =
       (sdsProject (SDSLensRead readInstances) (SDSBlindWrite \_. Ok Nothing) Nothing
-       (sdsTranslate "taskInstancesByAttribute" (\p -> {InstanceFilter|onlyInstanceNo=Nothing,notInstanceNo=Nothing,onlySession=Nothing,matchAttribute=Just p,includeConstants=True,includeProgress=True,includeAttributes=True}) filteredInstanceIndex))
+       (sdsTranslate "taskInstancesByAttribute" (\p -> {InstanceFilter|onlyInstanceNo=Nothing,notInstanceNo=Nothing,includeSessions=True,includeDetached=True,includeStartup=True,matchAttribute=Just p,includeConstants=True,includeProgress=True,includeAttributes=True}) filteredInstanceIndex))
 where
     readInstances is = Ok (map taskInstanceFromInstanceData is)
 

@@ -34,6 +34,7 @@ from StdOverloaded import class ==
                                                       //using the current SDS values (the string is the reason for the refresh)
 			| ResetEvent                              //Nop event, recalculate the entire task and reset output stream
 			| ReadEvent
+			| DestroyEvent                            //Cleanup and remove a task
 
 :: TaskResult a
    //If all goes well, a task computes its current value, a ui effect and a new task state

@@ -122,7 +122,7 @@ where
 //Field like components for which simply knowing the UI type is sufficient
 fieldComponent
 	:: !UIType !(Maybe a) !(UIAttributes a -> Bool) -> Editor a
-	| JSONDecode{|*|}, JSONEncode{|*|}, gEq{|*|} a & JSDecode{|*|} a
+	| JSONDecode{|*|}, JSONEncode{|*|}, gEq{|*|} a
 fieldComponent type mbEditModeInitValue isValid = disableOnView $ editorWithJSONEncode (leafEditorToEditor o leafEditor)
 where 
 	leafEditor toJSON =

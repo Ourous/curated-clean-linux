@@ -121,8 +121,7 @@ where
 			# val       = Just <$> val
 			# counter  	= maybe [] (\f -> [uia UITextView ('DM'.unions [widthAttr FlexSize, valueAttr (JSONString (f val))])]) count
 			# button	= if (isJust add) [uia UIButton ('DM'.unions [iconClsAttr "icon-add",editAttrs taskId (editorId dp) (Just (JSONString "add"))])] []
-			# attr      = 'DM'.unions [halignAttr AlignRight,heightAttr WrapSize,directionAttr Horizontal]
-			= uiac UIToolBar attr (counter ++ button)
+			= uiac UIToolBar (classAttr ["itask-listitem-controls"]) (counter ++ button)
 
 	listItemUI taskId dp numItems idx id item
 		# buttons	= (if reorder
@@ -132,7 +131,7 @@ where
 							  (if remove
 							  [uia UIButton ('DM'.unions [iconClsAttr "icon-remove",editAttrs taskId (editorId dp) (Just (JSONString ("rem_" +++ toString id)))])
 							  ] [])
-		# attr = 'DM'.unions [halignAttr AlignRight,heightAttr WrapSize,directionAttr Horizontal]
+		# attr = 'DM'.unions [heightAttr WrapSize]
 		= uiac UIListItem attr (if (reorder || remove) ([flexWidth item] ++ buttons) [flexWidth item])
 	where
 		flexWidth (UI type attr content) = UI type ('DM'.union (widthAttr FlexSize) attr) content

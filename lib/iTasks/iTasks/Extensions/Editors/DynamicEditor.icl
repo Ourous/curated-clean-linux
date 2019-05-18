@@ -1,4 +1,4 @@
-implementation module iTasks.Extensions.Editors.DynamicEditors
+implementation module iTasks.Extensions.Editors.DynamicEditor
 
 import StdEnv => qualified foldl
 import StdMisc, Data.Tuple, Text, Data.Maybe, Text.GenPrint
@@ -7,7 +7,6 @@ from Data.Tuple import appFst
 import iTasks, iTasks.UI.Definition, iTasks.UI.Editor.Common, iTasks.UI.Editor.Modifiers
 import qualified Data.Map as Map
 from Data.Func import $
-import Util
 from Data.List import zip3, intersperse
 import Data.Functor
 
@@ -17,6 +16,7 @@ import Data.Functor
     , builder          :: !DynamicConsBuilder
     , showIfOnlyChoice :: !Bool
     , useAsDefault     :: !Bool
+    , uiAttributes     :: !UIAttributes
     }
 
 (<<@@@) infixl 2 :: !DynamicCons !DynamicConsOption -> DynamicCons
@@ -28,6 +28,8 @@ import Data.Functor
 tunedDynamicConsEditor :: !DynamicConsOption !DynamicCons -> DynamicCons
 tunedDynamicConsEditor HideIfOnlyChoice cons = {cons & showIfOnlyChoice = False}
 tunedDynamicConsEditor UseAsDefault     cons = {cons & useAsDefault = True}
+tunedDynamicConsEditor (ApplyCssClasses classes) cons
+	= {cons & uiAttributes = 'Map'.union (classAttr classes) cons.uiAttributes}
 
 functionCons :: !String !String !a -> DynamicCons | TC a
 functionCons consId label func = functionConsDyn consId label (dynamic func)
@@ -38,6 +40,7 @@ functionConsDyn consId label func = { consId           = consId
                                     , builder          = FunctionCons func
                                     , showIfOnlyChoice = True
                                     , useAsDefault     = False
+                                    , uiAttributes     = 'Map'.newMap
                                     }
 
 listCons :: !String !String !([a] -> b) -> DynamicCons | TC a & TC b
@@ -49,6 +52,7 @@ listConsDyn consId label func = { consId           = consId
                                 , builder          = ListCons func
                                 , showIfOnlyChoice = True
                                 , useAsDefault     = False
+                                , uiAttributes     = 'Map'.newMap
                                 }
 
 customEditorCons :: !String !String !(Editor a) -> DynamicCons
@@ -58,6 +62,7 @@ customEditorCons consId label editor = { consId           = consId
                                        , builder          = CustomEditorCons editor
                                        , showIfOnlyChoice = True
                                        , useAsDefault     = False
+                                       , uiAttributes     = 'Map'.newMap
                                        }
 
 // TODO: don't use aborts here
@@ -167,7 +172,6 @@ where
 			((dynamicCompoundEditor $ editor p).CompoundEditor.onEdit dp event mbSt childSts vst)
 
 	onRefresh dp (p, new) st=:(p`, mbSt) childSts vst
-		| p === p` = (Ok (NoChange, st, childSts), vst) // HACK: only refresh on parameter change
 		= appFst
 			(fmap $ appSnd3 \st -> (p, st))
 			((dynamicCompoundEditor $ editor p).CompoundEditor.onRefresh dp new mbSt childSts vst)
@@ -305,7 +309,7 @@ where
                 # (E editor) = children !! argIdx
                 = editor.Editor.onEdit (dp ++ [argIdx]) (tp, e) (childSts !! (argIdx + 1)) vst
             ListCons lbuilder
-                = (listBuilderEditor lbuilder).Editor.onEdit (dp ++ [0]) (tp, e) (childSts !! 1) vst
+                = (listBuilderEditor lbuilder cons.uiAttributes).Editor.onEdit (dp ++ [0]) (tp, e) (childSts !! 1) vst
             CustomEditorCons editor
                 = editor.Editor.onEdit (dp ++ [0]) (tp, e) (childSts !! 1) vst
         = case res of
@@ -341,7 +345,13 @@ where
                   )
 	// TODO: how to get UI attributes?
 	// TODO: fine-grained replacement
-    onRefresh dp new _ _ vst = appFst (fmap $ appFst3 ReplaceUI) $ genUI 'Map'.newMap dp (Update new) vst
+    onRefresh dp new st childSts vst
+		| isNotChanged (valueFromState st childSts) new = (Ok (NoChange, st, childSts), vst)
+		= appFst (fmap $ appFst3 ReplaceUI) $ genUI 'Map'.newMap dp (Update new) vst
+	where
+		isNotChanged (Just (DynamicEditorValue consId val)) (DynamicEditorValue consId` val`) =
+			consId == consId` && val === val`
+		isNotChanged _ _ = False
 
     // TODO: accept ID or index
     genChildEditors :: !DataPath !DynamicConsId !(EditMode DEVal) !*VSt
@@ -353,7 +363,7 @@ where
         where
             genChildEditors` [] accUi accSt vst = (Ok (accUi, accSt), vst)
             genChildEditors` [(mbVal, E editor, i): children] accUi accSt vst =
-                case editor.Editor.genUI emptyAttr (dp ++ [i]) (maybe Enter (if viewMode View Update) mbVal) vst of
+                case editor.Editor.genUI cons.uiAttributes (dp ++ [i]) (maybe Enter (if viewMode View Update) mbVal) vst of
                     (Ok (ui, st), vst) = genChildEditors` children [ui: accUi] [st: accSt] vst
                     (Error e,     vst) = (Error e, vst)
 
@@ -365,13 +375,13 @@ where
                 _                             = repeat Nothing
         ListCons lbuilder
             # listEditorMode = mapEditMode (\(DEApplication listElems) -> listElems) mode
-            # (mbUi, vst) = (listBuilderEditor lbuilder).Editor.genUI emptyAttr (dp ++ [0]) listEditorMode vst
+            # (mbUi, vst) = (listBuilderEditor lbuilder cons.uiAttributes).Editor.genUI 'Map'.newMap (dp ++ [0]) listEditorMode vst
             = ((\(ui, st) -> ([ui], [st])) <$> mbUi, idx, type, cons.DynamicCons.label, vst)
         CustomEditorCons editor
             # editorMode = mapEditMode
                 (\(DEJSONValue json) -> fromMaybe (abort "Invalid dynamic editor state") $ fromJSON json)
                 mode
-            # (mbUi, vst) = editor.Editor.genUI emptyAttr (dp ++ [0]) editorMode vst
+            # (mbUi, vst) = editor.Editor.genUI cons.uiAttributes (dp ++ [0]) editorMode vst
             = ((\(ui, st) -> ([ui], [st])) <$> mbUi, idx, type, cons.DynamicCons.label, vst)
     where
         (cons, idx) = consWithId cid matchingConses
@@ -425,8 +435,8 @@ where
             (f :: [a] -> b, _ :: DynamicEditor b) = Just $ ListCons (dynamic f)
             _                                     = Nothing
 
-    listBuilderEditor :: !Dynamic -> Editor [(!DynamicConsId, !DEVal)]
-    listBuilderEditor (lbuilder :: [a] -> b) = listEditor (Just $ const Nothing) True True Nothing childrenEd`
+    listBuilderEditor :: !Dynamic !UIAttributes -> Editor [(!DynamicConsId, !DEVal)]
+    listBuilderEditor (lbuilder :: [a] -> b) attrs = listEditor (Just $ const Nothing) True True Nothing childrenEd`
     where
         childrenEd  = childrenEditorList lbuilder
         childrenEd` = bijectEditorValue (\(cid, val)                   -> DynamicEditorValue cid val)
@@ -435,14 +445,11 @@ where
 
         // first argument only used for type
         childrenEditorList :: ([a] -> b) -> Editor (DynamicEditorValue a) | TC a
-        childrenEditorList _ = dynamicEditor $ DynamicEditor elements
-    listBuilderEditor _ = abort "dynamic editors: invalid list builder value"
+        childrenEditorList _ = dynamicEditor (DynamicEditor elements) <<@ attrs
+    listBuilderEditor _ _ = abort "dynamic editors: invalid list builder value"
 
     uiContainer :: !UIAttributes ![UI] -> UI
-    uiContainer attr uis =
-        UI UIContainer
-           ('Map'.union attr $ 'Map'.fromList [("direction", JSONString "horizontal"), ("width", JSONString "wrap")])
-           uis
+    uiContainer attr uis = UI UIContainer attr uis
 
     valueFromState :: !(Maybe (!DynamicConsId, !ConsType)) ![EditState] -> *Maybe (DynamicEditorValue a)
     valueFromState (Just (cid, CustomEditor)) [_: [editorSt]] =

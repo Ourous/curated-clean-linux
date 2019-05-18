@@ -1,0 +1,8 @@
+div.itasks-container.manage-work-header {
+	padding: 2px 2px 2px 10px;
+	flex-direction: row;
+}
+div.itasks-window.new-work-window {
+    min-width: 600px;
+    min-height: 350px;
+}

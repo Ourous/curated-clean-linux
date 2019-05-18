@@ -4,10 +4,11 @@ implementation module iTasks.Extensions.Clock
 */
 import iTasks
 import iTasks.UI.Definition, iTasks.UI.Editor
-import iTasks.UI.JS.Interface
+import iTasks.UI.JavaScript
 import iTasks.Extensions.DateTime
 import qualified Data.Map as DM, Data.Tuple, Data.Error
 import Text.HTML, Data.Func
+import StdEnv
 
 derive JSONEncode AnalogClock
 derive JSONDecode AnalogClock
@@ -50,24 +51,29 @@ where
 
 	initUI me world
 		//Register listener for ui diffs from the server
-		# (jsOnAttributeChange,world) = jsWrapFun (onAttributeChange me) world
+		# (jsOnAttributeChange,world) = jsWrapFun (onAttributeChange me) me world
 		# world = (me .# "onAttributeChange" .= jsOnAttributeChange) world
 		= world
 
-	onAttributeChange me args world
-		| jsArgToString (args !! 0) == "diff"
-			# (changes, world) = fromJSArray (toJSVal (args !! 1)) id world
-			# world = foldl (updateHand me) world changes
-			= (jsNull,world)
+	onAttributeChange me {[0]=name,[1]=changes} world
+		| jsValToString name == Just "diff"
+			# (length,world) = changes .# "length" .? world
+			# length = jsValToInt` 0 length
+			# world = updateHand me (changes .# 0) world
+			| length < 2 = world
+			# world = updateHand me (changes .# 1) world
+			| length < 3 = world
+			# world = updateHand me (changes .# 2) world
+			= world
 		| otherwise
-			= (jsNull,jsTrace "Unknown attribute change" world)
+			= jsTrace "Unknown attribute change" world
 
-    updateHand me world change
-		# (which,world) = appFst jsValToInt (.? (change .# 0) world)
-		# (value,world) = appFst jsValToInt (.? (change .# 1) world)
-		# (svgEl,world)  = .? (me .# "domEl" .# "children" .# 0) world
-		# (handEl,world) = .? (svgEl .# "children" .# (13 + which)) world //The first 13 svg elements are the clock face and markers
-        # (_,world)      = (handEl .# "setAttribute" .$ [toJSArg "transform",toJSArg ("rotate("+++toString (degrees which value - 90)+++" 50 50)")]) world
+    updateHand me change world
+		# (which,world)  = appFst (jsValToInt` 0) (change .# 0 .? world)
+		# (value,world)  = appFst (jsValToInt` 0) (change .# 1 .? world)
+		# svgEl          = me .# "domEl.children" .# 0
+		# (handEl,world) = svgEl .# "children" .# (13 + which) .? world //The first 13 svg elements are the clock face and markers
+        # world          = (handEl .# "setAttribute" .$! ("transform","rotate("+++toString (degrees which value - 90)+++" 50 50)")) world
         = world
 
 	degrees 0 v = 6 * v

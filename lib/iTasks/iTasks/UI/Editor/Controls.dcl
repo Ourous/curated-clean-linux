@@ -5,7 +5,6 @@ definition module iTasks.UI.Editor.Controls
 */
 from iTasks.UI.Editor import :: Editor
 from iTasks.UI.Definition import :: UIAttributes, :: UIType
-from iTasks.UI.JS.Encoding import generic JSDecode
 from Data.Maybe import :: Maybe
 from Data.Map import :: Map
 from Text.HTML import :: HtmlTag
@@ -126,7 +125,7 @@ withConstantChoices :: !choices !(Editor (!choices, ![Int])) -> Editor [Int]
 
 fieldComponent
 	:: !UIType !(Maybe a) !(UIAttributes a -> Bool) -> Editor a
-	| JSONDecode{|*|}, JSONEncode{|*|}, gEq{|*|} a & JSDecode{|*|} a
+	| JSONDecode{|*|}, JSONEncode{|*|}, gEq{|*|} a
 
 //Convenient types for describing the values of grids and trees
 :: ChoiceText =

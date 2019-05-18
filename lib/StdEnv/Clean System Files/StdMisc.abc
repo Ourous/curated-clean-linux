@@ -1,4 +1,4 @@
-.comp 920 0001100110100
+.comp 920 0001100100100
 .start _nostart_
 .depend "StdMisc"
 .endinfo

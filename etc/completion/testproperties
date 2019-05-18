@@ -1,0 +1,39 @@
+# vim: syntax=sh
+_testproperties()
+{
+	local cur prev ownopts opts
+	COMPRREPLY=()
+	cur="${COMP_WORDS[COMP_CWORD]}"
+	prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+	ownopts="--help -h --directory -d --module -m --output-directory -D --prefix -p --print-option -P --test-option -T --compile -c --clm-arg -C --run -r --verbose -v --quiet -q --no-color"
+	opts="$_clean_module_finding_options $ownopts"
+
+	[ _clean_module_finding ] || return 0
+
+	case $prev in
+		"--directory" | "-d" | "--output-directory" | "-D")
+			_clean_dir
+			return 0
+			;;
+		"--module" | "-m")
+			_clean_module
+			return 0
+			;;
+		"--prefix" | "-p" | "--clm-arg" | "-C")
+			# Complete nothing
+			return 0
+			;;
+		"--print-option" | "-P")
+			opts="Verbose Trace Concise Quiet OutputTestEvents"
+			;;
+		"--test-option" | "-T")
+			opts="Tests Fails Args RandomSeed RandomList Skew Bent MaxDepth ArgTypes"
+			;;
+	esac
+
+	# Complete options
+	COMPREPLY=($(compgen -W "$opts" -- $cur))
+	return 0
+}
+complete -F _testproperties testproperties

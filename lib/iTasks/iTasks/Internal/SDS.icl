@@ -435,6 +435,7 @@ instance Writeable SDSCache where
 			(Error e, iworld) = (Error e, iworld)
 			(Ok (WriteResult r ssds), iworld) = (Ok (WriteResult r sds), iworld)
 		WriteDelayed
+			//FIXME: Even though write is delayed, the notification should still happen
 			# writeCache = 'DM'.put key (dynamic w :: w^, DeferredWrite p w sds1) writeCache
 			= (Ok (WriteResult 'Set'.newSet sds), {iworld & readCache = readCache, writeCache = writeCache})
 

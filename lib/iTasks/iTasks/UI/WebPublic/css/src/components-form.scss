@@ -1,0 +1,51 @@
+.#{$prefix}icon {
+    width: 16px;
+    height: 16px;
+}
+.#{$prefix}label {
+	width: 100px;
+	padding: 5px;
+	text-overflow: elipsis;
+}
+.#{$prefix}button {
+	font-size: 8pt;
+   	padding: 3px;
+    background: linear-gradient(lighten($button-base-color,20% ), $button-base-color);
+    background-repeat: none;
+    border: 1px solid darken($button-base-color,20%);
+    border-radius: 3px;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    text-decoration: none;
+    color: $button-text-color;
+    flex-shrink: 0;
+
+    &:hover {
+        border-color: darken($button-base-color,40%);
+    }
+
+    &:active {
+        background: lighten($button-base-color,20%);
+    }
+}
+.#{$prefix}button-label {
+    margin: 0 4px;
+    height: 16px;
+    cursor: default;
+}
+.#{$prefix}button-icon {
+    width: 16px;
+    height: 16px;
+}
+.#{$prefix}button-disabled {
+    color: lighten($button-text-color,35%);
+    background: linear-gradient(lighten($button-base-color,20%), darken($button-base-color,20%));
+}
+.#{$prefix}button-disabled:hover {
+    border-color: darken($button-base-color,40%);
+}
+.#{$prefix}button-disabled .#{$prefix}button-icon {
+    opacity: 0.5;
+}

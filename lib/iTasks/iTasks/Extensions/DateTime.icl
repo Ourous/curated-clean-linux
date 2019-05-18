@@ -69,7 +69,7 @@ JSONDecode{|Date|} _ c = (Nothing, c)
 
 gText{|Date|} _ val = [maybe "" toString val]
 
-gEditor{|Date|} = pikadayDateField 
+gEditor{|Date|} = pikadayDateField
 
 gDefault{|Date|} = {Date|day = 1, mon = 1, year = 2017}
 derive gEq Date

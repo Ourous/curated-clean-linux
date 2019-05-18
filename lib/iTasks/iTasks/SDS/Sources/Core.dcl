@@ -26,15 +26,15 @@ randomString :: SDSSource Int String ()
 // world function share
 worldShare :: (p *World -> *(MaybeErrorString r,*World)) (p w *World -> *(MaybeErrorString (),*World)) -> SDSSource p r w
 
+// memory share (essentially a global variable)
+memoryShare :: SDSSource String (Maybe a) (Maybe a) | TC a
+
 // Share that maps to the plain contents of a file on disk
 // When the file does not exist on reading it returns nothing. By writing Nothing you can remove the file
 fileShare :: SDSSource FilePath (Maybe String) (Maybe String)
 
 // Share that maps to a file encoded as JSON 
 jsonFileShare :: SDSSource FilePath (Maybe a) (Maybe a) | JSONEncode{|*|}, JSONDecode{|*|} a
-
-// memory share (essentially a global variable)
-memoryShare :: SDSSource String (Maybe a) (Maybe a) | TC a
 
 // Share that maps to a file that holds a serialized graph representation of the value
 graphFileShare :: SDSSource FilePath (Maybe a) (Maybe a)

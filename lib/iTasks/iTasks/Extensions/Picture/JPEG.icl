@@ -12,7 +12,7 @@ from Data.Map import :: Map, newMap
 
 from iTasks.UI.Editor.Modifiers import comapEditorValue, instance tune UIAttributes Editor
 from iTasks.UI.Editor.Controls import htmlView
-from iTasks.UI.Definition import paddingAttr, :: UIAttributes
+from iTasks.UI.Definition import :: UIAttributes
 from Text.HTML import :: HtmlTag(ImgTag), :: HtmlAttr(SrcAttr,StyleAttr,AltAttr)
 from iTasks.WF.Combinators.Tune import <<@, class tune
 
@@ -23,4 +23,4 @@ derive gDefault JPEGPicture
 derive gEq JPEGPicture
 
 gEditor{|JPEGPicture|} = comapEditorValue (\(JPEGPicture val) -> ImgTag [SrcAttr val, AltAttr "no photo", StyleAttr ("max-width: 200px; max-height: 200px;")])
-                                 		(htmlView <<@ paddingAttr 0 0 0 0)
+                                 		htmlView

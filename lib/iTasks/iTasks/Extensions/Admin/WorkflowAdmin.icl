@@ -9,6 +9,8 @@ from StdFunc import seq
 import qualified Data.Map as DM
 import Data.Map.GenJSON
 import Data.List, Data.Tuple
+import Text.HTML
+
 import iTasks.UI.Definition, iTasks.UI.Editor, iTasks.UI.Editor.Controls, iTasks.UI.Editor.Common, iTasks.UI.Layout.Default, iTasks.UI.Layout.Common
 import iTasks.Extensions.DateTime
 // SPECIALIZATIONS
@@ -41,7 +43,7 @@ myWork :: SDSLens () [(TaskId,WorklistRow)] ()
 myWork = workList taskInstancesForCurrentUser
 
 allWork :: SDSLens () [(TaskId,WorklistRow)] ()
-allWork = workList allTaskInstances
+allWork = workList detachedTaskInstances
 
 workList instances = mapRead projection (instances |*| currentTopTask)
 where
@@ -94,49 +96,57 @@ allowedPersistentWorkflows = mapRead (\wfs -> [wf \\ wf=:{Workflow|transient} <-
 
 instance Startable WorkflowCollection
 where
-	toStartable {WorkflowCollection|name,workflows} =
+	toStartable {WorkflowCollection|name,loginMessage,welcomeMessage,allowGuests,workflows} =
 		[onStartup (installWorkflows workflows)
-		,onRequest "/" (loginAndManageWork name)
+		,onStartup importDemoUsersFlow
+		,onRequest "/" (loginAndManageWork name loginMessage welcomeMessage allowGuests)
 		]
 
 installWorkflows :: ![Workflow] -> Task ()
 installWorkflows [] = return ()
 installWorkflows iflows
 	=   try (get workflows) (\(StoreReadBuildVersionError _) -> return [])
-	>>= \flows -> case flows of
+	>>- \flows -> case flows of
 		[]	= set iflows workflows @! ()
 		_	= return ()
 
-loginAndManageWork :: !String -> Task ()
-loginAndManageWork welcome
+loginAndManageWork :: !String !(Maybe HtmlTag) !(Maybe HtmlTag) !Bool -> Task ()
+loginAndManageWork applicationName loginMessage welcomeMessage allowGuests
 	= forever
-		(((	viewTitle welcome
+		(((	identifyApplication applicationName loginMessage
 			||-
 			(anyTask [
 	 				enterInformation ("Authenticated access","Enter your credentials and login") [] @ Just
 				>>* [OnAction (Action "Login")  (hasValue return)]
-				,
-					viewInformation ("Guest access","Alternatively, you can continue anonymously as guest user") [] ()
-					>>| (return Nothing)
-				] <<@ ApplyLayout (setUIAttributes (directionAttr Horizontal)))
+				:if allowGuests
+					[viewInformation ("Guest access","Alternatively, you can continue anonymously as guest user") [] ()
+					 >>| (return Nothing)
+					]
+					[]
+				] <<@ ArrangeHorizontal)
 	 	   )  <<@ ApplyLayout layout
 		>>- browse) //Compact layout before login, full screen afterwards
-		) <<@ ApplyLayout (setUIAttributes (titleAttr welcome))
+		) <<@ Title applicationName
 where
 	browse (Just {Credentials|username,password})
 		= authenticateUser username password
 		>>= \mbUser -> case mbUser of
-			Just user 	= workAs user manageWorkOfCurrentUser
-			Nothing		= viewInformation (Title "Login failed") [] "Your username or password is incorrect" >>| return ()
+			Just user 	= workAs user (manageWorkOfCurrentUser welcomeMessage)
+			Nothing		= (viewInformation (Title "Login failed") [] "Your username or password is incorrect" >>| return ()) <<@ ApplyLayout frameCompact
 	browse Nothing
-		= workAs (AuthenticatedUser "guest" ["manager"] (Just "Guest user")) manageWorkOfCurrentUser
+		= workAs (AuthenticatedUser "guest" ["manager"] (Just "Guest user")) (manageWorkOfCurrentUser welcomeMessage)
 
+	identifyApplication name welcomeMessage = viewInformation () [] html
+	where
+		html = DivTag [ClassAttr cssClass] [H1Tag [] [Text name]:maybe [] (\msg -> [msg]) welcomeMessage]
+		cssClass = "welcome-" +++ (toLowerCase $ replaceSubString " " "-" name)
+	
 	layout = sequenceLayouts [layoutSubUIs (SelectByType UIAction) (setActionIcon ('DM'.fromList [("Login","login")])) ,frameCompact]
 
-manageWorkOfCurrentUser :: Task ()
-manageWorkOfCurrentUser
+manageWorkOfCurrentUser :: !(Maybe HtmlTag) -> Task ()
+manageWorkOfCurrentUser welcomeMessage
 	= 	((manageSession -||
-		  (chooseWhatToDo >&> withSelection
+		  (chooseWhatToDo welcomeMessage >&> withSelection
 			(viewInformation () [] "Welcome!")
 			(\wf -> unwrapWorkflowTask wf.Workflow.task)
 		  )
@@ -145,7 +155,7 @@ manageWorkOfCurrentUser
 where
 	layout = sequenceLayouts
 		[unwrapUI //Get rid of the step
-		,arrangeWithSideBar 0 TopSide 50 False
+		,arrangeWithHeader 0
 		,layoutSubUIs (SelectByPath [0]) layoutManageSession
 		,layoutSubUIs (SelectByPath [1]) (sequenceLayouts [unwrapUI,layoutWhatToDo])
 		//Use maximal screen space
@@ -156,9 +166,9 @@ where
 		[layoutSubUIs SelectChildren actionToButton
 		,layoutSubUIs (SelectByPath [0]) (setUIType UIContainer)
 		,setUIType UIContainer
-		,setUIAttributes ('DM'.unions [heightAttr WrapSize,directionAttr Horizontal,paddingAttr 2 2 2 10])
+		,addCSSClass "manage-work-header"
 		]
-	layoutWhatToDo = sequenceLayouts [arrangeWithSideBar 0 LeftSide 150 True, layoutSubUIs (SelectByPath [1]) unwrapUI]
+	layoutWhatToDo = sequenceLayouts [arrangeWithSideBar 0 LeftSide True, layoutSubUIs (SelectByPath [1]) unwrapUI]
 
 manageSession :: Task ()
 manageSession =
@@ -168,15 +178,14 @@ manageSession =
 where
 	view user	= "Welcome " +++ toString user
 
-chooseWhatToDo = updateChoiceWithShared (Title "Menu") [ChooseFromList workflowTitle] (mapRead addManageWork allowedTransientTasks) manageWorkWf
+chooseWhatToDo welcomeMessage = updateChoiceWithShared (Title "Menu") [ChooseFromList workflowTitle] (mapRead addManageWork allowedTransientTasks) manageWorkWf
 where
 	addManageWork wfs = [manageWorkWf:wfs]
-	manageWorkWf = transientWorkflow "My work" "Manage your worklist"  manageWork
+	manageWorkWf = transientWorkflow "My Tasks" "Manage your worklist"  (manageWork welcomeMessage)
 
-manageWork :: Task ()
-manageWork = parallel [(Embedded, manageList)] [] <<@ ApplyLayout layoutManageWork @! ()
+manageWork :: (Maybe HtmlTag) -> Task ()
+manageWork welcomeMessage = parallel [(Embedded, manageList):maybe [] (\html -> [(Embedded, const (viewWelcomeMessage html))]) welcomeMessage] [] <<@ ApplyLayout layoutManageWork @! ()
 where
-
 	manageList taskList
 		= get currentUser @ userRoles
 		>>- \roles ->
@@ -188,7 +197,7 @@ where
 	worklist roles = if (isMember "admin" roles) allWork  myWork
 	continuations roles taskList = if (isMember "manager" roles) [new,open,delete] [open]
 	where
-		new = OnAction (Action "New") (always (appendTask Embedded (removeWhenStable (addNewTask taskList)) taskList @! () ))
+		new = OnAction (Action "New") (always (appendTask Embedded (removeWhenStable (addNewTask taskList <<@ InWindow <<@ AddCSSClass "new-work-window")) taskList @! () ))
 		open = OnAction (Action "Open") (hasValue (\(taskId,_) -> openTask taskList taskId @! ()))
 		delete = OnAction (Action "Delete") (ifValue (\x -> snd x || isMember "admin" roles) (\(taskId,_) -> removeTask taskId topLevelTasks @! ()))
 
@@ -197,23 +206,26 @@ where
 
 	layoutManageWork = sequenceLayouts
 		//Split the screen space
-		[ arrangeWithSideBar 0 TopSide 200 True
+		[ arrangeWithSideBar 0 TopSide True
 		  //Layout all dynamically added tasks as tabs
-		, layoutSubUIs (SelectByPath [1]) (arrangeWithTabs False)
+		, layoutSubUIs (SelectByPath [1]) (arrangeWithTabs True)
 		, layoutSubUIs (SelectByPath [1]) $
 			layoutSubUIs (SelectByDepth 1) (setUIAttributes $ 'DM'.put "fullscreenable" (JSONBool True) 'DM'.newMap)
 		]
 
+viewWelcomeMessage :: HtmlTag -> Task ()
+viewWelcomeMessage html = viewInformation (Title "Welcome") [] html @! ()
+	
 addNewTask :: !(SharedTaskList ()) -> Task ()
 addNewTask list
-	=   ((chooseWorkflow >&> viewWorkflowDetails) <<@ ApplyLayout (setUIAttributes (directionAttr Horizontal))
+	=   ((chooseWorkflow >&> viewWorkflowDetails) <<@ ArrangeHorizontal
 	>>* [OnAction (Action "Start task") (hasValue (\wf -> startWorkflow list wf @! ()))
 		,OnAction ActionCancel (always (return ()))
-		] ) <<@ Title "New work"
+		] ) <<@ Title "New task..."
 
 chooseWorkflow :: Task Workflow
 chooseWorkflow
-	=  editSelectionWithShared [Att (Title "Tasks"), Att IconEdit] False (SelectInTree toTree fromTree) allowedWorkflows (const []) <<@ Title "Workflow Catalogue"
+	=  editSelectionWithShared [Att (Title "Tasks"), Att IconEdit] False (SelectInTree toTree fromTree) allowedPersistentWorkflows (const []) 
 	@? tvHd
 where
 	//We assign unique negative id's to each folder and unique positive id's to each workflow in the list
@@ -328,9 +340,10 @@ where
 
 removeWhenStable :: (Task a) (SharedTaskList a) -> Task a | iTask a
 removeWhenStable task slist
-    =   task
+    =   (task
     >>* [OnValue (ifStable (\_ -> get (taskListSelfId slist) >>- \selfId -> removeTask selfId slist))]
-    @?  const NoValue
+    @?  const NoValue)
+	<<@ ApplyLayout unwrapUI
 
 addWorkflows :: ![Workflow] -> Task [Workflow]
 addWorkflows additional

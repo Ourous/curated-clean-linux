@@ -22,6 +22,10 @@ get :: !(sds () a w) -> Task a | iTask a & Readable sds & TC w
 get shared = Task (eval shared)
 where
 	eval :: (sds () a w) Event TaskEvalOpts TaskTree !*IWorld -> (TaskResult a, !*IWorld) | TC w & TC a & Readable sds & iTask a
+	eval _ DestroyEvent opts tree iworld=:{sdsEvalStates}
+	# sdsEvalStates = 'DM'.del (fromOk (taskIdFromTaskTree tree)) sdsEvalStates
+	= (DestroyedResult, {iworld & sdsEvalStates = sdsEvalStates})
+
 	eval shared event opts tree=:(TCInit taskId ts) iworld=:{sdsEvalStates}
 	= case 'SDS'.read shared ('SDS'.TaskContext taskId) iworld of
 		// Remote read is queued, enter AwaitRead state and show loading UI.
@@ -55,15 +59,11 @@ where
 		Just a	= (ValueResult (Value a True) {lastEvent=ts,removedTasks=[],attributes='DM'.newMap} (rep event) s, iworld)
 		Nothing	= (ExceptionResult (exception "Corrupt task result"), iworld)
 
-	eval _ event opts tree=:(TCDestroy _) iworld=:{sdsEvalStates}
-	# sdsEvalStates = 'DM'.del (fromOk (taskIdFromTaskTree tree)) sdsEvalStates
-	= (DestroyedResult, {iworld & sdsEvalStates = sdsEvalStates})
-
 set :: !a !(sds () r a)  -> Task a | iTask a & TC r & Writeable sds
 set val shared = Task (eval val shared)
 where
 	eval :: a (sds () r a) Event TaskEvalOpts TaskTree *IWorld -> (TaskResult a, !*IWorld) | iTask a & TC r & Writeable sds
-	eval _ _ event _ tree=:(TCDestroy _) iworld=:{sdsEvalStates}
+	eval _ _ DestroyEvent _ tree iworld=:{sdsEvalStates}
 	# sdsEvalStates = 'DM'.del (fromOk (taskIdFromTaskTree tree)) sdsEvalStates
 	= (DestroyedResult, {iworld & sdsEvalStates = sdsEvalStates})
 
@@ -96,7 +96,7 @@ upd :: !(r -> w) !(sds () r w) -> Task w | iTask r & iTask w & RWShared sds
 upd fun shared = Task (eval fun shared)
 where
 	eval :: (r -> w) (sds () r w) Event TaskEvalOpts TaskTree *IWorld -> (TaskResult w, !*IWorld) | iTask r & iTask w & RWShared sds
-	eval fun shared event _ tree=:(TCDestroy _) iworld=:{sdsEvalStates}
+	eval fun shared DestroyEvent _ tree iworld=:{sdsEvalStates}
 	# sdsEvalStates = 'DM'.del (fromOk (taskIdFromTaskTree tree)) sdsEvalStates
 	= (DestroyedResult, {iworld & sdsEvalStates = sdsEvalStates})
 
@@ -134,6 +134,12 @@ watch shared = Task (eval shared)
 where
 	eval :: (sds () r w) Event TaskEvalOpts TaskTree *IWorld
 		-> (TaskResult r, !*IWorld) | iTask r & TC w & Readable, Registrable sds
+	eval _ DestroyEvent _ ttree iworld=:{sdsEvalStates}
+		# taskId = fromOk $ taskIdFromTaskTree ttree
+		# iworld = 'SDS'.clearTaskSDSRegistrations ('DS'.singleton $ taskId) iworld
+		# iworld = {iworld & sdsEvalStates = 'DM'.del taskId sdsEvalStates}
+		= (DestroyedResult,iworld)
+
 	eval shared event _ tree=:(TCInit taskId ts) iworld=:{sdsEvalStates}
 	= case 'SDS'.readRegister taskId shared iworld of
 		(Error e, iworld) = (ExceptionResult e, iworld)
@@ -181,12 +187,6 @@ where
 					# sdsEvalStates = 'DM'.put taskId (dynamicResult ('SDS'.readRegister taskId sds)) sdsEvalStates
 					# result = ValueResult oldValue (tei ts) NoChange tree
 					= (result, {iworld & sdsEvalStates = sdsEvalStates})
-
-	eval _ _ _ ttree=:(TCDestroy _) iworld=:{sdsEvalStates}
-	# taskId = fromOk $ taskIdFromTaskTree ttree
-	# iworld = 'SDS'.clearTaskSDSRegistrations ('DS'.singleton $ taskId) iworld
-	# iworld = {iworld & sdsEvalStates = 'DM'.del taskId sdsEvalStates}
-	= (DestroyedResult,iworld)
 
 tei ts = {TaskEvalInfo|lastEvent=ts,removedTasks=[],attributes='DM'.newMap}
 

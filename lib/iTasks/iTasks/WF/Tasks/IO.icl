@@ -44,6 +44,21 @@ where
 	fjson = mb2error (exception "Corrupt taskstate") o fromDeferredJSON
 
 	eval :: Event TaskEvalOpts TaskTree *IWorld -> *(TaskResult Int, *IWorld)
+
+	//Destroyed while the process was still running
+	eval DestroyEvent evalOpts (TCBasic taskId ts jsonph _) iworld
+		# iworld = clearTaskSDSRegistrations ('DS'.singleton taskId) iworld
+		= apIWTransformer iworld
+		$             tuple (fjson jsonph)
+		>-= \(ph, _)->liftOSErr (terminateProcess ph)
+		>-= \_      ->tuple (Ok DestroyedResult)
+
+	//Destroyed when the task was already stable
+	eval DestroyEvent evalOpts tree iworld
+		# iworld = clearTaskSDSRegistrations ('DS'.singleton $ fromOk $ taskIdFromTaskTree tree) iworld
+		= (DestroyedResult, iworld)
+
+
 	eval event evalOpts tree=:(TCInit taskId ts) iworld
 		= case liftOSErr (maybe (runProcessIO cmd args dir) (runProcessPty cmd args dir) mopts) iworld of
 			(Error e, iworld) = (ExceptionResult e, iworld)
@@ -73,19 +88,6 @@ where
 	eval event evalOpts tree=:(TCStable tid ts (DeferredJSONNode (JSONInt i))) iworld
 		= (ValueResult (Value i True) (info ts) (rep event) tree, iworld)
 
-	//Destroyed while the process was still running
-	eval event evalOpts tree=:(TCDestroy (TCBasic taskId ts jsonph _)) iworld
-		# iworld = clearTaskSDSRegistrations ('DS'.singleton $ fromOk $ taskIdFromTaskTree tree) iworld
-		= apIWTransformer iworld
-		$             tuple (fjson jsonph)
-		>-= \(ph, _)->liftOSErr (terminateProcess ph)
-		>-= \_      ->tuple (Ok DestroyedResult)
-
-	//Destroyed when the task was already stable
-	eval event evalOpts tree=:(TCDestroy _) iworld
-		# iworld = clearTaskSDSRegistrations ('DS'.singleton $ fromOk $ taskIdFromTaskTree tree) iworld
-		= (DestroyedResult, iworld)
-
 	info ts = {TaskEvalInfo|lastEvent=ts,attributes='DM'.newMap,removedTasks=[]}
 
 	rep ResetEvent = ReplaceUI (stringDisplay ("External process: " <+++ cmd))
@@ -96,6 +98,16 @@ where
 tcplisten :: !Int !Bool !(sds () r w) (ConnectionHandlers l r w) -> Task [l] | iTask l & iTask r & iTask w & RWShared sds
 tcplisten port removeClosed sds handlers = Task eval
 where
+    eval DestroyEvent evalOpts tree=:(TCBasic taskId ts _ _) iworld=:{ioStates}
+        # ioStates = case 'DM'.get taskId ioStates of
+            Just (IOActive values)  = 'DM'.put taskId (IODestroyed values) ioStates
+            _                       = ioStates
+        = (DestroyedResult,{iworld & ioStates = ioStates})
+
+    //Destroyed before a connection has been made
+    eval DestroyEvent evalOpts tree iworld
+        = (DestroyedResult, iworld)
+
 	eval event evalOpts tree=:(TCInit taskId ts) iworld
         = case addListener taskId port removeClosed (wrapConnectionTask handlers sds) iworld of
             (Error e,iworld)
@@ -114,21 +126,23 @@ where
             Nothing
                 = (ValueResult (Value [] False) {TaskEvalInfo|lastEvent=ts,attributes='DM'.newMap,removedTasks=[]} (rep port) (TCBasic taskId ts (DeferredJSONNode JSONNull) False), iworld)
 
-    eval event evalOpts tree=:(TCDestroy (TCBasic taskId ts _ _)) iworld=:{ioStates}
-        # ioStates = case 'DM'.get taskId ioStates of
-            Just (IOActive values)  = 'DM'.put taskId (IODestroyed values) ioStates
-            _                       = ioStates
-        = (DestroyedResult,{iworld & ioStates = ioStates})
-
-    //Destroyed in before a connection has been made
-    eval event evalOpts tree=:(TCDestroy _) iworld
-        = (DestroyedResult, iworld)
-
     rep port = ReplaceUI (stringDisplay ("Listening for connections on port "<+++ port))
 
 tcpconnect :: !String !Int !(sds () r w) (ConnectionHandlers l r w) -> Task l | iTask l & iTask r & iTask w & RWShared sds
 tcpconnect host port sds handlers = Task eval
 where
+    eval DestroyEvent evalOpts tree=:(TCBasic taskId ts _ _) iworld=:{ioStates}
+        # ioStates = case 'DM'.get taskId ioStates of
+            Just (IOActive values)  = 'DM'.put taskId (IODestroyed values) ioStates
+            _                       = ioStates
+        = (DestroyedResult,{iworld & ioStates = ioStates})
+
+    eval DestroyEvent evalOpts tree=:(TCInit taskId ts) iworld=:{ioStates}
+		# ioStates = case 'DM'.get taskId ioStates of
+            Just (IOActive values)  = 'DM'.put taskId (IODestroyed values) ioStates
+            _                       = ioStates
+        = (DestroyedResult,{iworld & ioStates = ioStates})
+
 	eval event evalOpts tree=:(TCInit taskId ts) iworld=:{IWorld|ioTasks={done,todo},ioStates,world}
         = case addConnection taskId host port (wrapConnectionTask handlers sds) iworld of
             (Error e,iworld)
@@ -149,19 +163,6 @@ where
             Just (IOException e)
                 = (ExceptionResult (exception e),iworld)
 
-    eval event evalOpts tree=:(TCDestroy (TCBasic taskId ts _ _)) iworld=:{ioStates}
-        # ioStates = case 'DM'.get taskId ioStates of
-            Just (IOActive values)  = 'DM'.put taskId (IODestroyed values) ioStates
-            _                       = ioStates
-        = (DestroyedResult,{iworld & ioStates = ioStates})
-
-    eval event evalOpts tree=:(TCDestroy (TCInit taskId ts)) iworld=:{ioStates}
-		# ioStates = case 'DM'.get taskId ioStates of
-            Just (IOActive values)  = 'DM'.put taskId (IODestroyed values) ioStates
-            _                       = ioStates
-        = (DestroyedResult,{iworld & ioStates = ioStates})
-
     rep = ReplaceUI (stringDisplay ("TCP client " <+++ host <+++ ":" <+++ port))
-
 
 derive JSONEncode Event, Set

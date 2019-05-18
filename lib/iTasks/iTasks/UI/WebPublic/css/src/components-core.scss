@@ -1,0 +1,22 @@
+div.#{$prefix}loader {
+	display: flex;
+	font-size: 16pt;
+	font-style: italic;
+	text-align: center;
+}
+div.#{$prefix}loader-spinner {
+	width: 40px;
+	height: 40px;
+	border: 10px solid;
+	border-radius: 100%;
+	border-color: $panel-border-color $panel-border-color $panel-border-color $select-base-color;
+	margin: auto auto;
+	animation: #{$prefix}rotation .8s infinite linear;
+}
+@keyframes #{$prefix}rotation {
+	from { transform: rotate(0deg); }
+	to { transform: rotate(359deg); }
+}
+div.#{$prefix}exception {
+	text-align: center;
+}

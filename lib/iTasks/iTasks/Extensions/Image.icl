@@ -4,7 +4,7 @@ import iTasks.UI.Definition, iTasks.UI.Editor.Controls, iTasks.UI.Editor.Modifie
 import Text.HTML
 
 gEditor{|WebImage|} = comapEditorValue (\{WebImage|src,alt,width,height} -> ImgTag [SrcAttr src,AltAttr alt,WidthAttr (toString width), HeightAttr (toString height)])
-                                 		(htmlView <<@ paddingAttr 0 0 0 0)
+                                 		htmlView
 
 derive gText	        WebImage
 derive JSONEncode		WebImage

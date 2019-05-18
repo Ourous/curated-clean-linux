@@ -28,6 +28,8 @@ instance addValueAttribute Task
 where
 	addValueAttribute attrName attrValueFun task=:(Task evala) = Task eval
 	where
+		//Destroy
+		eval DestroyEvent evalOpts (TCAttribute _ _ tree) iworld = evala DestroyEvent evalOpts tree iworld
 		//Init
 		eval event evalOpts tree=:(TCInit taskId ts) iworld
 			= eval event evalOpts (TCAttribute taskId (toAttribute (attrValueFun Nothing)) tree) iworld
@@ -46,9 +48,6 @@ where
 			refreshAttribute (ValueResult (Value v _) _ _ _) = toAttribute (attrValueFun (Just v))
 			refreshAttribute _ = toAttribute (attrValueFun Nothing)
 
-		//Destroy
-		eval event evalOpts (TCDestroy (TCAttribute _ _ tree)) iworld =
-			evala event evalOpts (TCDestroy tree) iworld
 
 class addSDSAttribute f :: !String (sds () r w) (r -> b) !(f a) -> f a | toAttribute b & TC r & TC w & Registrable, Readable sds
 instance addSDSAttribute Task
@@ -57,6 +56,10 @@ where
 	where
 		//Init
 		eval :: (sds () r w) (r -> b) (Task a) Event TaskEvalOpts TaskTree !*IWorld -> (TaskResult a, !*IWorld) | toAttribute b & TC r & TC w & Registrable sds & Readable sds
+		//Destroy
+		eval sds attrValueFun (Task evala) DestroyEvent evalOpts (TCAttribute _ _ tree) iworld =
+			evala DestroyEvent evalOpts tree iworld
+
 		eval sds attrValueFun (Task evala) event evalOpts tree=:(TCInit taskId ts) iworld
 			# (mbr,iworld) = 'SDS'.readRegister taskId sds iworld 
 			| isError mbr = (ExceptionResult (fromError mbr),iworld)
@@ -85,9 +88,6 @@ where
 					= (fmap (toAttribute o attrValueFun o directResult) mbr,iworld)
 			refreshAttribute taskId cur _ iworld
 				= (Ok cur,iworld)
-		//Destroy
-		eval sds attrValueFun (Task evala) event evalOpts (TCDestroy (TCAttribute _ _ tree)) iworld =
-			evala event evalOpts (TCDestroy tree) iworld
 
 //Shared helper functions
 addAttributeChange attrName _ new (ValueResult value info (ReplaceUI (UI type attr items)) tree) iworld
@@ -137,8 +137,8 @@ applyLayout rule task=:(Task evala) = Task eval
 	where
 		ruleNo = LUINo [0]
 
-		eval event evalOpts (TCDestroy (TCLayout s tt)) iworld //Cleanup duty simply passed to inner task
-			= evala event evalOpts (TCDestroy tt) iworld
+		eval DestroyEvent evalOpts (TCLayout s tt) iworld //Cleanup duty simply passed to inner task
+			= evala DestroyEvent evalOpts tt iworld
 
 		eval event evalOpts tt=:(TCInit _ _) iworld
 			//On initialization, we need to do a reset to be able to apply the layout

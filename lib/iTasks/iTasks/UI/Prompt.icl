@@ -21,7 +21,7 @@ where toPrompt (title,hint) = let (UI type attr items) = createPrompt hint in
 createPrompt :: String -> UI
 createPrompt hint = (uiac UIContainer attr [stringDisplay hint])
 where
-	attr = 'DM'.unions [marginsAttr 5 5 10 5, widthAttr FlexSize, minWidthAttr WrapBound, heightAttr WrapSize]
+	attr = classAttr ["itasks-prompt","itasks-flex-width","itasks-wrap-height"]
 
 instance toString Icon
 where

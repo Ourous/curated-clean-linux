@@ -7,6 +7,7 @@ import Data.Func
 import Data.List
 import Data.Maybe
 import Data.Either
+import Data.Functor
 import qualified Data.Map as DM
 from Data.Map import instance Functor (Map a)
 from Data.Set import :: Set
@@ -33,7 +34,6 @@ import iTasks.Internal.Tonic.Types
 import iTasks.Internal.Tonic.Pretty
 import iTasks.UI.Definition
 from iTasks.Extensions.SVG.SVGEditor import fromSVGEditor, :: SVGEditor {..}
-import iTasks.UI.JS.Encoding
 import Text
 import StdMisc
 

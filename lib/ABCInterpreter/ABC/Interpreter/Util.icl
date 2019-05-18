@@ -24,6 +24,11 @@ import code from "util."
 
 OFFSET_PARSER_PROGRAM :== IF_INT_64_OR_32 8 4 // Offset to the program field in the parser struct (parse.h)
 
+ensure_interpreter_init :: Bool
+ensure_interpreter_init = code {
+	ccall ensure_interpreter_init ":I"
+}
+
 parse :: !{#Symbol} !String -> Maybe Int
 parse syms s
 #! cp = new_string_char_provider s

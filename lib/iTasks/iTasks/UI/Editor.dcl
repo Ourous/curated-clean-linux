@@ -4,9 +4,9 @@ definition module iTasks.UI.Editor
 * the interact core task uses these editors to generate and update the user interface
 */
 
+from ABC.Interpreter      import :: PrelinkedInterpretationEnvironment
 from iTasks.UI.Definition import :: UI, :: UIAttributes, :: UIChange, :: UIAttributeChange, :: TaskId
-from iTasks.UI.JS.Interface import :: JSWorld, :: JSObj, :: JSVal, :: JSObject
-from iTasks.UI.JS.Encoding import generic JSDecode
+from iTasks.UI.JavaScript import :: JSWorld, :: JSVal
 
 from iTasks.Internal.IWorld import :: IWorld
 from iTasks.Internal.Generic.Defaults import generic gDefault
@@ -55,12 +55,12 @@ from Control.GenBimap import generic bimap, :: Bimap
 	, valueFromState :: !st -> Maybe a
 	}
 
-leafEditorToEditor :: !(LeafEditor edit st a) -> Editor a | JSDecode{|*|} edit & JSONEncode{|*|}, JSONDecode{|*|} st
+leafEditorToEditor :: !(LeafEditor edit st a) -> Editor a | JSONEncode{|*|}, JSONDecode{|*|} st & JSONDecode{|*|} edit
 
 //Version without overloading, for use in generic case
 //The first two argument should be JSONEncode{|*|} and JSONDecode{|*|} which cannot be used by overloading within generic functions
 leafEditorToEditor_ :: !(Bool st -> [JSONNode]) !(Bool [JSONNode] -> (!Maybe st, ![JSONNode])) !(LeafEditor edit st a)
-                    -> Editor a | JSDecode{|*|} edit
+                    -> Editor a | JSONDecode{|*|} edit
 
 /*
 *	Definition of a compound editor using an additional typed state, next to the children's states.
@@ -130,9 +130,9 @@ derive bimap EditMode
 :: *VSt =
 	{ taskId			:: !String   //* The id of the task the visualisation belongs to
 	, optional			:: !Bool     //* Create optional form fields
-	, iworld			:: !*IWorld	 //* The iworld, used for example if external tools are needed to create editors
 	, selectedConsIndex	:: !Int      //* Index of the selected constructor in an OBJECT
 	, pathInEditMode    :: [Bool]    //* Path of LEFT/RIGHT choices used when UI is generated in edit mode
+	, abcInterpreterEnv :: !PrelinkedInterpretationEnvironment //* Used to serialize expressions for the client
 	}
 
 withVSt :: !TaskId !.(*VSt -> (!a, !*VSt)) !*IWorld -> (!a, !*IWorld)
@@ -152,7 +152,7 @@ isCompound :: !EditState -> Bool
 
 //Add client-side initialization to the generation of an initial UI
 withClientSideInit ::
-	!((JSObj ()) *JSWorld -> *JSWorld)
+	!(JSVal *JSWorld -> *JSWorld)
 	!(UIAttributes DataPath a *VSt -> *(!MaybeErrorString (!UI, !st), !*VSt))
 	!UIAttributes !DataPath !a !*VSt ->
 		*(!MaybeErrorString (!UI, !st), !*VSt)

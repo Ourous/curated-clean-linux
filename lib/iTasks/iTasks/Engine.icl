@@ -43,27 +43,30 @@ doTasksWithOptions initFun startable world
 	# (cli,world)                = getCommandLine world
 	# (options,world)            = defaultEngineOptions world
 	# mbOptions                  = initFun cli options
-	| mbOptions =:(Error _)      = show (fromError mbOptions) world
+	| mbOptions =:(Error _)      = show (fromError mbOptions) (setReturnCode 1 world)
 	# options                    = fromOk mbOptions
-	# iworld                     = createIWorld options world
-	# (res,iworld)               = initJSCompilerState iworld
-	| res =:(Error _)            = show ["Fatal error: " +++ fromError res] (destroyIWorld iworld)
+	# mbIWorld                   = createIWorld options world
+	| mbIWorld =: Left _
+		# (Left (err, world)) = mbIWorld
+		= show [err] (setReturnCode 1 world)
+	# (Right iworld)             = mbIWorld
 	# (symbolsResult, iworld)    = initSymbolsShare options.distributed options.appName iworld
-	| symbolsResult =: (Error _) = show ["Error reading symbols while required: " +++ fromError symbolsResult] (destroyIWorld iworld)
+	| symbolsResult =: (Error _) = show ["Error reading symbols while required: " +++ fromError symbolsResult] (setReturnCode 1 (destroyIWorld iworld))
 	# iworld                     = serve (startupTasks options) (tcpTasks options.serverPort options.keepaliveTime) (timeout options.timeout) iworld
 	= destroyIWorld iworld
 where
     webTasks = [t \\ WebTask t <- toStartable startable]
 	startupTasks {distributed, sdsPort}
 		//If distributed, start sds service task
-		=  (if distributed [startTask (sdsServiceTask sdsPort)] [])
-		++ [startTask flushWritesWhenIdle
+		=  (if distributed [systemTask (startTask (sdsServiceTask sdsPort))] [])
+		++ [systemTask (startTask flushWritesWhenIdle)
 		//If there no webtasks, stop when stable, otherwise cleanup old sessions
-		   ,startTask if (webTasks =: []) stopOnStable removeOutdatedSessions
+		   ,systemTask (startTask if (webTasks =: []) stopOnStable removeOutdatedSessions)
 		//Start all startup tasks
 		   :[t \\ StartupTask t <- toStartable startable]]
 
 	startTask t = {StartupTask|attributes=defaultValue,task=TaskWrapper t}
+	systemTask t = {StartupTask|t&attributes='DM'.put "system" "yes" t.StartupTask.attributes}
 
 	initSymbolsShare False _ iworld = (Ok (), iworld)
 	initSymbolsShare True appName iworld = case storeSymbols (IF_WINDOWS (appName +++ ".exe") appName) iworld of
@@ -108,6 +111,9 @@ where
 			("Specify the HTTP port (default: " +++ toString defaults.serverPort +++ ")")
 		, Option [] ["timeout"] (OptArg (\mp->fmap \o->{o & timeout=fmap toInt mp}) "MILLISECONDS")
 			"Specify the timeout in ms (default: 500)\nIf not given, use an indefinite timeout."
+		, Option [] ["allowed-hosts"] (ReqArg (\p->fmap \o->{o & allowedHosts = split "," p}) "IPADRESSES")
+			("Specify a comma separated white list of hosts that are allowed to connected to this application\ndefault: "
+			 +++ join "," defaults.allowedHosts)
 		, Option [] ["keepalive"] (ReqArg (\p->fmap \o->{o & keepaliveTime={tv_sec=toInt p,tv_nsec=0}}) "SECONDS")
 			"Specify the keepalive time in seconds (default: 300)"
 		, Option [] ["maxevents"] (ReqArg (\p->fmap \o->{o & maxEvents=toInt p}) "NUM")
@@ -128,8 +134,8 @@ where
 			("Specify the folder containing the data stores\ndefault: " +++ defaults.storeDirPath)
 		, Option [] ["tempdir"] (ReqArg (\p->fmap \o->{o & tempDirPath=p}) "PATH")
 			("Specify the folder containing the temporary files\ndefault: " +++ defaults.tempDirPath)
-		, Option [] ["sapldir"] (ReqArg (\p->fmap \o->{o & saplDirPath=p}) "PATH")
-			("Specify the folder containing the sapl files\ndefault: " +++ defaults.saplDirPath)
+		, Option [] ["bytecodepath"] (ReqArg (\p->fmap \o->{o & byteCodePath=p}) "PATH")
+			("Specify the app's bytecode file\ndefault: " +++ defaults.byteCodePath)
 		, Option [] ["distributed"] (NoArg (fmap \o->{o & distributed=True}))
 			"Enable distributed mode (populate the symbols share)"
 		, Option ['s'] ["sdsPort"] (ReqArg (\p->fmap \o->{o & sdsPort=toInt p}) "SDSPORT")
@@ -196,13 +202,14 @@ defaultEngineOptions world
 	# (appPath,world)    = determineAppPath world
 	# (appVersion,world) = determineAppVersion appPath world
 	# appDir             = takeDirectory appPath
-	# appName            = (dropExtension o dropDirectory) appPath
+	# appName            = (if (takeExtension appPath == "exe") dropExtension id o dropDirectory) appPath
 	# options =
 		{ appName        = appName
 		, appPath        = appPath
 		, appVersion     = appVersion
 		, serverPort     = IF_POSIX_OR_WINDOWS 8080 80
 		, serverUrl      = "http://localhost/"
+		, allowedHosts   = ["127.0.0.1"]
 		, keepaliveTime  = {tv_sec=300,tv_nsec=0} // 5 minutes
 		, sessionTime    = {tv_sec=60,tv_nsec=0}  // 1 minute, (the client pings every 10 seconds by default)
 		, persistTasks   = False
@@ -214,7 +221,7 @@ defaultEngineOptions world
 		, webDirPath     = appDir </> appName +++ "-www"
 		, storeDirPath   = appDir </> appName +++ "-data" </> "stores"
 		, tempDirPath    = appDir </> appName +++ "-data" </> "tmp"
-		, saplDirPath    = appDir </> appName +++ "-sapl"
+		, byteCodePath   = appDir </> appName +++ ".bc"
 		}
 	= (options,world)
 

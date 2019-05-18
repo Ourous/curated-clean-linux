@@ -32,8 +32,11 @@ import iTasks
 
 // Make the management framework startable 
 :: WorkflowCollection = 
-	{ name :: !String
-	, workflows :: ![Workflow]
+	{ name           :: !String
+	, loginMessage   :: !Maybe HtmlTag
+	, welcomeMessage :: !Maybe HtmlTag
+	, allowGuests    :: !Bool
+	, workflows      :: ![Workflow]
 	}
 
 instance Startable WorkflowCollection
@@ -94,8 +97,8 @@ instance toWorkflow (ParamWorkflowContainer a b)	| iTask a & iTask b
 * and let's them create instances of these tasks and work on instances.
 */
 installWorkflows :: ![Workflow] -> Task ()
-loginAndManageWork :: !String -> Task ()
-manageWorkOfCurrentUser :: Task ()
+loginAndManageWork :: !String !(Maybe HtmlTag) !(Maybe HtmlTag) !Bool -> Task ()
+manageWorkOfCurrentUser :: !(Maybe HtmlTag) -> Task ()
 
 /**
 * Dynamically adds a workflow to the system.

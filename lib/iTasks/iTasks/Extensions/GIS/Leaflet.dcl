@@ -1,6 +1,7 @@
 definition module iTasks.Extensions.GIS.Leaflet
 
 import iTasks
+from Text.HTML import :: SVGElt
 
 leafletEditor :: Editor LeafletMap
 
@@ -112,6 +113,9 @@ leafletObjectIdOf :: !LeafletObject -> LeafletObjectID
 
 
 :: LeafletWindowPos = { x :: !Int, y :: !Int }
+
+//Inline SVG based icons can be encoded as 'data uri's' which can be used instead of a url to an external icon image
+svgIconURL :: !SVGElt !(!Int,!Int) -> String
 
 //Public tileserver of openstreetmaps
 openStreetMapTiles :: String

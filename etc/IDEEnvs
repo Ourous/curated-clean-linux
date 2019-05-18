@@ -9,9 +9,52 @@ Environments
 		EnvironmentByteCodeGen:	lib/exe/bcgen
 		EnvironmentByteCodeLink:	lib/exe/bclink
 		EnvironmentByteCodeStrip:	lib/exe/bcstrip
+		EnvironmentByteCodePrelink:	lib/exe/bcprelink
 		EnvironmentCodeGen:	lib/exe/cg
 		EnvironmentLinker:	lib/exe/linker
 		EnvironmentDynLink:	lib/exe/linker
+		EnvironmentVersion:	920
+		EnvironmentRedirect:	False
+		EnvironmentCompileMethod:	Pers
+		EnvironmentProcessor:	I386
+		Environment64BitProcessor:	True
+	Environment
+		EnvironmentName:	Gast
+		EnvironmentPaths
+			Path:	{Application}/lib/StdEnv
+			Path:	{Application}/lib/Generics
+			Path:	{Application}/lib/Platform
+			Path:	{Application}/lib/Gast
+		EnvironmentCompiler:	lib/exe/cocl
+		EnvironmentCodeGen:	lib/exe/cg
+		EnvironmentLinker:	lib/exe/linker
+		EnvironmentDynLink:	lib/exe/linker
+		EnvironmentVersion:	920
+		EnvironmentRedirect:	False
+		EnvironmentCompileMethod:	Pers
+		EnvironmentProcessor:	I386
+		Environment64BitProcessor:	True
+	Environment
+		EnvironmentName:	iTasks
+		EnvironmentPaths
+			Path:	{Application}/lib/StdEnv
+			Path:	{Application}/lib/Dynamics
+			Path:	{Application}/lib/TCPIP
+			Path:	{Application}/lib/Platform
+			Path:	{Application}/lib/Platform/Deprecated/Generics
+			Path:	{Application}/lib/Platform/Deprecated/StdLib
+			Path:	{Application}/lib/ABCInterpreter
+			Path:	{Application}/lib/GraphCopy
+			Path:	{Application}/lib/iTasks
+		EnvironmentCompiler:	lib/exe/cocl::-dynamics
+		EnvironmentCodeGen:	lib/exe/cg
+		EnvironmentLinker:	lib/exe/linker|lib/exe/itasks-web-collector
+		EnvironmentDynLink:	lib/exe/linker
+		EnvironmentABCOptimise:	lib/exe/abcopt
+		EnvironmentByteCodeGen:	lib/exe/bcgen
+		EnvironmentByteCodeLink:	lib/exe/bclink
+		EnvironmentByteCodeStrip:	lib/exe/bcstrip
+		EnvironmentByteCodePrelink:	lib/exe/bcprelink
 		EnvironmentVersion:	920
 		EnvironmentRedirect:	False
 		EnvironmentCompileMethod:	Pers

@@ -1,6 +1,7 @@
 implementation module ABC.Interpreter
 
 import StdArray
+import StdBool
 import StdClass
 import StdFile
 import StdInt
@@ -42,20 +43,20 @@ defaultDeserializationSettings =
 
 serialize :: a !String !*World -> *(!Maybe SerializedGraph, !*World)
 serialize graph bcfile w
-# (graph,descs,mods) = copy_to_string_with_names graph
+# (graph,descinfo,modules) = copy_to_string_with_names graph
 
 # (bytecode,w) = readFile bcfile w
 | isNothing bytecode = (Nothing, w)
 # bytecode = fromJust bytecode
 
-#! (len,bytecodep) = strip_bytecode bytecode {#symbol_name di mods \\ di <-: descs}
+#! (len,bytecodep) = strip_bytecode False bytecode {#symbol_name di modules \\ di <-: descinfo}
 #! bytecode = derefCharArray bytecodep len
 | free_to_false bytecodep = (Nothing, w)
 
 # rec =
 	{ graph    = graph
-	, descinfo = descs
-	, modules  = mods
+	, descinfo = descinfo
+	, modules  = modules
 	, bytecode = bytecode
 	}
 = (Just rec, w)
@@ -69,9 +70,9 @@ where
 	where
 		PREFIX_D = 4
 
-	strip_bytecode :: !String !{#String} -> (!Int, !Pointer)
-	strip_bytecode bytecode descriptors = code {
-		ccall strip_bytecode "sA:VIp"
+	strip_bytecode :: !Bool !String !{#String} -> (!Int, !Pointer)
+	strip_bytecode include_symbol_table bytecode descriptors = code {
+		ccall strip_bytecode "IsA:VIp"
 	}
 
 deserialize :: !DeserializationSettings !SerializedGraph !String !*World -> *(!Maybe a, !*World)
@@ -84,6 +85,8 @@ deserialize_strict dsets graph thisexe w = case deserialize` True dsets graph th
 
 deserialize` :: !Bool !DeserializationSettings !SerializedGraph !String !*World -> *(Maybe a, !*World)
 deserialize` strict dsets {graph,descinfo,modules,bytecode} thisexe w
+| not ensure_interpreter_init = abort "internal error in deserialize`\n"
+
 # (host_syms,w) = accFiles (read_symbols thisexe) w
 
 # pgm = parse host_syms bytecode
@@ -162,6 +165,7 @@ where
 
 get_start_rule_as_expression :: !DeserializationSettings !String !String !*World -> *(Maybe a, !*World)
 get_start_rule_as_expression dsets filename prog w
+| not ensure_interpreter_init = abort "internal error in get_start_rule_as_expression\n"
 # (syms,w) = accFiles (read_symbols prog) w
 # (bc,w) = readFile filename w
 | isNothing bc = (Nothing, w)
@@ -403,3 +407,145 @@ where
 	findNull ptr = case derefChar ptr of
 		'\0' -> ptr
 		_    -> findNull (ptr+1)
+
+:: PrelinkedInterpretationEnvironment =
+	{ pie_symbols    :: !{#Symbol}
+	, pie_code_start :: !Int
+	}
+
+prepare_prelinked_interpretation :: !String !*World -> *(!Maybe PrelinkedInterpretationEnvironment, !*World)
+prepare_prelinked_interpretation bcfile w
+# (bytecode,w) = readFile bcfile w
+| isNothing bytecode = (Nothing, w)
+# bytecode = fromJust bytecode
+
+# pgm = parse {} bytecode // No matching with the host is required
+| isNothing pgm = (Nothing, w)
+# pgm = fromJust pgm
+# code_start = get_code pgm
+
+# int_syms = {#s \\ s <- getInterpreterSymbols pgm}
+= (Just {pie_symbols=int_syms,pie_code_start=code_start}, w)
+where
+	get_code :: !Int -> Int
+	get_code pgm = code {
+		ccall get_code "p:p"
+	}
+
+serialize_for_prelinked_interpretation :: a !PrelinkedInterpretationEnvironment -> String
+serialize_for_prelinked_interpretation graph pie
+# (graph,descinfo,modules) = copy_to_string_with_names graph
+# syms = {#predef_or_lookup_symbol pie.pie_code_start d modules pie.pie_symbols \\ d <-: descinfo}
+= replace_desc_numbers_by_descs 0 graph syms 0 pie.pie_code_start
+where
+	predef_or_lookup_symbol :: !Int !DescInfo !{#String} !{#Symbol} -> Int
+	predef_or_lookup_symbol code_start di mods syms = case di.di_name of
+		"_ARRAY_"  -> code_start-1*8+2
+		"_STRING_" -> code_start-2*8+2
+		"BOOL"     -> code_start-3*8+2
+		"CHAR"     -> code_start-4*8+2
+		"REAL"     -> code_start-5*8+2
+		"INT"      -> code_start-6*8+2
+		"dINT"     -> code_start-6*8+2
+		_          -> lookup_symbol_value di mods syms
+
+	// This is like the function with the same name in GraphCopy's
+	// graph_copy_with_names, but it assigns even negative descriptor numbers
+	// to predefined symbols so that it matches predef_or_lookup_symbol above.
+	replace_desc_numbers_by_descs :: !Int !*{#Char} !{#Int} !Int !Int -> *{#Char}
+	replace_desc_numbers_by_descs i s symbol_a symbol_offset array_desc
+	| i>=size s
+		| i==size s = s
+		| otherwise = abort "error in replace_desc_numbers_by_descs\n"
+	#! desc=get_word_from_string s i
+	| desc<0
+		= replace_desc_numbers_by_descs (i+IF_INT_64_OR_32 8 4) s symbol_a symbol_offset array_desc
+	# desc = symbol_a.[desc-1]
+	# desc=desc+symbol_offset
+	# s=store_int_in_string s i (desc-array_desc)
+	| desc bitand 2==0
+		# d = get_thunk_n_non_pointers desc
+		= replace_desc_numbers_by_descs (i+(IF_INT_64_OR_32 8 4)+(d<<(IF_INT_64_OR_32 3 2))) s symbol_a symbol_offset array_desc
+	# (d,not_array) = get_descriptor_n_non_pointers_and_not_array desc
+	| not_array
+		= replace_desc_numbers_by_descs (i+(IF_INT_64_OR_32 8 4)+(d<<(IF_INT_64_OR_32 3 2))) s symbol_a symbol_offset array_desc
+	| d==0 // _STRING_
+		#! l = get_word_from_string s (i+IF_INT_64_OR_32 8 4)
+		# l = IF_INT_64_OR_32 ((l+7) bitand -8) ((l+3) bitand -4)
+		= replace_desc_numbers_by_descs (i+(IF_INT_64_OR_32 16 8)+l) s symbol_a symbol_offset array_desc
+	| d==1 // _ARRAY_
+		#! d = get_word_from_string s (i+IF_INT_64_OR_32 16 8)
+		| d==0
+			= replace_desc_numbers_by_descs (i+(IF_INT_64_OR_32 24 12)) s symbol_a symbol_offset array_desc
+		# d = symbol_a.[d-1]
+		# d = d+symbol_offset
+		# s=store_int_in_string s (i+IF_INT_64_OR_32 16 8) (d-array_desc)
+		#! l = get_word_from_string s (i+IF_INT_64_OR_32 8 4)
+		| d==array_desc-5*8+2 // REAL
+			# l = l << IF_INT_64_OR_32 3 2
+			= replace_desc_numbers_by_descs (i+(IF_INT_64_OR_32 24 12)+l) s symbol_a symbol_offset array_desc
+		| d==array_desc-6*8+2 // INT
+			# l = l << 3
+			= replace_desc_numbers_by_descs (i+(IF_INT_64_OR_32 24 12)+l) s symbol_a symbol_offset array_desc
+		| d==array_desc-3*8+2 // BOOL
+			# l = IF_INT_64_OR_32 ((l+7) bitand -8) ((l+3) bitand -4)
+			= replace_desc_numbers_by_descs (i+(IF_INT_64_OR_32 24 12)+l) s symbol_a symbol_offset array_desc
+		# arity = get_D_node_arity d
+		| arity>=256
+			# record_a_arity = get_D_record_a_arity d
+			# record_b_arity = arity-256-record_a_arity
+			# l = (l * record_b_arity) << IF_INT_64_OR_32 3 2
+			= replace_desc_numbers_by_descs (i+(IF_INT_64_OR_32 24 12)+l) s symbol_a symbol_offset array_desc
+		= abort (toString l+++" "+++toString d)
+	where
+		get_word_from_string :: !{#Char} !Int -> Int // get_D_from_string_64
+		get_word_from_string s i = code inline {
+			push_a_b 0
+			pop_a 1
+			addI
+			load_i 16
+		}
+
+		store_int_in_string :: !*{#Char} !Int !Int -> *{#Char} // 64-bit variant
+		store_int_in_string s i n =
+			{s & [i]=toChar n,[i+1]=toChar (n>>8),[i+2]=toChar (n>>16),[i+3]=toChar (n>>24),
+				 [i+4]=toChar (n >> 32),[i+5]=toChar (n>>40),[i+6]=toChar (n>>48),[i+7]=toChar (n>>56)}
+
+		get_thunk_n_non_pointers:: !Int -> Int
+		get_thunk_n_non_pointers d
+		# arity = get_thunk_arity d
+		| arity<256
+			= 0
+			# b_size = arity>>8
+			= b_size
+		where
+			get_thunk_arity :: !Int -> Int // 64-bit version
+			get_thunk_arity a = code {
+				load_si32 -4
+			}
+
+		get_descriptor_n_non_pointers_and_not_array :: !Int -> (!Int,!Bool)
+		get_descriptor_n_non_pointers_and_not_array d
+		| d<array_desc
+			| d==array_desc-1*8+2 = (1,False) // _ARRAY_
+			| d==array_desc-2*8+2 = (0,False) // _STRING_
+			| d==array_desc-3*8+2 = (1,True)  // BOOL
+			| d==array_desc-4*8+2 = (1,True)  // CHAR
+			| d==array_desc-5*8+2 = (IF_INT_64_OR_32 1 2,True) // REAL
+			| d==array_desc-6*8+2 = (1,True)  // INT/dINT
+			| otherwise = abort "internal error in serialize_for_prelinked_interpretation\n"
+		# arity = get_D_node_arity d
+		| arity<256 = (0,True)
+		# record_a_arity = get_D_record_a_arity d
+		# record_b_arity = arity-256-record_a_arity
+		= (record_b_arity,True)
+
+		get_D_node_arity :: !Int -> Int
+		get_D_node_arity d = code inline {
+			load_si16 -2
+		}
+
+		get_D_record_a_arity :: !Int -> Int
+		get_D_record_a_arity d = code inline {
+			load_si16 0
+		}

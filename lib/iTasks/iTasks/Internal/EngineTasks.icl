@@ -12,12 +12,15 @@ import iTasks.Internal.TaskStore
 import iTasks.SDS.Combinators.Common
 import iTasks.UI.Definition
 import iTasks.WF.Definition
+import Text
 
-from Data.Map import newMap
+from Data.Map import newMap, member
 
 everyTick :: (*IWorld -> *(!MaybeError TaskException (), !*IWorld)) -> Task ()
 everyTick f = Task eval
 where
+	eval DestroyEvent evalOpts tree iworld
+		= (DestroyedResult, iworld)
 	eval event evalOpts tree=:(TCInit taskId ts) iworld
 		# (merr, iworld) = f iworld
 		| isError merr = (ExceptionResult (fromError merr), iworld)
@@ -33,7 +36,7 @@ where
 //When we run the built-in HTTP server we need to do active garbage collection of instances that were created for sessions
 removeOutdatedSessions :: Task ()
 removeOutdatedSessions = everyTick \iworld=:{IWorld|options}->
-	case read (sdsFocus {InstanceFilter|defaultValue & onlySession=Just True} filteredInstanceIndex) EmptyContext iworld of
+	case read (sdsFocus {InstanceFilter|defaultValue & includeSessions=True} filteredInstanceIndex) EmptyContext iworld of
 		(Ok (ReadingDone index), iworld) = checkAll (removeIfOutdated options) index iworld
 		(Error e, iworld)                = (Error e, iworld)
 where
@@ -80,14 +83,25 @@ flushWritesWhenIdle = everyTick \iworld->case read taskEvents EmptyContext iworl
 //When we don't run the built-in HTTP server we don't want to loop forever so we stop the loop
 //once all tasks are stable
 stopOnStable :: Task ()
-stopOnStable = everyTick \iworld=:{IWorld|shutdown}->case read (sdsFocus {InstanceFilter|defaultValue & includeProgress=True} filteredInstanceIndex) EmptyContext iworld of
+stopOnStable = everyTick \iworld->case read (sdsFocus {InstanceFilter|defaultValue & includeProgress=True, includeStartup=True, includeAttributes=True} filteredInstanceIndex) EmptyContext iworld of
 		(Ok (ReadingDone index), iworld)
-			# shutdown = case shutdown of
-				Nothing = if (allStable index) (Just (if (exceptionOccurred index) 1 0)) Nothing
-				_       = shutdown
-			= (Ok (), {IWorld|iworld & shutdown = shutdown})
+			# iworld = case exceptions index of
+				[] = iworld
+				excs
+					# (_, world) = fclose (stderr <<< join "\n" excs <<< "\n") iworld.world
+					= {IWorld | iworld & world=world, shutdown=Just 1}
+			# iworld = if (isNothing iworld.shutdown && all isStable (filter (not o isSystem) index))
+				{IWorld | iworld & shutdown=Just 0}
+				iworld
+			= (Ok (), iworld)
+		(Ok _,iworld)
+			= (Error (exception "Unexpeced SDS state"),iworld)
 		(Error e, iworld)  = (Error e, iworld)
 where
-	allStable instances = all (\v -> v =: Stable || v =: (Exception _)) (values instances)
-	exceptionOccurred instances = any (\v -> v =: (Exception _)) (values instances)
-	values instances = [value \\ (_,_,Just {InstanceProgress|value},_) <- instances]
+	isStable (_, _, Nothing, _) = False
+	isStable (_, _, Just {InstanceProgress|value}, attributes) = value =: Stable
+
+	isSystem (_, _, Just {InstanceProgress|value}, attributes) = member "system" (fromMaybe newMap attributes)
+	isSystem _ = False
+	
+	exceptions instances = [e\\(_, _, Just {InstanceProgress|value=Exception e}, _)<-instances]

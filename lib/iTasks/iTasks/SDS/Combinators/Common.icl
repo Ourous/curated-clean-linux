@@ -50,12 +50,12 @@ removeMaybe :: !(Maybe a) !(sds p (Maybe a) (Maybe a)) -> SDSLens p a a | gText{
 removeMaybe defaultValue sds = sdsLens "removeMaybe" id (SDSRead read) (SDSWriteConst write) (SDSNotifyConst (\_ _ _ _ -> True)) (Just reducer) sds
 where
     read p (Just r) = Ok r
-    read p Nothing = maybe (Error (exception "Required value not available in shared data source")) Ok defaultValue
+    read p Nothing = maybe (Error (exception ("Required value not available in shared data source: " <+++ p))) Ok defaultValue
 
     write p w = Ok (Just (Just w))
 
     reducer _ (Just a)  = Ok a
-    reducer _ Nothing   = maybe (Error (exception "Required value not available in shared data source")) Ok defaultValue
+    reducer p Nothing   = maybe (Error (exception ("Required value not available in shared data source: " <+++ p))) Ok defaultValue
 
 mapRead :: !(r -> r`) !(sds p r w) -> SDSLens p r` w | gText{|*|} p & TC p & TC r & TC w & RWShared sds
 mapRead read sds = mapReadError (\r -> Ok (read r)) sds

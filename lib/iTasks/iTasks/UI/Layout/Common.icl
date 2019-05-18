@@ -17,13 +17,20 @@ import qualified Data.Foldable
 import qualified Text as T
 from Text import class Text, instance Text String
 
-LABEL_WIDTH :== 100
+addCSSClass :: String -> LayoutRule
+addCSSClass className = modifyUIAttributes (SelectKeys ["class"]) add
+where
+	add attr = 'DM'.put "class" (maybe 
+		(JSONArray [JSONString className])
+		(\(JSONArray classNames) -> JSONArray (classNames ++ [JSONString className]))
+		('DM'.get "class" attr)) attr
 
 arrangeWithTabs :: Bool -> LayoutRule
 arrangeWithTabs closeable = layoutSubUIs
 	(SelectAND (SelectByPath []) (SelectByType UIParallel))
 	(sequenceLayouts
 		[setUIType UITabSet
+		,layoutSubUIs SelectChildren scrollContent
 		:if closeable [moveCloseToTab] []
 		])
 where
@@ -53,31 +60,39 @@ where
 		,removeSubUIs (SelectByPath [0])
 		]
 
-arrangeWithSideBar :: !Int !UISide !Int !Bool -> LayoutRule
-arrangeWithSideBar index side size resize = sequenceLayouts
+arrangeWithHeader :: !Int -> LayoutRule
+arrangeWithHeader index = setAside "itasks-headerbar" index TopSide False
+
+arrangeWithSideBar :: !Int !UISide !Bool -> LayoutRule
+arrangeWithSideBar index side resize = setAside ("itasks-sidebar" +++ suffix side) index side resize
+where
+	suffix TopSide = "-top"
+	suffix BottomSide = "-bottom"
+	suffix LeftSide = "-left"
+	suffix RightSide = "-right"
+
+setAside className index side resize = sequenceLayouts
 	[wrapUI UIPanel //Push the current container down a level
-	,copySubUIAttributes SelectAll [0] [] 	//Keep the attributes from the original UI
-	,setUIAttributes (directionAttr direction)
+	,copySubUIAttributes SelectAll [0] [] //Keep the attributes from the original UI
+	,addCSSClass className
 	,moveSubUIs (SelectByPath [0,index]) [] sidePanelIndex
 	,layoutSubUIs (SelectByPath [sidePanelIndex]) (sequenceLayouts
 		(if resize
 		[wrapUI UIPanel
-		,setUIAttributes (sizeAttr sidePanelWidth sidePanelHeight)
+		,addCSSClass "aside"
 		,setUIAttributes (resizableAttr (resizers side))
 		]
-		[setUIAttributes (sizeAttr sidePanelWidth sidePanelHeight)]
-	))
+		[addCSSClass "aside"]
+		)
+	)
 	]
 where
 	sidePanelIndex = if (side === TopSide || side === LeftSide) 0 1
-	direction = if (side === TopSide|| side === BottomSide) Vertical Horizontal
 
 	resizers TopSide = [BottomSide]
 	resizers BottomSide = [TopSide]
 	resizers LeftSide = [RightSide]
 	resizers RightSide = [LeftSide]
-
-	(sidePanelWidth,sidePanelHeight) = if (direction === Vertical) (FlexSize,ExactSize size) (ExactSize size,FlexSize)
 
 arrangeAsMenu :: [[Int]] -> LayoutRule
 arrangeAsMenu seps = sequenceLayouts
@@ -160,32 +175,38 @@ where
 arrangeSplit :: !UIDirection !Bool -> LayoutRule
 arrangeSplit direction resize 
 	= sequenceLayouts
-		[layoutSubUIs (SelectByPath []) (setUIAttributes (directionAttr direction))
+		[layoutSubUIs (SelectByPath []) (if (direction === Horizontal) arrangeHorizontal arrangeVertical)
 		,layoutSubUIs SelectChildren (setUIAttributes (sizeAttr FlexSize FlexSize))
 		]
 
 arrangeVertical :: LayoutRule
-arrangeVertical = setUIAttributes (directionAttr Vertical)
+arrangeVertical = addCSSClass "itasks-vertical"
 
 arrangeHorizontal :: LayoutRule
-arrangeHorizontal = setUIAttributes (directionAttr Horizontal)
+arrangeHorizontal = addCSSClass "itasks-horizontal"
 
 frameCompact :: LayoutRule
 frameCompact = sequenceLayouts
-	[setUIAttributes ('DM'.unions [frameAttr True,sizeAttr WrapSize WrapSize,marginsAttr 50 0 20 0,minWidthAttr (ExactBound 600)])
+	[addCSSClass "itasks-frame-compact-inner"
 	,wrapUI UIContainer
-	,setUIAttributes (halignAttr AlignCenter)
+	,addCSSClass "itasks-frame-compact-outer"
 	]
+
+scrollContent :: LayoutRule
+scrollContent = addCSSClass "itasks-scroll-content"
 
 toWindow :: UIWindowType UIVAlign UIHAlign -> LayoutRule
 toWindow windowType vpos hpos = sequenceLayouts
 	[wrapUI UIWindow
 	,interactToWindow
-	,copySubUIAttributes (SelectKeys [TITLE_ATTRIBUTE]) [0] []
-	,layoutSubUIs (SelectByPath [0]) (delUIAttributes (SelectKeys [TITLE_ATTRIBUTE]))
+	//Move title and class attributes to window
+	,copySubUIAttributes (SelectKeys ["title","class"]) [0] []
+	,layoutSubUIs (SelectByPath [0]) (delUIAttributes (SelectKeys ["title","class"]))
+	//Set window specific attributes
 	,setUIAttributes ('DM'.unions [windowTypeAttr windowType,vposAttr vpos, hposAttr hpos])
 	]
 where
+	//If the first child is an interact, move the title one level up
 	interactToWindow = layoutSubUIs (SelectAND (SelectByPath []) (SelectByContains (SelectAND (SelectByPath [0]) (SelectByType UIInteract))))
 		(sequenceLayouts [copySubUIAttributes (SelectKeys ["title"]) [0,0] []
 							 ,layoutSubUIs (SelectByPath [0,0]) (delUIAttributes (SelectKeys ["title"]))
@@ -261,7 +282,11 @@ where tune (ArrangeWithTabs b) t = tune (ApplyLayout (arrangeWithTabs b)) t
 
 instance tune ArrangeWithSideBar Task 
 where
-    tune (ArrangeWithSideBar index side size resize) t = tune (ApplyLayout (arrangeWithSideBar index side size resize)) t
+    tune (ArrangeWithSideBar index side resize) t = tune (ApplyLayout (arrangeWithSideBar index side resize)) t
+
+instance tune ArrangeWithHeader Task
+where
+    tune (ArrangeWithHeader index) t = tune (ApplyLayout (arrangeWithHeader index)) t
 
 instance tune ArrangeAsMenu Task
 where
@@ -278,6 +303,18 @@ where
 instance tune ArrangeHorizontal Task
 where
     tune ArrangeHorizontal t = tune (ApplyLayout arrangeHorizontal) t
+
+instance tune ScrollContent Task
+where
+    tune ScrollContent t = tune (ApplyLayout scrollContent) t
+
+instance tune AddCSSClass Task
+where
+	tune (AddCSSClass s) t = tune (ApplyLayout (addCSSClass s)) t
+
+instance tune CSSStyle Task
+where
+	tune (CSSStyle s) t = tune (ApplyAttribute "style" s) t
 
 instance tune ToWindow Task
 where
@@ -320,7 +357,7 @@ toFormItem = layoutSubUIs (SelectAND (SelectByPath []) (SelectOR (SelectByHasAtt
 	(sequenceLayouts
 		//Create the 'row' that holds the form item
 		[wrapUI UIContainer
-		,setUIAttributes ('DM'.unions [marginsAttr 2 4 2 4, directionAttr Horizontal,valignAttr AlignMiddle, sizeAttr FlexSize WrapSize])
+		,addCSSClass "itasks-form-item"
 		//If there is a label attribute, create a label 
 		,optAddLabel
 		//If there is hint attribute, create an extra icon 
@@ -331,7 +368,7 @@ toFormItem = layoutSubUIs (SelectAND (SelectByPath []) (SelectOR (SelectByHasAtt
 where
 	optAddLabel = layoutSubUIs (SelectByContains (SelectAND (SelectByPath [0]) (SelectByHasAttribute LABEL_ATTRIBUTE))) addLabel
 	addLabel = sequenceLayouts
-		[insertChildUI 0 (uia UILabel (widthAttr (ExactSize LABEL_WIDTH)))
+		[insertChildUI 0 (uia UILabel (widthAttr WrapSize))
 		,sequenceLayouts
 			[copySubUIAttributes (SelectKeys ["label","optional","mode"]) [1] [0]
 			,layoutSubUIs (SelectByPath [0]) (modifyUIAttributes (SelectKeys ["label","optional","mode"]) createLabelText)
@@ -354,7 +391,7 @@ where
 					)
 
 	addIcon iconIndex = sequenceLayouts
-		[insertChildUI iconIndex (uia UIIcon (leftMarginAttr 5))
+		[insertChildUI iconIndex (ui UIIcon)
 		,copySubUIAttributes (SelectKeys [HINT_ATTRIBUTE,HINT_TYPE_ATTRIBUTE]) [iconIndex - 1] [iconIndex]
 		,layoutSubUIs (SelectByPath [iconIndex]) (modifyUIAttributes (SelectKeys [HINT_ATTRIBUTE,HINT_TYPE_ATTRIBUTE]) createIconAttr)
 		]
