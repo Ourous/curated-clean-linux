@@ -4,6 +4,7 @@ import StdGeneric, StdMaybe, StdList, StdFunc
 
 generic gMapLM a b :: a:a -> m:(m b:b) | Monad m, [m <= b]
 gMapLM{|c|} x 						= ret x
+gMapLM{|UNIT|} _ = ret UNIT
 gMapLM{|PAIR|} fx fy (PAIR x y) 	= fx x >>= \x1 -> fy y >>= \y1 -> ret (PAIR x1 y1)  
 gMapLM{|EITHER|} fl fr x 			= mapMEITHER fl fr x 
 gMapLM{|CONS|} f (CONS x)			= f x >>= ret o CONS
@@ -12,6 +13,7 @@ gMapLM{|OBJECT|} f (OBJECT x)		= f x >>= ret o OBJECT
  
 generic gMapRM a b :: a:a -> m:(m b:b) | Monad m, [m <= b]
 gMapRM{|c|} x 						= ret x
+gMapRM{|UNIT|} _ = ret UNIT
 gMapRM{|PAIR|} fx fy (PAIR x y) 		= fy y >>= \y1 -> fx x >>= \x1 -> ret (PAIR x1 y1)  
 gMapRM{|EITHER|} fl fr x 			= mapMEITHER fl fr x 
 gMapRM{|CONS|} f (CONS x)			= f x >>= ret o CONS
