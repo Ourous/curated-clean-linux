@@ -35,6 +35,7 @@ class docPropertyBootstrap      d :: !d -> Maybe String
 class docPropertyTestWith       d :: !d -> [PropertyVarInstantiation]
 class docPropertyTestGenerators d :: !d -> [PropertyTestGenerator]
 class docProperties             d :: !d -> [Property]
+class docPreconditions          d :: !d -> [String]
 
 /**
  * Documentation of a Clean module.
@@ -76,8 +77,26 @@ instance docVars FunctionDoc
 instance docResults FunctionDoc
 instance docType FunctionDoc
 instance docThrows FunctionDoc
-instance docPropertyTestWith FunctionDoc
 instance docProperties FunctionDoc
+instance docPropertyTestWith FunctionDoc
+instance docPreconditions FunctionDoc
+
+/**
+ * Documentation of a class instance.
+ */
+:: InstanceDoc =
+	{ description        :: !Maybe Description
+	, complexity         :: !Maybe String  //* E.g. "O(n log n)"
+	, properties         :: ![Property] //* Properties of this instance
+	, property_test_with :: ![PropertyVarInstantiation] //* With which types to test the properties
+	, preconditions      :: ![String]   //* Preconditions for the properties
+	}
+
+instance docDescription InstanceDoc
+instance docComplexity InstanceDoc
+instance docProperties InstanceDoc
+instance docPropertyTestWith InstanceDoc
+instance docPreconditions InstanceDoc
 
 /**
  * Documentation of a function parameter.
@@ -98,7 +117,7 @@ instance docDescription ParamDoc
  *   the arguments (the second argument). The first argument is the name.
  */
 :: Property
-	= ForAll !String ![(!String,!Type)] !String
+	= ForAll !String ![(String,Type)] !String
 
 /**
  * When a property type contains type variables, a `PropertyVarInstantiation`
@@ -123,7 +142,7 @@ instance docDescription ParamDoc
 	= PTG_Function !Type !String
 	| PTG_List !Type !String
 
-derive gDefault FunctionDoc, Property, PropertyVarInstantiation, PropertyTestGenerator
+derive gDefault FunctionDoc, InstanceDoc, Property, PropertyVarInstantiation, PropertyTestGenerator
 
 /**
  * Documentation of a Clean class member.
@@ -251,7 +270,7 @@ parseDoc :: !String -> Either ParseError (!d, ![ParseWarning]) | docBlockToDoc{|
  * @representation An order list of key-value pairs. A key can occur multiple
  *   times. The description has key `description`.
  */
-:: DocBlock :== [(!String, !String)]
+:: DocBlock :== [(String, String)]
 
 /**
  * The magic for {{`parseDoc`}}. Usually, a record type like {{`FunctionDoc`}}
@@ -264,8 +283,8 @@ generic docBlockToDoc d :: !(Either [String] DocBlock) -> Either ParseError (!d,
 
 derive docBlockToDoc UNIT, PAIR, EITHER, CONS, OBJECT, FIELD of {gfd_name}, RECORD
 derive docBlockToDoc String, [], Maybe, Type
-derive docBlockToDoc ModuleDoc, FunctionDoc, ClassMemberDoc, ClassDoc,
-	ConstructorDoc, TypeDoc
+derive docBlockToDoc ModuleDoc, FunctionDoc, InstanceDoc, ClassMemberDoc,
+	ClassDoc, ConstructorDoc, TypeDoc
 
 /**
  * Print a documentation block as a string. The magic happens in
@@ -279,8 +298,8 @@ printDoc :: !d -> String | docToDocBlock{|*|} d
  */
 generic docToDocBlock d :: !Bool !d -> Either [String] DocBlock
 
-derive docToDocBlock ModuleDoc, FunctionDoc, ClassMemberDoc, ClassDoc,
-	ConstructorDoc, TypeDoc
+derive docToDocBlock ModuleDoc, FunctionDoc, InstanceDoc, ClassMemberDoc,
+	ClassDoc, ConstructorDoc, TypeDoc
 
 /**
  * Trace a list of ParseWarnings like StdDebug might do it

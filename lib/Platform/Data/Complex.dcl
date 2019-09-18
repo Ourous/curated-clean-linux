@@ -50,13 +50,13 @@ instance asinh (Complex a) | Ord a & Eq a & AllGeo a & Arith a & pi a & sqrt a &
 instance acosh (Complex a) | Ord a & Eq a & AllGeo a & Arith a & pi a & sqrt a & ln a
 instance atanh (Complex a) | Ord a & Eq a & AllGeo a & Arith a & pi a & sqrt a & ln a
 
-realPart :: (Complex a) -> a
-imagPart :: (Complex a) -> a
+realPart :: !(Complex a) -> a
+imagPart :: !(Complex a) -> a
 
 mkPolar :: a a -> Complex a | cos a & sin a & * a
 cis :: a -> Complex a | cos a & sin a
 polar :: (Complex a) -> (a, a) | Ord a & Eq a & atan a & sqrt a & MultDiv a & PlusMin a & pi a
-magnitude :: (Complex a) -> a | sqrt a & * a & + a
-phase :: (Complex a) -> a | Ord a & Eq a & atan a & MultDiv a & PlusMin a & pi a
+magnitude :: !(Complex a) -> a | sqrt a & * a & + a
+phase :: !(Complex a) -> a | Ord a & Eq a & atan a & MultDiv a & PlusMin a & pi a
 
-conjugate :: (Complex a) -> Complex a | ~ a
+conjugate :: !(Complex a) -> Complex a | ~ a

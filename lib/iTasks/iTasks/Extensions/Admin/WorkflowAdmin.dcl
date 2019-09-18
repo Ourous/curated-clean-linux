@@ -105,8 +105,6 @@ manageWorkOfCurrentUser :: !(Maybe HtmlTag) -> Task ()
 *
 * @param Workflow: The workflow to add
 * @return The description of the added workflow
-* 
-* @gin False
 */
 addWorkflows :: ![Workflow] -> Task [Workflow]
 

@@ -20,18 +20,28 @@ from Text.GenJSON import generic JSONEncode, generic JSONDecode, :: JSONNode, ::
 	| EndEvent   EndEvent   //* A test has finished
 
 /**
+ * The location of a test in a source file.
+ * This is not complete; more fields can be added as necessary.
+ */
+:: TestLocation =
+	{ moduleName :: !Maybe String //* The module the test is defined in
+	}
+
+/**
  * Event emitted when a test is started.
  * Specialised JSONEncode/JSONDecode instances are used for this type, which
  * have to be adapted in case the type definition is changed!
  */
-:: StartEvent = { name    :: !String //* The test's name
+:: StartEvent = { name     :: !String             //* The test's name
+                , location :: !Maybe TestLocation //* The test's location
                 }
 /**
  * Event emitted after a test has finished.
  */
-:: EndEvent   = { name    :: !String       //* The test's name
-                , event   :: !EndEventType //* The event's type, indicating success
-                , message :: !String       //* Message providing an explanation for the result
+:: EndEvent   = { name     :: !String             //* The test's name
+                , location :: !Maybe TestLocation //* The test's location
+                , event    :: !EndEventType       //* The event's type, indicating success
+                , message  :: !String             //* Message providing an explanation for the result
                 }
 
 /**
@@ -48,10 +58,11 @@ from Text.GenJSON import generic JSONEncode, generic JSONDecode, :: JSONNode, ::
  * Reasons for failing a test.
  */
 :: FailReason
-	= FailedAssertions [FailedAssertion]          //* Assertions that caused the test to fail
-	| CounterExamples [CounterExample]            //* Example values for which the test failed
-	| FailedChildren [(String, Maybe FailReason)] //* Subtests failed; the tuples are of name and failing reason
-	| Crashed                                     //* The test crashed
+	= FailedAssertions ![FailedAssertion]          //* Assertions that caused the test to fail
+	| CounterExamples ![CounterExample]            //* Example values for which the test failed
+	| FailedChildren ![(String, Maybe FailReason)] //* Subtests failed; the tuples are of name and failing reason
+	| Crashed                                      //* The test crashed
+	| CustomFailReason !String                     //* A custom reason for the test to have failed
 
 /**
  * A counter-example to a test.
@@ -87,8 +98,8 @@ from Text.GenJSON import generic JSONEncode, generic JSONDecode, :: JSONNode, ::
 	| Ge            //* Greater than or equal to
 	| Other !String //* Custom relation
 
-derive JSONEncode TestEvent, StartEvent, EndEvent, FailReason, CounterExample, FailedAssertion, Relation
-derive JSONDecode TestEvent, StartEvent, EndEvent, FailReason, CounterExample, FailedAssertion, Relation
+derive JSONEncode TestEvent, StartEvent, EndEvent, TestLocation, FailReason, CounterExample, FailedAssertion, Relation
+derive JSONDecode TestEvent, StartEvent, EndEvent, TestLocation, FailReason, CounterExample, FailedAssertion, Relation
 
 instance toString Expression
 instance toString Relation

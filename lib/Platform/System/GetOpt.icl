@@ -41,7 +41,7 @@ getOpt :: (ArgOrder a) [OptDescr a] [String] -> ([a],[String],[String])
 getOpt ordering optDescr args = (os,xs,es ++ map errUnrec us)
    where (os,xs,us,es) = getOpt` ordering optDescr args
 
-getOpt` :: (ArgOrder a) [OptDescr a] [String] -> ([a],[String],[String],[String])
+getOpt` :: (ArgOrder a) [OptDescr a] ![String] -> ([a],[String],[String],[String])
 getOpt` _        _        []         =  ([],[],[],[])
 getOpt` ordering optDescr [arg:args] = procNextOpt opt ordering
    where procNextOpt (Opt o)      _                 = ([o:os],     xs,       us,     es)

@@ -42,7 +42,7 @@ tabset2 :: !(Editor a) !(Editor b) -> Editor (a,b)
 tabset3 :: !(Editor a) !(Editor b) !(Editor c) -> Editor (a,b,c)
 tabset4 :: !(Editor a) !(Editor b) !(Editor c) !(Editor d) -> Editor (a,b,c,d)
 tabset5 :: !(Editor a) !(Editor b) !(Editor c) !(Editor d) !(Editor e) -> Editor (a,b,c,d,e)
-tabsetc :: !(Editor Int) ![((Maybe a) -> a, Editor a)] -> Editor (Int, a)
+tabsetc :: !(Editor Int) ![((Maybe a) -> a, Editor a)] -> Editor (Int,a)
 
 //# UIWindow
 window  :: Editor ()
@@ -53,7 +53,7 @@ window2 :: !(Editor a) !(Editor b) -> Editor (a,b)
 window3 :: !(Editor a) !(Editor b) !(Editor c) -> Editor (a,b,c)
 window4 :: !(Editor a) !(Editor b) !(Editor c) !(Editor d) -> Editor (a,b,c,d)
 window5 :: !(Editor a) !(Editor b) !(Editor c) !(Editor d) !(Editor e) -> Editor (a,b,c,d,e)
-windowc :: !(Editor Int) ![((Maybe a) -> a, Editor a)] -> Editor (Int, a)
+windowc :: !(Editor Int) ![((Maybe a) -> a, Editor a)] -> Editor (Int,a)
 
 //# UIMenu
 menu  :: Editor ()

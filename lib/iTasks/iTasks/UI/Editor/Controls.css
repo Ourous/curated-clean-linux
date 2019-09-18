@@ -1,0 +1,306 @@
+.itasks-textview, .itasks-htmlview {
+	padding: 5px;
+}
+
+.itasks-icon {
+	width: 16px;
+	height: 16px;
+}
+.itasks-label {
+	width: 100px;
+	padding: 5px;
+	text-overflow: elipsis;
+}
+.itasks-button {
+	font-size: 8pt;
+   	padding: 3px;
+	background: linear-gradient(var(--button-base-color-lighter), var(--button-base-color));
+	background-repeat: none;
+	border: 1px solid var(--button-base-color-darker);
+	border-radius: 3px;
+
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	text-decoration: none;
+	color: var(--button-text-color);
+	flex-shrink: 0;
+}
+.itasks-button:hover {
+	border-color: var(--button-base-color-darkest);
+}
+.itasks-button:active {
+	background: var(--button-base-color-lighter);
+}
+
+.itasks-button-label {
+	margin: 0 4px;
+	height: 16px;
+	cursor: default;
+}
+.itasks-button-icon {
+	width: 16px;
+	height: 16px;
+}
+.itasks-button:disabled {
+	color: var(--button-text-color-lighter);
+	background: linear-gradient(var(--button-base-color-lighter), var(--button-base-color-darker));
+}
+.itasks-button:disabled:hover {
+	border-color: var(--button-base-color-darkest);
+}
+.itasks-button:disabled .itasks-button-icon {
+	opacity: 0.5;
+}
+
+.itasks-checkgroup, {
+	margin: 0;
+	padding: 0;
+}
+.itasks-checkgroup li {
+	list-style: none;
+}
+.itasks-checkgroup label {
+	margin-left: 5px;
+}
+.itasks-choicegrid {
+	display: flex;
+	flex-direction: column;
+
+	/*Default stretch in both directions*/
+	flex-grow: 1;
+	align-self: stretch;
+}
+.itasks-choicegrid-header {
+	color: var(--panel-header-text-color);
+	background: var(--panel-header-base-color);
+	background: linear-gradient(var(--panel-header-base-color-lighter2), var(--panel-header-base-color-darker2));
+	display: flex;
+	flex-direction: row;
+	flex: none;
+}
+.itasks-choicegrid-header > div {
+	border: 1px solid;
+	border-color:  var(--choicegrid-up-color) var(--choicegrid-up-color) var(--choicegrid-down-color) var(--choicegrid-down-color);
+	flex: 1;
+	padding: 3px 5px;
+	font-size: 11px;
+	height: 20px;
+}
+.itasks-choicegrid-body {
+	flex: 1;
+	background: #fff;
+	color: #000;
+	overflow: auto;
+	min-height: 100px;
+}
+.itasks-choicegrid-body > div {
+	display: flex;
+	flex-direction: row;
+	cursor: default;
+	border: solid transparent;
+	border-width: 1px 0;
+	border-bottom-color: #ddd;
+}
+.itasks-choicegrid-body > div:nth-child(even) {
+	background-color: #fafafa;
+}
+.itasks-choicegrid-body > div:hover {
+	background-color: #eee;
+}
+.itasks-choicegrid-body > div.itasks-selected {
+	background-color: var(--select-base-color);
+	color: var(--select-text-color);
+	border: 1px dotted #333;
+}
+.itasks-choicegrid-body > div > div {
+	flex: 1;
+	padding: 3px 5px;
+}
+
+.itasks-choicetree {
+	overflow: auto;
+	min-width: 150px;
+	min-height: 100px;
+
+	background: #fff;
+	color: #000;
+}
+.itasks-choicetree ol {
+	margin: 5px 0 0 20px;
+	padding: 0;
+}
+.itasks-choicetree li {
+	position: relative;
+	margin: 0 0 2px -15px;
+	list-style: none;
+}
+.itasks-choicetree li input {
+	display: none;
+}
+.itasks-choicetree li input + label {
+	display: inline-block;
+	background: url("/css/icons/toggle-small-expand.png") no-repeat;
+	width: 16px;
+	height: 16px;
+	position: absolute;
+	top: 0;
+	left: 0;
+	padding: 0;
+}
+.itasks-choicetree li input ~ ol {
+	margin: 0 0 0 -44px;
+}
+.itasks-choicetree li input ~ ol > li {
+	display: none;
+	margin-left: -24px !important;
+	padding-left: 1px;
+}
+
+.itasks-choicetree li input:checked + label {
+	background: url("/css/icons/toggle-small.png") no-repeat;
+}
+.itasks-choicetree li input:checked ~ ol {
+	padding: 0 0 0 80px;
+	height: auto;
+}
+.itasks-choicetree li input:checked ~ ol > li {
+	display: block;
+	margin: 0 0 2px;
+}
+.itasks-choicetree li input:checked ~ ol > li:last-child {
+	margin: 0 0 1px;
+}
+
+.itasks-choicetree li.itasks-leaf > label {
+	background-position: 16px 0px;
+	background-repeat: no-repeat;
+}
+.itasks-choicetree li.itasks-selected > label {
+	font-weight: bold;
+}
+.itasks-choicetree li label {
+	cursor: pointer;
+	display: block;
+	white-space: nowrap;
+	font-size: 12px;
+	padding-left: 37px;
+	background-color: #fff;
+	background-position: 15px 0px;
+	background-repeat: no-repeat;
+	height: 16px;
+}
+.itasks-choicetree li label.itasks-default-folder {
+	background-image: url('/css/icons/folder.png');
+}
+.itasks-choicetree li label.itasks-default-leaf {
+	background-image: url('/css/icons/document.png');
+}
+
+.itasks-choice-list {
+	margin: 0;
+	border: 1px solid var(--select-base-color);
+	display: flex;
+	overflow: auto;
+	flex-direction: column;
+	align-items: stretch;
+	
+	/*Default stretch in both directions*/
+	flex-grow: 1;
+	align-self: stretch;
+}
+.itasks-choice-list * {
+	align-self: stretch;
+}
+.itasks-choice-list-option {
+	border: solid var(--select-base-color);
+	border-width: 0 0 1px 0;
+	padding: 5px 10px;
+	flex-shrink: 0;
+}
+.itasks-choice-list-option:last-child {
+	border-width: 0;
+}
+.itasks-choice-list-option.itasks-selected {
+	background-color: var(--select-base-color);
+	color: var(--select-text-color);
+}
+
+.itasks-progress {
+	height: 1.5em;
+	width: 100%;
+	background-color: #c9c9c9;
+	position: relative;
+}
+.itasks-progress:before {
+	content: attr(title);
+	font-size: 0.8em;
+	position: absolute;
+	text-align: center;
+	height: 80%;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	margin: auto;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.itasks-progress .value {
+	background-color: #7cc4ff;
+	display: inline-block;
+	height: 100%;
+	width: 100%;
+}
+
+*.itasks-viewport [data-tooltip] {
+		position: relative;
+		display: inline-block;
+}
+*.itasks-viewport [data-tooltip]:before, *.itasks-viewport [data-tooltip]:after {
+	position: absolute;
+	transform: translate3d(0, 0, 0);
+	visibility: hidden;
+	opacity: 0;
+	z-index: 1000000;
+	pointer-events: none;
+	transition: 0.3s ease;
+}
+*.itasks-viewport [data-tooltip]:hover:before, *.itasks-viewport [data-tooltip]:hover:after,
+*.itasks-viewport [data-tooltip]:focus:before, *.itasks-viewport [data-tooltip]:focus:after {
+	visibility: visible;
+	opacity: 1;
+}
+*.itasks-viewport [data-tooltip]:before {
+	content: '';
+	position: absolute;
+	background: transparent;
+	border: 6px solid transparent;
+	z-index: 1000001;
+}
+*.itasks-viewport [data-tooltip]:after {
+	content: attr(data-tooltip);
+	background: #ccc;
+	color: #000;
+	padding: 8px 10px;
+	font-size: 12px;
+	line-height: 12px;
+	white-space: nowrap;
+	box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.3);
+}
+*.itasks-viewport [data-tooltip]:before {
+  border-left-color: #ccc;
+  margin-right: -12px;
+  margin-bottom: -6px;
+}
+*.itasks-viewport [data-tooltip]:after {
+  margin-bottom: -14px;
+}
+*.itasks-viewport [data-tooltip]:before, *.itasks-viewport [data-tooltip]:after {
+  right: 100%;
+  bottom: 50%;
+}
+*.itasks-viewport [data-tooltip]:hover:after, *.itasks-viewport [data-tooltip]:hover:before, *.itasks-viewport [data-tooltip]:focus:after, *.itasks-viewport [data-tooltip]:focus:before {
+  transform: translateX(-8px);
+}

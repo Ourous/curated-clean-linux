@@ -21,19 +21,27 @@ snd3 tuple :== t2 where (_, t2, _) = tuple
 // thd3	:: !(.a,.b,!.c) -> .c								// t3 of (t1,t2,t3)
 thd3 tuple :== t3 where (_, _, t3) = tuple
 
+instance == () where
+	(==) :: !() !() -> Bool
+	(==) _ _ = code inline { pop_a 2 ; pushB TRUE }
+
 instance ==	(a,b) |	Eq a & Eq b
 	where
-	(==) ::!(a,b) !(a,b) -> Bool	|	Eq a & Eq b
+	(==) ::!(!a,b) !(!a,b) -> Bool	|	Eq a & Eq b
 	(==) (x1,y1) (x2,y2) = x1==x2 && y1==y2
 	
 instance == (a,b,c)	| Eq a & Eq b & Eq c
 	where
-	(==) ::!(a,b,c) !(a,b,c) -> Bool	|	Eq a & Eq b & Eq c
+	(==) ::!(!a,b,c) !(!a,b,c) -> Bool	|	Eq a & Eq b & Eq c
 	(==) (x1,y1,z1) (x2,y2,z2) = x1==x2 && y1==y2 && z1==z2
-	
+
+instance < () where
+	(<) :: !() !() -> Bool
+	(<) _ _ = code inline { pop_a 2 ; pushB FALSE }
+
 instance <	(a,b) |	Ord a & Ord b
 	where
-	(<) ::!(a,b) !(a,b) -> Bool	|	Ord a & Ord b
+	(<) ::!(!a,b) !(!a,b) -> Bool	|	Ord a & Ord b
 	(<) (x1,y1) (x2,y2)
 		|	x1<x2
 			=	True
@@ -44,7 +52,7 @@ instance <	(a,b) |	Ord a & Ord b
 	
 instance <	(a,b,c) | Ord a & Ord b & Ord c
 	where
-	(<) ::!(a,b,c) !(a,b,c) -> Bool	|	Ord a & Ord b & Ord c
+	(<) ::!(!a,b,c) !(!a,b,c) -> Bool	|	Ord a & Ord b & Ord c
 	(<) (x1,y1,z1) (x2,y2,z2)
 		|	x1<x2
 			=	True

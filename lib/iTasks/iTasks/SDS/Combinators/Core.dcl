@@ -10,7 +10,7 @@ from Text.GenJSON import :: JSONNode
 from System.Time import :: Timespec
 
 from iTasks.WF.Definition import class iTask
-from iTasks.WF.Definition import generic gEditor, generic gEq, generic gDefault, generic gText, generic JSONEncode, generic JSONDecode
+from iTasks.WF.Definition import generic gEditor, generic gEq, generic gText, generic JSONEncode, generic JSONDecode
 
 from iTasks.UI.Editor import :: Editor
 from iTasks.Internal.Generic.Visualization import :: TextFormat

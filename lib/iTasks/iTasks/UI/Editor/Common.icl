@@ -19,7 +19,7 @@ where
 emptyEditorWithDefaultInEnterMode :: !a -> Editor a | JSONEncode{|*|}, JSONDecode{|*|} a
 emptyEditorWithDefaultInEnterMode defaultValue = emptyEditorWithDefaultInEnterMode_ JSONEncode{|*|} JSONDecode{|*|} defaultValue
 
-emptyEditorWithDefaultInEnterMode_ :: !(Bool a -> [JSONNode]) !(Bool [JSONNode] -> (!Maybe a, ![JSONNode])) !a -> Editor a
+emptyEditorWithDefaultInEnterMode_ :: !(Bool a -> [JSONNode]) !(Bool [JSONNode] -> (Maybe a, [JSONNode])) !a -> Editor a
 emptyEditorWithDefaultInEnterMode_ jsonEncode jsonDecode defaultValue = leafEditorToEditor_
 	jsonEncode jsonDecode
 	{LeafEditor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh,valueFromState=valueFromState}
@@ -33,7 +33,7 @@ where
 emptyEditorWithErrorInEnterMode :: !String -> Editor a | JSONEncode{|*|}, JSONDecode{|*|} a
 emptyEditorWithErrorInEnterMode error = emptyEditorWithErrorInEnterMode_ JSONEncode{|*|} JSONDecode{|*|} error
 
-emptyEditorWithErrorInEnterMode_ :: !(Bool a -> [JSONNode]) !(Bool [JSONNode] -> (!Maybe a, ![JSONNode])) !String
+emptyEditorWithErrorInEnterMode_ :: !(Bool a -> [JSONNode]) !(Bool [JSONNode] -> (Maybe a, [JSONNode])) !String
                                  -> Editor a
 emptyEditorWithErrorInEnterMode_ jsonEncode jsonDecode error = leafEditorToEditor_ jsonEncode jsonDecode
 	{LeafEditor|genUI=genUI,onEdit=onEdit,onRefresh=onRefresh,valueFromState=valueFromState}
@@ -46,7 +46,7 @@ where
 	onRefresh _ val _ vst    = (Ok (NoChange, val),vst)   // just use new value
 	valueFromState val       = Just val
 
-diffChildren :: ![a] ![a] !(a a -> ChildUpdate) !(a -> UI) -> [(!Int, !UIChildChange)]
+diffChildren :: ![a] ![a] !(a a -> ChildUpdate) !(a -> UI) -> [(Int, UIChildChange)]
 diffChildren old new updateFromOldToNew toUI = diffChildren` (length old - 1) (reverse old) (reverse new)
 where
     // only children from old list are left -> remove them all
@@ -175,7 +175,7 @@ where
 				(Error e,vst) = (Error e, vst)
 				(Ok (ui,nm),vst)
 					# nChildSts = childSts ++ [nm]
-					# nitems = itemEditor.Editor.valueFromState <$> childSts
+					# nitems = itemEditor.Editor.valueFromState <$> nChildSts
 					# nids = ids ++ [nid]
 					# insert = [(ni,InsertChild (listItemUI taskId dp (ni + 1) ni nid ui))]
 					# counter = maybe [] (\f -> [(ni + 1, ChangeChild (ChangeUI [] [(0,ChangeChild (ChangeUI [SetAttribute "value" (JSONString (f nitems))] []))]))]) count

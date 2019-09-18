@@ -4,7 +4,7 @@ import StdString
 import StdInt
 
 from iTasks.WF.Definition import class iTask
-from iTasks.WF.Definition import :: Task, generic gEq, generic gDefault, generic JSONDecode, generic JSONEncode, generic gText, generic gEditor, :: Editor, :: TaskAttributes
+from iTasks.WF.Definition import :: Task, generic gEq, generic JSONDecode, generic JSONEncode, generic gText, generic gEditor, :: Editor, :: TaskAttributes
 from Data.Maybe import :: Maybe, maybe
 from iTasks.Extensions.User import class toUserConstraint(..), :: UserConstraint, instance toString UserConstraint, instance toUserConstraint User, instance toString UserConstraint
 from Text.GenJSON import :: JSONNode, generic JSONEncode, generic JSONDecode
@@ -28,11 +28,11 @@ where
 	(@:) worker task
 		= 'C'.get currentUser -&&- 'C'.get currentDateTime
 		>>- \(me,now) -> assign (workerAttributes worker
-			[ ("title",      toTitle worker)
-			, ("createdBy",  toString (toUserConstraint me))
-			, ("createdAt",  toString now)
-			, ("priority",   toString 5)
-			, ("createdFor", toString (toUserConstraint worker))
+			[ ("title",      toJSON (toTitle worker))
+			, ("createdBy",  toJSON (toUserConstraint me))
+			, ("createdAt",  toJSON now)
+			, ("priority",   toJSON 5)
+			, ("createdFor", toJSON (toUserConstraint worker))
 			]) task
 
 instance @: Domain (Task a) | iTask a
@@ -40,10 +40,10 @@ where
 	(@:) domain task
 		= 'C'.get currentUser -&&- 'C'.get currentDateTime
 		>>- \(me,now) -> remoteAssignTask (fromList
-			[ ("title",      "None")
-			, ("createdBy",  toString (toUserConstraint me))
-			, ("createdAt",  toString now)
-			, ("priority",   toString 5)
+			[ ("title",      toJSON "None")
+			, ("createdBy",  toJSON (toUserConstraint me))
+			, ("createdAt",  toJSON now)
+			, ("priority",   toJSON 5)
 			]) task domain
 
 instance @: DomainUser (Task a) | iTask a
@@ -51,11 +51,11 @@ where
 	(@:) (DomainUser worker domain) task
 		= 'C'.get currentUser -&&- 'C'.get currentDateTime
 		>>- \(me,now) -> remoteAssignTask (fromList
-			[ ("title",      toTitle worker)
-			, ("createdBy",  toString (toUserConstraint me))
-			, ("createdAt",  toString now)
-			, ("priority",   toString 5)
-			, ("createdFor", toString (toUserConstraint worker))
+			[ ("title",      toJSON (toTitle worker))
+			, ("createdBy",  toJSON (toUserConstraint me))
+			, ("createdAt",  toJSON now)
+			, ("priority",   toJSON 5)
+			, ("createdFor", toJSON (toUserConstraint worker))
 			]) task domain
 
 instance @: Requires (Task a) | iTask a
@@ -64,11 +64,11 @@ where
 		= 'C'.get currentUser -&&- 'C'.get currentDateTime
 		>>- \(me,now) -> 'C'.get currentDomain
 		>>- \domain -> remoteAssignTask (fromList
-			[ ("title",      "None")
-			, ("createdBy",  toString (toUserConstraint me))
-			, ("createdAt",  toString now)
-			, ("priority",   toString 5)
-			, ("requires",   requires)
+			[ ("title",      toJSON "None")
+			, ("createdBy",  toJSON (toUserConstraint me))
+			, ("createdAt",  toJSON now)
+			, ("priority",   toJSON 5)
+			, ("requires",   toJSON requires)
 			]) task domain
 
 

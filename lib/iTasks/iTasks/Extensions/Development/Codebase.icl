@@ -12,13 +12,14 @@ where
 	toString Icl = ".icl"
 
 moduleList :: SDSSource FilePath [(ModuleName,ModuleType)] ()
-moduleList = worldShare read write
+moduleList = worldShare read write notify
 where
 	read path world = case scanPaths [path] world of
 		(Ok paths,world) = (Ok (determineModules path paths), world)
 		(Error e,world) = (Error (snd e), world)
 
 	write path () world = (Ok (),world)
+	notify p1 _ p2 = p1 == p2
 
 	scanPaths [] world = (Ok [],world)
 	scanPaths [p:ps] world = case getFileInfo p world of
@@ -103,7 +104,7 @@ rescanCodeBase codebase
 
 navigateCodebase :: CodeBase -> Task SourceTreeSelection
 navigateCodebase codebase
-    = enterChoice () [/* ChooseWith (ChooseFromTree (groupModules (sourceTreeRoots codebase)))*/] (modulesOf codebase)
+    = enterChoice [/* ChooseWith (ChooseFromTree (groupModules (sourceTreeRoots codebase)))*/] (modulesOf codebase)
 where
     modulesOf codebase
         = flatten [[SelSourceTree name rootPath:[moduleSelection modName modType modPath \\ (modName,modType,modPath) <- modules]] \\ {SourceTree|name,rootPath,modules} <- codebase]

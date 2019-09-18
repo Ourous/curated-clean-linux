@@ -10,6 +10,7 @@ import iTasks.Internal.Serialization
 import iTasks.Internal.Generic.Defaults
 import iTasks.Internal.Generic.Visualization
 
+import iTasks.UI.Tune
 import iTasks.UI.Layout.Default
 
 import qualified iTasks.Internal.SDS as SDS
@@ -19,9 +20,11 @@ import iTasks.SDS.Sources.Store
 import iTasks.Internal.DynamicUtil
 import iTasks.Internal.SDSService
 import iTasks.WF.Combinators.Core
-import iTasks.WF.Combinators.Tune
+import iTasks.WF.Combinators.Common
+import iTasks.WF.Derives
 import iTasks.Extensions.Document
 
+from Data.Map import instance Functor (Map k)
 import qualified Data.Map as DM
 import Data.Map.GenJSON
 import qualified Data.Set as DS
@@ -31,13 +34,14 @@ from Control.Applicative import class Alternative(<|>)
 import Data.GenEq
 
 //Derives required for storage of UI definitions
-derive JSONEncode TaskOutputMessage, TaskResult, TaskEvalInfo, TIValue, ParallelTaskState, ParallelTaskChange, TIUIState
+derive JSONEncode TaskOutputMessage, TaskResult, TaskEvalInfo, TIValue, ParallelTaskState, ParallelTaskChange
 derive JSONEncode Queue, Event
 
-derive JSONDecode TaskOutputMessage, TaskResult, TaskEvalInfo, TIValue, ParallelTaskState, ParallelTaskChange, TIUIState
+derive JSONDecode TaskOutputMessage, TaskResult, TaskEvalInfo, TIValue, ParallelTaskState, ParallelTaskChange
 derive JSONDecode Queue, Event
 
-derive gDefault TIMeta, TIType
+derive gDefault InstanceFilter
+
 derive gEq ParallelTaskChange, TaskOutputMessage
 derive gText ParallelTaskChange
 derive class iTask InstanceFilter
@@ -137,20 +141,20 @@ createClientTaskInstance task sessionId instanceNo iworld=:{options={appVersion}
     # progress  = {InstanceProgress|value=Unstable,instanceKey=Nothing,attachedTo=[],firstEvent=Nothing,lastEvent=Nothing}
     # constants = {InstanceConstants|type=SessionInstance,build=appVersion,issuedAt=clock}
     =            'SDS'.write (instanceNo, Just constants,Just progress,Just defaultValue) (sdsFocus instanceNo taskInstance) 'SDS'.EmptyContext iworld
-  `b` \iworld -> 'SDS'.write (Just (createReduct defaultTonicOpts instanceNo task taskTime)) (sdsFocus instanceNo taskInstanceReduct) 'SDS'.EmptyContext iworld
+  `b` \iworld -> 'SDS'.write (Just (createReduct instanceNo task taskTime)) (sdsFocus instanceNo taskInstanceReduct) 'SDS'.EmptyContext iworld
   `b` \iworld -> 'SDS'.write (Just (TIValue NoValue)) (sdsFocus instanceNo taskInstanceValue) 'SDS'.EmptyContext iworld
   `b` \iworld -> (Ok (TaskId instanceNo 0), iworld)
 
 createSessionTaskInstance :: !(Task a) !TaskAttributes !*IWorld -> (!MaybeError TaskException (!InstanceNo,InstanceKey),!*IWorld) | iTask a
 createSessionTaskInstance task attributes iworld=:{options={appVersion,autoLayout},current={taskTime},clock}
-	# task = if autoLayout (applyLayout defaultSessionLayout task) task
+	# task = if autoLayout (ApplyLayout defaultSessionLayout @>> task) task
     # (mbInstanceNo,iworld) = newInstanceNo iworld
     # (Ok instanceNo,iworld) = newInstanceNo iworld
     # (instanceKey,iworld)  = newInstanceKey iworld
     # progress              = {InstanceProgress|value=Unstable,instanceKey=Just instanceKey,attachedTo=[],firstEvent=Nothing,lastEvent=Nothing}
     # constants             = {InstanceConstants|type=SessionInstance,build=appVersion,issuedAt=clock}
     =            'SDS'.write (instanceNo, Just constants,Just progress,Just attributes) (sdsFocus instanceNo taskInstance) 'SDS'.EmptyContext iworld
-  `b` \iworld -> 'SDS'.write (Just (createReduct defaultTonicOpts instanceNo task taskTime)) (sdsFocus instanceNo taskInstanceReduct) 'SDS'.EmptyContext iworld
+  `b` \iworld -> 'SDS'.write (Just (createReduct instanceNo task taskTime)) (sdsFocus instanceNo taskInstanceReduct) 'SDS'.EmptyContext iworld
   `b` \iworld -> 'SDS'.write (Just (TIValue NoValue)) (sdsFocus instanceNo taskInstanceValue) 'SDS'.EmptyContext iworld
   `b` \iworld -> (Ok (instanceNo,instanceKey), iworld)
 
@@ -160,7 +164,7 @@ createStartupTaskInstance task attributes iworld=:{options={appVersion,autoLayou
     # progress              = {InstanceProgress|value=Unstable,instanceKey=Nothing,attachedTo=[],firstEvent=Nothing,lastEvent=Nothing}
     # constants             = {InstanceConstants|type=StartupInstance,build=appVersion,issuedAt=clock}
     =            'SDS'.write (instanceNo, Just constants,Just progress,Just attributes) (sdsFocus instanceNo taskInstance) 'SDS'.EmptyContext iworld
-  `b` \iworld -> 'SDS'.write (Just (createReduct defaultTonicOpts instanceNo task taskTime)) (sdsFocus instanceNo taskInstanceReduct) 'SDS'.EmptyContext iworld
+  `b` \iworld -> 'SDS'.write (Just (createReduct instanceNo task taskTime)) (sdsFocus instanceNo taskInstanceReduct) 'SDS'.EmptyContext iworld
   `b` \iworld -> 'SDS'.write (Just (TIValue NoValue)) (sdsFocus instanceNo taskInstanceValue) 'SDS'.EmptyContext iworld
   `b` \iworld -> (Ok instanceNo, queueEvent instanceNo ResetEvent iworld)
 
@@ -170,42 +174,33 @@ createStartupTaskInstance task attributes iworld=:{options={appVersion,autoLayou
 
 createDetachedTaskInstance :: !(Task a) !Bool !TaskEvalOpts !InstanceNo !TaskAttributes !TaskId !Bool !*IWorld -> (!MaybeError TaskException TaskId, !*IWorld) | iTask a
 createDetachedTaskInstance task isTopLevel evalOpts instanceNo attributes listId refreshImmediate iworld=:{options={appVersion,autoLayout},current={taskTime},clock}
-	# task = if autoLayout (applyLayout defaultSessionLayout task) task
+	# task = if autoLayout (ApplyLayout defaultSessionLayout @>> task) task
     # (instanceKey,iworld) = newInstanceKey iworld
 	# mbListId             = if (listId == TaskId 0 0) Nothing (Just listId)
     # progress             = {InstanceProgress|value=Unstable,instanceKey=Just instanceKey,attachedTo=[],firstEvent=Nothing,lastEvent=Nothing}
     # constants            = {InstanceConstants|type=PersistentInstance mbListId,build=appVersion,issuedAt=clock}
     =            'SDS'.write (instanceNo,Just constants,Just progress,Just attributes) (sdsFocus instanceNo taskInstance) 'SDS'.EmptyContext iworld
-  `b` \iworld -> 'SDS'.write (Just (createReduct (if isTopLevel defaultTonicOpts evalOpts.tonicOpts) instanceNo task taskTime)) (sdsFocus instanceNo taskInstanceReduct) 'SDS'.EmptyContext iworld
+  `b` \iworld -> 'SDS'.write (Just (createReduct instanceNo task taskTime)) (sdsFocus instanceNo taskInstanceReduct) 'SDS'.EmptyContext iworld
   `b` \iworld -> 'SDS'.write (Just (TIValue NoValue)) (sdsFocus instanceNo taskInstanceValue) 'SDS'.EmptyContext iworld
   `b` \iworld -> ( Ok (TaskId instanceNo 0)
 				 , if refreshImmediate
 					  (queueEvent instanceNo ResetEvent iworld)
 					  iworld)
 
-createReduct :: !TonicOpts !InstanceNo !(Task a) !TaskTime -> TIReduct | iTask a
-createReduct tonicOpts instanceNo task taskTime
+createReduct :: !InstanceNo !(Task a) !TaskTime -> TIReduct | iTask a
+createReduct instanceNo task taskTime
 	= { TIReduct
-	  | task = toJSONTask task
-	  , tree = TCInit (TaskId instanceNo 0) 1
+	  | task = task @ DeferredJSON
 	  , nextTaskNo = 1
 	  , nextTaskTime = 1
 	  , tasks = 'DM'.newMap
-	  , tonicRedOpts = tonicOpts
 	  }
-where
-	toJSONTask (Task eval) = Task eval`
-	where
-		eval` event repOpts tree iworld = case eval event repOpts tree iworld of
-			(ValueResult val ts rep tree,iworld) = (ValueResult (fmap DeferredJSON val) ts rep tree, iworld)
-			(ExceptionResult e,iworld)           = (ExceptionResult e,iworld)
-			(DestroyedResult,iworld)             = (DestroyedResult,iworld)
 
 replaceTaskInstance :: !InstanceNo !(Task a) *IWorld -> (!MaybeError TaskException (), !*IWorld) | iTask a
 replaceTaskInstance instanceNo task iworld=:{options={appVersion},current={taskTime}}
 	# (meta, iworld)        = 'SDS'.read (sdsFocus instanceNo taskInstance) 'SDS'.EmptyContext iworld
 	| isError meta          = (liftError meta, iworld)
-	=            'SDS'.write (Just (createReduct defaultTonicOpts instanceNo task taskTime)) (sdsFocus instanceNo taskInstanceReduct) 'SDS'.EmptyContext iworld
+	=            'SDS'.write (Just (createReduct instanceNo task taskTime)) (sdsFocus instanceNo taskInstanceReduct) 'SDS'.EmptyContext iworld
   `b` \iworld -> 'SDS'.write (Just (TIValue NoValue)) (sdsFocus instanceNo taskInstanceValue) 'SDS'.EmptyContext iworld
   `b` \iworld -> let (_,Just constants,progress,attributes) ='SDS'.directResult (fromOk meta)
 				 in  'SDS'.write (instanceNo,Just {InstanceConstants|constants & build=appVersion},progress,attributes) (sdsFocus instanceNo taskInstance) 'SDS'.EmptyContext iworld
@@ -350,7 +345,7 @@ where
 	notify no _                 = const ((==) no)
 
 //Top list share has no items, and is therefore completely polymorphic
-topLevelTaskList :: SDSLens TaskListFilter (!TaskId,![TaskListItem a]) [(!TaskId,!TaskAttributes)]
+topLevelTaskList :: SDSLens TaskListFilter (!TaskId,![TaskListItem a]) [(TaskId,TaskAttributes)]
 topLevelTaskList = sdsLens "topLevelTaskList" param (SDSRead read) (SDSWrite write) (SDSNotifyConst notify) (Just reducer)
 					 ((sdsFocus filter filteredInstanceIndex) >*| currentInstanceShare)
 where
@@ -374,7 +369,7 @@ where
 
     notify _ _ _ _ = True
 
-    reducer :: TaskListFilter [InstanceData] -> MaybeError TaskException [(!TaskId,!TaskAttributes)]
+    reducer :: TaskListFilter [InstanceData] -> MaybeError TaskException [(TaskId,TaskAttributes)]
 	reducer p ws = Ok (map ff ws)
 	where
 	  ff (i, _, _, Just attr) = (TaskId i 0, attr)
@@ -448,7 +443,7 @@ where
 	//In this SDS the include value and include attributes flags are used to indicate what is written for notification
 	//During a read the whole ParallelTaskState record is used
 	param (listId,taskId,includeValue)
-		= (listId,{TaskListFilter|onlyIndex=Nothing,onlyTaskId=Just [taskId],onlySelf=False,includeValue=includeValue,includeAttributes=False,includeProgress=False})
+		= (listId,{TaskListFilter|onlyIndex=Nothing,onlyTaskId=Just [taskId],onlySelf=False,includeValue=includeValue,includeAttributes=True,includeProgress=False})
 	read p=:(listId,taskId,_) [] = Error (exception ("Could not find parallel task " <+++ taskId <+++ " in list " <+++ listId))
 	read p=:(_,taskId,_) [x:xs] = if (x.ParallelTaskState.taskId == taskId) (Ok x) (read p xs)
 	write (_,taskId,_) list pts = Ok (Just [if (x.ParallelTaskState.taskId == taskId) pts x \\ x <- list])
@@ -470,7 +465,7 @@ where
 	notify taskId _ = const ((==) taskId)
 	reducer p reduct = read p reduct
 
-parallelTaskList :: SDSSequence (!TaskId,!TaskId,!TaskListFilter) (!TaskId,![TaskListItem a]) [(!TaskId,!TaskAttributes)] | iTask a
+parallelTaskList :: SDSSequence (!TaskId,!TaskId,!TaskListFilter) (!TaskId,![TaskListItem a]) [(TaskId,TaskAttributes)] | iTask a
 parallelTaskList
 	= sdsSequence "parallelTaskList" id param2 (\_ _ -> Right read) (SDSWriteConst write1) (SDSWriteConst write2) filteredTaskStates filteredInstanceIndex
 where
@@ -484,22 +479,22 @@ where
 		where
 			items = [{TaskListItem|taskId = taskId, listId = listId
 					 , detached = detached, self = taskId == selfId
-					 , value = decode value, progress = Nothing, attributes = attributes
-					 } \\ {ParallelTaskState|taskId,detached,attributes,value,change} <- states | change =!= Just RemoveParallelTask]
+					 , value = decode value, progress = Nothing, attributes = 'DM'.union (fmap fst explicitAttributes) implicitAttributes
+					 } \\ {ParallelTaskState|taskId,detached,implicitAttributes,explicitAttributes,value,change} <- states | change =!= Just RemoveParallelTask]
 
 			decode NoValue	= NoValue
 			decode (Value json stable) = maybe NoValue (\v -> Value v stable) (fromDeferredJSON json)
 
-		write (listId,selfId,listFilter) _ []                              = Ok Nothing
 		write (listId,selfId,{TaskListFilter|includeAttributes=False}) _ _ = Ok Nothing
+		write (listId,selfId,listFilter) states [] = Ok (Just states)
 		write (listId,selfId,listFilter) states [(t,a):updates]
-			# states = [if (taskId == t) {ParallelTaskState|pts & attributes = a} pts \\ pts=:{ParallelTaskState|taskId} <- states]
-			= write (listId,selfId,listFilter) states updates
+			# states = [if (taskId == t) {ParallelTaskState|pts & explicitAttributes = fmap (\x -> (x,True)) a} pts \\ pts=:{ParallelTaskState|taskId} <- states]
+			= (write (listId,selfId,listFilter) states updates)
 
 		notify (listId,_,_) states ts (regListId,_,_) = regListId == listId //Only check list id, the listFilter is checked one level up
 
 		lensReducer (listId, selfId, listFilter) ws
-		= (Ok ([(taskId, attributes) \\ {ParallelTaskState|taskId,detached,attributes,value,change} <- ws | change =!= Just RemoveParallelTask]))
+			= (Ok ([(taskId, fmap fst explicitAttributes) \\ {ParallelTaskState|taskId,detached,explicitAttributes,value,change} <- ws | change =!= Just RemoveParallelTask]))
 
 	param2 _ (listId,items) = {InstanceFilter|onlyInstanceNo=Just [instanceNo \\ {TaskListItem|taskId=(TaskId instanceNo _),detached} <- items | detached],notInstanceNo=Nothing
 					 ,includeSessions=True,includeDetached=True,includeStartup=True,matchAttribute=Nothing, includeConstants = False, includeAttributes = True,includeProgress = True}
@@ -530,7 +525,7 @@ where
 			((\front` -> ('DQ'.Queue front` back))  <$> queueWithMergedRefreshEventList front) <|>
 			((\back`  -> ('DQ'.Queue front  back`)) <$> queueWithMergedRefreshEventList back)
 		where
-			queueWithMergedRefreshEventList :: [(!InstanceNo, !Event)] -> Maybe [(!InstanceNo, !Event)]
+			queueWithMergedRefreshEventList :: [(InstanceNo, Event)] -> Maybe [(InstanceNo, Event)]
 			queueWithMergedRefreshEventList [] = Nothing
 			queueWithMergedRefreshEventList [hd=:(instanceNo`, event`) : tl] = case event` of
 				RefreshEvent refreshTasks` reason` | instanceNo` == instanceNo =
@@ -542,7 +537,7 @@ where
 			mergeReason x y = concat [x , "; " , y]
 		_ = Nothing
 
-queueRefresh :: ![(!TaskId, !String)] !*IWorld -> *IWorld
+queueRefresh :: ![(TaskId, String)] !*IWorld -> *IWorld
 queueRefresh [] iworld = iworld
 queueRefresh tasks iworld
 	//Clear the instance's share change registrations, we are going to evaluate anyway
@@ -550,16 +545,15 @@ queueRefresh tasks iworld
 	# iworld 	= foldl (\w (t,r) -> queueEvent (toInstanceNo t) (RefreshEvent ('DS'.singleton t) r) w) iworld tasks
 	= iworld
 
-// TODO: Handle errors
-dequeueEvent :: !*IWorld -> (!Maybe (InstanceNo,Event),!*IWorld)
+dequeueEvent :: !*IWorld -> (!MaybeError TaskException (Maybe (InstanceNo,Event)),!*IWorld)
 dequeueEvent iworld
   = case 'SDS'.read taskEvents 'SDS'.EmptyContext iworld of
-	(Error e, iworld)               = (Nothing, iworld)
+	(Error e, iworld)               = (Error e, iworld)
 	(Ok ('SDS'.ReadingDone queue), iworld)
 	# (val, queue) = 'DQ'.dequeue queue
 	= case 'SDS'.write queue taskEvents 'SDS'.EmptyContext iworld of
-	  (Error e, iworld) = (Nothing, iworld)
-	  (Ok WritingDone, iworld) = (val, iworld)
+	  (Error e, iworld) = (Error e, iworld)
+	  (Ok WritingDone, iworld) = (Ok val, iworld)
 
 clearEvents :: !InstanceNo !*IWorld -> *IWorld
 clearEvents instanceNo iworld

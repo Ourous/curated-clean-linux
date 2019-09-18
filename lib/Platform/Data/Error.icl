@@ -68,7 +68,7 @@ combineErrors a b combf = case a of
 		Error e	= Error e
 		Ok b	= combf a b
 		
-seqErrorsSt :: !(.st -> (MaybeError e a,!.st)) (a .st -> u:(!MaybeError e b, !.st)) !.st -> v:(MaybeError e b, !.st), [u <= v]
+seqErrorsSt :: !(.st -> (MaybeError e a,.st)) (a .st -> u:(MaybeError e b, .st)) !.st -> v:(MaybeError e b, !.st), [u <= v]
 seqErrorsSt aop bop st
 	# (a,st) = aop st
 	= case a of
@@ -76,7 +76,7 @@ seqErrorsSt aop bop st
 		Ok a	= bop a st
 
 		
-combineErrorsSt :: !(.st -> (!MaybeError e a, !.st)) (.st -> (!MaybeError e b, !.st)) (a b -> MaybeError e c) !.st -> (!MaybeError e c, !.st)
+combineErrorsSt :: !(.st -> (MaybeError e a, .st)) (.st -> (MaybeError e b, .st)) (a b -> MaybeError e c) !.st -> (!MaybeError e c, !.st)
 combineErrorsSt aop bop combf st
 	# (a,st) = aop st
 	= case a of

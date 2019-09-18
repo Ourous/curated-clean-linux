@@ -23,20 +23,19 @@ import
     ,   iTasks.WF.Tasks.Interaction
     ,   iTasks.WF.Combinators.Core
     ,   iTasks.WF.Combinators.SDS
-    ,   iTasks.WF.Combinators.Tune
     ,   iTasks.WF.Combinators.Overloaded
     ,   iTasks.WF.Combinators.Common
 	// Distributed iTasks
 	,   iTasks.Internal.Distributed.Domain
 
 	//  Custom task GUI's
+    ,   iTasks.UI.Tune
     ,   iTasks.UI.Editor.Controls
     ,   iTasks.UI.Editor.Containers
     ,   iTasks.UI.Editor.Modifiers
 
 	//	Miscellaneous machinery
 	,	Text.GenJSON							// JSON is used for serializing/deserializing strings
-	,   iTasks.UI.Prompt 					// Standard for creating prompts
 	,   iTasks.UI.Layout.Common 			// Standard layout patterns
 
 	//	API extensions for user  & workflow management

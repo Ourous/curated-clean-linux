@@ -1,10 +1,13 @@
 implementation module iTasks.UI.JavaScript
 
+import qualified StdArray
 import StdEnv
 import StdGeneric
 import StdOverloadedList
 
+import Data.Func
 import Data.Maybe
+import Text.Encodings.Base64
 import Text.GenJSON
 
 :: *JSWorld = JSWorld
@@ -43,222 +46,243 @@ import Text.GenJSON
 	, val :: !JSVal
 	}
 
-instance toString JSVal
+js_val_to_string :: !JSVal -> .String
+js_val_to_string v
+#! v = hyperstrict v
+#! (s,i) = copy v ('StdArray'._createArray (len v 0)) 0
+| i < 0
+	= abort_with_node v
+	= s
 where
-	toString v = let s = toS v in if (size s<0) (abort_with_node v) s
+	copy :: !JSVal !*{#Char} !Int -> (!.{#Char}, !Int)
+	copy v dest i = case v of
+		JSInt n
+			-> copy_int n dest i
+		JSBool True
+			# dest & [i]='t',[i+1]='r',[i+2]='u',[i+3]='e'
+			-> (dest,i+4)
+		JSBool False
+			# dest & [i]='f',[i+1]='a',[i+2]='l',[i+3]='s',[i+4]='e'
+			-> (dest,i+5)
+		JSString s
+			# dest & [i] = '\''
+			# (dest,i) = copy_and_escape s 0 dest (i+1)
+			# dest & [i] = '\''
+			-> (dest,i+1)
+		JSReal r
+			// NB: this will trigger a warning in get_clean_string because the created String cannot be removed from the heap.
+			// Better would be to write a copy_real à la copy_int, but this is non-trivial.
+			// Another option is to walk the JSVal in JavaScript instead of creating a string.
+			-> copy_chars (toString r) dest i
+
+		JSVar v
+			-> copy_chars v dest i
+		JSNull
+			# dest & [i]='n',[i+1]='u',[i+2]='l',[i+3]='l'
+			-> (dest,i+4)
+		JSUndefined
+			# dest & [i]='u',[i+1]='n',[i+2]='d',[i+3]='e',[i+4]='f',[i+5]='i',[i+6]='n',[i+7]='e',[i+8]='d'
+			-> (dest,i+9)
+		JSTypeOf v
+			# dest & [i]='t',[i+1]='y',[i+2]='p',[i+3]='e',[i+4]='o',[i+5]='f',[i+6]=' '
+			-> copy v dest (i+7)
+		JSDelete v
+			# dest & [i]='d',[i+1]='e',[i+2]='l',[i+3]='e',[i+4]='t',[i+5]='e',[i+6]=' '
+			-> copy v dest (i+7)
+
+		JSObject elems
+			# dest & [i]='{'
+			| size elems==0
+				# dest & [i+1]='}'
+				-> (dest,i+2)
+			# (dest,i) = copy_elems elems 0 dest (i+1)
+			# dest & [i]='}'
+			-> (dest,i+1)
+			with
+				copy_elems :: !{#JSObjectElement} !Int !*{#Char} !Int -> (!.{#Char}, !Int)
+				copy_elems elems k dest i
+				# dest & [i]='"'
+				# {key,val} = elems.[k]
+				# (dest,i) = copy_chars key dest (i+1)
+				# dest & [i]='"'
+				# dest & [i+1]=':'
+				# (dest,i) = copy val dest (i+2)
+				| k+1>=size elems
+					= (dest,i)
+					= copy_elems elems (k+1) {dest & [i]=','} (i+1)
+		JSArray elems
+			# dest & [i]='['
+			| size elems==0
+				# dest & [i+1]=']'
+				-> (dest,i+2)
+			# (dest,i) = copy_with_commas elems 0 dest (i+1)
+			# dest & [i]=']'
+			-> (dest,i+1)
+		JSCall fun args
+			# (dest,i) = copy fun dest i
+			# dest & [i]='('
+			| size args==0
+				# dest & [i+1]=')'
+				-> (dest,i+2)
+			# (dest,i) = copy_with_commas args 0 dest (i+1)
+			# dest & [i]=')'
+			-> (dest,i+1)
+		JSNew cons args
+			# dest & [i]='n',[i+1]='e',[i+2]='w',[i+3]=' '
+			# (dest,i) = copy_chars cons dest (i+4)
+			# dest & [i]='('
+			| size args==0
+				# dest & [i+1]=')'
+				-> (dest,i+2)
+			# (dest,i) = copy_with_commas args 0 dest (i+1)
+			# dest & [i]=')'
+			-> (dest,i+1)
+
+		JSSel obj attr
+			# (dest,i) = copy obj dest i
+			# dest & [i]='['
+			# (dest,i) = copy attr dest (i+1)
+			# dest & [i]=']'
+			-> (dest,i+1)
+		JSSelPath obj path
+			# (dest,i) = copy obj dest i
+			# dest & [i]='.'
+			-> copy_chars path dest (i+1)
+
+		JSRef n
+			# dest & [i]='A',[i+1]='B',[i+2]='C',[i+3]='.',[i+4]='j',[i+5]='s',[i+6]='['
+			# (dest,i) = copy_int n dest (i+7)
+			# dest & [i]=']'
+			-> (dest,i+1)
+		JSCleanRef n
+			# dest & [i]='A',[i+1]='B',[i+2]='C',[i+3]='.',[i+4]='a',[i+5]='p',[i+6]='('
+			# (dest,i) = copy_int n dest (i+7)
+			# dest & [i]=')'
+			-> (dest,i+1)
 	where
-		toS :: !JSVal -> String
-		toS v = fst (copy v (createArray (len v 0) '\0') 0)
-
-		copy :: !JSVal !*{#Char} !Int -> (!.{#Char}, !Int)
-		copy v dest i = case v of
-			JSInt n
-				-> copy_chars (toString n) dest i
-			JSBool True
-				# dest & [i]='t',[i+1]='r',[i+2]='u',[i+3]='e'
-				-> (dest,i+4)
-			JSBool False
-				# dest & [i]='f',[i+1]='a',[i+2]='l',[i+3]='s',[i+4]='e'
-				-> (dest,i+5)
-			JSString s
-				# dest & [i] = '\''
-				# (dest,i) = copy_and_escape s 0 dest (i+1)
-				# dest & [i] = '\''
-				-> (dest,i+1)
-			JSReal r
-				-> copy_chars (toString r) dest i
-
-			JSVar v
-				-> copy_chars v dest i
-			JSNull
-				# dest & [i]='n',[i+1]='u',[i+2]='l',[i+3]='l'
-				-> (dest,i+4)
-			JSUndefined
-				# dest & [i]='u',[i+1]='n',[i+2]='d',[i+3]='e',[i+4]='f',[i+5]='i',[i+6]='n',[i+7]='e',[i+8]='d'
-				-> (dest,i+9)
-			JSTypeOf v
-				# dest & [i]='t',[i+1]='y',[i+2]='p',[i+3]='e',[i+4]='o',[i+5]='f',[i+6]=' '
-				-> copy v dest (i+7)
-			JSDelete v
-				# dest & [i]='d',[i+1]='e',[i+2]='l',[i+3]='e',[i+4]='t',[i+5]='e',[i+6]=' '
-				-> copy v dest (i+7)
-
-			JSObject elems
-				# dest & [i]='{'
-				| size elems==0
-					# dest & [i+1]='}'
-					-> (dest,i+2)
-				# (dest,i) = copy_elems elems 0 dest (i+1)
-				# dest & [i]='}'
-				-> (dest,i+1)
-				with
-					copy_elems :: !{#JSObjectElement} !Int !*{#Char} !Int -> (!.{#Char}, !Int)
-					copy_elems elems k dest i
-					# {key,val} = elems.[k]
-					# (dest,i) = copy_chars key dest i
-					# dest & [i]=':'
-					# (dest,i) = copy val dest (i+1)
-					| k+1>=size elems
-						= (dest,i)
-						= copy_elems elems (k+1) {dest & [i]=','} (i+1)
-			JSArray elems
-				# dest & [i]='['
-				| size elems==0
-					# dest & [i+1]=']'
-					-> (dest,i+2)
-				# (dest,i) = copy_with_commas elems 0 dest (i+1)
-				# dest & [i]=']'
-				-> (dest,i+1)
-			JSCall fun args
-				# (dest,i) = copy fun dest i
-				# dest & [i]='('
-				| size args==0
-					# dest & [i+1]=')'
-					-> (dest,i+2)
-				# (dest,i) = copy_with_commas args 0 dest (i+1)
-				# dest & [i]=')'
-				-> (dest,i+1)
-			JSNew cons args
-				# dest & [i]='n',[i+1]='e',[i+2]='w',[i+3]=' '
-				# (dest,i) = copy_chars cons dest (i+4)
-				# dest & [i]='('
-				| size args==0
-					# dest & [i+1]=')'
-					-> (dest,i+2)
-				# (dest,i) = copy_with_commas args 0 dest (i+1)
-				# dest & [i]=')'
-				-> (dest,i+1)
-
-			JSSel obj attr
-				# (dest,i) = copy obj dest i
-				# dest & [i]='['
-				# (dest,i) = copy attr dest (i+1)
-				# dest & [i]=']'
-				-> (dest,i+1)
-			JSSelPath obj path
-				# (dest,i) = copy obj dest i
-				# dest & [i]='.'
-				-> copy_chars path dest (i+1)
-
-			JSRef n
-				# dest & [i]='A',[i+1]='B',[i+2]='C',[i+3]='.',[i+4]='j',[i+5]='s',[i+6]='['
-				# (dest,i) = copy_chars (toString n) dest (i+7)
-				# dest & [i]=']'
-				-> (dest,i+1)
-			JSCleanRef n
-				# dest & [i]='A',[i+1]='B',[i+2]='C',[i+3]='.',[i+4]='a',[i+5]='p',[i+6]='('
-				# (dest,i) = copy_chars (toString n) dest (i+7)
-				# dest & [i]=')'
-				-> (dest,i+1)
+		copy_chars :: !String !*{#Char} !Int -> (!.{#Char}, !Int)
+		copy_chars src dest i
+		#! sz = size src
+		= (copy` src (sz-1) dest (i+sz-1), i+sz)
 		where
-			copy_chars :: !String !*{#Char} !Int -> (!.{#Char}, !Int)
-			copy_chars src dest i = (copy` src (sz-1) dest (i+sz-1), i+sz)
-			where
-				sz = size src
+			copy` :: !String !Int !*{#Char} !Int -> .{#Char}
+			copy` _   -1 dest _  = dest
+			copy` src si dest di = copy` src (si-1) {dest & [di]=src.[si]} (di-1)
 
-				copy` :: !String !Int !*{#Char} !Int -> .{#Char}
-				copy` _   -1 dest _  = dest
-				copy` src si dest di = copy` src (si-1) {dest & [di]=src.[si]} (di-1)
-
-			copy_and_escape :: !String !Int !*{#Char} !Int -> (!.{#Char}, !Int)
-			copy_and_escape src si dest di
-			| si >= size src = (dest,di)
-			# c = src.[si]
-			| c < '\x20'
-				# c = toInt c
-				# dest = {dest & [di]='\\', [di+1]='x', [di+2]=hex (c>>4), [di+3]=hex (c bitand 0x0f)}
-				= copy_and_escape src (si+1) dest (di+4)
-			| c == '\''
-				# dest = {dest & [di]='\\', [di+1]='\''}
-				= copy_and_escape src (si+1) dest (di+2)
-			| otherwise
-				# dest = {dest & [di]=c}
-				= copy_and_escape src (si+1) dest (di+1)
-			where
-				hex i = "0123456789abcdef".[i]
-
-			copy_with_commas :: !{!JSVal} !Int !*{#Char} !Int -> (!.{#Char}, !Int)
-			copy_with_commas elems k dest i
-			# (dest,i) = copy elems.[k] dest i
-			| k+1>=size elems
-				= (dest,i)
-				= copy_with_commas elems (k+1) {dest & [i]=','} (i+1)
-
-		len :: !JSVal !Int -> Int
-		len v l = case v of
-			JSInt i -> int_len i l
-			JSBool b -> if b 4 5 + l
-			JSString s -> escaped_size s (size s-1) (2+l)
-			where
-				escaped_size :: !String !Int !Int -> Int
-				escaped_size s -1 n = n
-				escaped_size s  i n
-				| s.[i] < '\x20' = escaped_size s (i-1) (n+4)
-				| s.[i] == '\''  = escaped_size s (i-1) (n+2)
-				| otherwise      = escaped_size s (i-1) (n+1)
-			JSReal r -> size (toString r) + l
-
-			JSVar v -> size v + l
-			JSNull -> 4+l
-			JSUndefined -> 9+l
-			JSTypeOf v -> len v (7+l)
-			JSDelete v -> len v (7+l)
-
-			JSObject elems
-			| size elems==0
-				-> 2+l
-				-> count_elems (size elems-1) (l+(2*size elems)+1)
-			where
-				count_elems :: !Int !Int -> Int
-				count_elems -1 l = l
-				count_elems  i l
-				# {key,val} = elems.[i]
-				= count_elems (i-1) (len val (l+size key))
-			JSArray elems
-			| size elems==0
-				-> 2+l
-				-> count_array elems (size elems-1) (size elems+1+l)
-			JSCall fun args
-			| size args==0
-				-> len fun (2+l)
-				-> count_array args (size args-1) (len fun (size args+1+l))
-			JSNew cons args
-			| size args==0
-				-> size cons+6+l
-				-> count_array args (size args-1) (size cons+5+size args+l)
-
-			JSSel obj attr -> len obj (len attr (l+2))
-			JSSelPath obj path -> len obj (l+1+size path)
-
-			JSRef i -> int_len i (8+l)
-			JSCleanRef i -> int_len i (8+l)
-
-			_ -> missing_case v
+		copy_int :: !Int !*{#Char} !Int -> (!.{#Char}, !Int)
+		copy_int n dest i
+		#! dest = copy` (abs n) dest (len-1)
+		#! dest = if (n<0) {dest & [i]='-'} dest
+		= (dest, i+len)
 		where
-			int_len :: !Int !Int -> Int
-			int_len i l
-			| i > 9 = int_len (i/10) (l+1)
-			| i < 0 = int_len (0-i) (l+1)
-			| otherwise = l+1
+			len = int_len n 0
 
-			count_array :: !{!JSVal} !Int !Int -> Int
-			count_array elems -1 l = l
-			count_array elems  i l = count_array elems (i-1) (len elems.[i] l)
+			copy` :: !Int !*{#Char} !Int -> .{#Char}
+			copy` _ dest -1 = dest
+			copy` n dest len = copy` (n/10) {dest & [i+len]='0' + toChar (n rem 10)} (len-1)
 
-		missing_case :: !JSVal -> .a
-		missing_case _ = code {
-			print "missing case in toString JSVal:\n"
-			.d 1 0
-			jsr _print_graph
-			.o 0 0
-			halt
-		}
+		copy_and_escape :: !String !Int !*{#Char} !Int -> (!.{#Char}, !Int)
+		copy_and_escape src si dest di
+		| si >= size src = (dest,di)
+		# c = src.[si]
+		| c < '\x20'
+			#! c = toInt c
+			# dest = {dest & [di]='\\', [di+1]='x', [di+2]=hex (c>>4), [di+3]=hex (c bitand 0x0f)}
+			= copy_and_escape src (si+1) dest (di+4)
+		| c == '\'' || c == '\\'
+			# dest = {dest & [di]='\\', [di+1]=c}
+			= copy_and_escape src (si+1) dest (di+2)
+		| otherwise
+			# dest = {dest & [di]=c}
+			= copy_and_escape src (si+1) dest (di+1)
+		where
+			hex :: !Int -> Char
+			hex i = "0123456789abcdef".[i]
 
-jsMakeCleanReference :: a !JSVal -> JSVal
-jsMakeCleanReference x attach_to = share attach_to x
+		copy_with_commas :: !{!JSVal} !Int !*{#Char} !Int -> (!.{#Char}, !Int)
+		copy_with_commas elems k dest i
+		# (dest,i) = copy elems.[k] dest i
+		| k+1>=size elems
+			= (dest,i)
+			= copy_with_commas elems (k+1) {dest & [i]=','} (i+1)
+
+	len :: !JSVal !Int -> Int
+	len v l = case v of
+		JSInt i -> int_len i l
+		JSBool b -> if b 4 5 + l
+		JSString s -> escaped_size s (size s-1) (2+l)
+		where
+			escaped_size :: !String !Int !Int -> Int
+			escaped_size s -1 n = n
+			escaped_size s  i n
+			| s.[i] < '\x20'
+				= escaped_size s (i-1) (n+4)
+			| s.[i] == '\'' || s.[i] == '\\'
+				= escaped_size s (i-1) (n+2)
+				= escaped_size s (i-1) (n+1)
+		JSReal r -> size (toString r) + l
+
+		JSVar v -> size v + l
+		JSNull -> 4+l
+		JSUndefined -> 9+l
+		JSTypeOf v -> len v (7+l)
+		JSDelete v -> len v (7+l)
+
+		JSObject elems
+		| size elems==0
+			-> 2+l
+			-> count_elems (size elems-1) (l+(4*size elems)+1)
+		where
+			count_elems :: !Int !Int -> Int
+			count_elems -1 l = l
+			count_elems  i l
+			# {key,val} = elems.[i]
+			= count_elems (i-1) (len val (l+size key))
+		JSArray elems
+		| size elems==0
+			-> 2+l
+			-> count_array elems (size elems-1) (size elems+1+l)
+		JSCall fun args
+		| size args==0
+			-> len fun (2+l)
+			-> count_array args (size args-1) (len fun (size args+1+l))
+		JSNew cons args
+		| size args==0
+			-> size cons+6+l
+			-> count_array args (size args-1) (size cons+5+size args+l)
+
+		JSSel obj attr -> len obj (len attr (l+2))
+		JSSelPath obj path -> len obj (l+1+size path)
+
+		JSRef i -> int_len i (8+l)
+		JSCleanRef i -> int_len i (8+l)
+
+		_ -> missing_case v
+	where
+		count_array :: !{!JSVal} !Int !Int -> Int
+		count_array elems -1 l = l
+		count_array elems  i l = count_array elems (i-1) (len elems.[i] l)
+
+	int_len :: !Int !Int -> Int
+	int_len i l
+	| i > 9 = int_len (i/10) (l+1)
+	| i < 0 = int_len (0-i) (l+1)
+	| otherwise = l+1
+
+	missing_case :: !JSVal -> .a
+	missing_case _ = code {
+		print "missing case in js_val_to_string:\n"
+		.d 1 0
+		jsr _print_graph
+		.o 0 0
+		halt
+	}
+
+jsMakeCleanReference :: a !JSVal !*JSWorld -> *(!JSVal, !*JSWorld)
+jsMakeCleanReference x attach_to w = (share attach_to x, w)
 
 jsGetCleanReference :: !JSVal !*JSWorld -> *(!Maybe b, !*JSWorld)
-jsGetCleanReference v w = case eval_js_with_return_value (toString v) of
+jsGetCleanReference v w = case eval_js_with_return_value (js_val_to_string v) of
 	JSCleanRef i -> case fetch i of
 		(val,True) -> (Just val, w)
 	_            -> if (1==1) (Nothing, w) (abort_with_node v)
@@ -270,6 +294,12 @@ where
 		pop_b 1
 		pushB TRUE
 	}
+
+jsFreeCleanReference :: !JSVal !*JSWorld -> *JSWorld
+jsFreeCleanReference (JSCleanRef ref) w = case eval_js (js_val_to_string clear) of
+	True -> w
+where
+	clear = JSCall (JSVar "ABC.clear_shared_clean_value") {JSInt ref,JSBool True}
 
 jsTypeOf :: !JSVal -> JSVal
 jsTypeOf v = JSTypeOf v
@@ -407,7 +437,7 @@ where
 # (done,js) = try_local_computation js
 | done
 	= (js,w)
-	= case eval_js_with_return_value (toString js) of
+	= case eval_js_with_return_value (js_val_to_string js) of
 		JSUnused -> abort_with_node js
 		result   -> (result, w)
 where
@@ -437,7 +467,7 @@ where
 (.=) infixl 1 :: !JSVal !b !*JSWorld -> *JSWorld | gToJS{|*|} b
 (.=) sel v w
 # v = toJS v
-= case set_js (toString sel) (toString v) of
+= case set_js (js_val_to_string sel) (js_val_to_string v) of
 	True  -> w
 	False -> abort_with_node (sel,v)
 
@@ -468,28 +498,28 @@ instance toJSArgs (a,b,c,d,e,f) | gToJS{|*|} a & gToJS{|*|} b & gToJS{|*|} c & g
 where toJSArgs (a,b,c,d,e,f) = {toJS a, toJS b, toJS c, toJS d, toJS e, toJS f}
 
 (.$) infixl 2 :: !JSFun !b !*JSWorld -> *(!JSVal, !*JSWorld) | toJSArgs b
-(.$) f args w = case eval_js_with_return_value (toString call) of
+(.$) f args w = case eval_js_with_return_value (js_val_to_string call) of
 	JSUnused -> abort_with_node call
 	result   -> (result, w)
 where
 	call = JSCall f (toJSArgs args)
 
 (.$!) infixl 2 :: !JSFun !b !*JSWorld -> *JSWorld | toJSArgs b
-(.$!) f args w = case eval_js (toString call) of
+(.$!) f args w = case eval_js (js_val_to_string call) of
 	True  -> w
 	False -> abort_with_node call
 where
 	call = JSCall f (toJSArgs args)
 
 jsNew :: !String !a !*JSWorld -> *(!JSVal, !*JSWorld) | toJSArgs a
-jsNew cons args w = case eval_js_with_return_value (toString new) of
+jsNew cons args w = case eval_js_with_return_value (js_val_to_string new) of
 	JSUnused -> abort_with_node new
 	result   -> (result, w)
 where
 	new = JSNew cons (toJSArgs args)
 
 jsDelete :: !JSVal !*JSWorld -> *JSWorld
-jsDelete v w = case eval_js (toString (JSDelete v)) of
+jsDelete v w = case eval_js (js_val_to_string (JSDelete v)) of
 	True  -> w
 	False -> abort_with_node v
 
@@ -501,6 +531,13 @@ jsGlobal s = JSVar s
 
 jsWrapFun :: !({!JSVal} *JSWorld -> *JSWorld) !JSVal !*JSWorld -> *(!JSFun, !*JSWorld)
 jsWrapFun f attach_to world = (share attach_to \(JSArray args) w -> f args w, world)
+
+jsWrapFunWithResult :: !({!JSVal} *JSWorld -> *(JSVal, *JSWorld)) !JSVal !*JSWorld -> *(!JSFun, !*JSWorld)
+jsWrapFunWithResult f attach_to world = (share attach_to fun, world)
+where
+	fun (JSArray args) w
+	# (r,w) = f args w
+	= hyperstrict (js_val_to_string r,w)
 
 wrapInitUIFunction :: !(JSVal *JSWorld -> *JSWorld) -> {!JSVal} -> *JSWorld -> *JSWorld
 wrapInitUIFunction f = init
@@ -542,15 +579,12 @@ where
 			repl_r_args 0 1
 		}
 
-jsDeserializeGraph :: !String !JSVal !*JSWorld -> *(!.a, !*JSWorld)
-jsDeserializeGraph s attach_to w = case attach_to of
-	JSRef r -> (deserialize s r, w)
-	_       -> abort "when deserializing a Clean value it must be linked to an iTasks component\n"
+jsDeserializeGraph :: !*String !*JSWorld -> *(!.a, !*JSWorld)
+jsDeserializeGraph s w = (deserialize (base64Decode s), w)
 where
-	deserialize :: !String !Int -> .a
-	deserialize _ _ = code {
+	deserialize :: !*String -> .a
+	deserialize _ = code {
 		instruction 6
-		pop_b 1
 	}
 
 addCSSFromUrl :: !String !*JSWorld -> *JSWorld
@@ -570,10 +604,10 @@ addJSFromUrl js mbCallback w = case add_js js callback of
 	False -> abort_with_node mbCallback
 where
 	callback = case mbCallback of
-		Just cb -> toString cb
+		Just cb -> js_val_to_string cb
 		Nothing -> ""
 
-	add_js :: !String !String -> Bool
+	add_js :: !String !*String -> Bool
 	add_js _ _ = code {
 		instruction 11
 		pop_a 2
@@ -581,25 +615,28 @@ where
 	}
 
 jsTrace :: !a .b -> .b | toString a
-jsTrace s x = case eval_js (toString (JSCall (JSVar "console.log") {JSString (toString s)})) of
-	True  -> x
-	False -> abort_with_node s // just in case it is a JSVal
+jsTrace s x = jsTraceVal (JSString (toString s)) x
 
-set_js :: !String !String -> Bool
+jsTraceVal :: !JSVal .a -> .a
+jsTraceVal v x = case eval_js (js_val_to_string (JSCall (JSVar "console.log") {v})) of
+	True  -> x
+	False -> abort_with_node v
+
+set_js :: !*String !*String -> Bool
 set_js var val = code {
 	instruction 1
 	pop_a 2
 	pushB TRUE
 }
 
-eval_js :: !String -> Bool
+eval_js :: !*String -> Bool
 eval_js s = code {
 	instruction 2
 	pop_a 1
 	pushB TRUE
 }
 
-eval_js_with_return_value :: !String -> JSVal
+eval_js_with_return_value :: !*String -> JSVal
 eval_js_with_return_value s = code {
 	instruction 3
 	fill_a 0 1

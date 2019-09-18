@@ -1,0 +1,4 @@
+clean-lib-itasks linux x64 20190917
+[svn sources]
+[git sources]
+clean-and-itasks itasks-sdk master 32268735c9db1efe35b5b057858f78c2bbe77308

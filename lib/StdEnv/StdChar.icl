@@ -1,8 +1,8 @@
 implementation module StdChar
 
 // ****************************************************************************************
-//	Concurrent Clean Standard Library Module Version .0
-//	Copyright 1998 University of Nijmegen
+//	Concurrent Clean Standard Library Module Version 3.0
+//	Copyright 2019 University of Nijmegen
 // ****************************************************************************************
 
 import	StdOverloaded, StdBool, StdInt, StdClass

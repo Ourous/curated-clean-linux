@@ -1,0 +1,30 @@
+# vim: syntax=sh
+_cloogletags()
+{
+	local cur prev opts
+	COMPRREPLY=()
+	cur="${COMP_WORDS[COMP_CWORD]}"
+	prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+	opts="--help -h -d -m -a -c -l -H -o -v"
+
+	case $prev in
+		"-d" | "-H")
+			_clean_dir
+			return 0
+			;;
+		"-m")
+			_clean_module
+			return 0
+			;;
+		"-o")
+			_clean_file
+			return 0
+			;;
+	esac
+
+	# Complete options
+	COMPREPLY=($(compgen -W "$opts" -- $cur))
+	return 0
+}
+complete -F _cloogletags cloogletags

@@ -1,5 +1,6 @@
 implementation module iTasks.WF.Combinators.SDS
 
+import iTasks.WF.Derives
 import iTasks.WF.Definition
 import iTasks.SDS.Definition
 from iTasks.SDS.Combinators.Common import sdsFocus
@@ -22,96 +23,81 @@ import System.Directory, System.File, System.FilePath, Data.Error, System.OSErro
 import qualified Data.Map as DM
 
 withShared :: !b !((SimpleSDSLens b) -> Task a) -> Task a | iTask a & iTask b
-withShared initial stask = Task eval
+withShared initial stask = Task evalinit
 where
-	eval DestroyEvent evalOpts (TCShared taskId=:(TaskId instanceNo _) ts treea) iworld //First destroy inner task, then remove shared state
-		# (Task evala) = stask (sdsFocus taskId localShare)
-		# (resa,iworld) = evala DestroyEvent (extendCallTrace taskId evalOpts) treea iworld
-        //Remove share from reduct
-        # (e,iworld) = modify (fmap ('DM'.del taskId)) (sdsFocus instanceNo taskInstanceShares) EmptyContext iworld
-        | isError e = (ExceptionResult (fromError e), iworld)
-		= (resa,iworld)
-	eval DestroyEvent _ _ iworld
-		= (DestroyedResult,iworld)
+	//Initialization
+	evalinit DestroyEvent _ iworld = (DestroyedResult,iworld)
 
-	eval event evalOpts (TCInit taskId ts) iworld
-        # (taskIda,iworld)  = getNextTaskId iworld
-        # (e,iworld)        = write (initial) (sdsFocus taskId localShare) EmptyContext iworld
-        | isError e
-            = (ExceptionResult (fromError e),iworld)
-        | otherwise
-		    = eval event evalOpts (TCShared taskId ts (TCInit taskIda ts)) iworld
+	evalinit event evalOpts=:{TaskEvalOpts|taskId} iworld
+		# (taskIda, iworld) = getNextTaskId iworld
+		# (e, iworld)       = write initial (sdsFocus taskId localShare) EmptyContext iworld
+		| isError e
+			= (ExceptionResult (fromError e),iworld)
+		= eval taskIda (stask (sdsFocus taskId localShare)) event evalOpts iworld
 
-	eval event evalOpts (TCShared taskId ts treea) iworld=:{current={taskTime}}
-		# (Task evala)			= stask (sdsFocus taskId localShare)
-		# (resa,iworld)			= evala event (extendCallTrace taskId evalOpts) treea iworld
-		= case resa of
-			ValueResult NoValue info rep ntreea
-				# info = {TaskEvalInfo|info & lastEvent = max ts info.TaskEvalInfo.lastEvent}
-				= (ValueResult NoValue info rep (TCShared taskId info.TaskEvalInfo.lastEvent ntreea),iworld)
-			ValueResult (Value stable val) info rep ntreea
-				# info = {TaskEvalInfo|info & lastEvent = max ts info.TaskEvalInfo.lastEvent}
-				= (ValueResult (Value stable val) info rep (TCShared taskId info.TaskEvalInfo.lastEvent ntreea),iworld)
-			ExceptionResult e   = (ExceptionResult e,iworld)
+	//Running
+	eval innerTaskId (Task inner) DestroyEvent opts iworld
+		= case inner DestroyEvent {TaskEvalOpts|opts&taskId=innerTaskId} iworld of
+			(ValueResult _ _ _ _, iworld)
+				= (ExceptionResult (exception "Failed to destroy withShared child"), iworld)
+			e = e
 
-	eval _ _ _ iworld
-		= (ExceptionResult (exception "Corrupt task state in withShared"), iworld)
+	eval innerTaskId (Task inner) event evalOpts=:{TaskEvalOpts|taskId,lastEval} iworld
+		= case inner event {TaskEvalOpts|evalOpts&taskId=innerTaskId} iworld of
+			(ValueResult val info rep newinner, iworld)
+				# info = {TaskEvalInfo|info & lastEvent = max lastEval info.TaskEvalInfo.lastEvent}
+				= (ValueResult val info rep (Task (eval innerTaskId newinner)), iworld)
+			e = e
 
 withTaskId :: (Task a) -> Task (a, TaskId)
-withTaskId (Task eval) = Task eval`
-  where
-  eval` event evalOpts state iworld
-    = case eval event evalOpts state iworld of
-        (ValueResult (Value x st) info rep tree, iworld) -> case taskIdFromTaskTree tree of
-                                                              Ok tid -> (ValueResult (Value (x, tid) st) info rep tree, iworld)
-                                                              _      -> (ValueResult (Value (x, TaskId 0 0) st) info rep tree, iworld)
-        (ValueResult NoValue info rep tree, iworld) -> (ValueResult NoValue info rep tree, iworld)
-        (ExceptionResult te, iworld) -> (ExceptionResult te, iworld)
-        (DestroyedResult, iworld) -> (DestroyedResult, iworld)
+withTaskId (Task task) = Task eval
+where
+	eval event evalOpts=:{TaskEvalOpts|taskId} iworld
+		= case task event evalOpts iworld of
+			(ValueResult (Value x st) info rep newtask, iworld)
+				= (ValueResult (Value (x, taskId) st) info rep (withTaskId newtask), iworld)
+			(ExceptionResult te, iworld) = (ExceptionResult te, iworld)
+			(DestroyedResult, iworld) = (DestroyedResult, iworld)
 
 withTemporaryDirectory :: (FilePath -> Task a) -> Task a | iTask a
-withTemporaryDirectory taskfun = Task eval
+withTemporaryDirectory taskfun = Task evalinit
 where
-	eval DestroyEvent evalOpts (TCShared taskId ts treea) iworld=:{options={appVersion,tempDirPath}} //First destroy inner task
-		# tmpDir 		= tempDirPath </> (appVersion +++ "-" +++ toString taskId +++ "-tmpdir")
-		# (Task evala)	= taskfun tmpDir
-		# (resa,iworld)	= evala DestroyEvent evalOpts treea iworld
-		# (merr, world) = recursiveDelete tmpDir iworld.world
-		# iworld        = {iworld & world = world}
-		| isError merr  = (ExceptionResult (exception (fromError merr)), iworld)
-		= (resa,iworld)
-	eval DestroyEvent _ _ iworld
-		= (DestroyedResult,iworld)
-
-	eval event evalOpts (TCInit taskId ts) iworld=:{options={appVersion,tempDirPath}}
-		# tmpDir 			= tempDirPath </> (appVersion +++ "-" +++ toString taskId +++ "-tmpdir")
-		# (taskIda,iworld=:{world})	= getNextTaskId iworld
-		# (ok ,world)		= ensureDirectoryExists tmpDir world
-		| isOk ok
-			= eval event evalOpts (TCShared taskId ts (TCInit taskIda ts)) {iworld & world = world}
-		| otherwise
-			= (ExceptionResult (exception ("Could not create temporary directory: " +++ tmpDir)) , {iworld & world = world})
-
-	eval event evalOpts (TCShared taskId ts treea) iworld=:{options={appVersion,tempDirPath},current={taskTime},world}
-		# tmpDir 			        = tempDirPath </> (appVersion +++ "-" +++ toString taskId +++ "-tmpdir")
-        # (mbCurdir,world)          = getCurrentDirectory world
-        | isError mbCurdir          = (ExceptionResult (exception (fromError mbCurdir)), {IWorld|iworld & world = world})
-        # (mbErr,world)             = setCurrentDirectory tmpDir world
-        | isError mbErr             = (ExceptionResult (exception (fromError mbErr)), {IWorld|iworld & world = world})
-		# ts						= case event of
-			(FocusEvent focusId)	= if (focusId == taskId) taskTime ts
-			_						= ts
-		# (Task evala)			= taskfun tmpDir
-		# (resa,iworld=:{world})	= evala event evalOpts treea {IWorld|iworld & world = world}
-        # (_,world)                 = setCurrentDirectory (fromOk mbCurdir) world
-        | isError mbErr             = (ExceptionResult (exception (fromError mbErr)), {IWorld|iworld & world = world})
+	//Initialization
+	evalinit DestroyEvent _ iworld
+		= (DestroyedResult, iworld)
+	evalinit event eo=:{TaskEvalOpts|taskId} iworld=:{options={appVersion,tempDirPath}}
+		# tmpDir                    = tempDirPath </> (appVersion +++ "-" +++ toString taskId +++ "-tmpdir")
+		# (taskIda,iworld=:{world}) = getNextTaskId iworld
+		# (ok ,world)               = ensureDirectoryExists tmpDir world
+		# iworld & world            = world
+		= case ok of
+			Ok _    = eval tmpDir taskIda (taskfun tmpDir) event eo iworld
+			Error e = (ExceptionResult (exception ("Could not create temporary directory: " +++ tmpDir +++ " (" +++ toString e +++ ")")) , iworld)
+	//Actual task execution
+	//First destroy the inner task, then delete the tmp dir
+	eval tmpDir innerTaskId (Task inner) DestroyEvent evalOpts iworld
+		# (resa,iworld)  = inner DestroyEvent {TaskEvalOpts|evalOpts&taskId=innerTaskId} iworld
+		# (merr, world)  = recursiveDelete tmpDir iworld.world
+		# iworld & world = world
+		| isError merr = (ExceptionResult (exception (fromError merr)), iworld)
 		= case resa of
-			ValueResult value info rep ntreea
-				# info = {TaskEvalInfo|info & lastEvent = max ts info.TaskEvalInfo.lastEvent}
-				= (ValueResult value info rep (TCShared taskId info.TaskEvalInfo.lastEvent ntreea),{IWorld|iworld & world = world})
-			ExceptionResult e = (ExceptionResult e,{IWorld|iworld & world = world})
+			ValueResult _ _ _ _ = (ExceptionResult (exception "Failed to destroy inner task withTempdir"), iworld)
+			e = (e, iworld)
 
-	eval _ _ _ iworld
-		= (ExceptionResult (exception "Corrupt task state in withShared"), iworld)
+	//During execution, set the cwd to the tmp dir
+	eval tmpDir innerTaskId (Task inner) event evalOpts=:{TaskEvalOpts|lastEval} iworld
+		# (oldcurdir, iworld)= liftIWorld getCurrentDirectory iworld
+		| isError oldcurdir  = (ExceptionResult (exception (fromError oldcurdir)), iworld)
+		# (Ok oldcurdir)     = oldcurdir
+		# (mbErr, iworld)    = liftIWorld (setCurrentDirectory tmpDir) iworld
+		| isError mbErr      = (ExceptionResult (exception (fromError mbErr)), iworld)
+		# (resa, iworld)     = inner event {TaskEvalOpts|evalOpts&taskId=innerTaskId} iworld
+		# (mbErr,iworld)     = setCurrentDirectory oldcurdir iworld
+		| isError mbErr      = (ExceptionResult (exception (fromError mbErr)), iworld)
+		= case resa of
+			ValueResult value info rep newinner
+				# info = {TaskEvalInfo|info & lastEvent = max lastEval info.TaskEvalInfo.lastEvent}
+				= (ValueResult value info rep (Task (eval tmpDir innerTaskId newinner)), iworld)
+			ExceptionResult e = (ExceptionResult e, iworld)
 
 instance toString (OSErrorCode,String) where toString x = snd x

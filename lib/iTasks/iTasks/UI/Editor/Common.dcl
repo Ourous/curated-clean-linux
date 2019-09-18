@@ -26,7 +26,7 @@ emptyEditorWithDefaultInEnterMode :: !a -> Editor a | JSONEncode{|*|}, JSONDecod
 
 //Version without overloading, for use in generic case
 //The first two argument should be JSONEncode{|*|} and JSONDecode{|*|} which cannot be used by overloading within generic functions
-emptyEditorWithDefaultInEnterMode_ :: !(Bool a -> [JSONNode]) !(Bool [JSONNode] -> (!Maybe a, ![JSONNode])) !a -> Editor a
+emptyEditorWithDefaultInEnterMode_ :: !(Bool a -> [JSONNode]) !(Bool [JSONNode] -> (Maybe a, [JSONNode])) !a -> Editor a
 
 /**
 * Editor that does nothing and gives an error in enter mode.
@@ -38,7 +38,7 @@ emptyEditorWithErrorInEnterMode :: !String -> Editor a | JSONEncode{|*|}, JSONDe
 
 //Version without overloading, for use in generic case
 //The first two argument should be JSONEncode{|*|} and JSONDecode{|*|} which cannot be used by overloading within generic functions
-emptyEditorWithErrorInEnterMode_ :: !(Bool a -> [JSONNode]) !(Bool [JSONNode] -> (!Maybe a, ![JSONNode])) !String
+emptyEditorWithErrorInEnterMode_ :: !(Bool a -> [JSONNode]) !(Bool [JSONNode] -> (Maybe a, [JSONNode])) !String
                                  -> Editor a
 
 /**
@@ -62,7 +62,7 @@ emptyEditorWithErrorInEnterMode_ :: !(Bool a -> [JSONNode]) !(Bool [JSONNode] ->
 * @param: To UI:              A function to map children to UIs.
 * @return                     A list of index/change pairs as expected by 'iTasks.UI.Definition.ChangeUI'.
 */
-diffChildren :: ![a] ![a] !(a a -> ChildUpdate) !(a -> UI) -> [(!Int, !UIChildChange)]
+diffChildren :: ![a] ![a] !(a a -> ChildUpdate) !(a -> UI) -> [(Int, UIChildChange)]
 
 /**
 * Simple dropdown that edits an index by choosing from a list of labels

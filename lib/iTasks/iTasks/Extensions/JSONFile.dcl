@@ -14,8 +14,6 @@ instance toString JSONParseException
 *
 * @return The imported content
 * @throws FileException 
-* 
-* @gin-icon page_white_json
 */
 importJSONFile		:: !FilePath -> Task a | iTask a
 importJSONDocument  :: !Document -> Task a | iTask a
@@ -28,8 +26,6 @@ importJSONDocument  :: !Document -> Task a | iTask a
 *
 * @return The imported content
 * @throws FileException 
-* 
-* @gin False
 */
 importJSONFileWith	:: !(JSONNode -> Maybe a) !FilePath -> Task a | iTask a
 /**
@@ -48,8 +44,6 @@ createJSONFile      :: !String a -> Task Document | iTask a
 * @param Value: The content to encode as JSON using the generic JSON encoder
 *
 * @return The exported content
-* 
-* @gin-icon page_white_json
 */
 exportJSONFile		:: !FilePath a -> Task a | iTask a
 /**
@@ -61,7 +55,5 @@ exportJSONFile		:: !FilePath a -> Task a | iTask a
 * 
 * @return The exported content
 * @throws FileException
-* 
-* @gin False
 */
 exportJSONFileWith	:: !(a -> JSONNode) !FilePath a -> Task a | iTask a

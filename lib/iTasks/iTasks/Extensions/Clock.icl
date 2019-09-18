@@ -13,7 +13,6 @@ import StdEnv
 derive JSONEncode AnalogClock
 derive JSONDecode AnalogClock
 derive gEq AnalogClock
-derive gDefault AnalogClock
 derive gText AnalogClock
 
 gEditor{|AnalogClock|} = analogClockEditor

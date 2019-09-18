@@ -45,7 +45,6 @@ CLEAN_HOME_VAR	:== "CLEAN_HOME"
 
 	, ioTasks               :: !*IOTasks                                        // The low-level input/output tasks
 	, ioStates              :: !IOStates                                        // Results of low-level io tasks, indexed by the high-level taskid that it is linked to
-	, sdsEvalStates         :: !SDSEvalStates
 
 	, signalHandlers        :: *[*SigHandler]                                   // Signal handlers
 	, world					:: !*World									        // The outside world
@@ -94,8 +93,6 @@ CLEAN_HOME_VAR	:== "CLEAN_HOME"
     = IOActive      !(Map ConnectionId (!Dynamic,!Bool)) // Bool: stability
     | IODestroyed   !(Map ConnectionId (!Dynamic,!Bool)) // Bool: stability
     | IOException   !String
-
-:: SDSEvalStates :== Map TaskId (*IWorld -> *(MaybeError TaskException Dynamic, !*IWorld))
 
 :: *Resource = Resource | .. //Extensible resource type for caching database connections etc...
 

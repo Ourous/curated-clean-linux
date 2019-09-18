@@ -15,8 +15,6 @@ from Data.Either				import :: Either
 * @param Task: The task for which continuations are defined
 * @param The possible continuations
 * @return The continuation's result
-*
-* @gin False
 */
 (>>*) infixl 1 :: !(Task a) ![TaskCont a (Task b)] -> Task b | iTask a & iTask b
 
@@ -30,8 +28,6 @@ from Data.Either				import :: Either
 * @param First: The first task to be executed
 * @param Second: The second task, which receives the result of the first task
 * @return The combined task
-*
-* @gin False
 */
 tbind :: !(Task a) !(a -> Task b) 			-> Task b		| iTask a & iTask b
 /**
@@ -41,8 +37,6 @@ tbind :: !(Task a) !(a -> Task b) 			-> Task b		| iTask a & iTask b
 * @param First: The first task to be executed
 * @param Second: The second task, which receives the result of the first task
 * @return The combined task
-*
-* @gin False
 */
 (>>!) infixl 1 :: !(Task a) !(a -> Task b) -> Task b | iTask a & iTask b
 /**
@@ -78,8 +72,6 @@ tbind :: !(Task a) !(a -> Task b) 			-> Task b		| iTask a & iTask b
 * @param Second: The second task to be executed
 *
 * @return The combined task
-*
-* @gin False
 */
 (>>^) infixl 1 :: !(Task a) (Task b) -> Task a| iTask a & iTask b
 /**
@@ -88,8 +80,6 @@ tbind :: !(Task a) !(a -> Task b) 			-> Task b		| iTask a & iTask b
 * @param Task: The task on which the transform should be applied
 * @param The transformation function to apply
 * @return The transformed task
-*
-* @gin False
 */
 (@?) infixl 1 :: !(Task a) !((TaskValue a) -> TaskValue b) -> Task b
 /**
@@ -98,8 +88,6 @@ tbind :: !(Task a) !(a -> Task b) 			-> Task b		| iTask a & iTask b
 * @param Task: The task on which the transform should be applied
 * @param The transformation function to apply
 * @return The transformed task
-*
-* @gin False
 */
 (@) infixl 1 :: !(Task a) !(a -> b) -> Task b
 /**
@@ -126,9 +114,6 @@ sideStep       :: !(Task a) ![TaskCont a (Task b)] -> Task a | iTask a & iTask b
 * @param Task: The normal task which will possibly raise an exception of type e
 * @param Handler: The exception handling task which gets the exception as parameter
 * @return The combined task
-*
-* @gin-title Try block
-* @gin-icon catch
 */
 try 		:: !(Task a) (e -> Task a) 			-> Task a 	| iTask a & iTask, toString e
 /**
@@ -136,9 +121,6 @@ try 		:: !(Task a) (e -> Task a) 			-> Task a 	| iTask a & iTask, toString e
 *
 * @param Task: The normal task which will possibly raise an exception of any type
 * @param Handler: The exception handling task
-*
-* @gin-title Catch all exceptions
-* @gin-icon catch
 */
 catchAll	:: !(Task a) (String -> Task a)		-> Task a | iTask a
 
@@ -148,8 +130,6 @@ catchAll	:: !(Task a) (String -> Task a)		-> Task a | iTask a
 *
 * @param The task that could in theory return Nothing
 * @return The result of the task
-*
-* @gin False
 */
 justdo	:: !(Task (Maybe a)) -> Task a | iTask a
 
@@ -158,8 +138,6 @@ justdo	:: !(Task (Maybe a)) -> Task a | iTask a
 *
 * @param Tasks: The list of tasks to be executed sequentially
 * @return The combined task
-*
-* @gin-icon sequence
 */
 sequence	:: ![Task a] 						-> Task [a]		| iTask a
 
@@ -170,10 +148,8 @@ sequence	:: ![Task a] 						-> Task [a]		| iTask a
 * @param Task: The task to be looped
 * @param Predicate: The predicate over the result of the task to determine if the combination is finished
 * @return The combined task
-* @type (Task a) (a -> Bool) -> Task a | iTask a
 */
-(<!) infixl 6
-(<!) task pred :== foreverIf (\p->not (pred p)) task
+(<!) infixl 6 :: (Task a) (a -> Bool) -> Task a | iTask a
 
 /**
 * Repeats a task while carrying a state while a predicate holds
@@ -186,14 +162,13 @@ sequence	:: ![Task a] 						-> Task [a]		| iTask a
 foreverStIf :: (a -> Bool) a !(a -> Task a) -> Task a | iTask a
 
 /**
-* Repeats a task until while a predicate holds
+* Repeats a task while a predicate holds
 *
 * @param Predicate: The predicate that has to hold
 * @param Task: The task that has to be repeate
 * @return The combined task
-* @type !(a -> Task a) (a -> Bool) -> Task a | iTask a
 */
-foreverIf pred task :== foreverStIf pred gDefault{|*|} \_->task
+foreverIf :: (a -> Bool) !(Task a) -> Task a | iTask a
 
 /**
 * Repeats a task indefinitely while carrying a state
@@ -201,18 +176,16 @@ foreverIf pred task :== foreverStIf pred gDefault{|*|} \_->task
 * @param State: The initial state
 * @param Task: The task that has to be repeate
 * @return The combined task
-* @type !(a -> Task a) a -> Task a | iTask a
 */
-foreverSt initialState task :== foreverStIf (\_->True) initialState task
+foreverSt :: a !(a -> Task a) -> Task a | iTask a
 
 /**
 * Repeats a task indefinitely
 *
 * @param Task: The task that has to be repeate
 * @return The combined task
-* @type (Task a) -> Task a | iTask a
 */
-forever task :== foreverSt gDefault{|*|} \_->task
+forever :: (Task a) -> Task a | iTask a
 
 /**
 * Group two tasks in parallel, return the result of the first completed task.
@@ -221,8 +194,6 @@ forever task :== foreverSt gDefault{|*|} \_->task
 * @param Right: The right task
 *
 * @return The result of the task that is completed first
-*
-* @gin False
 */
 (-||-) infixr 3 	:: !(Task a) !(Task a) 	-> Task a 				| iTask a
 
@@ -233,8 +204,6 @@ forever task :== foreverSt gDefault{|*|} \_->task
 * @param Right: The right task
 *
 * @return The result of the task that is completed first
-*
-* @gin False
 */
 (||-)  infixr 3		:: !(Task a) !(Task b)	-> Task b				| iTask a & iTask b
 
@@ -245,8 +214,6 @@ forever task :== foreverSt gDefault{|*|} \_->task
 * @param Right: The right task
 *
 * @return The result of the task that is completed first
-*
-* @gin False
 */
 (-||)  infixl 3		:: !(Task a) !(Task b)	-> Task a				| iTask a & iTask b
 
@@ -257,10 +224,6 @@ forever task :== foreverSt gDefault{|*|} \_->task
 * @param Right: The right task
 *
 * @return The results of both tasks
-*
-* @gin-parallel True
-* @gin-title Parallel merge (tuple)
-* @gin-icon parallel-merge-tuple
 */
 (-&&-) infixr 4 	:: !(Task a) !(Task b) 	-> Task (a,b) 			| iTask a & iTask b
 
@@ -298,10 +261,6 @@ feedBidirectionally :: !((SDSLens () (Maybe b) ()) -> Task a) !((SDSLens () (May
 * @param Tasks: The list of tasks
 *
 * @return The first result
-*
-* @gin-parallel True
-* @gin-title Take first completed
-* @gin-icon parallel-merge-first
 */
 anyTask				:: ![Task a]			-> Task a				| iTask a
 
@@ -312,10 +271,6 @@ anyTask				:: ![Task a]			-> Task a				| iTask a
 * @param Tasks: The list of tasks
 *
 * @return The list of results
-*
-* @gin-parallel True
-* @gin-title Parallel merge (list)
-* @gin-icon parallel-merge-list
 */
 allTasks			:: ![Task a]			-> Task [a]				| iTask a
 
@@ -327,8 +282,6 @@ allTasks			:: ![Task a]			-> Task [a]				| iTask a
 * @param Right: The right task
 *
 * @return The result of the first completed task wrapped in an 'Either'.
-*
-* @gin False
 */
 eitherTask			:: !(Task a) !(Task b) 	-> Task (Either a b)	| iTask a & iTask b
 

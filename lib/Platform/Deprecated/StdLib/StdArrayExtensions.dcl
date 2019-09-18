@@ -52,7 +52,7 @@ instance updateArrElt {!}
  *   = (x, { array & [index] = elt` })
  * where (x, elt`) = f array.[index]`
  */
-class accArrElt a :: !(.e -> (!.x, !.e)) !Int !*(a .e) -> (!.x, !*(a .e))
+class accArrElt a :: !(.e -> (.x, .e)) !Int !*(a .e) -> (!.x, !*(a .e))
 
 instance accArrElt {}
 instance accArrElt {!}

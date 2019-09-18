@@ -93,8 +93,8 @@ tcpPossible		:: !*env
 //	multiplexing
 //	********************************************************************************
 
-selectChannel_MT:: !(Maybe Timeout)          !*r_channels !*s_channels !*env
-				-> (![(!Int, !SelectResult)],!*r_channels,!*s_channels,!*env)
+selectChannel_MT:: !(Maybe Timeout)        !*r_channels !*s_channels !*env
+				-> (![(Int, SelectResult)],!*r_channels,!*s_channels,!*env)
 				|  SelectReceive r_channels & SelectSend s_channels & ChannelEnv env
 /*	selectChannel_MT mbTimeout r_channels s_channels world
 		determines the first channel on which "something happens". 

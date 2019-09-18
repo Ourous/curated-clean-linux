@@ -133,7 +133,7 @@ size Nil = 0
 // | /O(min(n,W))/. Is the value a member of the set?
 
 // See Note: Local 'go' functions and capturing]
-member :: !Key IntSet -> Bool
+member :: !Key !IntSet -> Bool
 member x is = go is
   where
     go (Bin p m l r)
@@ -758,7 +758,7 @@ toDescList :: IntSet -> [Key]
 toDescList s = foldl (\xs x -> [x:xs]) [] s
 
 // | /O(n*min(n,W))/. Create a set from a list of integers.
-fromList :: [Key] -> IntSet
+fromList :: ![Key] -> IntSet
 fromList xs
   = 'StdList'.foldl ins empty xs
   where

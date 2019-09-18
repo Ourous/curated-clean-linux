@@ -28,10 +28,26 @@ moveFile srcPath dstPath = accWorldError ('SF'.moveFile srcPath dstPath) snd
 copyFile :: !FilePath !FilePath -> Task ()
 copyFile srcPath dstPath = accWorldError (copyFile` srcPath dstPath) id
 
-//TODO: This is a very stupid way of copying files, should be replaced by a better way
-copyFile` srcPath dstPath world = case 'SF'.readFile srcPath world of
-	(Error e,world) = (Error e,world)
-	(Ok content,world) = writeFile dstPath content world
+copyFile` :: !FilePath !FilePath !*World -> (MaybeError String (), !*World)
+copyFile` srcPath dstPath w
+	# (ok, srcFile, w) = fopen srcPath FReadText w
+	| not ok = (Error ("cannot open " +++ srcPath), w)
+	# (ok, dstFile, w) = fopen dstPath FWriteText w
+	| not ok = (Error ("cannot open " +++ dstPath), w)
+	# (srcFile, dstFile) = actuallyCopy srcFile dstFile
+	# (ok, w) = fclose srcFile w
+	| not ok = (Error ("cannot close " +++ srcPath), w)
+	# (ok, w) = fclose dstFile w
+	| not ok = (Error ("cannot close " +++ dstPath), w)
+	= (Ok (), w)
+where
+	actuallyCopy :: !*File !*File -> (!*File, !*File)
+	actuallyCopy src dst
+		# (end, src) = fend src
+		| end = (src, dst)
+		# (s, src) = freads src 65536
+		# dst = dst <<< s
+		= actuallyCopy src dst
 
 createDirectory :: !FilePath !Bool -> Task ()
 createDirectory path False = accWorldError ('SD'.createDirectory path) snd
@@ -101,27 +117,27 @@ where
 //Why is this necessary?!?!?!?
 derive class iTask RTree, FileInfo, Tm
 
-selectFileTree :: !Bool !d !Bool !FilePath [FilePath]-> Task [FilePath] | toPrompt d
-selectFileTree exp prompt multi root initial
+selectFileTree :: !Bool !Bool !FilePath [FilePath]-> Task [FilePath]
+selectFileTree exp multi root initial
 	= accWorld (readDirectoryTree root Nothing) @ numberTree
-	>>= \tree->editSelection prompt multi selectOption tree
+	>>- \tree->editSelection [SelectMultiple multi,selectOption] tree
 		[i\\(i, (f, _))<-leafs tree | elem f initial]
 where
 	selectOption = SelectInTree
 		(\tree->[{foldTree (fp2cn exp) tree & label=root}])
 		(\tree sel->[f\\(i, (f, _))<-leafs tree | isMember i sel])
 
-selectFileTreeLazy :: !d !Bool !FilePath -> Task [FilePath] | toPrompt d
-selectFileTreeLazy d multi root = accWorld (readDirectoryTree root (Just 1)) >>= \tree->
+selectFileTreeLazy :: !Bool !FilePath -> Task [FilePath]
+selectFileTreeLazy multi root = accWorld (readDirectoryTree root (Just 1)) >>- \tree->
 	withShared tree \stree->let numberedtree = mapRead numberTree stree in
 	withShared [] \ssel->
-	editSharedSelectionWithShared d multi selOpt numberedtree ssel
+	editSharedSelectionWithShared [SelectMultiple multi,selOpt] numberedtree ssel
 	-|| whileUnchanged (ssel >*< numberedtree) (\(sel, tree)->case sel of
 		[i] = case find ((==)i o fst) (leafs tree) of
 			Just (i, (fp, Ok {directory=True}))
 				= accWorld (readDirectoryTree fp (Just 1))
 				@ flip (mergeIn i) tree
-				>>= \newtree->set ([], newtree) (ssel >*< stree) @? const NoValue
+				>>- \newtree->set ([], newtree) (ssel >*< stree) @? const NoValue
 			_ = unstable ()
 		_ = unstable ()
 	)

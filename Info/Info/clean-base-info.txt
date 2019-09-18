@@ -1,0 +1,13 @@
+clean-base linux x64 20190917
+[svn sources]
+clean-tools trunk 657       
+clean-dynamic-system trunk 667       
+[git sources]
+clean-compiler-and-rts code-generator master f2d043320c6b9a955b874bd09d54418cec02f794
+clean-compiler-and-rts run-time-system master bdda1a1503f7356bccbe7e2527d39c0b395707cc
+clean-compiler-and-rts compiler itask 30bff1beffac729d3b2e5f2834221545a03dfbfb
+clean-compiler-and-rts language-report master 76f9242679808f07bc33805c911ae8b6220e3388
+clean-compiler-and-rts stdenv master dceae337f893687cde56d6a7b1edbc44ec2b6469
+clean-and-itasks clean-libraries master cf79df7a875e521ea9137e1f0034a1970f75135f
+clean-and-itasks clean-ide master 2eea5773d44366c4446b75ad7b29e35315cb0c83
+clean-and-itasks clm master d49cca01b7a1bf353bdcb6a2d35e230d0dbef556

@@ -51,6 +51,7 @@ where
 	toType (GTV tv) = 'Clean.Types'.Var tv.tv_ident.id_name
 	toType (t1 --> t2) = 'Clean.Types'.Func ['Clean.Types'.toType t1] ('Clean.Types'.toType t2) []
 	toType ((CV cv) :@: ats) = 'Clean.Types'.Cons cv.tv_ident.id_name (map 'Clean.Types'.toType ats)
+	toType (TFA tvas t) = 'Clean.Types'.Forall (map 'Clean.Types'.toType tvas) ('Clean.Types'.toType t) []
 	toType (TFAC tvas t tc) = 'Clean.Types'.Forall (map 'Clean.Types'.toType tvas) ('Clean.Types'.toType t) ('Clean.Types'.toTypeContext tc)
 	toType TArrow = 'Clean.Types'.Arrow Nothing
 	toType (TArrow1 t) = 'Clean.Types'.Arrow (Just ('Clean.Types'.toType t))

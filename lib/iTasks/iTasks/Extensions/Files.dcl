@@ -56,19 +56,17 @@ copyDirectory :: !FilePath !FilePath -> Task ()
  * If your file structure is big or contains cyclic links, choose {{`selectFileLazyTree`}}
  *
  * @param Start with all directories expanded
- * @param Prompt
  * @param Flag for multiple selection
  * @param Root directory to select from
  * @param Initial selection
  */
-selectFileTree :: !Bool !d !Bool !FilePath [FilePath]-> Task [FilePath] | toPrompt d
+selectFileTree :: !Bool !Bool !FilePath [FilePath]-> Task [FilePath]
 
 /**
  * Browse for a file in a lazy tree structure.
  *
- * @param Prompt
  * @param Multiple selection allowed
  * @param Path to start in
  * @result Filepaths picked
  */
-selectFileTreeLazy :: !d !Bool !FilePath -> Task [FilePath] | toPrompt d
+selectFileTreeLazy :: !Bool !FilePath -> Task [FilePath]

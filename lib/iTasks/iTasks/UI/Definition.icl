@@ -21,21 +21,6 @@ derive class iTask UI, UIType
 derive class iTask UISize, UIBound, UIDirection, UIVAlign, UIHAlign, UISide, UIWindowType
 derive class iTask UITreeNode 
 
-//SHOULD BE IN Text.GenJSON
-jsonObjectPut :: String JSONNode JSONNode -> JSONNode
-jsonObjectPut k v (JSONObject fields) = JSONObject (put k v fields)
-where
-	put k v [] = [(k,v)]
-	put k v [(fk,fv):fs] = if (k == fk) [(fk,v):fs] [(fk,fv):put k v fs]
-jsonObjectPut k v node = node
-
-jsonObjectGet :: String JSONNode -> Maybe JSONNode
-jsonObjectGet k (JSONObject fields) = get k fields
-where
-	get k [] = Nothing
-	get k [(fk,fv):fs] = if (k == fk) (Just fv) (get k fs)
-jsonObjectGet k node = Nothing
-
 ui :: UIType -> UI
 ui type = UI type 'DM'.newMap []
 
@@ -52,109 +37,120 @@ emptyAttr :: UIAttributes
 emptyAttr = 'DM'.newMap
 
 optionalAttr :: !Bool -> UIAttributes
-optionalAttr optional = 'DM'.fromList [("optional",JSONBool optional)]
+optionalAttr optional = 'DM'.singleton "optional" (JSONBool optional)
 
 sizeAttr :: !UISize !UISize -> UIAttributes
 sizeAttr width height = 'DM'.fromList [("width",encodeUI width),("height",encodeUI height)]
 
 widthAttr :: !UISize -> UIAttributes
-widthAttr width = 'DM'.fromList [("width",encodeUI width)]
+widthAttr width = 'DM'.singleton "width" (encodeUI width)
 
 heightAttr :: !UISize -> UIAttributes
-heightAttr height = 'DM'.fromList [("height",encodeUI height)]
+heightAttr height = 'DM'.singleton "height" (encodeUI height)
+
+hintAttr :: !String -> UIAttributes
+hintAttr hint = 'DM'.singleton "hint" (JSONString hint)
 
 titleAttr :: !String -> UIAttributes
-titleAttr title = 'DM'.fromList [("title",JSONString title)]
+titleAttr title = 'DM'.singleton "title" (JSONString title)
 
 iconClsAttr :: !String -> UIAttributes
-iconClsAttr iconCls = 'DM'.fromList [("iconCls",JSONString iconCls)]
+iconClsAttr iconCls = 'DM'.singleton "iconCls" (JSONString iconCls)
 
 tooltipAttr :: !String -> UIAttributes
-tooltipAttr tooltip = 'DM'.fromList [("tooltip",JSONString tooltip)]
+tooltipAttr tooltip = 'DM'.singleton "tooltip" (JSONString tooltip)
 
 hposAttr :: !UIHAlign -> UIAttributes
-hposAttr pos = 'DM'.fromList [("hpos",encodeUI pos)]
+hposAttr pos = 'DM'.singleton "hpos" (encodeUI pos)
 
 vposAttr :: !UIVAlign -> UIAttributes
-vposAttr pos = 'DM'.fromList [("vpos",encodeUI pos)]
+vposAttr pos = 'DM'.singleton "vpos" (encodeUI pos)
 
 windowTypeAttr :: !UIWindowType -> UIAttributes
-windowTypeAttr windowType = 'DM'.fromList [("windowType",encodeUI windowType)]
+windowTypeAttr windowType = 'DM'.singleton "windowType" (encodeUI windowType)
 
 focusTaskIdAttr :: !String -> UIAttributes
-focusTaskIdAttr taskId = 'DM'.fromList [("focusTaskId",JSONString taskId)]
+focusTaskIdAttr taskId = 'DM'.singleton "focusTaskId" (JSONString taskId)
 
 closeTaskIdAttr :: !String -> UIAttributes
-closeTaskIdAttr taskId = 'DM'.fromList [("closeTaskId",JSONString taskId)]
+closeTaskIdAttr taskId = 'DM'.singleton "closeTaskId" (JSONString taskId)
 
 activeTabAttr :: !Int -> UIAttributes
-activeTabAttr activeTab = 'DM'.fromList [("activeTab",JSONInt activeTab)]
+activeTabAttr activeTab = 'DM'.singleton "activeTab" (JSONInt activeTab)
 
 valueAttr :: !JSONNode -> UIAttributes
-valueAttr value = 'DM'.fromList [("value",value)]
+valueAttr value = 'DM'.singleton "value" value
 
 minAttr :: !Int -> UIAttributes
-minAttr min = 'DM'.fromList [("min",JSONInt min)]
+minAttr min = 'DM'.singleton "min" (JSONInt min)
 
 maxAttr :: !Int -> UIAttributes
-maxAttr max = 'DM'.fromList [("max",JSONInt max)]
+maxAttr max = 'DM'.singleton "max" (JSONInt max)
 
 textAttr :: !String -> UIAttributes
-textAttr text = 'DM'.fromList [("text",JSONString text)]
+textAttr text = 'DM'.singleton "text" (JSONString text)
 
 enabledAttr :: !Bool -> UIAttributes
-enabledAttr enabled = 'DM'.fromList [("enabled",JSONBool enabled)]
+enabledAttr enabled = 'DM'.singleton "enabled" (JSONBool enabled)
 
 multipleAttr :: !Bool -> UIAttributes
-multipleAttr multiple = 'DM'.fromList [("multiple",JSONBool multiple)]
+multipleAttr multiple = 'DM'.singleton "multiple" (JSONBool multiple)
 
 instanceNoAttr :: !Int -> UIAttributes
-instanceNoAttr instanceNo = 'DM'.fromList [("instanceNo",JSONInt instanceNo)]
+instanceNoAttr instanceNo = 'DM'.singleton "instanceNo" (JSONInt instanceNo)
 
 instanceKeyAttr :: !String -> UIAttributes
-instanceKeyAttr instanceKey = 'DM'.fromList [("instanceKey",JSONString instanceKey)]
+instanceKeyAttr instanceKey = 'DM'.singleton "instanceKey" (JSONString instanceKey)
 
 columnsAttr :: ![String] -> UIAttributes
-columnsAttr columns = 'DM'.fromList [("columns",JSONArray (map JSONString columns))]
+columnsAttr columns = 'DM'.singleton "columns" (JSONArray (map JSONString columns))
 
 doubleClickAttr :: !String !String -> UIAttributes
-doubleClickAttr taskId actionId = 'DM'.fromList [("doubleClickAction",JSONArray [JSONString taskId,JSONString actionId])]
+doubleClickAttr taskId actionId = 'DM'.singleton "doubleClickAction" (JSONArray [JSONString taskId,JSONString actionId])
 
 actionIdAttr :: !String -> UIAttributes
-actionIdAttr actionId = 'DM'.fromList [("actionId",JSONString actionId)]
+actionIdAttr actionId = 'DM'.singleton "actionId" (JSONString actionId)
 
 taskIdAttr :: !String -> UIAttributes
-taskIdAttr taskId = 'DM'.fromList [("taskId",JSONString taskId)]
+taskIdAttr taskId = 'DM'.singleton "taskId" (JSONString taskId)
 
 editorIdAttr :: !String -> UIAttributes
-editorIdAttr taskId = 'DM'.fromList [("editorId",JSONString taskId)]
+editorIdAttr taskId = 'DM'.singleton "editorId" (JSONString taskId)
 
 labelAttr :: !String -> UIAttributes
-labelAttr taskId = 'DM'.fromList [(LABEL_ATTRIBUTE,JSONString taskId)]
+labelAttr taskId = 'DM'.singleton "label" (JSONString taskId)
 
 styleAttr :: !String -> UIAttributes
-styleAttr style = 'DM'.fromList [("style",JSONString style)]
+styleAttr style = 'DM'.singleton "style" (JSONString style)
 
 classAttr :: ![String] -> UIAttributes
-classAttr cls = 'DM'.fromList [("class",JSONArray (map JSONString cls))]
+classAttr classes = 'DM'.singleton "class" (JSONArray (map JSONString classes))
+
+addClassAttr :: !String !UIAttributes -> UIAttributes
+addClassAttr classname attributes = 'DM'.put "class" (JSONArray [JSONString classname:classes]) attributes
+where
+	classes = case 'DM'.get "class" attributes of (Just (JSONArray names)) = names ; _ = []
+
+removeClassAttr :: !String !UIAttributes -> UIAttributes
+removeClassAttr remove attributes 
+	= case 'DM'.get "class" attributes of
+		(Just (JSONArray items)) = 'DM'.put "class" (JSONArray [i \\ i=:(JSONString name) <- items | name <> remove]) attributes
+		_ = attributes
 
 resizableAttr :: ![UISide] -> UIAttributes
-resizableAttr sides = 'DM'.fromList [("resizable",JSONArray (map encodeUI sides))]
+resizableAttr sides = 'DM'.singleton "resizable" (JSONArray (map encodeUI sides))
 
 maxlengthAttr :: !Int -> UIAttributes
-maxlengthAttr l = 'DM'.fromList [("maxlength", JSONInt l)]
+maxlengthAttr maxlength = 'DM'.singleton "maxlength" (JSONInt maxlength)
 
 minlengthAttr :: !Int -> UIAttributes
-minlengthAttr l = 'DM'.fromList [("minlength", JSONInt l)]
+minlengthAttr minlength = 'DM'.singleton "minlength" (JSONInt minlength)
 
 boundedlengthAttr :: !Int !Int -> UIAttributes
 boundedlengthAttr min max = 'DM'.unions [minlengthAttr min, maxlengthAttr max]
 
 eventTimeoutAttr :: !(Maybe Int) -> UIAttributes
-eventTimeoutAttr to = 'DM'.fromList [("eventTimeout", maybe JSONNull JSONInt to)]
-
-steppedAttr :: !Bool -> UIAttributes
-steppedAttr stepped = 'DM'.fromList [(STEPPED_ATTRIBUTE, JSONBool stepped)]
+eventTimeoutAttr timeout = 'DM'.singleton "eventTimeout" (maybe JSONNull JSONInt timeout)
 
 editAttrs :: !String !String !(Maybe JSONNode) -> UIAttributes
 editAttrs taskId editorId mbValue 
@@ -209,13 +205,6 @@ instance toString UIType
 where
 	toString UIEmpty           = "RawEmpty"
 	toString UIAction          = "RawAction"
-	toString UIPair            = "RawPair"
-	toString UIRecord          = "RawRecord"
-	toString UICons            = "RawCons"
-	toString UIVarCons         = "RawVarCons"
-	toString UIInteract        = "RawInteract"
-	toString UIStep            = "RawStep"
-	toString UIParallel        = "RawParallel"
 
 	toString UIComponent       = "Component" 
 	toString UIViewport        = "Viewport"
@@ -242,6 +231,7 @@ where
 	toString UIChoiceList      = "ChoiceList"
 	toString UIGrid            = "Grid"
 	toString UITree            = "Tree"
+	toString UITabBar          = "TabBar"
 
     toString UIContainer       = "Container"
 	toString UIPanel           = "Panel"

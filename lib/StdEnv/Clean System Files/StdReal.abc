@@ -111,24 +111,19 @@ s35
 	push_b 0
 	pushR 1.0
 	subR
-
 	push_b 1
 	pushR 1.0
 	addR
-
 	update_b 1 2
 	updatepop_b 0 1
 	divR
-
 	lnR
-
 	pushR 0.5
 	push_b 1
 	update_b 1 2
 	update_b 0 1
 	pop_b 1
 	mulR
-
 .d 0 1 r
 	rtn
 .pe
@@ -184,23 +179,18 @@ s34
 	push_b 0
 	push_b 1
 	mulR
-
 	pushR 1.0
 	push_b 1
 	update_b 1 2
 	update_b 0 1
 	pop_b 1
 	subR
-
 	sqrtR
-
 	push_b 1
 	update_b 1 2
 	updatepop_b 0 1
 	addR
-
 	lnR
-
 .d 0 1 r
 	rtn
 .pe
@@ -256,23 +246,18 @@ s33
 	push_b 0
 	push_b 1
 	mulR
-
 	pushR 1.0
 	push_b 1
 	update_b 1 2
 	update_b 0 1
 	pop_b 1
 	addR
-
 	sqrtR
-
 	push_b 1
 	update_b 1 2
 	updatepop_b 0 1
 	addR
-
 	lnR
-
 .d 0 1 r
 	rtn
 .pe
@@ -327,24 +312,18 @@ e_StdReal_stanh;31
 s32
 	push_b 0
 	expR
-
 	push_b 1
 	negR
-
 	expR
-
 	push_b 0
 	push_b 2
 	addR
-
 	push_b 1
 	push_b 3
 	subR
-
 	update_b 1 4
 	updatepop_b 0 3
 	divR
-
 .d 0 1 r
 	rtn
 .pe
@@ -399,23 +378,18 @@ e_StdReal_scosh;30
 s31
 	push_b 0
 	negR
-
 	expR
-
 	push_b 1
 	expR
-
 	update_b 1 2
 	updatepop_b 0 1
 	addR
-
 	pushR 0.5
 	push_b 1
 	update_b 1 2
 	update_b 0 1
 	pop_b 1
 	mulR
-
 .d 0 1 r
 	rtn
 .pe
@@ -470,23 +444,18 @@ e_StdReal_ssinh;29
 s30
 	push_b 0
 	negR
-
 	expR
-
 	push_b 1
 	expR
-
 	update_b 1 2
 	updatepop_b 0 1
 	subR
-
 	pushR 0.5
 	push_b 1
 	update_b 1 2
 	update_b 0 1
 	pop_b 1
 	mulR
-
 .d 0 1 r
 	rtn
 .pe
@@ -542,7 +511,6 @@ s29
 .inline atan;28
 	atanR
 .end
-
 .d 0 1 r
 	rtn
 .pe
@@ -598,7 +566,6 @@ s28
 .inline acos;27
 	acosR
 .end
-
 .d 0 1 r
 	rtn
 .pe
@@ -654,7 +621,6 @@ s27
 .inline asin;26
 	asinR
 .end
-
 .d 0 1 r
 	rtn
 .pe
@@ -710,7 +676,6 @@ s26
 .inline tan;25
 	tanR
 .end
-
 .d 0 1 r
 	rtn
 .pe
@@ -766,7 +731,6 @@ s25
 .inline cos;24
 	cosR
 .end
-
 .d 0 1 r
 	rtn
 .pe
@@ -822,7 +786,6 @@ s24
 .inline sin;23
 	sinR
 .end
-
 .d 0 1 r
 	rtn
 .pe
@@ -878,7 +841,6 @@ s23
 .inline sqrt;22
 	sqrtR
 .end
-
 .d 0 1 r
 	rtn
 .pe
@@ -934,7 +896,6 @@ s22
 .inline exp;21
 	expR
 .end
-
 .d 0 1 r
 	rtn
 .pe
@@ -990,7 +951,6 @@ s21
 .inline log10;20
 	log10R
 .end
-
 .d 0 1 r
 	rtn
 .pe
@@ -1046,7 +1006,6 @@ s20
 .inline ln;19
 	lnR
 .end
-
 .d 0 1 r
 	rtn
 .pe
@@ -1099,7 +1058,6 @@ s19
 	jsr RtoAC
 .o 1 0
 .end
-
 .d 1 0
 	rtn
 .pe
@@ -1153,7 +1111,6 @@ s18
 .inline fromReal;17
 	no_op
 .end
-
 .d 0 1 r
 	rtn
 .pe
@@ -1207,7 +1164,6 @@ s17
 .inline fromReal;16
 	RtoI
 .end
-
 .d 0 1 i
 	rtn
 .pe
@@ -1288,7 +1244,6 @@ else.1
 	jsr s36
 .o 0 1 r
 	negR
-
 .d 0 1 r
 	rtn
 else.2
@@ -1346,18 +1301,15 @@ else.4
 	push_b 3
 	pushR 10.0
 	mulR
-
 	pushC '0'
 	CtoI
 	push_b 2
 	CtoI
 	subI
 	ItoR
-
 	update_b 1 2
 	updatepop_b 0 1
 	addR
-
 	pushI 1
 	push_b 3
 	addI
@@ -1562,15 +1514,12 @@ else.16
 	updatepop_b 0 2
 	pop_a 1
 	ItoR
-
 	pushR 10.0
 	powR
-
 	push_b 1
 	update_b 1 3
 	updatepop_b 0 2
 	divR
-
 .d 0 1 r
 	rtn
 else.15
@@ -1593,16 +1542,13 @@ else.15
 	push_b 4
 	pushR 10.0
 	mulR
-
 	pushC '0'
 	CtoI
 	push_b 3
 	CtoI
 	subI
 	ItoR
-
 	addR
-
 	pushI 1
 	push_b 5
 	addI
@@ -1790,15 +1736,12 @@ s38
 	push_b 0
 	updatepop_b 0 1
 	ItoR
-
 	pushR 10.0
 	powR
-
 	push_b 1
 	update_b 1 5
 	updatepop_b 0 4
 	mulR
-
 .d 0 1 r
 	rtn
 else.27
@@ -1811,39 +1754,30 @@ else.27
 	negI
 	updatepop_b 0 1
 	ItoR
-
 	pushR 10.0
 	powR
-
 	push_b 1
 	update_b 1 5
 	updatepop_b 0 4
 	divR
-
 .d 0 1 r
 	rtn
 else.28
 	push_b 0
 	negI
 	ItoR
-
 	pushR 2.0
 	powR
-
 	push_b 1
 	negI
 	ItoR
-
 	pushR 5.0
 	powR
-
 	push_b 3
 	divR
-
 	update_b 1 6
 	updatepop_b 0 5
 	divR
-
 .d 0 1 r
 	rtn
 else.26
@@ -1946,7 +1880,6 @@ s15
 .inline toReal;14
 	no_op
 .end
-
 .d 0 1 r
 	rtn
 .pe
@@ -1997,7 +1930,6 @@ s14
 .inline toReal;13
 	ItoR
 .end
-
 .d 0 1 r
 	rtn
 .pe
@@ -2053,7 +1985,6 @@ s11
 .inline ~;10
 	negR
 .end
-
 .d 0 1 r
 	rtn
 .pe
@@ -2104,7 +2035,6 @@ s10
 	pushR 0.0
 	push_b 1
 	eqR
-
 	jmp_false else.31
 	pop_b 1
 	pushI 0
@@ -2116,7 +2046,6 @@ else.31
 	update_b 1 2
 	updatepop_b 0 1
 	ltR
-
 	jmp_false else.32
 	pushI -1
 .d 0 1 i
@@ -2179,7 +2108,6 @@ s13
 .inline <;12
 	ltR
 .end
-
 .d 0 1 b
 	rtn
 .pe
@@ -2236,7 +2164,6 @@ s12
 .inline ==;11
 	eqR
 .end
-
 .d 0 1 b
 	rtn
 .pe
@@ -2292,7 +2219,6 @@ s9
 .inline abs;8
 	absR
 .end
-
 .d 0 1 r
 	rtn
 .pe
@@ -2354,7 +2280,6 @@ s8
 .inline ^;7
 	powR
 .end
-
 .d 0 1 r
 	rtn
 .pe
@@ -2396,7 +2321,6 @@ s7
 .inline one;6
 	pushR 1.0
 .end
-
 .d 0 1 r
 	rtn
 .pe
@@ -2458,7 +2382,6 @@ s6
 .inline /;5
 	divR
 .end
-
 .d 0 1 r
 	rtn
 .pe
@@ -2520,7 +2443,6 @@ s5
 .inline *;4
 	mulR
 .end
-
 .d 0 1 r
 	rtn
 .pe
@@ -2562,7 +2484,6 @@ s4
 .inline zero;3
 	pushR 0.0
 .end
-
 .d 0 1 r
 	rtn
 .pe
@@ -2624,7 +2545,6 @@ s3
 .inline -;2
 	subR
 .end
-
 .d 0 1 r
 	rtn
 .pe
@@ -2686,7 +2606,6 @@ s2
 .inline +;1
 	addR
 .end
-
 .d 0 1 r
 	rtn
 .pe
@@ -2729,7 +2648,6 @@ s1
 .inline entier
 	entierR
 .end
-
 .d 0 1 i
 	rtn
 .pe

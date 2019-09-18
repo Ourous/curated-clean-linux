@@ -7,7 +7,6 @@ from Internet.HTTP				import :: HTTPRequest, :: HTTPResponse
 from iTasks.Engine              import :: WebTask
 from iTasks.Internal.IWorld		import :: IWorld
 from iTasks.Internal.Task 	    import :: Task, :: ConnectionTask
-from iTasks.Internal.TaskState 	import :: TIUIState
 from iTasks.Internal.TaskStore  import :: TaskOutput, :: TaskOutputMessage
 import iTasks.SDS.Definition
 from iTasks.UI.Definition           import :: UIChange
@@ -32,14 +31,14 @@ from System.Time                    import :: Timespec
 	| WSPing String        //A ping frame was received
 
 :: WebService r w =
-    { urlMatchPred    :: !(String -> Bool)                                                                                              // checks whether the URL is served by this service
-    , completeRequest :: !Bool                                                                                                          // wait for complete request before start serving request
-    , onNewReq        :: !(HTTPRequest r                        *IWorld -> *(!HTTPResponse,!Maybe ConnectionState, !Maybe w, !*IWorld)) // is called for each new request
-    , onData          :: !(HTTPRequest r String ConnectionState *IWorld -> *(![{#Char}], !Bool, !ConnectionState, !Maybe w, !*IWorld))  // on new data from client
-    , onShareChange   :: !(HTTPRequest r        ConnectionState *IWorld -> *(![{#Char}], !Bool, !ConnectionState, !Maybe w, !*IWorld))  // on shared change
-    , onTick          :: !(HTTPRequest r        ConnectionState *IWorld -> *(![{#Char}], !Bool, !ConnectionState, !Maybe w, !*IWorld))  // called on each iteration of main loop
-    , onDisconnect    :: !(HTTPRequest r ConnectionState        *IWorld -> *(!Maybe w, !*IWorld))                                       // is called on disconnect
-    }
+	{ urlMatchPred    :: !(String -> Bool)                                                                                          // checks whether the URL is served by this service
+	, completeRequest :: !Bool                                                                                                      // wait for complete request before start serving request
+	, onNewReq        :: !(HTTPRequest r                        *IWorld -> *(HTTPResponse,Maybe ConnectionState, Maybe w, *IWorld)) // is called for each new request
+	, onData          :: !(HTTPRequest r String ConnectionState *IWorld -> *([{#Char}], Bool, ConnectionState, Maybe w, *IWorld))   // on new data from client
+	, onShareChange   :: !(HTTPRequest r        ConnectionState *IWorld -> *([{#Char}], Bool, ConnectionState, Maybe w, *IWorld))   // on shared change
+	, onTick          :: !(HTTPRequest r        ConnectionState *IWorld -> *([{#Char}], Bool, ConnectionState, Maybe w, *IWorld))   // called on each iteration of main loop
+	, onDisconnect    :: !(HTTPRequest r ConnectionState        *IWorld -> *(Maybe w, *IWorld))                                     // is called on disconnect
+	}
 
 httpServer :: !Int !Timespec ![WebService r w] (sds () r w) -> ConnectionTask | TC r & TC w & RWShared sds
 

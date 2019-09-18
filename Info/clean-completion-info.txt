@@ -1,0 +1,4 @@
+clean-completion linux x64 20190917
+[svn sources]
+[git sources]
+cstaps clean-completion master c03d98e885d34e806ea2aa48a6b23f32a4e98624

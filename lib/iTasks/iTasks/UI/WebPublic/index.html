@@ -4,12 +4,11 @@
 	<meta charset="UTF-8">
 	<title></title>
 
-	<link rel="stylesheet" href="/css/itasks.css" type="text/css" >
 	<link rel="stylesheet" href="/css/itasks-modules.css" type="text/css" >
 
 	<!-- ABC interpreter -->
-	<script type="text/javascript" src="/js/abc-instructions.js"></script>
 	<script type="text/javascript" src="/js/abc-interpreter.js"></script>
+	<script type="text/javascript" src="/js/itasks-abc-interpreter.js"></script>
 
 	<!-- iTasks framework -->
 	<script type="text/javascript" src="/js/itasks-core.js"></script>
@@ -22,9 +21,7 @@
 	<!-- load iTasks viewport -->
 	<script type="text/javascript">
 	window.onload = function() {
-		ABC.loading_promise.finally(function(){
-			itasks.viewport({syncTitle: true}, document.body);
-		});
+		itasks.viewport({syncTitle: true}, document.body);
 	};
 	</script>
 </head>

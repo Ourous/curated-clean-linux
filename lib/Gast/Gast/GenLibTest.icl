@@ -42,6 +42,7 @@ genShow{|[]|}		f		sep p xs			rest = ["[" :showList f xs [ "]":rest]]
 genShow{|[!]|}		f		sep p xs			rest = ["[!":showList f xs [ "]":rest]]
 genShow{|[ !]|}		f		sep p xs			rest = ["[" :showList f xs ["!]":rest]]
 genShow{|[!!]|}		f		sep p xs			rest = ["[!":showList f xs ["!]":rest]]
+genShow{|()|}               _   _ _             rest = ["()": rest]
 genShow{|(,)|}		f1 f2	sep p (x1,x2)		rest = ["(":f1 sep False x1 [",":f2 sep False x2 [")":rest]]]
 genShow{|(,,)|}		f1 f2 f3 sep p (x1,x2,x3)	rest = ["(":f1 sep False x1 [",":f2 sep False x2 [",":f3 sep False x3 [")":rest]]]]
 genShow{|(,,,)|}	f1 f2 f3 f4 sep p (x1,x2,x3,x4) rest

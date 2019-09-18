@@ -5,6 +5,7 @@ import iTasks.UI.Layout
 import iTasks.UI.Layout.Common
 import StdBool, StdString, StdArray, Data.List, Data.Maybe, Data.Func, Text.GenJSON
 import qualified Data.Map as DM
+import Text.HTML
 
 standardFormsSessionLayout :: LayoutRule
 standardFormsSessionLayout = sequenceLayouts
@@ -14,26 +15,27 @@ standardFormsSessionLayout = sequenceLayouts
 	]
 
 layoutCombinatorContainers = sequenceLayouts
-	[layoutSubUIs (SelectByType UIInteract) layoutInteract
-	,layoutSubUIs (SelectByType UIStep) layoutStep
-	,layoutSubUIs (SelectByType UIParallel) layoutParallel
+	[layoutSubUIs (SelectByClass "interact") layoutInteract
+	,layoutSubUIs (SelectByClass "step-actions") layoutStepWithActions
+	,layoutSubUIs (SelectByClass "parallel-actions") layoutParallelWithActions
 	//There can still be buttons (e.g. when a parallel has been transformed to a tabset
 	,layoutSubUIs (SelectByType UIAction) layoutAsButton
 	]
 
-layoutStep = sequenceLayouts
-	[layoutSubUIs (SelectAND SelectDescendents (SelectByType UIStep)) layoutStep
+layoutStepWithActions = sequenceLayouts
+	[layoutSubUIs (SelectAND SelectDescendents (SelectByClass "step-actions")) layoutStepWithActions
 	,layoutSubUIs SelectNestedStep removeDisabledActions
-	,layoutSubUIs (SelectAND NotYetTransformed HasActions) layoutWithActions
-	,layoutSubUIs NotYetTransformed layoutWithoutActions
+	,layoutSubUIs (SelectAND (SelectByPath []) (SelectByType UIContainer)) (setUIType UIPanel) 
+	,addButtonBar
+	,modifyUIAttributes (SelectKeys ["class"]) (removeClassAttr "step-actions")
 	]
 where
 	SelectNestedStep =
 		(SelectAND                             // (Nested)
-			(SelectByType UIStep)              // Steps (are steps)
+			(SelectByClass "step-actions")     // Steps (are steps)
 				$ SelectByContains             // having
 					$ SelectAND
-						(SelectByType UIStep)  // steps
+						(SelectByClass "step-actions")  // steps
 						SelectDescendents)     // under them
 
 	SelectDisabledAction =
@@ -46,91 +48,63 @@ where
 
 	removeDisabledActions = layoutSubUIs SelectDisabledAction hideUI
 
-	NotYetTransformed = SelectAND (SelectByPath []) (SelectByType UIStep)
-	HasActions = SelectByContains (SelectAND SelectChildren (SelectByType UIAction))
-
-	layoutWithoutActions = sequenceLayouts
-		[copySubUIAttributes SelectAll [] [0]
-		,unwrapUI
-		]
-	layoutWithActions = sequenceLayouts
-		[setUIType UIPanel
-		,addButtonBar
-		]
-		
-layoutParallel = sequenceLayouts
-	[layoutSubUIs (SelectAND NotYetTransformed HasActions) layoutWithActions
-	,layoutSubUIs NotYetTransformed layoutWithoutActions
-	,layoutSubUIs (SelectAND SelectDescendents (SelectByType UIParallel)) layoutParallel
+layoutParallelWithActions = sequenceLayouts
+	[layoutSubUIs (SelectAND (SelectByPath []) (SelectByType UIContainer)) (setUIType UIPanel) 
+	,addToolBar
+	,modifyUIAttributes (SelectKeys ["class"]) (removeClassAttr "parallel-actions")
 	]
-where
-	NotYetTransformed = SelectAND (SelectByPath []) (SelectByType UIParallel)
-	HasActions = SelectByContains (SelectAND SelectChildren (SelectByType UIAction))
-
-	layoutWithoutActions = setUIType UIContainer
-	layoutWithActions = sequenceLayouts [setUIType UIPanel, addToolBar]
 
 layoutInteract = sequenceLayouts
-	[setTitle
+	[modifyUIAttributes (SelectKeys ["class"]) (removeClassAttr "interact") //Make sure the rule won't trigger twice
 	,layoutEditor
-	,removePromptIfEmpty
-	,setContainerType
+	,decorateEditor
 	]
 where
-	setTitle = copySubUIAttributes (SelectKeys ["title"]) [0] []
-
-	layoutEditor = layoutSubUIs (SelectByPath [1]) (sequenceLayouts
+	layoutEditor = sequenceLayouts
 		[layoutSubUIs SelectFormElement layoutFormItem
-		,layoutSubUIs (SelectByType UIRecord) layoutRecord
-		,layoutSubUIs (SelectByType UICons) layoutCons
-		,layoutSubUIs (SelectByType UIVarCons) layoutVarCons
+		,layoutSubUIs (SelectByClass "record") layoutRecord
+		,layoutSubUIs (SelectByClass "var-cons") layoutVarCons
 		,layoutSubUIs (SelectByType UIList) layoutList
-		,layoutSubUIs (SelectByType UIPair) layoutPair
-		])
+		]
 	layoutFormItem = sequenceLayouts
 		[toFormItem
 		,layoutSubUIs (SelectAND SelectDescendents SelectFormElement) layoutFormItem
 		]
 
-	removePromptIfEmpty = layoutSubUIs withEmptyPrompt removePrompt
+	SelectFormElement = SelectByHasAttribute "label"
+
+	decorateEditor = layoutSubUIs (SelectOR hasTitle hasPrompt) wrapEditor
 	where
-		withEmptyPrompt = SelectAND (SelectByPath []) (SelectRelative [0] (SelectByNumChildren 0))
-		removePrompt = removeSubUIs (SelectByPath [0])
+		hasTitle = SelectAND (SelectByPath []) (SelectByHasAttribute "title")
+		hasPrompt = SelectAND (SelectByPath []) (SelectByHasAttribute "hint")
+		wrapEditor = sequenceLayouts
+			[wrapUI UIContainer
+			,copySubUIAttributes SelectAll [0] []
+			,layoutSubUIs hasTitle (setUIType UIPanel)
+			,layoutSubUIs hasPrompt (sequenceLayouts [createPrompt,fillPrompt])
+			]
+		createPrompt = insertChildUI 0 prompt
+		where
+			prompt = UI UIContainer (classAttr ["itasks-prompt","itasks-flex-width","itasks-wrap-height"]) [ui UITextView]
 
-	setContainerType = sequenceLayouts
-		[setUIType UIContainer 
-		,layoutSubUIs (SelectAND (SelectByPath []) (SelectByHasAttribute "title")) (setUIType UIPanel)
-		]
-
-SelectFormElement = SelectByHasAttribute LABEL_ATTRIBUTE
-
-//TODO: consider flattening PAIRs somehow?
-layoutPair = sequenceLayouts
-	[setUIType UIContainer
-	,layoutSubUIs (SelectAND SelectDescendents (SelectByType UIPair)) layoutPair
-	]
+		fillPrompt = sequenceLayouts
+			[copySubUIAttributes (SelectKeys ["hint"]) [] [0,0]
+			,layoutSubUIs (SelectByPath [0,0]) (modifyUIAttributes (SelectKeys ["hint"]) promptToValue)
+			]
+		where
+			promptToValue attr = 'DM'.fromList [("value",JSONString (maybe "" (\(JSONString s) -> escapeStr s) ('DM'.get "hint" attr)))]
 
 //Different types of editor containers
 layoutRecord :: LayoutRule
 layoutRecord = sequenceLayouts
-	[setUIType UIContainer
-	,setUIAttributes (heightAttr WrapSize)
-	,layoutSubUIs (SelectAND SelectDescendents (SelectByType UIRecord)) layoutRecord
-	]
-
-layoutCons :: LayoutRule
-layoutCons = sequenceLayouts
-	[setUIType UIContainer
-	,addCSSClass "itasks-cons"
-	,layoutSubUIs (SelectAND SelectDescendents (SelectByType UICons)) layoutCons
+	[setUIAttributes (heightAttr WrapSize)
+	,layoutSubUIs (SelectAND SelectDescendents (SelectByClass "record")) layoutRecord
 	]
 
 layoutVarCons :: LayoutRule
 layoutVarCons = sequenceLayouts
-	[setUIType UIContainer
-	,addCSSClass "itasks-var-cons"
-	,layoutSubUIs (SelectByPath [0]) (setUIAttributes (widthAttr WrapSize)) //Make the constructor selection wrapping
-	,layoutSubUIs (SelectAND SelectDescendents (SelectByType UIVarCons)) layoutVarCons
+	[layoutSubUIs (SelectByPath [0]) (setUIAttributes (widthAttr WrapSize)) //Make the constructor selection wrapping
+	,layoutSubUIs (SelectAND SelectDescendents (SelectByClass "var-cons")) layoutVarCons
 	]
 
 layoutList :: LayoutRule

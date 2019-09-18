@@ -2,13 +2,10 @@ definition module iTasks.UI.Editor.Modifiers
 /**
 * This module provides combinator functions for combining editors
 */
-import iTasks.UI.Editor, iTasks.UI.Definition, iTasks.WF.Combinators.Tune
+import iTasks.UI.Editor, iTasks.UI.Definition, iTasks.UI.Tune
 import Data.Error
 
 //### Modifying atributes of editors ### 
-
-instance tune UIAttributes Editor
-
 /**
 * Adds an attribute that tags the UI with the edit mode of the editor: view, enter, update
 * This does not change the mode of the editor
@@ -62,7 +59,7 @@ injectEditorValue :: !(a -> b) !(b -> MaybeErrorString a) !(Editor b) -> Editor 
 /**
 * Map the value of an editor to another domain which is 'smaller' than the original domain
 */
-surjectEditorValue :: !(a -> b) !(b (Maybe a) -> a) !(Editor b) -> Editor a | JSONEncode{|*|}, JSONDecode{|*|} a
+surjectEditorValue :: !(a (Maybe b) -> b) !(b (Maybe a) -> a) !(Editor b) -> Editor a | JSONEncode{|*|}, JSONDecode{|*|} a
 
 /**
 * Map the value of an editor to another domain, without mapping changes in the editor back

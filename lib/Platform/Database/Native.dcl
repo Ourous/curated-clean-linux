@@ -2,7 +2,7 @@ definition module Database.Native
 
 /**
  * This module provides types and functions to build a database on the native
- * Clean heap. It can be tedious to add new entries, but access is fast. and
+ * Clean heap. It can be tedious to add new entries, but access is fast, and
  * only little memory is used.
  */
 
@@ -19,7 +19,6 @@ from Text.GenJSON import generic JSONEncode, generic JSONDecode, :: JSONNode
  * data to the database use a map over values.
  *
  * @var The type of values stored.
- * @var The key type of annotations.
  * @var The type of annotations.
  */
 :: *NativeDB v a
@@ -103,7 +102,7 @@ unsearchIndex :: !Index !*(NativeDB v a) -> *NativeDB v a
 /**
  * Like {{`search`}}, but search for specific indices.
  */
-searchIndices :: !SearchMode ![(!Index, ![!a!])] !*(NativeDB v a) -> *NativeDB v a
+searchIndices :: !SearchMode ![(Index, [!a!])] !*(NativeDB v a) -> *NativeDB v a
 
 /**
  * Exclude a list of indices.
@@ -119,12 +118,12 @@ unsearchIndices` :: !{#Index} !*(NativeDB v a) -> *NativeDB v a
  * Like {{`searchIndices`}}, but also check on some property.
  * This search always uses the {{`AddExcluded`}} {{`SearchMode`}}.
  */
-searchWithIndices :: !(v -> (Bool, ![!a!])) ![Index] !*(NativeDB v a) -> *NativeDB v a
+searchWithIndices :: !(v -> (Bool, [!a!])) ![Index] !*(NativeDB v a) -> *NativeDB v a
 
 /**
  * Like {{`searchWithIndices`}}, but with an array of indices.
  */
-searchWithIndices` :: !(v -> (Bool, ![!a!])) !{#Index} !*(NativeDB v a) -> *NativeDB v a
+searchWithIndices` :: !(v -> (Bool, [!a!])) !{#Index} !*(NativeDB v a) -> *NativeDB v a
 
 /**
  * Retrieve an entry.

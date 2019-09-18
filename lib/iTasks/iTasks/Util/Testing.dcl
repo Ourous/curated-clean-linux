@@ -77,7 +77,7 @@ testEditorWithShare :: (Editor a) a Bool -> Task a | iTask a
 *
 * @param The name of the type to test (e.g. "Int" or "MyADT")
 */
-testCommonInteractions :: String -> Task a | iTask a
+testCommonInteractions :: String -> Task a | iTask, gDefault{|*|} a
 
 
 /**

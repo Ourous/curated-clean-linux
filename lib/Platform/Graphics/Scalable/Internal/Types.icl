@@ -1,9 +1,11 @@
 implementation module Graphics.Scalable.Internal.Types
 
 import Data.List
+import Text.GenPrint
 from StdOrdList import minList, maxList
 import Graphics.Scalable.Types
 import StdBool, StdInt, StdMisc, StdReal, StdString
+from Text.GenJSON  import generic JSONEncode, generic JSONDecode, :: JSONNode
 
 :: Span
   = PxSpan      !Real                      // (PxSpan a) is a pixels
@@ -23,6 +25,14 @@ import StdBool, StdInt, StdMisc, StdReal, StdString
   | TextXSpan   !FontDef !String           // (TextXSpan a b) is width of text b written in font a
   | PathXSpan   !ImageTag                  // (PathXSpan t) is x-span of path element tagged with t
   | PathYSpan   !ImageTag                  // (PathYSpan t) is y-span of path element tagged with t
+:: FontDef`
+  = { fontfamily`  :: !String              // font family name
+    , fontysize`   :: !Real                // font size as span (px -)
+    , fontstretch` :: !String              // default value: "normal"
+    , fontstyle`   :: !String              // default value: "normal"
+    , fontvariant` :: !String              // default value: "normal"
+    , fontweight`  :: !String              // default value: "normal"
+    }
 
 /* The span computations below simplify their expressions by applying actual computations on (PxSpan _) values as much as possible.
    We denote a value (PxSpan _) with a capital letter. If we do not care or do not know, we denote the value with a lowercase letter.
@@ -217,3 +227,48 @@ instance <  ImageTag where <  (ImageTagUser n1 s1) (ImageTagUser n2 s2) = n1 < n
                            <  (ImageTagUser _  _)  _                    = True
                            <  (ImageTagSystem  s1) (ImageTagSystem  s2) = s1 < s2
                            <  _                    _                    = False
+
+derive gEq        FontDef`
+derive JSONEncode FontDef`
+derive JSONDecode FontDef`
+derive gPrint     FontDef`
+
+
+setfontfamily` :: !String !FontDef` -> FontDef`
+setfontfamily` family fontdef = {FontDef` | fontdef & fontfamily` = family}
+
+setfontysize` :: !Real !FontDef` -> FontDef`
+setfontysize` ysize fontdef = {FontDef` | fontdef & fontysize` = to2dec ysize}
+
+setfontstretch` :: !String !FontDef` -> FontDef`
+setfontstretch` stretch fontdef = {FontDef` | fontdef & fontstretch` = stretch}
+
+setfontstyle` :: !String !FontDef` -> FontDef`
+setfontstyle` style fontdef = {FontDef` | fontdef & fontstyle` = style}
+
+setfontvariant` :: !String !FontDef` -> FontDef`
+setfontvariant` variant fontdef = {FontDef` | fontdef & fontvariant` = variant}
+
+setfontweight` :: !String !FontDef` -> FontDef`
+setfontweight` weight fontdef = {FontDef` | fontdef & fontweight` = weight}
+
+getfontfamily` :: !FontDef` -> String
+getfontfamily` {FontDef` | fontfamily`} = fontfamily`
+
+getfontysize` :: !FontDef` -> Real
+getfontysize` {FontDef` | fontysize`} = fontysize`
+
+getfontstretch` :: !FontDef` -> String
+getfontstretch` {FontDef` | fontstretch`} = fontstretch`
+
+getfontstyle` :: !FontDef` -> String
+getfontstyle` {FontDef` | fontstyle`} = fontstyle`
+
+getfontvariant` :: !FontDef` -> String
+getfontvariant` {FontDef` | fontvariant`} = fontvariant`
+
+getfontweight` :: !FontDef` -> String
+getfontweight` {FontDef` | fontweight`} = fontweight`
+
+to2dec :: !Real -> Real
+to2dec r = toReal (toInt (r * 100.0)) / 100.0

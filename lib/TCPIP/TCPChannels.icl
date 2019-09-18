@@ -500,7 +500,7 @@ instance toString SelectResult
   	toString SR_Disconnected	= "SR_Disconnected"
 
 selectChannel_MT		:: !(Maybe Timeout) !*r_channels !*s_channels !*env
-					-> (![(!Int, !SelectResult)], !*r_channels, !*s_channels, !*env) 
+					-> (![(Int, SelectResult)], !*r_channels, !*s_channels, !*env)
 					|	SelectReceive r_channels & SelectSend s_channels & ChannelEnv env
 selectChannel_MT mbTimeout r_channels s_channels env
 	|	isJust mbTimeout && fromJust mbTimeout<0

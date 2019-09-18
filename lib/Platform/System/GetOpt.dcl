@@ -98,5 +98,5 @@ unrecognized options, and a list of error messages.
 */
 getOpt` :: (ArgOrder a)                       // non-option handling
            [OptDescr a]                       // option descriptors
-           [String]                           // the command-line arguments
+          ![String]                           // the command-line arguments
         -> ([a],[String], [String] ,[String]) // (options,non-options,unrecognized,error messages)

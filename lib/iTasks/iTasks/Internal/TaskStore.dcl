@@ -23,12 +23,13 @@ from System.Time    import :: Timestamp
 	, includeSessions   :: !Bool
 	, includeDetached   :: !Bool
 	, includeStartup    :: !Bool
-	, matchAttribute 	:: !Maybe (!String,!String)
+	, matchAttribute 	:: !Maybe (!String,!JSONNode)
 	  //'Horizontal' filters
 	, includeConstants  :: !Bool
 	, includeProgress   :: !Bool
 	, includeAttributes :: !Bool
 	}
+derive gDefault InstanceFilter
 
 :: InstanceData :== (!InstanceNo,!Maybe InstanceConstants,!Maybe InstanceProgress,!Maybe TaskAttributes)
 
@@ -64,7 +65,7 @@ taskInstanceValue             :: SDSLens InstanceNo (Maybe TIValue) (Maybe TIVal
 taskInstanceShares            :: SDSLens InstanceNo (Maybe (Map TaskId DeferredJSON)) (Maybe (Map TaskId DeferredJSON))
 taskInstanceParallelTaskLists :: SDSLens InstanceNo (Maybe (Map TaskId [ParallelTaskState])) (Maybe (Map TaskId [ParallelTaskState]))
 
-topLevelTaskList        :: SDSLens TaskListFilter (!TaskId,![TaskListItem a]) [(!TaskId,!TaskAttributes)]
+topLevelTaskList        :: SDSLens TaskListFilter (!TaskId,![TaskListItem a]) [(TaskId,TaskAttributes)]
 
 taskInstanceIO 			:: SDSLens InstanceNo (Maybe (!String,!Timespec)) (Maybe (!String,!Timespec))
 allInstanceIO           :: SimpleSDSLens (Map InstanceNo (!String,Timespec))
@@ -88,7 +89,7 @@ taskInstanceParallelTaskListItem    :: SDSLens (TaskId,TaskId,Bool) ParallelTask
 taskInstanceEmbeddedTask            :: SDSLens TaskId (Task a) (Task a) | iTask a
 
 //Public interface used by parallel tasks
-parallelTaskList                    :: SDSSequence (!TaskId,!TaskId,!TaskListFilter) (!TaskId,![TaskListItem a]) [(!TaskId,!TaskAttributes)] | iTask a
+parallelTaskList                    :: SDSSequence (!TaskId,!TaskId,!TaskListFilter) (!TaskId,![TaskListItem a]) [(TaskId,TaskAttributes)] | iTask a
 
 //===  Task instance output: ===
 
@@ -156,12 +157,12 @@ queueEvent :: !InstanceNo !Event !*IWorld -> *IWorld
 /**
 * Convenience function for queueing multiple refresh multiple refresh events at once
 */
-queueRefresh :: ![(!TaskId, !String)] !*IWorld -> *IWorld
+queueRefresh :: ![(TaskId, String)] !*IWorld -> *IWorld
 
 /**
 * Dequeue a task event
 */
-dequeueEvent :: !*IWorld -> (!Maybe (InstanceNo,Event),!*IWorld)
+dequeueEvent :: !*IWorld -> (!MaybeError TaskException (Maybe (InstanceNo,Event)),!*IWorld)
 
 /**
 * Queue ui change task output

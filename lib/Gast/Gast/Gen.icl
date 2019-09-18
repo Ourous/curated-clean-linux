@@ -54,6 +54,7 @@ genState :: GenState
 genState =
 	{ depth                 = 0
 	, maxDepth              = maxint
+	, maxStringLength       = defaultMaxStrLen
 	, path                  = []
 	, mode                  = SkewGeneration { skewl = 1
 	                                         , skewr = 3
@@ -194,24 +195,27 @@ where
         Nothing    -> f s
         Just limit -> take limit $ f s
 
-ggenString :: Int Real Int Int RandomStream -> [String]
+ggenString :: !Int !Real !Int !Int !RandomStream -> [String]
 ggenString maxlen factor minchar maxchar stream = rndStrings stream
 where
 	rndStrings [len:rnd] 
 		# len = toInt ((randIntToReal len) ^ factor * (fromInt maxlen - 0.5))
-		# (chars,rnd)	= seqList (repeatn len genElem) rnd
+		# (chars,rnd)	= genElems [] len rnd
 		  string		= {c \\ c<-chars}
 		= [string:rndStrings rnd]
 	where
-		genElem :: RandomStream -> .(Char, RandomStream)
-		genElem [r:rnd] = (toChar (minchar+((abs r) rem (maxchar+1-minchar))), rnd)
+		genElems :: ![Char] !Int !RandomStream -> (![Char], !RandomStream)
+		genElems cs 0 rnd     = (cs,rnd)
+		genElems cs n [r:rnd] = genElems [toChar (minchar+((abs r) rem (maxchar+1-minchar))):cs] (n-1) rnd
 
 		randIntToReal :: Int -> Real
 		randIntToReal x = (toReal x + if (x >= 0) 0.0 4294967296.0) / 4294967295.0
 
-ggen{|String|} s = ["hello world!","Gast","":ggenString StrLen 4.0 32 126 aStream]
+ggen{|String|} s = init ++ ["":ggenString s.maxStringLength 4.0 32 126 aStream]
+where
+	init = filter ((>=) s.maxStringLength o size) ["hello world!", "Gast"]
 
-derive ggen (,), (,,), (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,)
+derive ggen (), (,), (,,), (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,)
 derive ggen [], [!], [ !], [!!]
 ggen{|{}|}  fx r = [{x \\ x <- xs} \\ xs <- ggen{|*->*|} fx r]
 ggen{|{!}|} fx r = [{x \\ x <- xs} \\ xs <- ggen{|*->*|} fx r]

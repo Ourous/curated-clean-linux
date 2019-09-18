@@ -75,39 +75,39 @@ where
 		changed :: Task Bool
 		changed
 			= get share
-			>>= \{AuthShare|clients} -> processClients clients
-			>>= \newClients -> upd (\s -> {AuthShare| s & clients = newClients}) share
-			>>| return True
+			>>- \{AuthShare|clients} -> processClients clients
+			>>- \newClients -> upd (\s -> {AuthShare| s & clients = newClients}) share
+			>-| return True
 
 		processClients :: [Communication] -> Task [Communication]
 		processClients [] = return []
 		processClients [c=:{Communication|id, requests}:rest]
 			= case requests of
-				[]		= processClients rest >>= \rest -> return [c:rest]
-				data	= processClients rest >>= \rest -> appendTopLevelTask ('DM'.fromList []) True (handleClient id data) >>| return [{Communication| c & requests = []}:rest]
+				[]		= processClients rest >>- \rest -> return [c:rest]
+				data	= processClients rest >>- \rest -> appendTopLevelTask ('DM'.fromList []) True (handleClient id data) >-| return [{Communication| c & requests = []}:rest]
 
 		handleClient :: Int [String] -> Task ()
 		handleClient id requests
 			= handleClientRequests id requests
-			>>= \responses -> upd (\s -> {AuthShare| s & clients = [if (clientid == id) ({Communication| c & responses=responses}) c \\ c=:{Communication|id=clientid} <- s.clients]}) share @! ()
+			>>- \responses -> upd (\s -> {AuthShare| s & clients = [if (clientid == id) ({Communication| c & responses=responses}) c \\ c=:{Communication|id=clientid} <- s.clients]}) share @! ()
 
 		handleClientRequests :: Int [String] -> Task [String]
 		handleClientRequests id []
 			= return []
 		handleClientRequests id [request:rest]
 			= handleClientRequest id ('T'.split " " request)
-			>>= \responses -> handleClientRequests id rest
-			>>= \other -> return (responses ++ other)
+			>>- \responses -> handleClientRequests id rest
+			>>- \other -> return (responses ++ other)
 
 		handleClientRequest :: Int [String] -> Task [String]
 		handleClientRequest id ["auth", username, password]
 			# username = base64Decode username
 			# password = base64Decode password
 			= authenticateUser (Username username) (Password password)
-			>>= \user -> return [(base64Encode (toString (toJSON user)))]
+			>>- \user -> return [(base64Encode (toString (toJSON user)))]
 		handleClientRequest id ["users"]
 			= get users
-			>>= \users -> return [(base64Encode (toString (toJSON users)))]
+			>>- \users -> return [(base64Encode (toString (toJSON users)))]
 		handleClientRequest _ _ = return []
 
 remoteAuthenticateUser	:: !Username !Password	-> Task (Maybe User)
@@ -121,7 +121,7 @@ remoteAuthenticateUser (Username username) (Password password)
 getUsers :: String Int -> Task [User]
 getUsers host port
 	= request host port "users"
-	>>= \users -> return (fromMaybe [] users)
+	>>- \users -> return (fromMaybe [] users)
 
 request	:: String Int String -> Task (Maybe a) | iTask a
 request host port request
@@ -203,4 +203,4 @@ currentDomain = toReadOnly (mapRead (\domain -> Domain domain) authServerInfoSha
 enterDomain :: Task Domain
 enterDomain
 	= get authServerInfoShare
-	>>- \domain -> updateInformation "Enter domain" [] (Domain domain)
+	>>- \domain -> Hint "Enter domain" @>> updateInformation  [] (Domain domain)

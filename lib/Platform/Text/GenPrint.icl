@@ -263,8 +263,8 @@ gPrint{|OBJECT of {gtd_num_conses,gtd_conses}|} f (OBJECT x) st=:{ps_context}
 		| needParenthesis CtxNonfix ps_context
 			= printChar '(' $ printString cnsstr $ f x $ printChar ')' @ st 
 			= printString cnsstr $ f x @ st
-	= f x st	
-	
+	= f x st
+gPrint{|()|} _ st = printChar ')' (printChar '(' st)
 gPrint{|[]|} f xs st
 	= printChar '['
 	$ printList f xs 

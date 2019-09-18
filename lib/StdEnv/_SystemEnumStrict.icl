@@ -65,19 +65,19 @@ _from_to_o n e
 
 _from_by n s = [|n : _from_by (n+s) s];
 
-_from_then_s :: a a -> .[!a] | Enum a;
+_from_then_s :: !a a -> .[!a] | Enum a;
 _from_then_s n1 n2 = [|n1 : _from_by n2 (n2-n1)];
 
-_from_then_ts :: a a -> .[a!] | Enum a;
+_from_then_ts :: !a !a -> .[a!] | Enum a;
 _from_then_ts n1 n2 = [|n1 : _from_by n2 (n2-n1)];
 
-_from_then_sts :: a a -> .[!a!] | Enum a;
+_from_then_sts :: !a !a -> .[!a!] | Enum a;
 _from_then_sts n1 n2 = [|n1 : _from_by n2 (n2-n1)];
 
-_from_then_u :: a a -> .[#a] | Enum,UList a;
+_from_then_u :: !a a -> .[#a] | Enum,UList a;
 _from_then_u n1 n2 = [|n1 : _from_by n2 (n2-n1)];
 
-_from_then_uts :: a a -> .[#a!] | Enum,UTSList a;
+_from_then_uts :: !a !a -> .[#a!] | Enum,UTSList a;
 _from_then_uts n1 n2 = [|n1 : _from_by n2 (n2-n1)];
 
 _from_then_o :: a a -> .(l a) | Enum a & List l a;

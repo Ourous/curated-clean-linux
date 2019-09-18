@@ -11,8 +11,6 @@ from System.FilePath import :: FilePath
 *
 * @return The imported content
 * @throws FileException
-* 
-* @gin-icon page_white_csv
 */
 importCSVFile		:: !FilePath -> Task [[String]]
 importCSVDocument	:: !Document -> Task [[String]]
@@ -27,8 +25,6 @@ importCSVDocument	:: !Document -> Task [[String]]
 *
 * @return The imported content
 * @throws FileException
-*
-* @gin False
 */
 importCSVFileWith		:: !Char !Char !Char !FilePath -> Task [[String]]
 importCSVDocumentWith	:: !Char !Char !Char !Document -> Task [[String]]
@@ -40,8 +36,6 @@ importCSVDocumentWith	:: !Char !Char !Char !Document -> Task [[String]]
 * @param Cells: The content to export as a list of rows of lists of fields
 *
 * @return The exported content as a document
-* 
-* @gin-icon page_white_csv
 */
 createCSVFile		:: !String ![[String]] -> Task Document
 /**
@@ -52,8 +46,6 @@ createCSVFile		:: !String ![[String]] -> Task Document
 *
 * @return The exported content
 * @throws FileException
-* 
-* @gin-icon page_white_csv
 */
 exportCSVFile		:: !FilePath ![[String]] -> Task [[String]]
 /**
@@ -68,7 +60,5 @@ exportCSVFile		:: !FilePath ![[String]] -> Task [[String]]
 *
 * @return The exported content
 * @throws FileException
-* 
-* @gin False
 */
 exportCSVFileWith	:: !Char !Char !Char !FilePath ![[String]] -> Task [[String]]

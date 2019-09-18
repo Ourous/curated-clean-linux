@@ -4,25 +4,25 @@ definition module System.FilePath
  * Module for manipulation of file and directory paths
  *
  * @property-bootstrap
- *   import StdEnv, Text
+ *     import StdEnv, Text
  *
- *   :: GFilePath :== [GFilePathPart]
- *   :: GFilePathPart = PathSep | ExtSep | Name GName
- *   :: GName = A | B | C | D
+ *     :: GFilePath :== [GFilePathPart]
+ *     :: GFilePathPart = PathSep | ExtSep | Name GName
+ *     :: GName = A | B | C | D
  *
- *   derive genShow GFilePathPart, GName
- *   derive ggen GFilePathPart, GName
- *   derive gPrint GFilePathPart, GName
+ *     derive genShow GFilePathPart, GName
+ *     derive ggen GFilePathPart, GName
+ *     derive gPrint GFilePathPart, GName
  *
  * @property-test-generator GFilePath -> FilePath
- *   gen gfp = concat (map toString gfp)
- *   where
- *     toString PathSep  = {pathSeparator}
- *     toString ExtSep   = {extSeparator}
- *     toString (Name A) = "a"
- *     toString (Name B) = "ab"
- *     toString (Name C) = "abc"
- *     toString (Name D) = "abcd"
+ *     gen gfp = concat (map toString gfp)
+ *     where
+ *         toString PathSep  = {pathSeparator}
+ *         toString ExtSep   = {extSeparator}
+ *         toString (Name A) = "a"
+ *         toString (Name B) = "ab"
+ *         toString (Name C) = "abc"
+ *         toString (Name D) = "abcd"
  */
 
 from Data.Error import :: MaybeError
@@ -54,16 +54,16 @@ extSeparator :: Char
  * Split a FilePath into filename and extension. The result does not include the extension separator (.).
  *
  * @property no separators in extension: A.fp :: FilePath:
- *   let
- *       (fname,ext`) = splitExtension fp
- *       ext = [c \\ c <-: ext`] in
- *     not (isMember extSeparator  ext) /\
- *     not (isMember pathSeparator ext)
+ *     let
+ *             (fname,ext`) = splitExtension fp
+ *             ext = [c \\ c <-: ext`] in
+ *         not (isMember extSeparator  ext) /\
+ *         not (isMember pathSeparator ext)
  *
  * @property identity with addExtension: A.fp :: FilePath:
- *   let (fname,ext) = splitExtension fp in
- *     not (endsWith {extSeparator} fname) ==>
- *       addExtension fname ext =.= fp
+ *     let (fname,ext) = splitExtension fp in
+ *         not (endsWith {extSeparator} fname) ==>
+ *             addExtension fname ext =.= fp
  */
 splitExtension :: !FilePath -> (String, String)
 

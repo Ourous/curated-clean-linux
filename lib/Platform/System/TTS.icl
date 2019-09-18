@@ -4,13 +4,13 @@ import StdTuple, StdOverloaded
 import Data.Maybe
 import System.Process
 
-tts :: String *World -> *World
+tts :: !String !*World -> *World
 tts str world = say [str] world
 
-ttsWithVoice :: Voice String *World -> *World
+ttsWithVoice :: !Voice !String *World -> *World
 ttsWithVoice voice str world = say ["-t", toString voice, str] world
 
-say :: [String] *World -> *World
+say :: ![String] !*World -> *World
 say args world = snd (runProcess "/usr/bin/spd-say" args Nothing world)
 
 instance toString Voice where

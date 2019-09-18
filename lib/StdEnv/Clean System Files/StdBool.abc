@@ -88,7 +88,6 @@ s7
 	jsr BtoAC
 .o 1 0
 .end
-
 .d 1 0
 	rtn
 .pe
@@ -142,7 +141,6 @@ s6
 .inline fromBool;5
 	no_op
 .end
-
 .d 0 1 b
 	rtn
 .pe
@@ -193,7 +191,6 @@ s5
 .inline toBool;4
 	no_op
 .end
-
 .d 0 1 b
 	rtn
 .pe
@@ -250,7 +247,6 @@ s4
 .inline ==;3
 	eqB
 .end
-
 .d 0 1 b
 	rtn
 .pe
@@ -306,7 +302,6 @@ l1
 	pop_a 1
 .d 0 1 b
 	rtn
-
 .d 0 1 b
 	rtn
 .pe
@@ -362,7 +357,6 @@ l2
 	pop_a 1
 .d 0 1 b
 	rtn
-
 .d 0 1 b
 	rtn
 .pe
@@ -405,7 +399,6 @@ s1
 .inline not
 	notB
 .end
-
 .d 0 1 b
 	rtn
 .pe

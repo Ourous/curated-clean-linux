@@ -6,11 +6,11 @@ import qualified Data.Map as DM
 import Data.Map.GenJSON
 import qualified Text as T
 import Text.Encodings.Base64
+import iTasks.Extensions.Distributed._Evaluation
 import iTasks.Extensions.Distributed._Formatter
 import iTasks.Extensions.Distributed._Util
 import iTasks.Extensions.Distributed._Types
 import iTasks.Internal.Distributed.Symbols
-import iTasks.Extensions.Distributed._Evaluation
 from iTasks.Extensions.Distributed.Task import :: Domain(..)
 from iTasks.Extensions.Distributed._Util import repeatClient
 from iTasks.SDS.Sources.System import topLevelTasks
@@ -148,46 +148,46 @@ where
 		changed :: Task Bool
 		changed
 			= get share
-			>>= \{InstanceServerShare|clients} -> processClients clients
-			>>= \newClients -> upd (\s -> {InstanceServerShare| s & clients = newClients}) share
-			>>| return True
+			>>- \{InstanceServerShare|clients} -> processClients clients
+			>>- \newClients -> upd (\s -> {InstanceServerShare| s & clients = newClients}) share
+			>-| return True
 
 		processClients :: [Communication] -> Task [Communication]
 		processClients [] = return []
 		processClients [c=:{Communication|id, requests}:rest]
 			= case requests of
-				[]		= processClients rest >>= \rest -> return [c:rest]
-				data	= processClients rest >>= \rest -> appendTopLevelTask ('DM'.fromList []) True (handleClient id data) >>| return [{Communication| c & requests = []}:rest]
+				[]		= processClients rest >>- \rest -> return [c:rest]
+				data	= processClients rest >>- \rest -> appendTopLevelTask ('DM'.fromList []) True (handleClient id data) >-| return [{Communication| c & requests = []}:rest]
 
 		handleClient :: Int [String] -> Task ()
 		handleClient id requests
 			= handleClientRequests id requests
-			>>= \responses -> upd (\s=:{InstanceServerShare|clients} -> {InstanceServerShare| s & clients = [if (clientid == id) ({Communication| c & responses=orgresponses ++ responses}) c \\ c=:{Communication|id=clientid,responses=orgresponses} <- clients]}) share @! ()
+			>>- \responses -> upd (\s=:{InstanceServerShare|clients} -> {InstanceServerShare| s & clients = [if (clientid == id) ({Communication| c & responses=orgresponses ++ responses}) c \\ c=:{Communication|id=clientid,responses=orgresponses} <- clients]}) share @! ()
 
 		handleClientRequests :: Int [String] -> Task [String]
 		handleClientRequests id []
 			= return []
 		handleClientRequests id [request:rest]
 			= handleClientRequest id ('T'.split " " request)
-			>>= \responses -> handleClientRequests id rest
-			>>= \other -> return (responses ++ other)
+			>>- \responses -> handleClientRequests id rest
+			>>- \other -> return (responses ++ other)
 
 		handleClientRequest :: Int [String] -> Task [String]
 		handleClientRequest id ["instance", "add", clientId, data]
 			= withSymbols (\symbols -> case deserializeFromBase64 data symbols of
 				(Remote_Task _ attributes taskid)
 					= addTask (Client id (toInt clientId)) data attributes
-					>>| return []
+					>-| return []
 				_
 					= return [])
 		handleClientRequest id ["instance", "destory", taskid]
 			= destroyTask id (toInt taskid) @! []
 		handleClientRequest id ["filter", "view", data]
 			= withSymbols (\symbols -> let filter = deserializeFromBase64 data symbols in
-				updateViewFilter id filter >>| return [])
+				updateViewFilter id filter >-| return [])
 		handleClientRequest id ["filter", "clame", data]
 			= withSymbols (\symbols -> let filter = deserializeFromBase64 data symbols in
-				updateClameFilter id filter >>| return [])
+				updateClameFilter id filter >-| return [])
 		handleClientRequest id ["instance", "get", instanceid]
 			= getInstanceById id (toInt instanceid) False
 		handleClientRequest id ["instance", "get-force", instanceid]
@@ -199,7 +199,7 @@ where
 		forwardRequest :: Int [String] -> Task ()
 		forwardRequest clientid request=:["value", ref, clientRef : data]
 			= getCreatorAndAssignedTo (toInt ref)
-			>>= \v -> case v of
+			>>- \v -> case v of
 					(Just (Client creatorClient creatorRef, _)) -> sendToClient creatorClient ('T'.join " " ["value", (toString creatorRef) : data])
 					(Just (Server creatorServer instanceNo, _)) -> sendToInstanceServer creatorServer ('T'.join " " ["value", (toString instanceNo) : data])
 
@@ -212,7 +212,7 @@ updateViewFilter clientid filter
 	>>- \{DistributedTaskInstances|instances} -> let responses = [ getNotifyMessage id attributes \\ i=:{DistributedTaskInstance|id,attributes} <- instances | filter attributes ] in
 		upd (\s=:{InstanceServerShare|clients} ->
 			{InstanceServerShare| s & clients = [ if (id==clientid) (updateClient c responses) c \\ c=:{Communication|id} <- clients] }) instanceServerShared
-		>>| upd (updateFilter clientid filter) instanceServerFilters @! ()
+		>-| upd (updateFilter clientid filter) instanceServerFilters @! ()
 where
 	updateClient :: Communication [String] -> Communication
 	updateClient c=:{Communication|responses=r} responses
@@ -250,7 +250,7 @@ where
 getCreatorAndAssignedTo :: InstanceNo -> Task (Maybe (Source,Int))
 getCreatorAndAssignedTo instanceno
 	= get distributedInstances
-	>>= \{DistributedTaskInstances|instances} -> case [ (creator,assignedTo) \\ {DistributedTaskInstance|id,creator,assignedTo} <- instances | id == instanceno ] of
+	>>- \{DistributedTaskInstances|instances} -> case [ (creator,assignedTo) \\ {DistributedTaskInstance|id,creator,assignedTo} <- instances | id == instanceno ] of
 		[x:_] -> return (Just x)
 		_     -> return Nothing
 
@@ -262,8 +262,8 @@ addTask creator task attributes
 		{ s & lastId = lastId + 1
 		, instances = instances ++ [pack (lastId + 1) task attributes assignedTo]
 		}) distributedInstances
-	>>= \{DistributedTaskInstances|lastId} -> notifyChange lastId attributes
-	>>| if (assignedTo == 0) (return lastId) (sendDataToClient assignedTo task attributes lastId >>| return lastId)
+	>>- \{DistributedTaskInstances|lastId} -> notifyChange lastId attributes
+	>-| if (assignedTo == 0) (return lastId) (sendDataToClient assignedTo task attributes lastId >-| return lastId)
 where
 	pack id task attributes assignedTo
 		= { DistributedTaskInstance|id=id
@@ -280,7 +280,7 @@ destroyTask clientId taskId
 	>>- \id -> case id of
 			Nothing 	-> return ()
 			(Just (tid,at))	-> notifyDestory tid at
-					   >>| upd (\s=:{DistributedTaskInstances|instances} ->
+					   >-| upd (\s=:{DistributedTaskInstances|instances} ->
 					        {s & instances = [ i \\ i=:{DistributedTaskInstance|id} <- instances | id <> tid]}) distributedInstances @! ()
 where
 	getTaskInfo :: Int InstanceNo -> Task (Maybe (Int,TaskAttributes))
@@ -317,7 +317,7 @@ clameTask attributes
 getInstanceById :: Int InstanceNo Bool -> Task [String]
 getInstanceById clientid instanceno force
 	= upd (\i=:{DistributedTaskInstances|instances} -> {i & instances = [if (id==instanceno) { s & assignedTo = if (to==0 || force) clientid to } s \\ s=:{DistributedTaskInstance|id,assignedTo=to} <- instances] })  distributedInstances
-	>>= \{DistributedTaskInstances|instances} -> case [i \\ i=:{DistributedTaskInstance|id}<- instances | id == instanceno ] of
+	>>- \{DistributedTaskInstances|instances} -> case [i \\ i=:{DistributedTaskInstance|id}<- instances | id == instanceno ] of
 		[{DistributedTaskInstance|id,task,assignedTo}:_] -> if (assignedTo==clientid) (return ["instance data " +++ (toString instanceno) +++ " " +++ task]) (return ["instance assigned " +++ (toString instanceno)])
 		_ -> return []
 
@@ -475,7 +475,7 @@ where
                                                       , onDisconnect   = onDisconnect
                                                       , onDestroy      = \s->(Ok s, [])
                                                       } @! Nothing)
-                -||- (viewInformation () [] () >>* [OnAction (Action "reset") (always (return Nothing))])
+                -||- (viewInformation [] () >>* [OnAction (Action "reset") (always (return Nothing))])
 
         onConnect :: String ConnectionId String ClientShare -> (MaybeErrorString ClientState, Maybe ClientShare, [String], Bool)
         onConnect helloMessage connId host store
@@ -510,32 +510,32 @@ where
                 changed :: Task Bool
                 changed
                         = get share
-                        >>= \{ClientShare|requests} -> handleRequests requests
-                        >>= \(newServerId, newResponses) -> upd (\s=:{ClientShare|serverId,responses=orgresponses} -> {ClientShare| s & requests = [], serverId = (fromMaybe serverId newServerId), responses = orgresponses ++ newResponses}) share
-                        >>| return True
+                        >>- \{ClientShare|requests} -> handleRequests requests
+                        >>- \(newServerId, newResponses) -> upd (\s=:{ClientShare|serverId,responses=orgresponses} -> {ClientShare| s & requests = [], serverId = (fromMaybe serverId newServerId), responses = orgresponses ++ newResponses}) share
+                        >-| return True
 
                 handleRequests :: [String] -> Task (Maybe Int, [String])
                 handleRequests []
                         = return (Nothing, [])
                 handleRequests [request:rest]
                         = withSymbols (handleRequest ('T'.split " " request))
-                        >>= \(serverId, responses) -> handleRequests rest
-                        >>= \(serverIdOther, other) -> return (if (isNothing serverId) serverIdOther serverId, (responses ++ other))
+                        >>- \(serverId, responses) -> handleRequests rest
+                        >>- \(serverIdOther, other) -> return (if (isNothing serverId) serverIdOther serverId, (responses ++ other))
 
                 handleRequest :: [String] {#Symbol} -> Task (Maybe Int, [String])
                 handleRequest ["instance", "notify", instanceno, attributes] symbols
                         # attributes = deserializeFromBase64 attributes symbols
-                        = getTaskIdByAttribute "distributedInstanceId" instanceno
-                        >>= \id -> if (isNothing id)
-                                (appendTopLevelTask ('DM'.put "distributedInstanceServerId" (toString clientId) ('DM'.put "distributedInstanceId" instanceno attributes)) False (wrapperTask (toInt instanceno) clientId) @! ())
+                        = getTaskIdByAttribute "distributedInstanceId" (JSONString instanceno)
+                        >>- \id -> if (isNothing id)
+                                (appendTopLevelTask ('DM'.put "distributedInstanceServerId" (JSONString (toString clientId)) ('DM'.put "distributedInstanceId" (JSONString instanceno) attributes)) False (wrapperTask (toInt instanceno) clientId) @! ())
                                 (return ())
-                        >>| return (Nothing, [])
+                        >-| return (Nothing, [])
                 handleRequest ["instance", "destory", instanceno] _
-                        = getTaskIdByAttribute "distributedInstanceId" instanceno
+                        = getTaskIdByAttribute "distributedInstanceId" (JSONString instanceno)
                         >>- \id -> if (isNothing id)
                                 (return ())
                                 (removeTask (TaskId (fromJust id) 0) topLevelTasks @! ())
-                        >>| return (Nothing, [])
+                        >-| return (Nothing, [])
                 handleRequest ["instance-clame", "data", instanceno, data] _
                         = storeInPool clientId (toInt instanceno) data @! (Nothing, [])
                 handleRequest ["instance", "data", instanceno, data] _
@@ -591,7 +591,7 @@ sendDistributedInstance _ task attributes domain
 	= newRemoteTaskId
 	>>- \id -> let valueShare = taskValueShare id in getClientIdByDomain domain
 	>>- \clientId -> upd (\s=:{ClientShare|responses=or} -> {ClientShare| s & responses = or ++ ["instance add " +++ (toString id) +++ " " +++ (serializeToBase64 (Remote_Task task attributes id))]}) (instanceClientShare (fromMaybe 0 clientId))
-	>>| proxyTask valueShare (onDestroy id (instanceClientShare (fromMaybe 0 clientId)))
+	>-| proxyTask valueShare (onDestroy id (instanceClientShare (fromMaybe 0 clientId)))
 where
 	onDestroy :: InstanceNo (Shared sds ClientShare) *IWorld -> *IWorld | RWShared sds
 	onDestroy id share iworld
@@ -602,7 +602,7 @@ sendRequestToInstanceServer :: Int String -> Task ()
 sendRequestToInstanceServer clientId request
 	= upd (\s=:{ClientShare|responses=or} -> {ClientShare| s & responses = or ++ [request]}) (instanceClientShare clientId) @! ()
 
-getTaskIdByAttribute :: String String -> Task (Maybe InstanceNo)
+getTaskIdByAttribute :: String JSONNode -> Task (Maybe InstanceNo)
 getTaskIdByAttribute key value = get attrb
 where
 	attrb = mapRead find (sdsFocus (key,value) taskInstancesByAttribute)
@@ -624,27 +624,26 @@ wrapperTask instanceno clientId
 where
 	loadTask :: InstanceNo Bool (Shared sds String) -> Task String | RWShared sds
 	loadTask instanceno force shared
-		= viewInformation "Loading task" [] "Please wait, the task is loaded ..."
+		= Title "Loading task" @>> viewInformation [] "Please wait, the task is loaded ..."
 		||- (addWrapperTaskHandler instanceno (handlerTask shared)
-	 	     >>| sendRequestToInstanceServer clientId ("instance " +++ (if force "get-force " "get ") +++ (toString instanceno))
+	 	     >-| sendRequestToInstanceServer clientId ("instance " +++ (if force "get-force " "get ") +++ toString instanceno)
                      >>| (watch shared >>* [OnValue (ifValue (\v -> not (v == "")) return)])
-		) >>- \result -> if (result=="ASSIGNED") (assinged instanceno shared) (return result)
+		) >>- \result -> if (result=="ASSIGNED") (assigned instanceno shared) (return result)
 
 	handlerTask :: (Shared sds String) String -> Task () | RWShared sds
 	handlerTask shared data = set data shared @! ()
 
-	assinged :: InstanceNo (Shared sds String) -> Task String | RWShared sds
-	assinged instanceno shared
-		= viewInformation "Task is assigned to another node" []
+	assigned :: InstanceNo (Shared sds String) -> Task String | RWShared sds
+	assigned instanceno shared
+		= Hint "Task is assigned to another node" @>> viewInformation []
 			"You can takeover the task. Please take in mind that the progress at the other device maybe lost."
 		>>* [OnAction (Action "Take over") (always (return ()))]
-		>>| set "" shared
-		>>| loadTask instanceno True shared
+		>-| set "" shared
+		>-| loadTask instanceno True shared
 
 	valueChange :: InstanceNo (TaskValue a) -> Task () | iTask a
 	valueChange instanceno value
 		= sendRequestToInstanceServer clientId ("value " +++ (toString instanceno) +++ " none " +++ serializeToBase64 (Remote_TaskValue value))
-
 
 :: WrapperTaskHandelers :== Map Int String
 
@@ -660,7 +659,7 @@ where
 callTaskHandler :: Int String -> Task ()
 callTaskHandler instanceno data
         = get wrapperTaskHandelersShare
-        >>= \handlers ->
+        >>- \handlers ->
                 case 'DM'.get instanceno handlers of
                         (Just handler)     = withSymbols (\s -> callHandler (deserializeFromBase64 handler s) data)
                         _                  = return () // Not found.

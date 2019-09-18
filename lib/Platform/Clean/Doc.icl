@@ -48,8 +48,15 @@ instance docVars             FunctionDoc where docVars             d = d.Functio
 instance docResults          FunctionDoc where docResults          d = d.FunctionDoc.results
 instance docType             FunctionDoc where docType             d = d.FunctionDoc.type
 instance docThrows           FunctionDoc where docThrows           d = d.FunctionDoc.throws
-instance docProperties       FunctionDoc where docProperties       d = d.properties
+instance docProperties       FunctionDoc where docProperties       d = d.FunctionDoc.properties
 instance docPropertyTestWith FunctionDoc where docPropertyTestWith d = d.FunctionDoc.property_test_with
+instance docPreconditions    FunctionDoc where docPreconditions    d = d.FunctionDoc.preconditions
+
+instance docDescription      InstanceDoc where docDescription      d = d.InstanceDoc.description
+instance docComplexity       InstanceDoc where docComplexity       d = d.InstanceDoc.complexity
+instance docProperties       InstanceDoc where docProperties       d = d.InstanceDoc.properties
+instance docPropertyTestWith InstanceDoc where docPropertyTestWith d = d.InstanceDoc.property_test_with
+instance docPreconditions    InstanceDoc where docPreconditions    d = d.InstanceDoc.preconditions
 
 instance docDescription ParamDoc where docDescription d = d.ParamDoc.description
 
@@ -79,9 +86,9 @@ where
 	toString {ParamDoc | description=Just d} = d
 	toString _ = ""
 
-derive gDefault Type, TypeRestriction, ModuleDoc, FunctionDoc, ClassMemberDoc,
-	ConstructorDoc, ClassDoc, TypeDoc, Property, PropertyVarInstantiation,
-	MultiLineString, PropertyTestGenerator, ParamDoc
+derive gDefault Type, TypeRestriction, ModuleDoc, FunctionDoc, InstanceDoc,
+	ClassMemberDoc, ConstructorDoc, ClassDoc, TypeDoc, Property,
+	PropertyVarInstantiation, MultiLineString, PropertyTestGenerator, ParamDoc
 
 constructorToFunctionDoc :: !ConstructorDoc -> FunctionDoc
 constructorToFunctionDoc d =
@@ -186,7 +193,7 @@ where
 		Left es           -> Left (UnknownError "failed to parse property signature")
 		Right (name,args) -> Right (ForAll name args, [])
 	where
-		parser :: Parser Char (!String, ![(!String, !Type)])
+		parser :: Parser Char (!String, ![(String, Type)])
 		parser = skipSpaces *>
 			pMany (pSatisfy ((<>) ':')) >>= \name ->
 			skipSpaces *> pToken ':' *>
@@ -230,8 +237,8 @@ where
 	error = Left (UnknownError "test generator could not be parsed")
 docBlockToDoc{|PropertyTestGenerator|} _ = abort "error in docBlockToDoc{|PropertyTestGenerator|}\n"
 
-derive docBlockToDoc ModuleDoc, FunctionDoc, ClassMemberDoc, ConstructorDoc,
-	ClassDoc, TypeDoc
+derive docBlockToDoc ModuleDoc, FunctionDoc, InstanceDoc, ClassMemberDoc,
+	ConstructorDoc, ClassDoc, TypeDoc
 
 printDoc :: !d -> String | docToDocBlock{|*|} d
 printDoc d = join "\n * "
@@ -302,8 +309,8 @@ where
 		PTG_List t imp     -> (t,imp)
 docToDocBlock{|PropertyTestGenerator|} _    _                              = abort "error in docToDocBlock{|PropertyTestGenerator|}\n"
 
-derive docToDocBlock ModuleDoc, FunctionDoc, ClassMemberDoc, ClassDoc,
-	ConstructorDoc, TypeDoc
+derive docToDocBlock ModuleDoc, FunctionDoc, InstanceDoc, ClassMemberDoc,
+	ClassDoc, ConstructorDoc, TypeDoc
 
 trimMultiLine :: ![String] -> String
 trimMultiLine ss = join "\n" [s % (trimn, size s - 1) \\ s <- ss]

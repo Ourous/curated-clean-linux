@@ -17,7 +17,7 @@ deviceRequest request close
 		, onDisconnect   = onDisconnect
 		, onDestroy= \s->(Ok s, [])
 		} 
-	>>= \{DeviceRequestState|result} -> return result            
+	>>- \{DeviceRequestState|result} -> return result            
 where
 	onConnect :: ConnectionId String () -> (MaybeErrorString DeviceRequestState, Maybe (), [String], Bool)
 	onConnect connId host _

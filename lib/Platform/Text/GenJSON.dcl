@@ -9,7 +9,7 @@ definition module Text.GenJSON
 * For more info about JSON see: http://www.json.org/
 *
 * @property-bootstrap
-*   import StdEnv
+*     import StdEnv
 */
 
 import StdGeneric
@@ -24,9 +24,9 @@ from Data.GenEq import generic gEq
 			| JSONBool !Bool
 			| JSONInt !Int
 			| JSONReal !Real
-			| JSONString !String
+			| JSONString !String //* Only control characters and '"' will be escaped
 			| JSONArray ![JSONNode]
-			| JSONObject ![(!String,!JSONNode)]
+			| JSONObject ![(String,JSONNode)]
 			| JSONRaw !String
 			| JSONError
 /**
@@ -49,17 +49,17 @@ derive gEq JSONNode
 * Encodes any value to JSON format.
 *
 * @property correctness: A.a :: type:
-*   maybe (prop False) ((=.=) a) (fromJSON (fromString (toString (toJSON a))))
+*     maybe (prop False) ((=.=) a) (fromJSON (fromString (toString (toJSON a))))
 * @property-test-with type=Int
 * @property-test-with type=Bool
 * @property-test-with type=Char
 * @property-test-with type=String
 *
 * @property correctness Real: A.a :: Real:
-*   toString (toReal (toString a)) == toString a ==>
-*     case fromJSON (fromString (toString (toJSON a))) of
-*       Nothing -> prop False
-*       Just b -> if (isNaN a) (prop (isNaN b)) (toString a =.= fromReal b)
+*     toString (toReal (toString a)) == toString a ==>
+*         case fromJSON (fromString (toString (toJSON a))) of
+*             Nothing -> prop False
+*             Just b -> if (isNaN a) (prop (isNaN b)) (toString a =.= fromReal b)
 *
 * @param The value to encode
 * @return The JSON encoded value
@@ -156,7 +156,7 @@ JSONDecode{|CONS of {gcd_name}|} fx _ l=:[JSONArray [JSONString name:fields] :xs
 JSONDecode{|CONS|} fx _ l = (Nothing, l)
 JSONDecode{|PAIR|} fx fy _ l = d1 fy (fx False l) l
   where
-  d1 :: !(Bool [JSONNode] -> (!Maybe b, ![JSONNode])) !(!Maybe a, ![JSONNode]) ![JSONNode]
+  d1 :: !(Bool [JSONNode] -> (Maybe b, [JSONNode])) !(!Maybe a, ![JSONNode]) ![JSONNode]
      -> (!Maybe (PAIR a b), ![JSONNode])
   d1 fy (Just x,xs)  l = d2 x (fy False xs) l
   d1 _  (Nothing, _) l = (Nothing, l)
@@ -181,7 +181,7 @@ JSONDecode{|FIELD of {gfd_name}|} fx _ l =:[JSONObject fields]
       (Just x, _) = (Just (FIELD x), l)
       (_, _)      = (Nothing, l)
   where
-  findField :: !String ![(!String, !JSONNode)] -> [JSONNode]
+  findField :: !String ![(String, JSONNode)] -> [JSONNode]
   findField match [(l,x):xs]
     | l == match = [x]
     | otherwise  = findField match xs

@@ -19,11 +19,13 @@ snd3 tuple :== t2 where (_, t2, _) = tuple
 // thd3	:: !(.a,.b,!.c) -> .c								// t3 of (t1,t2,t3)
 thd3 tuple :== t3 where (_, _, t3) = tuple
 
-instance == (a,b)   | Eq a & Eq b
-instance == (a,b,c) | Eq a & Eq b & Eq c
+instance == ()                              :: !() !() -> Bool :== code { pop_a 2 ; pushB TRUE }
+instance == (a,b)   | Eq a & Eq b			:: !(!a,b) !(!a,b) -> Bool | Eq a & Eq b
+instance == (a,b,c) | Eq a & Eq b & Eq c	:: !(!a,b,c) !(!a,b,c) -> Bool | Eq a & Eq b & Eq c
 
-instance <  (a,b)   | Ord a & Ord b
-instance <  (a,b,c) | Ord a & Ord b & Ord c
+instance <  ()                              :: !() !() -> Bool :== code { pop_a 2 ; pushB FALSE }
+instance <  (a,b)   | Ord a & Ord b			:: !(!a,b) !(!a,b) -> Bool | Ord a & Ord b
+instance <  (a,b,c) | Ord a & Ord b & Ord c	:: !(!a,b,c) !(!a,b,c) -> Bool | Ord a & Ord b & Ord c
 
 app2 	:: !(.(.a -> .b),.(.c -> .d)) !(.a,.c) -> (.b,.d)	// app2 (f,g) (a,b) = (f a,g b)
 app3 	:: !(.(.a -> .b),.(.c -> .d),.(.e -> .f)) !(.a,.c,.e) -> (.b,.d,.f)

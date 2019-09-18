@@ -77,6 +77,7 @@ instance Startable (a,b) | Startable a & Startable b
 	, tempDirPath   :: FilePath  // Location for temporary files used in tasks
 	, byteCodePath  :: FilePath  // Location of the application's bytecode
 	}
+derive class iTask EngineOptions
 
 /**
 * Executes the task framework with a collection of startable task definitions.

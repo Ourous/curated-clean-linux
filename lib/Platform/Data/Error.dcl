@@ -102,7 +102,7 @@ combineErrors :: !(MaybeError e a) (MaybeError e b) (a b -> MaybeError e c) -> M
  * @param The second operation, getting the result of the first as input
  * @return The Error of the first or the second operation
  */
-seqErrorsSt :: !(.st -> (MaybeError e a,!.st)) (a .st -> u:(!MaybeError e b, !.st)) !.st -> v:(MaybeError e b, !.st), [u <= v]	
+seqErrorsSt :: !(.st -> (MaybeError e a,.st)) (a .st -> u:(MaybeError e b, .st)) !.st -> v:(MaybeError e b, !.st), [u <= v]	
 
 /**
  * Combines two MaybeError values, resulting from two operations on a state.
@@ -113,4 +113,4 @@ seqErrorsSt :: !(.st -> (MaybeError e a,!.st)) (a .st -> u:(!MaybeError e b, !.s
  * @param A combination function for the inputs if they are Ok
  * @return The error of one of the operations or the result of the combination
  */
-combineErrorsSt :: !(.st -> (!MaybeError e a, !.st)) (.st -> (!MaybeError e b, !.st)) (a b -> MaybeError e c) !.st -> (!MaybeError e c, !.st)
+combineErrorsSt :: !(.st -> (MaybeError e a, .st)) (.st -> (MaybeError e b, .st)) (a b -> MaybeError e c) !.st -> (!MaybeError e c, !.st)

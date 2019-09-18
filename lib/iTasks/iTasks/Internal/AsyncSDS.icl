@@ -1,6 +1,8 @@
 implementation module iTasks.Internal.AsyncSDS
 
 import Data.Maybe, Data.Either, Data.List, Data.Func
+import iTasks.Internal.TaskEval
+import iTasks.Internal.TaskState
 import Text, Text.GenJSON
 import StdMisc, StdArray, StdBool
 import Internet.HTTP
@@ -10,8 +12,12 @@ import iTasks.Internal.Distributed.Symbols
 import iTasks.Internal.IWorld
 import iTasks.Internal.SDS
 import iTasks.Internal.Task
+import iTasks.Internal.Util
 import iTasks.SDS.Definition
+import iTasks.UI.Definition
 import iTasks.WF.Tasks.IO
+import iTasks.WF.Derives
+import iTasks.Internal.Serialization
 
 import iTasks.Extensions.Distributed._Formatter
 
@@ -20,6 +26,7 @@ from iTasks.SDS.Sources.Core import unitShare
 import iTasks.Internal.SDSService
 
 import qualified Data.Map as DM
+import qualified Data.Set as DS
 
 derive JSONEncode SDSNotifyRequest, RemoteNotifyOptions
 
@@ -229,7 +236,7 @@ where
 	buildRequest True iworld=:{options}= (SDSRegisterRequest sds p reqSDSId (sdsIdentity rsds) taskId options.sdsPort, iworld)
 	buildRequest False iworld = (SDSReadRequest sds p, iworld)
 
-queueRemoteRefresh :: ![(!TaskId, !RemoteNotifyOptions)] !*IWorld -> *IWorld
+queueRemoteRefresh :: ![(TaskId, RemoteNotifyOptions)] !*IWorld -> *IWorld
 queueRemoteRefresh [] iworld = iworld
 queueRemoteRefresh [(reqTaskId, remoteOpts) : reqs] iworld=:{options}
 # (symbols, iworld) = case read symbolsShare EmptyContext iworld of
@@ -380,3 +387,63 @@ where
 			(Right (Error e))				= Error e
 		(Just (dyn, _))					= Error (exception ("Dynamic not of the correct modify type, got " +++ toString (typeCodeOfDynamic dyn)))
 		Nothing 						= Ok Nothing
+
+asyncSDSLoaderUI :: !AsyncAction -> UI
+asyncSDSLoaderUI Read = uia UIProgressBar (textAttr "Reading data")
+asyncSDSLoaderUI Write = uia UIProgressBar (textAttr "Writing data")
+asyncSDSLoaderUI Modify = uia UIProgressBar (textAttr "Modifying data")
+
+readCompletely :: (sds () r w) (TaskValue a) (r Event TaskEvalOpts *IWorld -> *(TaskResult a, *IWorld)) Event TaskEvalOpts !*IWorld
+	-> *(TaskResult a, *IWorld) | Readable sds & TC r & TC w
+readCompletely _ _ _ DestroyEvent _ iworld
+	= (DestroyedResult, iworld)
+readCompletely sds tv cont event evalOpts=:{TaskEvalOpts|taskId,lastEval} iworld
+	= case read sds (TaskContext taskId) iworld of
+		(Error e, iworld) = (ExceptionResult e, iworld)
+		(Ok (ReadingDone r), iworld)
+			= cont r event evalOpts iworld
+		(Ok (Reading sds), iworld)
+			= (ValueResult tv (mkTaskEvalInfo lastEval) (mkUIIfReset event (asyncSDSLoaderUI Read)) (Task (readCompletely sds tv cont)), iworld)
+
+writeCompletely :: w (sds () r w) (TaskValue a) (Event TaskEvalOpts *IWorld -> *(TaskResult a, *IWorld)) Event TaskEvalOpts !*IWorld
+	-> *(TaskResult a, *IWorld) | Writeable sds & TC r & TC w
+writeCompletely _ _ _ cont DestroyEvent evalOpts iworld
+	= (DestroyedResult, iworld)
+writeCompletely w sds tv cont event evalOpts=:{taskId,lastEval} iworld
+	= case write w sds (TaskContext taskId) iworld of
+		(Error e, iworld) = (ExceptionResult e, iworld)
+		(Ok (WritingDone), iworld)
+			= cont event evalOpts iworld
+		(Ok (Writing sds), iworld)
+			= (ValueResult tv (mkTaskEvalInfo lastEval) (mkUIIfReset event (asyncSDSLoaderUI Write)) (Task (writeCompletely w sds tv cont)), iworld)
+
+modifyCompletely :: (r -> w) (sds () r w) (TaskValue a) (Event -> UIChange) (w Event TaskEvalOpts *IWorld -> *(TaskResult a, *IWorld)) Event TaskEvalOpts !*IWorld
+	-> *(TaskResult a, *IWorld) | TC r & TC w & Modifiable sds
+modifyCompletely _ _ _ _ cont DestroyEvent evalOpts iworld
+	= (DestroyedResult, iworld)
+modifyCompletely modfun sds tv ui cont event evalOpts=:{taskId,lastEval} iworld
+	= case modify modfun sds (TaskContext taskId) iworld of
+		(Error e, iworld) = (ExceptionResult e, iworld)
+		(Ok (ModifyingDone w), iworld)
+			= cont w event evalOpts iworld
+		(Ok (Modifying sds modfun), iworld)
+			= (ValueResult tv (mkTaskEvalInfo lastEval) (ui event) (Task (modifyCompletely modfun sds tv ui cont)), iworld)
+
+readRegisterCompletely :: (sds () r w) (TaskValue a) (Event -> UIChange) (r Event TaskEvalOpts *IWorld -> *(TaskResult a, *IWorld)) Event TaskEvalOpts !*IWorld
+	-> *(TaskResult a, *IWorld) | TC r & TC w & Registrable sds
+readRegisterCompletely _ _ _ cont DestroyEvent evalOpts iworld
+	= (DestroyedResult, iworld)
+readRegisterCompletely sds tv ui cont event evalOpts=:{taskId,lastEval} iworld
+	| not (isRefreshForTask event taskId)
+		= (ValueResult tv (mkTaskEvalInfo lastEval) (ui event) (Task (readRegisterCompletely sds tv ui cont)), iworld)
+	= case readRegister taskId sds iworld of
+		(Error e, iworld) = (ExceptionResult e, iworld)
+		(Ok (ReadingDone r), iworld)
+			= cont r event evalOpts iworld
+		(Ok (Reading sds), iworld)
+			= (ValueResult
+				tv
+				(mkTaskEvalInfo lastEval)
+				(ui event)
+				(Task (readRegisterCompletely sds tv ui cont))
+			, iworld)

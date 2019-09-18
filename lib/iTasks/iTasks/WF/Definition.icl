@@ -1,9 +1,8 @@
 implementation module iTasks.WF.Definition
 
 from iTasks.Internal.IWorld import :: IWorld
-from iTasks.Internal.TaskState import :: TaskTree
-from iTasks.Internal.TaskEval import :: TaskEvalOpts, :: TaskEvalInfo
 from System.Time import :: Timestamp, :: Timespec
+import iTasks.WF.Derives
 import iTasks.UI.Definition
 import iTasks.UI.Editor
 import iTasks.UI.Editor.Generic
@@ -15,10 +14,15 @@ from Data.Maybe import :: Maybe
 import Data.Functor
 import Text, Text.GenJSON
 
-import StdString, StdClass, StdBool, StdInt
+import StdEnv
 
 exception :: !e -> TaskException | TC, toString e
 exception e = (dynamic e, toString e)
+
+:: ExceptionList =: ExceptionList [TaskException]
+instance toString ExceptionList
+where
+	toString (ExceptionList l) = join "\n" (map snd l)
 
 derive JSONDecode Event, Set
 derive JSONEncode Event, Set

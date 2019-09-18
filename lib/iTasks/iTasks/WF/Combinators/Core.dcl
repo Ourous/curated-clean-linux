@@ -33,16 +33,14 @@ ActionRefresh	:== Action "Refresh"
 ActionClose		:==	Action "Close"
 
 :: ParallelTaskType
-	= Embedded                                    //Simplest embedded
-    | NamedEmbedded !String                       //Embedded with name
+	= Embedded
 	| Detached !TaskAttributes !Bool              //Management meta and flag whether the task should be started at once
-    | NamedDetached !String !TaskAttributes !Bool //Detached with name
 
 :: ParallelTask a	:== (SharedTaskList a) -> Task a
 
 // Data available to parallel sibling tasks
 :: TaskList a :== (!TaskId,![TaskListItem a])
-:: SharedTaskList a :== SDSLens TaskListFilter (!TaskId,![TaskListItem a]) [(!TaskId,!TaskAttributes)]
+:: SharedTaskList a :== SDSLens TaskListFilter (!TaskId,![TaskListItem a]) [(TaskId,TaskAttributes)]
 
 :: TaskListItem a =
 	{ taskId			:: !TaskId
@@ -64,6 +62,7 @@ ActionClose		:==	Action "Close"
     , includeAttributes :: !Bool
     , includeProgress   :: !Bool
     }
+derive gDefault TaskListFilter
 
 /**
 * State of another task instance.
@@ -118,7 +117,7 @@ transform f :== transformError (\tv->Ok (f tv))
 *
 *	@return The combined task
 */
-step :: !(Task a) ((Maybe a) -> (Maybe b)) [TaskCont a (Task b)] -> Task b | TC a & JSONDecode{|*|} a & JSONEncode{|*|} a
+step :: !(Task a) ((Maybe a) -> (Maybe b)) [TaskCont a (Task b)] -> Task b | TC, JSONEncode{|*|} a
 
 :: TaskCont a b
     =       OnValue             ((TaskValue a)  -> Maybe b)
@@ -142,9 +141,8 @@ step :: !(Task a) ((Maybe a) -> (Maybe b)) [TaskCont a (Task b)] -> Task b | TC 
 *                     The task in the parallel set that raised the exception is replaced
 *                     with the continuation
 * @return The sum of all results
-* @gin False
 */
-parallel :: ![(!ParallelTaskType,!ParallelTask a)] [TaskCont [(!Int,!TaskValue a)] (!ParallelTaskType,!ParallelTask a)] -> Task [(!Int,!TaskValue a)] | iTask a
+parallel :: ![(ParallelTaskType,ParallelTask a)] [TaskCont [(Int,TaskValue a)] (ParallelTaskType,ParallelTask a)] -> Task [(Int,TaskValue a)] | iTask a
 
 //Task list manipulation
 /**
@@ -160,10 +158,6 @@ removeTask  :: !TaskId								!(SharedTaskList a)	-> Task () | TC a
 * All meta-data is kept
 */
 replaceTask :: !TaskId !(ParallelTask a)            !(SharedTaskList a) -> Task () | iTask a
-/**
-* Focuses a task in a task list
-*/
-focusTask   :: !TaskId                              !(SharedTaskList a) -> Task () | iTask a
 
 /**
 * Attaches a a detached task.

@@ -8,93 +8,7 @@ import Data.Monoid
 import qualified Data.Foldable
 import Text
 
-// | The @shows@ functions return a function that prepends the
-// output 'String' to an existing 'String'.  This allows constant-time
-// concatenation of results using function composition.
-:: ShowS :== String -> String
-
-// | Conversion of values to readable 'String's.
-//
-// Derived instances of 'Show' have the following properties, which
-// are compatible with derived instances of 'Text.Read.Read':
-//
-// * The result of 'show' is a syntactically correct Haskell
-//   expression containing only constants, given the fixity
-//   declarations in force at the point where the type is declared.
-//   It contains only the constructor names defined in the data type,
-//   parentheses, and spaces.  When labelled constructor fields are
-//   used, braces, commas, field names, and equal signs are also used.
-//
-// * If the constructor is defined to be an infix operator, then
-//   'showsPrec' will produce infix applications of the constructor.
-//
-// * the representation will be enclosed in parentheses if the
-//   precedence of the top-level constructor in @x@ is less than @d@
-//   (associativity is ignored).  Thus, if @d@ is @0@ then the result
-//   is never surrounded in parentheses; if @d@ is @11@ it is always
-//   surrounded in parentheses, unless it is an atomic expression.
-//
-// * If the constructor is defined using record syntax, then 'show'
-//   will produce the record-syntax form, with the fields given in the
-//   same order as the original declaration.
-//
-// For example, given the declarations
-//
-// > infixr 5 :^:
-// > data Tree a =  Leaf a  |  Tree a :^: Tree a
-//
-// the derived instance of 'Show' is equivalent to
-//
-// > instance (Show a) => Show (Tree a) where
-// >
-// >        showsPrec d (Leaf m) = showParen (d > app_prec) $
-// >             showString "Leaf " . showsPrec (app_prec+1) m
-// >          where app_prec = 10
-// >
-// >        showsPrec d (u :^: v) = showParen (d > up_prec) $
-// >             showsPrec (up_prec+1) u .
-// >             showString " :^: "      .
-// >             showsPrec (up_prec+1) v
-// >          where up_prec = 5
-//
-// Note that right-associativity of @:^:@ is ignored.  For example,
-//
-// * @'show' (Leaf 1 :^: Leaf 2 :^: Leaf 3)@ produces the string
-//   @\"Leaf 1 :^: (Leaf 2 :^: Leaf 3)\"@.
-
-class Show a where
-    // | Convert a value to a readable 'String'.
-    //
-    // 'showsPrec' should satisfy the law
-    //
-    // > showsPrec d x r ++ s  ==  showsPrec d x (r ++ s)
-    //
-    // Derived instances of 'Text.Read.Read' and 'Show' satisfy the following:
-    //
-    // * @(x,\"\")@ is an element of
-    //   @('Text.Read.readsPrec' d ('showsPrec' d x \"\"))@.
-    //
-    // That is, 'Text.Read.readsPrec' parses the string produced by
-    // 'showsPrec', and delivers the value that 'showsPrec' started with.
-
-    showsPrec :: Int    // ^ the operator precedence of the enclosing
-                        // context (a number from @0@ to @11@).
-                        // Function application has precedence @10@.
-                 a      // ^ the value to be converted to a 'String'
-              -> ShowS
-
-    // | A specialised variant of 'showsPrec', using precedence context
-    // zero, and returning an ordinary 'String'.
-    show      :: a   -> String
-
-    // | The method 'showList' is provided to allow the programmer to
-    // give a specialised way of showing lists of values.
-    // For example, this is used by the predefined 'Show' instance of
-    // the 'Char' type, where values of type 'String' should be shown
-    // in double quotes, rather than between square brackets.
-    showList  :: [a] -> ShowS
-
-showList` :: (a -> ShowS) [a] -> ShowS
+showList` :: !(a -> ShowS) ![a] -> ShowS
 showList` _     []     = \s -> "[]" +++ s
 showList` showx [x:xs] = \s -> "[" +++ showx x (showl xs s)
   where
@@ -212,7 +126,7 @@ instance Show (a,b,c,d,e,f,g,h,i,j,k,l) | Show a & Show b & Show c & Show d & Sh
   show x = shows x ""
   showList ls = \s -> showList` shows ls s
 
-show_tuple :: [ShowS] -> ShowS
+show_tuple :: ![ShowS] -> ShowS
 show_tuple ss = showChar '('
               o 'Data.Foldable'.foldr1 (\s r -> s o showChar ',' o r) ss
               o showChar ')'
@@ -222,22 +136,22 @@ show_tuple ss = showChar '('
 //------------------------------------------------------------
 
 // | equivalent to 'showsPrec' with a precedence of 0.
-shows :: a -> ShowS | Show a
+shows :: !a -> ShowS | Show a
 shows x =  showsPrec 0 x
 
 // | utility function converting a 'Char' to a show function that
 // simply prepends the character unchanged.
-showChar :: Char -> ShowS
+showChar :: !Char -> ShowS
 showChar c = \xs -> {c} +++ xs
 
 // | utility function converting a 'String' to a show function that
 // simply prepends the string unchanged.
-showString :: String -> ShowS
+showString :: !String -> ShowS
 showString xs = \ys -> xs +++ ys
 
 // | utility function that surrounds the inner show function with
 // parentheses when the 'Bool' parameter is 'True'.
-showParen :: Bool ShowS -> ShowS
+showParen :: !Bool !ShowS -> ShowS
 showParen b p = if b (showChar '(' o p o showChar ')') p
 
 showSpace :: ShowS
@@ -250,7 +164,7 @@ showSpace = \ xs -> " " +++ xs
 //
 // > showLitChar '\n' s  =  "\\n" ++ s
 //
-showLitChar :: Char -> ShowS
+showLitChar :: !Char -> ShowS
 showLitChar c | toInt c > 127  = \s -> showChar '\\' (protectEsc isDec (shows (toInt c)) s)
 showLitChar c | toInt c == 127 = \s -> showString "\\DEL" s
 showLitChar '\\'           = \s -> showString "\\\\" s
@@ -266,7 +180,7 @@ showLitChar c
 | c == toChar 14    = \s -> protectEsc (\x -> x == 'H') (showString "\\SO") s
 = \s -> showString ("\\" +++ asciiTab.[toInt c]) s
 
-showLitString :: String -> ShowS
+showLitString :: !String -> ShowS
 // | Same as 'showLitChar', but for strings
 // It converts the string to a string using Haskell escape conventions
 // for non-printable characters. Does not add double-quotes around the
@@ -282,7 +196,7 @@ showLitString cs
    // The sticking point is the recursive call to (showLitString cs), which
    // it can't figure out would be ok with arity 2.
 
-showMultiLineString :: String -> [String]
+showMultiLineString :: !String -> [String]
 // | Like 'showLitString' (expand escape characters using Haskell
 // escape conventions), but
 //   * break the string into multiple lines
@@ -295,10 +209,10 @@ showMultiLineString str
     pts -> map (quote o flip (+++) "\n") (init pts) ++ [quote (last pts)]
   where quote s = "\"" +++ s +++ "\""
 
-isDec :: Char -> Bool
+isDec :: !Char -> Bool
 isDec c = c >= '0' && c <= '9'
 
-protectEsc :: (Char -> Bool) ShowS -> ShowS
+protectEsc :: !(Char -> Bool) !ShowS -> ShowS
 protectEsc p f = f o cont
                  where cont s | size s > 0 && p s.[0] = "\\&" +++ s
                        cont s                         = s
@@ -312,7 +226,7 @@ asciiTab = // Using an array drags in the array module.  listArray ('\NUL', ' ')
             "CAN", "EM",  "SUB", "ESC", "FS",  "GS",  "RS",  "US",
             "SP"}
 
-showSignedInt :: Int Int -> ShowS
+showSignedInt :: !Int !Int -> ShowS
 showSignedInt p n
     | n < 0 && p > 6 = \r -> "(" +++ toString n +++ ")" +++ r
     | otherwise      = \r -> toString n +++ r

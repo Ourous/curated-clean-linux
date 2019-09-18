@@ -6,7 +6,7 @@ from StdFunc import seq, o
 // stores the indentation level in global environment variable
 NIDENT_ENV_VAR :== "CLEAN_PLATFORM_DEBUG_PERFORMANCE_INDENT_LEVEL"
 
-measureTime :: !u:(*env -> *env) -> v:(*env -> (!Int, !Int, !*env)), [v <= u]
+measureTime :: !u:(*env -> *env) -> v:(*env -> (Int, Int, *env)), [v <= u]
 measureTime f = g
 where
     g env
@@ -17,7 +17,7 @@ where
         # env = f env
         = ((), env)
 
-measureTimeRes :: !u:(*env -> (!.a, !*env)) -> v:(*env -> (!Int, !Int, !.a, !*env)), [v <= u]
+measureTimeRes :: !u:(*env -> (.a, *env)) -> v:(*env -> (Int, Int, .a, *env)), [v <= u]
 measureTimeRes f = g
 where
     // unsafe operations used, because we don't have *World, but arbitrary env
@@ -42,7 +42,7 @@ where
         # env = f env
         = ((), env)
 
-printTimeRes :: !String !u:(*env -> (!.a, !*env)) -> v:(*env -> (!.a, !*env)), [v <= u]
+printTimeRes :: !String !u:(*env -> (.a, *env)) -> v:(*env -> (.a, *env)), [v <= u]
 printTimeRes str f = g
 where
     // unsafe operations used, because we don't have *World, but arbitrary env
@@ -64,7 +64,7 @@ where
         = (x, env)
 
 // used instead of accUnsafe to make sure that *env used by timing functions is evaluated
-accUnsafe` :: !*(*World -> *(.a, !*World)) !*env -> (.a, !*env)
+accUnsafe` :: !*(*World -> *(.a, *World)) !*env -> (.a, !*env)
 accUnsafe` f env = accUnsafe (g env)
 where
     g env world

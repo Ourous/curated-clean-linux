@@ -1,0 +1,4 @@
+clean-lib-dynamics linux x64 20190917
+[svn sources]
+clean-dynamic-system trunk 667       
+[git sources]

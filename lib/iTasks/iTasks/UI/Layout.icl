@@ -18,7 +18,7 @@ from Data.Foldable import maximum
 import Text.GenJSON
 
 from StdFunc import o, const, id, flip
-from iTasks.Internal.TaskState import :: TIMeta(..), :: TIType(..), :: TaskTree(..), :: DeferredJSON, :: AsyncAction
+from iTasks.Internal.TaskState import :: TIMeta(..), :: TIType(..), :: DeferredJSON, :: AsyncAction
 
 from iTasks.Internal.TaskEval import :: TaskTime
 from iTasks.WF.Combinators.Core import :: AttachmentStatus
@@ -560,8 +560,16 @@ nodeSelected_ ruleNo (SelectByType t) _ lui moves = fromMaybe False
 	(fmap (\n -> nodeType_ ruleNo n === t) (selectNode_ ruleNo True fst (lui,moves)))
 nodeSelected_ ruleNo (SelectByHasAttribute k) _ lui moves = fromMaybe False
 	(fmap (\n -> isJust ('DM'.get k (nodeAttributes_ ruleNo n))) (selectNode_ ruleNo True fst (lui,moves)))
+
 nodeSelected_ ruleNo (SelectByAttribute k p) _ lui moves = fromMaybe False
 	(fmap (\n -> maybe False p ('DM'.get k (nodeAttributes_ ruleNo n)))	(selectNode_ ruleNo True fst (lui,moves)))
+
+nodeSelected_ ruleNo (SelectByClass c) _ lui moves = fromMaybe False
+	(fmap (\n -> maybe False (hasClass c) ('DM'.get "class" (nodeAttributes_ ruleNo n))) (selectNode_ ruleNo True fst (lui,moves)))
+where
+	hasClass name (JSONArray items) = isMember name [item \\ JSONString item <- items]
+	hasClass _ _ = False
+
 nodeSelected_ ruleNo (SelectByNumChildren num) _ lui moves = fromMaybe False
 	//TODO: selectChildNodes should also have selectable before/after effect
 	(fmap (\(LUINode node,m) -> length (selectChildNodes_ ruleNo (node.items,m)) == num)
@@ -584,6 +592,7 @@ nodeSelected_ ruleNo (SelectAND sell selr) path ui moves = nodeSelected_ ruleNo 
 nodeSelected_ ruleNo (SelectOR sell selr) path ui moves = nodeSelected_ ruleNo sell path ui moves || nodeSelected_ ruleNo selr path ui moves
 nodeSelected_ ruleNo (SelectNOT sel) path ui moves = not (nodeSelected_ ruleNo sel path ui moves)
 nodeSelected_ ruleNo _ _ _ moves = False
+
 
 matchAttributeKey_ :: !UIAttributeSelection !UIAttributeKey -> Bool
 matchAttributeKey_ (SelectAll) _ = True
@@ -654,7 +663,7 @@ selectChildNodes_ ruleNo (items,moves)
 	# (selection,_,moves) = processChildNodes_ ruleNo fun ([],items,moves)
 	= map snd (sortBy fstEl selection)
 where
-	fun :: !Int !(![(!Int, !LUI)], !LUI, !LUIMoves) -> (![(!Int, !LUI)], !LUI, !LUIMoves)
+	fun :: !Int !(![(Int, LUI)], !LUI, !LUIMoves) -> (![(Int, LUI)], !LUI, !LUIMoves)
 	fun i (acc,item,moves) = ([(i,item):acc],item,moves)
 
 	fstEl (x,_) (y,_) = x < y	
@@ -668,7 +677,7 @@ where
 		| s < 0 || s >= length items = Nothing
 		| otherwise = selectSubNode_ ruleNo ss (items !! s, moves)
 
-updateNode_ :: !LUINo !((!LUI, !LUIMoves) -> (!LUI, !LUIMoves)) !(!LUI, !LUIMoves) -> (!LUI, !LUIMoves)
+updateNode_ :: !LUINo !((!LUI, !LUIMoves) -> (LUI, LUIMoves)) !(!LUI, !LUIMoves) -> (!LUI, !LUIMoves)
 updateNode_ ruleNo update (lui,moves)
 	# (_,lui,moves) = processNode_ ruleNo False fun (lui,moves)
 	= (lui,moves)
@@ -678,7 +687,7 @@ where
 		# (item,moves) = update (item,moves)
 		= ((),item,moves)
 
-updateChildNodes_ :: !LUINo !(Int (!LUI, !LUIMoves) -> (!LUI, !LUIMoves)) !(![LUI], !LUIMoves) -> (![LUI], !LUIMoves)
+updateChildNodes_ :: !LUINo !(Int (!LUI, !LUIMoves) -> (LUI, LUIMoves)) !(![LUI], !LUIMoves) -> (![LUI], !LUIMoves)
 updateChildNodes_ ruleNo update (items,moves)
 	# (_,items,moves) = processChildNodes_ ruleNo fun ((),items,moves)
 	= (items, moves)
@@ -688,7 +697,7 @@ where
 		# (items,moves) = update i (items,moves)
 		= (s,items,moves)
 
-updateSubNode_ :: !LUINo !UIPath !((!LUI, !LUIMoves) -> (!LUI, !LUIMoves)) !(!LUI, !LUIMoves) -> (!LUI, !LUIMoves)
+updateSubNode_ :: !LUINo !UIPath !((!LUI, !LUIMoves) -> (LUI, LUIMoves)) !(!LUI, !LUIMoves) -> (!LUI, !LUIMoves)
 updateSubNode_ ruleNo [] update (lui,moves) = updateNode_ ruleNo update (lui,moves)
 updateSubNode_ ruleNo [s:ss] update (lui,moves) = updateNode_ ruleNo apply (lui,moves)
 where
@@ -699,7 +708,7 @@ where
 	applyc :: !Int !(!LUI, !LUIMoves) -> (!LUI, !LUIMoves)
 	applyc i luiMoves=:(lui,moves) = if (i == s) (updateSubNode_ ruleNo ss update (lui,moves)) luiMoves
 
-processNode_ :: !LUINo !Bool !((!LUI, !LUIMoves) -> (!a, !LUI, !LUIMoves)) !(!LUI, !LUIMoves)
+processNode_ :: !LUINo !Bool !((!LUI, !LUIMoves) -> (a, LUI, LUIMoves)) !(!LUI, !LUIMoves)
              -> (!Maybe a, !LUI, !LUIMoves)
 processNode_ ruleNo beforeEffect fun (lui,moves) = case lui of
 	//When a move source exists (it is moved by a later rule), we update the referenced node
@@ -761,7 +770,7 @@ where
 				= (result, LUINode {node & items = updateAt index wrapped node.items}, moves)
 			_ = (Nothing,lui,moves)
 
-processChildNodes_ :: !LUINo !(Int (!a, !LUI, !LUIMoves) -> (!a, !LUI, !LUIMoves)) !(!a, ![LUI], !LUIMoves)
+processChildNodes_ :: !LUINo !(Int (!a, !LUI, !LUIMoves) -> (a, LUI, LUIMoves)) !(!a, ![LUI], !LUIMoves)
                    -> (!a, ![LUI], !LUIMoves)
 processChildNodes_ ruleNo fun (state,items,moves) = processItems (indexShiftDestinations items moves) state items moves
 where
@@ -778,7 +787,7 @@ where
 		# (_,state,items,moves) = foldl (updateItem fun) (0,state,[],moves) items
 		= (state,reverse items, moves)
 	where
-		updateItem :: !(Int (!a, !LUI, !LUIMoves) -> (!a, !LUI, !LUIMoves)) !(!Int, !a, ![LUI], !LUIMoves) !LUI
+		updateItem :: !(Int (!a, !LUI, !LUIMoves) -> (a, LUI, LUIMoves)) !(!Int, !a, ![LUI], !LUIMoves) !LUI
 		           -> (!Int, !a, ![LUI], !LUIMoves)
 		updateItem fun (i,state,acc,moves) item
 			| nodeExists_ ruleNo item moves
@@ -905,7 +914,7 @@ where
 		Just (ESToBeUpdated _ _) = True
 		Just (ESToBeRemoved _) = True
 		_ = False
-import StdDebug
+
 //Undo the effects of a previously applied rule for a single node
 undoEffects_ :: !LUINo !(!LUI, !LUIMoves) -> (!LUI, !LUIMoves)
 // optimisation to prevent a new LUINode to be allocated if no change is required
@@ -1157,7 +1166,7 @@ where
 //Important: Shifts are done before inserts and removes
 //           so we ignore items that are not yet inserted, but still
 //           count items that are to be removed
-extractChildShifts :: ![LUI] -> (![(!Int, !UIChildChange)], ![LUI])
+extractChildShifts :: ![LUI] -> (![(Int, UIChildChange)], ![LUI])
 extractChildShifts items = extract 0 [] items
 where
 	extract i acc [] = ([],reverse acc)
@@ -1212,7 +1221,7 @@ where
 
 	resetToBeShifted (LUINode node) = LUINode {node & changes  = {node.changes & toBeShifted = Nothing}}
 
-extractChildInsertsAndRemoves :: ![LUI] !LUIMoves -> [(!Int, !UIChildChange)]
+extractChildInsertsAndRemoves :: ![LUI] !LUIMoves -> [(Int, UIChildChange)]
 extractChildInsertsAndRemoves items moves = extract 0 items moves
 where
 	extract i [] moves = []

@@ -9,7 +9,7 @@ from System.Time import :: Clock, :: Timespec
 * @param computation on the unique environment
 * @return function that additionally measures the duration of the given computation (second result integer is wall time)
 */
-measureTime :: !u:(*env -> *env) -> v:(*env -> (!Int, !Int, !*env)), [v <= u]
+measureTime :: !u:(*env -> *env) -> v:(*env -> (Int, Int, *env)), [v <= u]
 
 /**
 * Measures the duration of the computation on a unique environment, returning an additional result.
@@ -18,7 +18,7 @@ measureTime :: !u:(*env -> *env) -> v:(*env -> (!Int, !Int, !*env)), [v <= u]
 * @param computation on the unique environment
 * @return function that additionally measures the duration of the given computation (second result integer is wall time)
 */
-measureTimeRes :: !u:(*env -> (!.a, !*env)) -> v:(*env -> (!Int, !Int, !.a, !*env)), [v <= u]
+measureTimeRes :: !u:(*env -> (.a, *env)) -> v:(*env -> (Int, Int, .a, *env)), [v <= u]
 
 /**
 * Prints the duration of the computation on a unique environment.
@@ -38,4 +38,4 @@ printTime :: !String !u:(*env -> *env) -> v:(*env -> *env), [v <= u]
 * @param computation on the unique environment
 * @return function that additionally prints the duration of the given computation
 */
-printTimeRes :: !String !u:(*env -> (!.a, !*env)) -> v:(*env -> (!.a, !*env)), [v <= u]
+printTimeRes :: !String !u:(*env -> (.a, *env)) -> v:(*env -> (.a, *env)), [v <= u]

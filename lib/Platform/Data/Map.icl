@@ -16,6 +16,7 @@ from Data.Set import :: Set
 // Ported from Haskell`s Data.Map by Jurriën Stutterheim, 10-09-2014
 
 instance Semigroup (Map k v) | < k where
+	mappend :: !(Map k v) !(Map k v) -> Map k v | < k
     mappend x y = union x y
 
 instance Monoid (Map k v) | < k where
@@ -557,10 +558,10 @@ union t1 Tip  = t1
 union t1 t2 = hedgeUnion Nothing Nothing t1 t2
 
 unions :: ![Map k a] -> Map k a | < k
-unions ts = foldlStrict union newMap ts
+unions ts = foldl union newMap ts
 
 unionsWith :: !(a a -> a) ![Map k a] -> Map k a | < k
-unionsWith f ts = foldlStrict (unionWith f) newMap ts
+unionsWith f ts = foldl (unionWith f) newMap ts
 
 unionWith :: !(a a -> a) !(Map k a) !(Map k a) -> Map k a | < k
 unionWith f m1 m2 = unionWithKey (appUnion f) m1 m2
@@ -972,7 +973,7 @@ traverseWithKey f (Bin s k v l r) = flip (Bin s k) <$> traverseWithKey f l <*> f
 // > let f a b = (a ++ b, b ++ "X")
 // > mapAccum f "Everything: " (fromList [(5,"a"), (3,"b")]) == ("Everything: ba", fromList [(3, "bX"), (5, "aX")])
 
-mapAccum :: !(a b -> (!a, !c)) !a !(Map k b) -> (!a, !Map k c)
+mapAccum :: !(a b -> (a, c)) !a !(Map k b) -> (!a, !Map k c)
 mapAccum f a m = mapAccumWithKey (\a` _ x` -> f a` x`) a m
 
 // | /O(n)/. The function 'mapAccumWithKey` threads an accumulating
@@ -981,12 +982,12 @@ mapAccum f a m = mapAccumWithKey (\a` _ x` -> f a` x`) a m
 // > let f a k b = (a ++ " " ++ (show k) ++ "-" ++ b, b ++ "X")
 // > mapAccumWithKey f "Everything:" (fromList [(5,"a"), (3,"b")]) == ("Everything: 3-b 5-a", fromList [(3, "bX"), (5, "aX")])
 
-mapAccumWithKey :: !(a k b -> (!a, !c)) !a !(Map k b) -> (!a, !Map k c)
+mapAccumWithKey :: !(a k b -> (a, c)) !a !(Map k b) -> (!a, !Map k c)
 mapAccumWithKey f a t = mapAccumL f a t
 
 // | /O(n)/. The function 'mapAccumL' threads an accumulating
 // argument through the map in ascending order of keys.
-mapAccumL :: !(a k b -> (!a, !c)) !a !(Map k b) -> (!a, !Map k c)
+mapAccumL :: !(a k b -> (a, c)) !a !(Map k b) -> (!a, !Map k c)
 mapAccumL _ a Tip               = (a,Tip)
 mapAccumL f a (Bin sx kx x l r)
   #! (a1,l`) = mapAccumL f a l
@@ -996,7 +997,7 @@ mapAccumL f a (Bin sx kx x l r)
 
 // | /O(n)/. The function 'mapAccumR' threads an accumulating
 // argument through the map in descending order of keys.
-mapAccumRWithKey :: !(a k b -> (!a, !c)) !a !(Map k b) -> (!a, !Map k c)
+mapAccumRWithKey :: !(a k b -> (a, c)) !a !(Map k b) -> (!a, !Map k c)
 mapAccumRWithKey _ a Tip = (a,Tip)
 mapAccumRWithKey f a (Bin sx kx x l r)
   #! (a1,r`) = mapAccumRWithKey f a r
@@ -1088,9 +1089,9 @@ foldr` f z` (Bin _ _ x l r) = foldr` f (f x (foldr` f z` r)) l
 //
 // > let f len a = len + (length a)
 // > foldl f 0 (fromList [(5,"a"), (3,"bbb")]) == 4
-foldl :: !(a b -> a) !a !(Map k b) -> a
+/*foldl :: !(a b -> a) !a !(Map k b) -> a
 foldl f z` Tip             = z`
-foldl f z` (Bin _ _ x l r) = foldl f (f (foldl f z` l) x) r
+foldl f z` (Bin _ _ x l r) = foldl f (f (foldl f z` l) x) r*/
 
 // | /O(n)/. A strict version of 'foldl`. Each application of the operator is
 // evaluated before using the result in the next application. This
@@ -1177,7 +1178,7 @@ foldMapWithKey f (Bin _ k v l r) = mappend (foldMapWithKey f l) (mappend (f k v)
 // > assocs (fromList [(5,"a"), (3,"b")]) == [(3,"b"), (5,"a")]
 // > assocs newMap == []
 
-assocs :: !(Map k a) -> [(!k, !a)]
+assocs :: !(Map k a) -> [(k, a)]
 assocs m = toAscList m
 
 keysSet :: !(Map k a) -> Set k
@@ -1188,22 +1189,22 @@ fromSet :: !(k -> a) !(Set k) -> Map k a
 fromSet _ 'Data.Set'.Tip            = Tip
 fromSet f ('Data.Set'.Bin sz x l r) = Bin sz x (f x) (fromSet f l) (fromSet f r)
 
-fromList :: !u:[v:(!a, !b)] -> Map a b | == a & < a, [u <= v]
+fromList :: !u:[v:(a, b)] -> Map a b | == a & < a, [u <= v]
 fromList [] = Tip
 fromList [(kx, x)] = Bin 1 kx x Tip Tip
 fromList [(kx0, x0) : xs0]
   | not_ordered kx0 xs0 = fromList` (Bin 1 kx0 x0 Tip Tip) xs0
   | otherwise = go 1 (Bin 1 kx0 x0 Tip Tip) xs0
   where
-    not_ordered :: !a !u:[v:(!a, !b)] -> Bool | == a & < a, [u <= v]
+    not_ordered :: !a !u:[v:(a, b)] -> Bool | == a & < a, [u <= v]
     not_ordered _ [] = False
     not_ordered kx [(ky,_) : _] = kx >= ky
 
-    fromList` :: !(Map a b) !u:[v:(!a, !b)] -> Map a b | == a & < a, [u <= v]
-    fromList` t0 xs = foldlStrict ins t0 xs
+    fromList` :: !(Map a b) !u:[v:(a, b)] -> Map a b | == a & < a, [u <= v]
+    fromList` t0 xs = foldl ins t0 xs
       where ins t (k,x) = put k x t
 
-    go :: !Int !(Map a b) !u:[v:(!a, !b)] -> Map a b | == a & < a, [u <= v]
+    go :: !Int !(Map a b) !u:[v:(a, b)] -> Map a b | == a & < a, [u <= v]
     go _ t [] = t
     go _ t [(kx, x)] = putMax kx x t
     go s l xs=:[(kx, x) : xss]
@@ -1217,7 +1218,7 @@ fromList [(kx0, x0) : xs0]
     // If ys is nonnewMap, the keys in ys are not ordered with respect to tree
     // and must be puted using fromList`. Otherwise the keys have been
     // ordered so far.
-    create :: !Int !u:[v:(!a, !b)] -> (!Map a b, ![(!a, !b)], ![(!a, !b)]) | == a & < a, [u <= v]
+    create :: !Int !u:[v:(a, b)] -> (!Map a b, ![(a, b)], ![(a, b)]) | == a & < a, [u <= v]
     create _ [] = (Tip, [], [])
     create s xs=:[xp : xss]
       | s == 1 = case xp of (kx, x) | not_ordered kx xss -> (Bin 1 kx x Tip Tip, [], xss)
@@ -1234,7 +1235,7 @@ fromList [(kx0, x0) : xs0]
 // > fromListWith (++) [(5,"a"), (5,"b"), (3,"b"), (3,"a"), (5,"a")] == fromList [(3, "ab"), (5, "aba")]
 // > fromListWith (++) [] == newMap
 
-//fromListWith :: !(a a -> a) ![(!k, !a)] -> Map k a | < k
+//fromListWith :: !(a a -> a) ![(k, a)] -> Map k a | < k
 fromListWith f xs :== fromListWithKey (\_ x y -> f x y) xs
 
 // | /O(n*log n)/. Build a map from a list of key\/value pairs with a combining function. See also 'fromAscListWithKey`.
@@ -1243,8 +1244,8 @@ fromListWith f xs :== fromListWithKey (\_ x y -> f x y) xs
 // > fromListWithKey f [(5,"a"), (5,"b"), (3,"b"), (3,"a"), (5,"a")] == fromList [(3, "3ab"), (5, "5a5ba")]
 // > fromListWithKey f [] == newMap
 
-fromListWithKey :: !(k a a -> a) ![(!k, !a)] -> Map k a | < k
-fromListWithKey f xs = foldlStrict (ins f) newMap xs
+fromListWithKey :: !(k a a -> a) ![(k, a)] -> Map k a | < k
+fromListWithKey f xs = foldl (ins f) newMap xs
   where
   ins :: !(k a a -> a) !(Map k a) !(!k, !a) -> Map k a | < k
   ins f t (k, x) = putWithKey f k x t
@@ -1254,7 +1255,7 @@ fromListWithKey f xs = foldlStrict (ins f) newMap xs
 // > toList (fromList [(5,"a"), (3,"b")]) == [(3,"b"), (5,"a")]
 // > toList newMap == []
 
-//toList :: !(Map k a) -> [(!k, !a)]
+//toList :: !(Map k a) -> [(k, a)]
 //toList m = toAscList m
 
 // | /O(n)/. Convert the map to a list of key\/value pairs where the keys are
@@ -1262,14 +1263,14 @@ fromListWithKey f xs = foldlStrict (ins f) newMap xs
 //
 // > toAscList (fromList [(5,"a"), (3,"b")]) == [(3,"b"), (5,"a")]
 
-//toAscList :: !(Map k a) -> [(!k, !a)]
+//toAscList :: !(Map k a) -> [(k, a)]
 
 // | /O(n)/. Convert the map to a list of key\/value pairs where the keys
 // are in descending order. Subject to list fusion.
 //
 // > toDescList (fromList [(5,"a"), (3,"b")]) == [(5,"a"), (3,"b")]
 
-toDescList :: !(Map k a) -> [(!k, !a)]
+toDescList :: !(Map k a) -> [(k, a)]
 toDescList m = foldlWithKey (\xs k x -> [(k,x):xs]) [] m
 
 //////////////////////////////////////////////////////////////////////
@@ -1287,7 +1288,7 @@ toDescList m = foldlWithKey (\xs k x -> [(k,x):xs]) [] m
 // > valid (fromAscList [(3,"b"), (5,"a"), (5,"b")]) == True
 // > valid (fromAscList [(5,"a"), (3,"b"), (5,"b")]) == False
 
-fromAscList :: ![(!k, !a)] -> Map k a | == k
+fromAscList :: ![(k, a)] -> Map k a | == k
 fromAscList xs = fromAscListWithKey (\_ x _ -> x) xs
 
 // | /O(n)/. Build a map from an ascending list in linear time with a combining function for equal keys.
@@ -1297,7 +1298,7 @@ fromAscList xs = fromAscListWithKey (\_ x _ -> x) xs
 // > valid (fromAscListWith (++) [(3,"b"), (5,"a"), (5,"b")]) == True
 // > valid (fromAscListWith (++) [(5,"a"), (3,"b"), (5,"b")]) == False
 
-fromAscListWith :: !(a a -> a) ![(!k, !a)] -> Map k a | == k
+fromAscListWith :: !(a a -> a) ![(k, a)] -> Map k a | == k
 fromAscListWith f xs = fromAscListWithKey (\_ x y -> f x y) xs
 
 // | /O(n)/. Build a map from an ascending list in linear time with a
@@ -1309,18 +1310,18 @@ fromAscListWith f xs = fromAscListWithKey (\_ x y -> f x y) xs
 // > valid (fromAscListWithKey f [(3,"b"), (5,"a"), (5,"b"), (5,"b")]) == True
 // > valid (fromAscListWithKey f [(5,"a"), (3,"b"), (5,"b"), (5,"b")]) == False
 
-fromAscListWithKey :: !(k a a -> a) ![(!k, !a)] -> Map k a | == k
+fromAscListWithKey :: !(k a a -> a) ![(k, a)] -> Map k a | == k
 fromAscListWithKey f xs = fromDistinctAscList (combineEq f xs)
   where
   // [combineEq f xs] combines equal elements with function [f] in an ordered list [xs]
-  combineEq :: !(k a a -> a) ![(!k, !a)] -> [(!k, !a)] | == k
+  combineEq :: !(k a a -> a) ![(k, a)] -> [(k, a)] | == k
   combineEq f xs`
     = case xs` of
         []     -> []
         [x]    -> [x]
         [x:xx] -> combineEq` f x xx
 
-  combineEq` :: !(k a a -> a)  !(!k, !a) ![(!k, !a)] -> [(!k, !a)] | == k
+  combineEq` :: !(k a a -> a)  !(!k, !a) ![(k, a)] -> [(k, a)] | == k
   combineEq` _ z [] = [z]
   combineEq` f z=:(kz,zz) [x=:(kx,xx):xs`]
     | kx == kz
@@ -1337,16 +1338,16 @@ fromAscListWithKey f xs = fromDistinctAscList (combineEq f xs)
 
 // For some reason, when 'singleton' is used in fromDistinctAscList or in
 // create, it is not inlined, so we inline it manually.
-fromDistinctAscList :: ![(!k, !a)] -> Map k a
+fromDistinctAscList :: ![(k, a)] -> Map k a
 fromDistinctAscList [] = Tip
 fromDistinctAscList [(kx0, x0) : xs0] = go 1 (Bin 1 kx0 x0 Tip Tip) xs0
   where
-  go :: !Int !(Map a b) ![(!a, !b)] -> Map a b
+  go :: !Int !(Map a b) ![(a, b)] -> Map a b
   go _ t [] = t
   go s l [(kx, x) : xs] = case create s xs of
                             (r, ys) -> go (s << 1) (link kx x l r) ys
 
-  create :: !Int ![(!a, !b)] -> (!Map a b, ![(!a, !b)])
+  create :: !Int ![(a, b)] -> (!Map a b, ![(a, b)])
   create _ [] = (Tip, [])
   create s xs=:[x` : xs`]
     | s == 1 = case x` of (kx, x) -> (Bin 1 kx x Tip Tip, xs`)
@@ -1962,12 +1963,6 @@ validmapSize t
   realmapSize (Bin sz _ _ l r) = case (realmapSize l, realmapSize r) of
                                    (Just n,Just m)  | n+m+1 == sz  -> Just sz
                                    _                               -> Nothing
-
-foldlStrict :: !(a b -> a) !a ![b] -> a
-foldlStrict f acc [] = acc
-foldlStrict f acc [x:xs]
-  #! z` = f acc x
-  = foldlStrict f z` xs
 
 // | /O(1)/.  Decompose a map into pieces based on the structure of the underlying
 // tree.  This function is useful for consuming a map in parallel.

@@ -25,15 +25,15 @@ instance == (Heap a)
 
 instance < (Heap a)
 
-instance Semigroup (Heap a)
+instance Semigroup (Heap a) where mappend :: !(Heap a) !(Heap a) -> Heap a
 
 instance Monoid (Heap a)
 
 :: Entry p a = Entry p a
 
-null :: (Heap a) -> Bool
+null :: !(Heap a) -> Bool
 
-size :: (Heap a) -> Int
+size :: !(Heap a) -> Int
 
 //* @type Heap a
 empty :== Empty
@@ -47,32 +47,32 @@ singletonWith f a :== Heap 1 f (Node 0 a Nil)
 //* @type a (Heap a) -> (Heap a) | Ord a
 insert :== insertWith (<=)
 
-insertWith :: (a a -> Bool) a (Heap a) -> Heap a
+insertWith :: (a a -> Bool) a !(Heap a) -> Heap a
 
-union :: (Heap a) (Heap a) -> Heap a
+union :: !(Heap a) !(Heap a) -> Heap a
 
-replicate :: a Int -> Heap a | Ord a
+replicate :: a !Int -> Heap a | Ord a
 
-uncons :: (Heap a) -> Maybe (a, Heap a) | Ord a
+uncons :: !(Heap a) -> Maybe (a, Heap a) | Ord a
 
 //* @type (Heap a) -> Maybe (a, Heap a) | Ord a
 viewMin :== uncons
 
-minimum :: (Heap a) -> a
+minimum :: !(Heap a) -> a
 
-trees :: (Forest a) -> [Tree a]
+trees :: !(Forest a) -> [Tree a]
 
-deleteMin :: (Heap a) -> Heap a
+deleteMin :: !(Heap a) -> Heap a
 
-map :: (a -> b) (Heap a) -> Heap b | Ord b
+map :: (a -> b) !(Heap a) -> Heap b | Ord b
 
-mapMonotonic :: (a -> b) (Heap a) -> Heap b | Ord b
+mapMonotonic :: (a -> b) !(Heap a) -> Heap b | Ord b
 
-filter :: (a -> Bool) (Heap a) -> Heap a
+filter :: (a -> Bool) !(Heap a) -> Heap a
 
-partition :: (a -> Bool) (Heap a) -> (Heap a, Heap a)
+partition :: (a -> Bool) !(Heap a) -> (Heap a, Heap a)
 
-split :: a (Heap a) -> (Heap a, Heap a, Heap a)
+split :: a !(Heap a) -> (Heap a, Heap a, Heap a)
 
 //* @type Int (Heap a) -> Heap a
 take :== withList o 'Data.List'.take
@@ -95,18 +95,18 @@ takeWhile :== withList o 'Data.List'.takeWhile
 //* @type (a -> Bool) (Heap a) -> Heap a
 dropWhile :== withList o 'Data.List'.dropWhile
 
-nub :: (Heap a) -> Heap a
+nub :: !(Heap a) -> Heap a
 
-concatMap :: (a -> Heap b) (Heap a) -> Heap b | Ord b
+concatMap :: (a -> Heap b) !(Heap a) -> Heap b | Ord b
 
-group :: (Heap a) -> Heap (Heap a)
+group :: !(Heap a) -> Heap (Heap a)
 
-groupBy :: (a a -> Bool) (Heap a) -> Heap (Heap a)
+groupBy :: (a a -> Bool) !(Heap a) -> Heap (Heap a)
 
-intersect :: (Heap a) (Heap a) -> Heap a
+intersect :: !(Heap a) (Heap a) -> Heap a
 
-intersectWith :: (a a -> b) (Heap a) (Heap a) -> Heap b | Ord b
+intersectWith :: (a a -> b) !(Heap a) (Heap a) -> Heap b | Ord b
 
-withList :: ([a] -> [a]) (Heap a) -> Heap a
+withList :: ([a] -> [a]) !(Heap a) -> Heap a
 
-splitWithList :: ([a] -> ([a], [a])) (Heap a) -> (Heap a, Heap a)
+splitWithList :: ([a] -> ([a], [a])) !(Heap a) -> (Heap a, Heap a)

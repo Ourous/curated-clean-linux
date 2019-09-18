@@ -18,7 +18,7 @@ import System.Directory, System.File
 chooseFile :: [FilePath] [FileExtension] -> Task (FilePath,FilePath)
 chooseFile paths extensions
 	=					accWorld (getFilesInDir paths extensions) 
-		>>= \tree ->	enterChoice [Att (Title "Select File"), Att IconEdit] [ChooseWith (ChooseFromTree (\list _ -> toChoiceTree list))] (treeToList tree [])
+		>>- \tree ->	enterChoice [Att (Title "Select File"), Att IconEdit] [ChooseWith (ChooseFromTree (\list _ -> toChoiceTree list))] (treeToList tree [])
 		@? adjust
 where
 	toChoiceTree :: [(Int,(FilePath,[FilePath],FilePath))] -> [ChoiceTree FilePath]

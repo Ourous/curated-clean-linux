@@ -117,7 +117,7 @@ replaceInList cond new [x:xs]
     | cond new x            = [new : xs]
     | otherwise             = [x : replaceInList cond new xs]
 
-sortByIndex :: ![(!Int,!a)] -> [a]
+sortByIndex :: ![(Int,a)] -> [a]
 sortByIndex l = map snd (sortBy (\(a,_) (b,_) -> a < b) l)
 
 intersperse :: !a ![a] -> [a]
@@ -403,12 +403,12 @@ flattenTRAcc [xs:xss] acc
   #! r = reverseTR xs ++ acc
   = flattenTRAcc xss r
 
-strictTRMapSt :: !(a .st -> (!b, !.st)) ![a] !.st -> (![b], !.st)
+strictTRMapSt :: !(a .st -> (b, .st)) ![a] !.st -> (![b], !.st)
 strictTRMapSt f xs st
   #! (rs, st) = strictTRMapStAcc f xs [] st
   = (reverseTR rs, st)
 
-strictTRMapStAcc :: !(a .st -> (!b, !.st)) ![a] ![b] !.st -> (![b], !.st)
+strictTRMapStAcc :: !(a .st -> (b, .st)) ![a] ![b] !.st -> (![b], !.st)
 strictTRMapStAcc f []     acc st = (acc, st)
 strictTRMapStAcc f [x:xs] acc st
   #! (r, st) = f x st
@@ -425,24 +425,24 @@ strictTRZipWithAcc f [a:as] [b:bs] acc
   = strictTRZipWithAcc f as bs [f a b : acc]
 strictTRZipWithAcc _ _ _ acc = acc
 
-strictTRZip4 :: ![a] ![b] ![c] ![d] -> [(!a, !b, !c, !d)]
+strictTRZip4 :: ![a] ![b] ![c] ![d] -> [(a, b, c, d)]
 strictTRZip4 as bs cs ds = reverseTR (strictTRZip4Rev as bs cs ds)
 
-strictTRZip4Rev :: ![a] ![b] ![c] ![d] -> [(!a, !b, !c, !d)]
+strictTRZip4Rev :: ![a] ![b] ![c] ![d] -> [(a, b, c, d)]
 strictTRZip4Rev as bs cs ds = strictTRZip4Acc as bs cs ds []
 
-strictTRZip4Acc :: ![a] ![b] ![c] ![d] ![(!a, !b, !c, !d)] -> [(!a, !b, !c, !d)]
+strictTRZip4Acc :: ![a] ![b] ![c] ![d] ![(a, b, c, d)] -> [(a, b, c, d)]
 strictTRZip4Acc [a:as] [b:bs] [c:cs] [d:ds] acc
   = strictTRZip4Acc as bs cs ds [(a, b, c, d):acc]
 strictTRZip4Acc _ _ _ _ acc = acc
 
-strictTRZip2 :: ![a] ![b]-> [(!a, !b)]
+strictTRZip2 :: ![a] ![b]-> [(a, b)]
 strictTRZip2 as bs = reverseTR (strictTRZip2Rev as bs)
 
-strictTRZip2Rev :: ![a] ![b]-> [(!a, !b)]
+strictTRZip2Rev :: ![a] ![b]-> [(a, b)]
 strictTRZip2Rev as bs = strictTRZip2Acc as bs []
 
-strictTRZip2Acc :: ![a] ![b] ![(!a, !b)] -> [(!a, !b)]
+strictTRZip2Acc :: ![a] ![b] ![(a, b)] -> [(a, b)]
 strictTRZip2Acc [a:as] [b:bs] acc
   = strictTRZip2Acc as bs [(a, b):acc]
 strictTRZip2Acc _ _ acc = acc

@@ -26,6 +26,6 @@ dynamicJSONDecode	:: !JSONNode -> Maybe a
  * WebAssembly interpreter. The values are serialized using GraphCopy after
  * which the descriptors are replaced by the descriptors of the client.
  * @param The expression to serialize.
- * @result The serialized string.
+ * @result The serialized string in base64 encoding.
  */
-serializeForClient :: f !*VSt -> *(!String, !*VSt)
+serializeForClient :: a !*VSt -> *(!String, !*VSt)

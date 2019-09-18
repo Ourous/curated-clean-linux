@@ -20,6 +20,7 @@ defaultDeserializationSettings :: DeserializationSettings
 defaultDeserializationSettings =
 	{ heap_size  = 2 << 20
 	, stack_size = (512 << 10) * 2
+	, file_io    = False
 	}
 
 :: *SerializedGraph =
@@ -104,7 +105,7 @@ deserialize` strict dsets {graph,descinfo,modules,bytecode} thisexe w
 	pgm
 	heap dsets.heap_size stack dsets.stack_size
 	asp bsp csp heap
-	strict
+	strict dsets.file_io
 # graph = replace_desc_numbers_by_descs 0 graph int_syms 0 0
 # graph_node = string_to_interpreter graph ie_settings
 #! (ie,_) = make_finalizer ie_settings
@@ -117,10 +118,16 @@ where
 	}
 
 getInterpreterSymbols :: !Pointer -> [Symbol]
-getInterpreterSymbols pgm = takeWhile (\s -> size s.symbol_name <> 0)
-	[getSymbol i \\ i <- [0..get_symbol_table_size pgm-1]]
+getInterpreterSymbols pgm = getSymbols 0 (get_symbol_table_size pgm-1)
 where
 	symbol_table = get_symbol_table pgm
+
+	getSymbols :: !Int !Int -> [Symbol]
+	getSymbols i max
+	| i > max = []
+	# sym = getSymbol i
+	| size sym.symbol_name == 0 = []
+	= [sym:getSymbols (i+1) max]
 
 	getSymbol :: !Int -> Symbol
 	getSymbol i
@@ -182,7 +189,7 @@ get_start_rule_as_expression dsets filename prog w
 	pgm
 	heap dsets.heap_size stack dsets.stack_size
 	asp bsp csp heap
-	False
+	False dsets.file_io
 # start_node = build_start_node ie_settings
 #! (ie,_) = make_finalizer ie_settings
 # ie = {ie_finalizer=ie, ie_snode_ptr=0, ie_snodes=create_array_ 1}
@@ -192,9 +199,9 @@ get_start_rule_as_expression dsets filename prog w
 	// it to the finalizer_list anyway. This is just to ensure that the first
 	// call to interpret gets the right argument.
 
-build_interpretation_environment :: !Pointer !Pointer !Int !Pointer !Int !Pointer !Pointer !Pointer !Pointer !Bool -> Pointer
-build_interpretation_environment pgm heap hsize stack ssize asp bsp csp hp strict = code {
-	ccall build_interpretation_environment "ppIpIppppI:p"
+build_interpretation_environment :: !Pointer !Pointer !Int !Pointer !Int !Pointer !Pointer !Pointer !Pointer !Bool !Bool -> Pointer
+build_interpretation_environment pgm heap hsize stack ssize asp bsp csp hp strict file_io = code {
+	ccall build_interpretation_environment "ppIpIppppII:p"
 }
 
 build_start_node :: !Pointer -> Pointer
@@ -408,11 +415,6 @@ where
 		'\0' -> ptr
 		_    -> findNull (ptr+1)
 
-:: PrelinkedInterpretationEnvironment =
-	{ pie_symbols    :: !{#Symbol}
-	, pie_code_start :: !Int
-	}
-
 prepare_prelinked_interpretation :: !String !*World -> *(!Maybe PrelinkedInterpretationEnvironment, !*World)
 prepare_prelinked_interpretation bcfile w
 # (bytecode,w) = readFile bcfile w
@@ -439,7 +441,9 @@ serialize_for_prelinked_interpretation graph pie
 = replace_desc_numbers_by_descs 0 graph syms 0 pie.pie_code_start
 where
 	predef_or_lookup_symbol :: !Int !DescInfo !{#String} !{#Symbol} -> Int
-	predef_or_lookup_symbol code_start di mods syms = case di.di_name of
+	predef_or_lookup_symbol code_start di mods syms
+	# module_name = mods.[(di.di_prefix_arity_and_mod>>8)-1]
+	| module_name == "_system" = case di.di_name of
 		"_ARRAY_"  -> code_start-1*8+2
 		"_STRING_" -> code_start-2*8+2
 		"BOOL"     -> code_start-3*8+2
@@ -447,7 +451,9 @@ where
 		"REAL"     -> code_start-5*8+2
 		"INT"      -> code_start-6*8+2
 		"dINT"     -> code_start-6*8+2
+		"_ind"     -> code_start-7*8+2
 		_          -> lookup_symbol_value di mods syms
+	| otherwise    =  lookup_symbol_value di mods syms
 
 	// This is like the function with the same name in GraphCopy's
 	// graph_copy_with_names, but it assigns even negative descriptor numbers
@@ -533,6 +539,7 @@ where
 			| d==array_desc-4*8+2 = (1,True)  // CHAR
 			| d==array_desc-5*8+2 = (IF_INT_64_OR_32 1 2,True) // REAL
 			| d==array_desc-6*8+2 = (1,True)  // INT/dINT
+			| d==array_desc-7*8+2 = (0,True)  // _ind
 			| otherwise = abort "internal error in serialize_for_prelinked_interpretation\n"
 		# arity = get_D_node_arity d
 		| arity<256 = (0,True)

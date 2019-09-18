@@ -7,7 +7,6 @@ from iTasks.WF.Definition           import :: Task, :: TaskResult, :: TaskExcept
 from iTasks.WF.Combinators.Core     import :: TaskListItem
 from iTasks.Internal.IWorld		import :: IWorld
 import iTasks.Internal.SDS
-from iTasks.Internal.Tonic        import :: ExprId
 from iTasks.Internal.TaskState import :: DeferredJSON
 from Text.GenJSON import :: JSONNode
 from Data.Maybe import :: Maybe
@@ -15,46 +14,31 @@ from Data.Map import :: Map
 from Data.Error import :: MaybeErrorString, :: MaybeError
 from Data.CircularStack import :: CircularStack
 
-//Extra types used during evaluation
-
-//Additional options to pass down the tree when evaluating a task
+//* External evaluation passed to the task under execution
 :: TaskEvalOpts	=
-	{ noUI              :: Bool
-	, tonicOpts         :: TonicOpts
+	{ noUI     :: !Bool
+	//* Whether to generate a UI
+	, taskId   :: !TaskId
+	//* The id of the task
+	, lastEval :: !TaskTime
+	//* The last evaluation
 	}
-
-:: TonicOpts =
-  { inAssignNode            :: Maybe ExprId
-  , inParallel              :: Maybe TaskId
-  , captureParallel         :: Bool
-  , currBlueprintModuleName :: String
-  , currBlueprintFuncName   :: String
-  , currBlueprintTaskId     :: TaskId
-  , currBlueprintExprId     :: ExprId
-  , callTrace               :: CircularStack TaskId
-  }
 
 mkEvalOpts :: TaskEvalOpts
-defaultTonicOpts :: TonicOpts
 
-//Additional information passed up from the tree when evaluating a task
+//* External information passed from the task
 :: TaskEvalInfo =
-	{ lastEvent			:: !TaskTime	        //When was the last event in this task
-	, attributes        :: !TaskAttributes      //Meta-data annotations on the task
-    , removedTasks      :: ![(TaskId,TaskId)]   //Which embedded parallel tasks were removed (listId,taskId)
+	{ lastEvent    :: !TaskTime	        //When was the last event in this task
+    , removedTasks :: ![(TaskId,TaskId)]   //Which embedded parallel tasks were removed (listId,taskId)
 	}
 
-:: TaskTime			:== Int
-
-/**
-* Extend the call trace with the current task number
-*/
-extendCallTrace :: !TaskId !TaskEvalOpts -> TaskEvalOpts
+:: TaskTime :== Int
 
 /**
  * Get the next TaskId
  */
 getNextTaskId :: *IWorld -> (!TaskId,!*IWorld)
+
 /**
 * Dequeues events from the event queue and evaluates the tasks instances
 * @param Maximum amount of events to process at once

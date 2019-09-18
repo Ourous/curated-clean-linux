@@ -26,13 +26,13 @@ from Control.GenBimap import generic bimap, :: Bimap
 :: Editor a =
 	//Generating the initial UI
 	{ genUI :: !UIAttributes DataPath *(EditMode a) *VSt ->
-		*(!MaybeErrorString (!UI, !EditState), !*VSt)
+		*(MaybeErrorString (!UI, !EditState), *VSt)
 	//React to edit events
 	, onEdit :: !DataPath (!DataPath, !JSONNode) EditState *VSt ->
-		*(!MaybeErrorString (!UIChange, !EditState), !*VSt)
+		*(MaybeErrorString (!UIChange, !EditState), *VSt)
 	//React to a new model value
 	, onRefresh :: !DataPath a EditState *VSt ->
-		*(!MaybeErrorString (!UIChange, !EditState), !*VSt)
+		*(MaybeErrorString (!UIChange, !EditState), *VSt)
 	//Get the typed value from the editor state, if the state represents a valid value
 	, valueFromState :: !EditState -> *Maybe a
 	}
@@ -44,13 +44,13 @@ from Control.GenBimap import generic bimap, :: Bimap
 :: LeafEditor edit st a =
 	//Generating the initial UI
 	{ genUI :: !UIAttributes DataPath (EditMode a) *VSt ->
-		*(!MaybeErrorString (!UI, !st), !*VSt)
+		*(MaybeErrorString (!UI, !st), *VSt)
 	//React to edit events
 	, onEdit :: !DataPath (!DataPath, !edit) st *VSt ->
-		*(!MaybeErrorString (!UIChange, !st), !*VSt)
+		*(MaybeErrorString (!UIChange, !st), *VSt)
 	//React to a new model value
 	, onRefresh :: !DataPath a st *VSt ->
-		*(!MaybeErrorString (!UIChange, !st), !*VSt)
+		*(MaybeErrorString (!UIChange, !st), *VSt)
 	//Get the typed value from the editor state, if the state represents a valid value
 	, valueFromState :: !st -> Maybe a
 	}
@@ -59,7 +59,7 @@ leafEditorToEditor :: !(LeafEditor edit st a) -> Editor a | JSONEncode{|*|}, JSO
 
 //Version without overloading, for use in generic case
 //The first two argument should be JSONEncode{|*|} and JSONDecode{|*|} which cannot be used by overloading within generic functions
-leafEditorToEditor_ :: !(Bool st -> [JSONNode]) !(Bool [JSONNode] -> (!Maybe st, ![JSONNode])) !(LeafEditor edit st a)
+leafEditorToEditor_ :: !(Bool st -> [JSONNode]) !(Bool [JSONNode] -> (Maybe st, [JSONNode])) !(LeafEditor edit st a)
                     -> Editor a | JSONDecode{|*|} edit
 
 /*
@@ -70,13 +70,13 @@ leafEditorToEditor_ :: !(Bool st -> [JSONNode]) !(Bool [JSONNode] -> (!Maybe st,
 :: CompoundEditor st a =
 	//Generating the initial UI
 	{ genUI :: !UIAttributes DataPath (EditMode a) *VSt ->
-		*(!MaybeErrorString (!UI, !st, ![EditState]), !*VSt)
+		*(MaybeErrorString (!UI, !st, ![EditState]), *VSt)
 	//React to edit events
 	, onEdit :: !DataPath (!DataPath, !JSONNode) st [EditState] *VSt ->
-		*(!MaybeErrorString (!UIChange, !st, ![EditState]), !*VSt)
+		*(MaybeErrorString (!UIChange, !st, ![EditState]), *VSt)
 	//React to a new model value
 	, onRefresh :: !DataPath a st [EditState] *VSt ->
-		*(!MaybeErrorString (!UIChange, !st, ![EditState]), !*VSt)
+		*(MaybeErrorString (!UIChange, !st, ![EditState]), *VSt)
 	//Get the typed value from the editor state, if the state represents a valid value
 	, valueFromState :: !st [EditState] -> Maybe a
 	}
@@ -92,13 +92,13 @@ compoundEditorToEditor :: !(CompoundEditor st a) -> Editor a | JSONDecode{|*|}, 
 :: EditorModifierWithState st a =
 	//Generating the initial UI
 	{ genUI :: !UIAttributes DataPath (EditMode a) *VSt ->
-		*(!MaybeErrorString (!UI, !st, !EditState), !*VSt)
+		*(MaybeErrorString (!UI, !st, !EditState), *VSt)
 	//React to edit events
 	, onEdit :: !DataPath (!DataPath, !JSONNode) st EditState *VSt ->
-		*(!MaybeErrorString (!UIChange, !st, !EditState), !*VSt)
+		*(MaybeErrorString (!UIChange, !st, !EditState), *VSt)
 	//React to a new model value
 	, onRefresh :: !DataPath a st EditState *VSt ->
-		*(!MaybeErrorString (!UIChange, !st, !EditState), !*VSt)
+		*(MaybeErrorString (!UIChange, !st, !EditState), *VSt)
 	//Get the typed value from the editor state, if the state represents a valid value
 	, valueFromState :: !st EditState -> Maybe a
 	}
@@ -135,7 +135,7 @@ derive bimap EditMode
 	, abcInterpreterEnv :: !PrelinkedInterpretationEnvironment //* Used to serialize expressions for the client
 	}
 
-withVSt :: !TaskId !.(*VSt -> (!a, !*VSt)) !*IWorld -> (!a, !*IWorld)
+withVSt :: !TaskId !.(*VSt -> (a, *VSt)) !*IWorld -> (!a, !*IWorld)
 
 derive JSONEncode EditState, LeafState, EditMode
 derive JSONDecode EditState, LeafState, EditMode
@@ -153,7 +153,6 @@ isCompound :: !EditState -> Bool
 //Add client-side initialization to the generation of an initial UI
 withClientSideInit ::
 	!(JSVal *JSWorld -> *JSWorld)
-	!(UIAttributes DataPath a *VSt -> *(!MaybeErrorString (!UI, !st), !*VSt))
+	!(UIAttributes DataPath a *VSt -> *(MaybeErrorString (!UI, !st), *VSt))
 	!UIAttributes !DataPath !a !*VSt ->
 		*(!MaybeErrorString (!UI, !st), !*VSt)
-

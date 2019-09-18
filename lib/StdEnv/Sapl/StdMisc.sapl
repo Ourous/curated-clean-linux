@@ -1,7 +1,0 @@
-|| Generated Sapl file for StdMisc.icl
-|| Externally defined functions: 
-
-StdMisc.abort :== abort 
-StdMisc.undef = abort "Run-time error! Program evaluated undefined value?!"
-
-

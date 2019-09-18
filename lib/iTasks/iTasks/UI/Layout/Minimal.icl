@@ -9,23 +9,13 @@ import iTasks.UI.Definition
 import iTasks.UI.Layout
 import Data.List, Data.Maybe, Text.GenJSON
 import qualified Data.Map as DM
-import qualified Data.Foldable as DF
 
 minimalSessionLayout :: LayoutRule
-minimalSessionLayout = layoutAny
-
-layoutAny = sequenceLayouts
-	[layoutSubUIs SelectIntermediateContainers layoutAsContainer
-	,layoutSubUIs (SelectByType UIAction) layoutAsButton
+minimalSessionLayout = sequenceLayouts
+	[layoutSubUIs (SelectByType UIAction) layoutAsButton
 	,removeSubUIs (SelectByType UIEmpty)
 	]
-SelectIntermediateContainers = 'DF'.foldr1 SelectOR
-	(map SelectByType [UIPair,UIRecord,UICons,UIVarCons,UIInteract,UIStep,UIParallel])
 
-layoutAsContainer = sequenceLayouts
-	[setUIType UIContainer
-	,layoutSubUIs SelectChildren layoutAny
-	]
 layoutAsButton = sequenceLayouts
 	[setUIType UIButton
 	,modifyUIAttributes (SelectKeys ["actionId"]) toButtonAttributes

@@ -15,8 +15,6 @@ import System._Pointer
 import System._Posix
 import System.OS
 
-CHUNK_SIZE :== 1024
-
 instance toString FileError
 where
 	toString CannotOpen = "Cannot open"
@@ -25,6 +23,20 @@ where
 
 readFile :: !String !*env -> (!MaybeError FileError String, !*env) | FileSystem env
 readFile filename env = withFile filename FReadData readAll env
+
+readAll :: !*File -> (!MaybeError FileError String, !*File)
+readAll file
+	# (ok,file)  = fseek file 0 FSeekEnd
+	| not ok     = (Error IOError,file)
+	# (pos,file) = fposition file
+	# (err,file) = ferror file
+	| err        = (Error IOError,file)
+	# (ok,file)  = fseek file 0 FSeekSet
+	| not ok     = (Error IOError,file)
+	# (str,file) = freads file pos
+	# (err,file) = ferror file
+	| err        = (Error IOError,file)
+	| otherwise  = (Ok str,file)
 
 readFileLines :: !String !*env -> (!MaybeError FileError [String], !*env) | FileSystem env
 readFileLines filename env = withFile filename FReadData readAllLines env
@@ -44,27 +56,11 @@ where
 		| string == ""   = (Ok acc, file)
 		| otherwise      = rec file [string:acc]
 
-readAll :: !*File -> (!MaybeError FileError String, !*File)
-readAll file
-# (result, file) = readAcc file []
-= case result of
-	Error e	   = (Error e, file)
-	Ok contents = (Ok ('Text'.concat (reverse contents)), file)
-where
-	readAcc :: *File [String] -> (MaybeError FileError [String], *File)
-	readAcc file acc
-		# (str,file)	= freads file CHUNK_SIZE
-		# (err,file)	= ferror file
-		| err			= (Error IOError,file)
-		# (eof,file)	= fend file
-		| eof			= (Ok [str:acc],file)
-		| otherwise		= readAcc file [str:acc]
-
 writeFile :: !String !String !*env -> (!MaybeError FileError (), !*env) | FileSystem env
 writeFile filename contents env =
 	withFile filename FWriteData (\file -> (Ok (), fwrites contents file)) env
 
-withFile :: !String !Int (*File -> (!MaybeError FileError a,!*File)) !*env
+withFile :: !String !Int (*File -> (MaybeError FileError a,*File)) !*env
 			-> (!MaybeError FileError a, !*env) | FileSystem env
 withFile filename filemode operation env
 # (ok,file,env)	= fopen filename filemode env

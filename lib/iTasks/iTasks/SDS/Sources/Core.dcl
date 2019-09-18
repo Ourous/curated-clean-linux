@@ -24,7 +24,7 @@ randomInt :: SDSSource () Int ()
 randomString :: SDSSource Int String ()
 
 // world function share
-worldShare :: (p *World -> *(MaybeErrorString r,*World)) (p w *World -> *(MaybeErrorString (),*World)) -> SDSSource p r w
+worldShare :: (p *World -> *(MaybeErrorString r,*World)) (p w *World -> *(MaybeErrorString (),*World)) (p Timespec p -> Bool) -> SDSSource p r w
 
 // memory share (essentially a global variable)
 memoryShare :: SDSSource String (Maybe a) (Maybe a) | TC a

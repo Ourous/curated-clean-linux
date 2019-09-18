@@ -1,8 +1,8 @@
 implementation module StdInt
 
 // ****************************************************************************************
-//	Concurrent Clean Standard Library Module Version 2.0
-//	Copyright 1998 University of Nijmegen
+//	Concurrent Clean Standard Library Module Version 3.0
+//	Copyright 2019 University of Nijmegen
 // ****************************************************************************************
 
 import StdOverloaded
@@ -186,6 +186,7 @@ where
 
 instance rem Int
 where
+	(rem) :: !Int !Int -> Int
 	(rem) a b
 	= code inline {
 			remI
@@ -209,6 +210,7 @@ where
 
 instance isEven Int
 where
+	isEven :: !Int -> Bool
 	isEven a
 		= code inline {
 			pushI 1
@@ -219,6 +221,7 @@ where
 
 instance isOdd Int
 where
+	isOdd :: !Int -> Bool
 	isOdd a
 		= code inline {
 			pushI 1

@@ -1,7 +1,7 @@
 definition module iTasks.Extensions.Distributed.Task
 
 from iTasks.WF.Definition import class iTask
-from iTasks.WF.Definition import :: Task, generic gEq, generic gDefault, generic JSONDecode, generic JSONEncode, generic gText, generic gEditor, :: Editor
+from iTasks.WF.Definition import :: Task, generic gEq, generic JSONDecode, generic JSONEncode, generic gText, generic gEditor, :: Editor
 from Data.Maybe import :: Maybe
 from iTasks.Extensions.User import class toUserConstraint(..), :: UserConstraint
 from Text.GenJSON import :: JSONNode, generic JSONEncode, generic JSONDecode

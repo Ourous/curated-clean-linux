@@ -7,6 +7,6 @@ import StdOverloaded, StdCleanTypes, StdString
 //
 // Left True =+?= Left False == True
 //
-(=+?=) infix 6 :: a a -> Bool
+// TODO: this can probably be: pushD_a 0; pushD_a 1; pop_a 2; eqI
+(=+?=) infix 6 :: !a !a -> Bool
 (=+?=) l r = toString (CTToCons l) == toString (CTToCons r)
-

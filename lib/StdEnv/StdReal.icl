@@ -1,8 +1,8 @@
 implementation module StdReal
 
 // ********************************************************
-//	Concurrent Clean Standard Library Module Version 2.0
-//	Copyright 1998 University of Nijmegen
+//	Concurrent Clean Standard Library Module Version 3.0
+//	Copyright 2019 University of Nijmegen
 // ********************************************************
 import StdClass
 import StdOverloaded,StdInt,StdArray
@@ -106,6 +106,7 @@ where
 
 instance ln Real
 where
+	ln :: !Real -> Real
 	ln a
 		= code inline {
 				lnR
@@ -113,25 +114,31 @@ where
 
 instance log10 Real
 where
+	log10 :: !Real -> Real
 	log10 a
 		= code inline {
 				log10R
 		}
 
 instance exp  Real
-where exp a
+where
+	exp :: !Real -> Real
+	exp a
 		= code inline {
 				expR
 		}
 
 instance sqrt Real
-where sqrt a
+where
+	sqrt :: !Real -> Real
+	sqrt a
 		= code inline {
 				sqrtR
 		}
 
 instance sin Real
 where
+	sin :: !Real -> Real
 	sin a
 		= code inline {
 				sinR
@@ -139,13 +146,15 @@ where
 
 instance cos Real
 where
+	cos :: !Real -> Real
 	cos a
 		= code inline {
 				cosR
 		}
 
 instance tan Real
-where 
+where
+	tan :: !Real -> Real
 	tan a
 		= code inline {
 				tanR
@@ -153,6 +162,7 @@ where
 		
 instance asin Real
 where
+	asin :: !Real -> Real
 	asin a
 		= code inline {
 				asinR
@@ -160,6 +170,7 @@ where
 
 instance acos Real
 where
+	acos :: !Real -> Real
 	acos a
 		= code inline {
 				acosR
@@ -167,6 +178,7 @@ where
 
 instance atan Real
 where
+	atan :: !Real -> Real
 	atan a
 		= code inline {
 				atanR

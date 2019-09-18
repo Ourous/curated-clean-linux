@@ -35,3 +35,6 @@ getIntContent :: String FileCollection -> Maybe Int
 setIntContent :: String Int FileCollection -> FileCollection
 
 toPaths :: FileCollection -> [FilePath]
+
+//Filter to ignore all hidden files (e.g. starting with a '.')
+ignoreHiddenFiles :: FileFilter

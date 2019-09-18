@@ -2,14 +2,14 @@ implementation module iTasks.Extensions.Distributed.InteractionTasks
 
 import iTasks
 
-viewSharedInformation :: String [ViewOption r] !(sds () r w) -> Task r | iTask r & iTask w & RWShared sds
-viewSharedInformation title options share
+viewSharedInformation :: [ViewOption r] !(sds () r w) -> Task r | iTask r & iTask w & RWShared sds
+viewSharedInformation options share
         = watch share
         >>* [OnValue (hasValue return)]
-        >>- \v -> loop v title options share
+        >>- \v -> loop v options share
 where
-        loop :: r String [ViewOption r] (sds () r w) -> Task r | iTask r & iTask w & RWShared sds
-        loop v title options share
-                = (viewInformation title options v)
+        loop :: r [ViewOption r] (sds () r w) -> Task r | iTask r & iTask w & RWShared sds
+        loop v options share
+                = (viewInformation options v)
                 ||- (watch share >>* [OnValue (ifValue ((=!=) v) return)])
-                >>- \v -> loop v title options share
+                >>- \v -> loop v options share

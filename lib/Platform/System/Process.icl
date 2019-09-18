@@ -183,8 +183,8 @@ where
 		       )
 		  , world)
 
-runProcessFork :: !(    Int Int *World -> (!MaybeOSError a, !*World))
-                  !(Int Int Int *World -> (!MaybeOSError a, !*World))
+runProcessFork :: !(    Int Int *World -> (MaybeOSError a, *World))
+                  !(Int Int Int *World -> (MaybeOSError a, *World))
                   !*World
                -> (!MaybeOSError a, !*World)
 runProcessFork childProcess parentProcess world

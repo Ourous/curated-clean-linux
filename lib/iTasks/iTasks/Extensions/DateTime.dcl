@@ -51,7 +51,6 @@ instance <	Date, Time, DateTime
 
 derive JSONEncode		Date, Time, DateTime
 derive JSONDecode		Date, Time, DateTime
-derive gDefault			Date, Time, DateTime
 derive gEq				Date, Time, DateTime
 derive gText	        Date, Time, DateTime
 derive gEditor 			Date, Time, DateTime

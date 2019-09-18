@@ -154,7 +154,7 @@ searchIndex (Index i) new_annots db
 unsearchIndex :: !Index !*(NativeDB v a) -> *NativeDB v a
 unsearchIndex (Index i) db = {db & [i].included=False}
 
-searchIndices :: !SearchMode ![(!Index, ![!a!])] !*(NativeDB v a) -> *NativeDB v a
+searchIndices :: !SearchMode ![(Index, [!a!])] !*(NativeDB v a) -> *NativeDB v a
 searchIndices mode idxs db = case mode of
 	Intersect
 		# (s,db) = usize db
@@ -167,7 +167,7 @@ where
 	# (annots,es) = es![i].annotations
 	= {es & [i].included=True, [i].annotations=new_annots ++$ annots}
 
-	upd_intersect :: !Int !Int ![(!Index, ![!a!])] !*{!*Entry v a} -> *{!*Entry v a}
+	upd_intersect :: !Int !Int ![(Index, [!a!])] !*{!*Entry v a} -> *{!*Entry v a}
 	upd_intersect i s _  es | i > s = es
 	upd_intersect i s [] es = upd_intersect (i+1) s [] {es & [i].included=False}
 	upd_intersect i s allidxs=:[(Index idx,new_annots):idxs] es
@@ -195,10 +195,10 @@ where
 	# (Index ei) = idxs.[i]
 	= upd (i-1) idxs {es & [ei].included=False}
 
-searchWithIndices :: !(v -> (Bool, ![!a!])) ![Index] !*(NativeDB v a) -> *NativeDB v a
+searchWithIndices :: !(v -> (Bool, [!a!])) ![Index] !*(NativeDB v a) -> *NativeDB v a
 searchWithIndices prop idxs db = upd prop idxs db
 where
-	upd :: !(v -> (Bool, ![!a!])) ![Index] !*{!*Entry v a} -> *{!*Entry v a}
+	upd :: !(v -> (Bool, [!a!])) ![Index] !*{!*Entry v a} -> *{!*Entry v a}
 	upd _ [] es = es
 	upd prop [Index i:is] es
 	# (val,es) = es![i].value
@@ -209,12 +209,12 @@ where
 			# (annots,es) = es![i].annotations
 			-> upd prop is {es & [i].included=True, [i].annotations=new_annots ++$ annots}
 
-searchWithIndices` :: !(v -> (Bool, ![!a!])) !{#Index} !*(NativeDB v a) -> *NativeDB v a
+searchWithIndices` :: !(v -> (Bool, [!a!])) !{#Index} !*(NativeDB v a) -> *NativeDB v a
 searchWithIndices` prop idxs db
 # (sz,idxs) = usize idxs
 = upd prop (sz-1) idxs db
 where
-	upd :: !(v -> (Bool, ![!a!])) !Int !{#Index} !*{!*Entry v a} -> *{!*Entry v a}
+	upd :: !(v -> (Bool, [!a!])) !Int !{#Index} !*{!*Entry v a} -> *{!*Entry v a}
 	upd _ -1 _ es = es
 	upd prop i idxs es
 	# (Index ei) = idxs.[i]

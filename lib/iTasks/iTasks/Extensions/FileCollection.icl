@@ -11,7 +11,7 @@ import StdFile
 from Data.Map import :: Map
 import qualified Data.Map as DM
 import Data.Map.GenJSON
-import Data.Error, Data.Functor, Data.Maybe, Text
+import Data.Error, Data.Functor, Data.Func, Data.Maybe, Text
 import System.Directory, System.File, System.FilePath, System.OS
 
 derive class iTask FileCollectionItem
@@ -21,10 +21,11 @@ EXCLUDE_FILE :== "exclude.txt"
 //Writes a map of key/value pairs to a directory with one file per key/value
 //It will ignore all files in the directory that don't match the filter
 fileCollection :: FileFilter Bool -> SDSSource FilePath FileCollection FileCollection
-fileCollection isFileInCollection deleteRemovedFiles = worldShare (read isFileInCollection) (write isFileInCollection)
+fileCollection isFileInCollection deleteRemovedFiles = worldShare (read isFileInCollection) (write isFileInCollection) notify
 where
 	read isFileInCollection dir world = case readDirectory dir world of
-		(Error (_,msg),world) = (Error msg,world) 
+		(Error (2,msg),world) = (Ok 'DM'.newMap,world) //Directory does not exist yet
+		(Error (errNo,msg),world) = (Error msg,world)
 		(Ok files,world) = case (if deleteRemovedFiles (Ok [],world) (readExcludeList dir world)) of 
 			(Error e, world) = (Error e,world)
 			(Ok excludes,world) = case readFiles isFileInCollection excludes dir files world of
@@ -60,10 +61,16 @@ where
 
 	write isFileInCollection dir collection world = case readDirectory dir world of 
 		//We need to know the current content of the directory to be able to delete removed entries
-		(Error (_,msg),world) = (Error msg,world) 
 		(Ok curfiles,world) = case writeFiles ('DM'.toList collection) isFileInCollection dir world of
 			(Error e,world) = (Error e,world)
 			(Ok newfiles,world) = cleanupRemovedFiles curfiles newfiles dir world
+		//The direcrory does not exist yet, create it first and then write the collection
+		(Error (2,_),world) = case ensureDirectory dir world of
+			(Error e,world) = (Error e,world)
+			(Ok (),world) = case writeFiles ('DM'.toList collection) isFileInCollection dir world of
+				(Error e,world) = (Error e,world)
+				(Ok newfiles,world) = cleanupRemovedFiles [] newfiles dir world
+		(Error (_,msg),world) = (Error msg,world)
 		
 	writeFiles [] isFileInCollection dir world = (Ok [],world)
 	writeFiles [(name,FileContent content):fs] isFileInCollection dir world
@@ -111,6 +118,9 @@ where
 			(Ok (),world) = deleteFiles fs dir world
 			(Error (_,msg),world) = (Error msg,world)
 
+	notify writeParameter _ registeredParameter
+		= startsWith writeParameter registeredParameter || startsWith registeredParameter writeParameter
+
 getStringContent :: String FileCollection -> Maybe String
 getStringContent key collection = case 'DM'.get key collection of
 	(Just (FileContent content)) = Just content
@@ -130,4 +140,7 @@ toPaths collection = flatten (map toPath ('DM'.toList collection))
 where
 	toPath (name,FileContent _) = [name]
 	toPath (name,FileCollection collection) = [name:[name </> path \\ path <- toPaths collection]]
+
+ignoreHiddenFiles :: FileFilter
+ignoreHiddenFiles = \path isDir -> not (startsWith "." $ dropDirectory path)
 

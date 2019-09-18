@@ -129,10 +129,10 @@ instance acosh (Complex a) | Ord a & Eq a & AllGeo a & Arith a & pi a & sqrt a &
 instance atanh (Complex a) | Ord a & Eq a & AllGeo a & Arith a & pi a & sqrt a & ln a where
     atanh z = (one/two) * ln ((one+z) / (one-z))
 
-realPart :: (Complex a) -> a
+realPart :: !(Complex a) -> a
 realPart (x :+ _) = x
 
-imagPart :: (Complex a) -> a
+imagPart :: !(Complex a) -> a
 imagPart (_ :+ x) = x
 
 mkPolar :: a a -> Complex a | cos a & sin a & * a
@@ -144,10 +144,10 @@ cis theta = cos theta :+ sin theta
 polar :: (Complex a) -> (a, a) | Ord a & Eq a & atan a & sqrt a & MultDiv a & PlusMin a & pi a
 polar z = (magnitude z, phase z)
 
-magnitude :: (Complex a) -> a | sqrt a & * a & + a
+magnitude :: !(Complex a) -> a | sqrt a & * a & + a
 magnitude (x :+ y) = sqrt (x*x + y*y)
 
-phase :: (Complex a) -> a | Ord a & Eq a & atan a & MultDiv a & PlusMin a & pi a
+phase :: !(Complex a) -> a | Ord a & Eq a & atan a & MultDiv a & PlusMin a & pi a
 phase (x :+ y)
 | x > zero              = atan (y/x)
 | x < zero && y >= zero = atan (y/x) + pi
@@ -156,7 +156,7 @@ phase (x :+ y)
 | x == zero && y < zero = pi / two
                         = undef
 
-conjugate :: (Complex a) -> Complex a | ~ a
+conjugate :: !(Complex a) -> Complex a | ~ a
 conjugate (x :+ y) = x :+ (~y)
 
 //Ugly

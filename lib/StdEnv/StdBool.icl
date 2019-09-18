@@ -23,17 +23,6 @@ where
 			no_op
 	}
 
-instance toString Bool
-where
- toString :: !Bool -> {#Char}
- toString a
-	= code inline {
-		.d 0 1 b
-			jsr BtoAC
-		.o 1 0
-	}
-
-
 instance fromBool Bool
 where
  fromBool :: !Bool -> Bool

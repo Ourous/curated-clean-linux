@@ -109,7 +109,7 @@ where
 
 :: UnificationState =
 	{ assignments         :: ![TVAssignment]
-	, goals               :: ![(!Type, !Type)]
+	, goals               :: ![(Type, Type)]
 	, used_universal_vars :: ![TypeVar]
 	}
 assignments         s :== s.UnificationState.assignments

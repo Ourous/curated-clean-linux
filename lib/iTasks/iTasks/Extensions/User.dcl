@@ -98,8 +98,6 @@ workAs :: !User !(Task a)						-> Task a | iTask a
 * @param Task: The task that is to be delegated
 *
 * @return The combined task
-*
-* @gin False
 */
 assign :: !TaskAttributes !(Task a) -> Task a | iTask a
 
@@ -110,14 +108,10 @@ assign :: !TaskAttributes !(Task a) -> Task a | iTask a
 * @param Task: The task that is to be delegated.
 *
 * @return The combined task
-*
-* @gin-title Assign to user
-* @gin-icon user
-* @gin-shape assign
 */
 (@:) infix 3 :: !worker !(Task a) -> Task a | iTask a & toUserConstraint worker
 
-workerAttributes :: worker [(String, String)] -> TaskAttributes | toUserConstraint worker
+workerAttributes :: worker [(String, JSONNode)] -> TaskAttributes | toUserConstraint worker
 
 appendTopLevelTaskFor 	  :: !worker         		 !Bool !(Task a) -> Task TaskId | iTask a & toUserConstraint worker
 appendTopLevelTaskPrioFor :: !worker !String !String !Bool !(Task a) -> Task TaskId | iTask a & toUserConstraint worker

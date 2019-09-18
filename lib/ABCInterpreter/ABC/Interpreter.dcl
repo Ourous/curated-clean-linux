@@ -13,7 +13,6 @@ definition module ABC.Interpreter
  *  - ByteCode: path for the main bytecode file (e.g. {Project}*app.bc)
  *  - CodeGen/GenerateByteCode: True
  *  - CodeGen/OptimiseABC: True (unless you suspect a bug in the ABC optimiser)
- *  - Link/StripByteCode: False (because we need symbols in the bytecode)
  *  - Link/GenerateSymbolTable: True (because we need symbols in the executable)
  *
  * In the Clean IDE, you can set these options in two panes:
@@ -24,14 +23,16 @@ definition module ABC.Interpreter
  */
 
 from StdMaybe import :: Maybe
+from symbols_in_program import :: Symbol
 
 /**
  * This type describes settings used by the interpreter to deserialize
  * expressions. You may also use {{`defaultDeserializationSettings`}}.
  */
 :: DeserializationSettings =
-	{ heap_size  :: !Int //* Heap size for the interpreter, in bytes (default: 2M)
-	, stack_size :: !Int //* Stack size for the interpreter, in bytes (default: 1M in total; 500k for A and 500k for BC stack)
+	{ heap_size  :: !Int  //* Heap size for the interpreter, in bytes (default: 2M)
+	, stack_size :: !Int  //* Stack size for the interpreter, in bytes (default: 1M in total; 500k for A and 500k for BC stack)
+	, file_io    :: !Bool //* Whether file I/O is allowed (default: False)
 	}
 
 defaultDeserializationSettings :: DeserializationSettings
@@ -95,6 +96,8 @@ deserialize :: !DeserializationSettings !SerializedGraph !String !*World -> *(!M
 		//* The ABC instruction `halt` was encountered.
 	| DV_IllegalInstruction
 		//* A forbidden (ccall, etc.) or unknown ABC instruction was encountered.
+	| DV_FileIOAttempted
+		//* File I/O was attempted while the interpreter was started with file_io=False.
 	| DV_HostHeapFull
 		//* The heap of the host application has not enough space to copy the result.
 
@@ -139,7 +142,10 @@ graph_from_file :: !*File -> *(!Maybe *SerializedGraph, !*File)
  * The environment can be initialized with {{`prepare_prelinked_interpretation`}}
  * and used with {{`serialize_for_prelinked_interpretation`}}.
  */
-:: PrelinkedInterpretationEnvironment
+:: PrelinkedInterpretationEnvironment =
+	{ pie_symbols    :: !{#Symbol}
+	, pie_code_start :: !Int
+	}
 
 /**
  * See {{`PrelinkedInterpretationEnvironment`}} for documentation.

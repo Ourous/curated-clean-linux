@@ -1,0 +1,49 @@
+# vim: syntax=sh
+_clm()
+{
+	local cur prev pathopts mainmodopts projectopts linkeropts appopts otheropts opts
+	COMPRREPLY=()
+	cur="${COMP_WORDS[COMP_CWORD]}"
+	prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+	pathopts="-I -IL -P"
+	mainmodopts="-w -nw -d -nd -sa -nsa"
+	projectopts="-mv -ms -O -PO -S -PS -ABC -PABC -c -lt -nlt -lat -nlat -lset -ci -nci -ou -nou -fusion -nfusion -pt -npt -desc -exl -tst"
+	linkeropts="-ns -no-opt-link -l -sl -e -E"
+	appopts="-h -s -b -sc -t -nt -gc -ngc -st -nst -nr -gcm -gcc -gcf -gci"
+	otheropts="-aC -funcmayfail -varnotused -funcnotused -nowarn -dynamics -nortsopts -p -pic -optabc -bytecode"
+	opts="$pathopts $mainmodopts $projectopts $linkeropts $appopts $otheropts"
+
+	case $prev in
+		"-IL")
+			# Complete Clean libraries
+			_clean_library
+			return 0
+			;;
+		"-I")
+			# Complete directories
+			_clean_dir
+			return 0
+			;;
+		"-l" | "-sl")
+			# Complete files
+			_clean_file
+			return 0
+			;;
+		"-P" | "-e" | "-E" | "-h" | "-s" | "-gcf" | "-gci")
+			# Complete nothing
+			return 0
+			;;
+	esac
+
+	if [[ $cur == -* ]]; then
+		# Complete options
+		COMPREPLY=($(compgen -W "$opts" -- $cur))
+		return 0
+	else
+		# Main module; complete icl module names
+		_clean_module
+		return 0
+	fi
+}
+complete -F _clm clm

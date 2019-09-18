@@ -10,6 +10,4 @@ derive JSONEncode AnalogClock
 derive JSONDecode AnalogClock
 derive gEditor AnalogClock
 derive gEq AnalogClock
-derive gDefault AnalogClock
 derive gText AnalogClock
-

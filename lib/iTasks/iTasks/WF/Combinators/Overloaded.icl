@@ -1,5 +1,6 @@
 implementation module iTasks.WF.Combinators.Overloaded
 
+import iTasks.WF.Derives
 import iTasks.WF.Definition
 import iTasks.WF.Tasks.Core
 import iTasks.WF.Combinators.Core
@@ -17,7 +18,7 @@ instance TApplicative Task where
 instance TMonad Task where
   (>>=) l r = tbind l r
   (>>|) l r = l >>*
-	[OnAction (Action "Continue") (always r)
+	[OnAction ActionContinue (always r)
 	,OnValue (ifStable (\_->r))]
 
 instance TApplicative Maybe where

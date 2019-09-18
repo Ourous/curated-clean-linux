@@ -9,6 +9,7 @@ import iTasks.Internal.TaskEval
 import iTasks.Internal.TaskServer
 import iTasks.Internal.TaskState
 import iTasks.Internal.TaskStore
+import iTasks.Internal.Util
 import iTasks.SDS.Combinators.Common
 import iTasks.UI.Definition
 import iTasks.WF.Definition
@@ -16,21 +17,21 @@ import Text
 
 from Data.Map import newMap, member
 
-everyTick :: (*IWorld -> *(!MaybeError TaskException (), !*IWorld)) -> Task ()
+everyTick :: (*IWorld -> *(MaybeError TaskException (), *IWorld)) -> Task ()
 everyTick f = Task eval
 where
-	eval DestroyEvent evalOpts tree iworld
+	eval DestroyEvent evalOpts iworld
 		= (DestroyedResult, iworld)
-	eval event evalOpts tree=:(TCInit taskId ts) iworld
+	eval event {taskId,lastEval} iworld
 		# (merr, iworld) = f iworld
 		| isError merr = (ExceptionResult (fromError merr), iworld)
 		# (merr, iworld) = readRegister taskId tick iworld
 		| isError merr = (ExceptionResult (fromError merr), iworld)
 		= (ValueResult
 				NoValue
-				{TaskEvalInfo|lastEvent=ts,removedTasks=[],attributes=newMap}
+				(mkTaskEvalInfo lastEval)
 				NoChange
-				(TCInit taskId ts)
+				(Task eval)
 			, iworld)
 	
 //When we run the built-in HTTP server we need to do active garbage collection of instances that were created for sessions
@@ -81,15 +82,10 @@ flushWritesWhenIdle = everyTick \iworld->case read taskEvents EmptyContext iworl
 		(Ok _,iworld)             = (Ok (),iworld)
 
 //When we don't run the built-in HTTP server we don't want to loop forever so we stop the loop
-//once all tasks are stable
+//once all non-system tasks are stable
 stopOnStable :: Task ()
 stopOnStable = everyTick \iworld->case read (sdsFocus {InstanceFilter|defaultValue & includeProgress=True, includeStartup=True, includeAttributes=True} filteredInstanceIndex) EmptyContext iworld of
 		(Ok (ReadingDone index), iworld)
-			# iworld = case exceptions index of
-				[] = iworld
-				excs
-					# (_, world) = fclose (stderr <<< join "\n" excs <<< "\n") iworld.world
-					= {IWorld | iworld & world=world, shutdown=Just 1}
 			# iworld = if (isNothing iworld.shutdown && all isStable (filter (not o isSystem) index))
 				{IWorld | iworld & shutdown=Just 0}
 				iworld
@@ -103,5 +99,7 @@ where
 
 	isSystem (_, _, Just {InstanceProgress|value}, attributes) = member "system" (fromMaybe newMap attributes)
 	isSystem _ = False
-	
-	exceptions instances = [e\\(_, _, Just {InstanceProgress|value=Exception e}, _)<-instances]
+
+printStdErr :: v !*IWorld -> *IWorld | gText{|*|} v
+printStdErr v iw=:{world}
+	= {iw & world=snd (fclose (stderr <<< toSingleLineText v <<< "\n") world)}

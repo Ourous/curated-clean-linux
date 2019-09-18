@@ -492,14 +492,14 @@ alter f k t =
 // > unions [(fromList [(5, "A3"), (3, "B3")]), (fromList [(5, "A"), (7, "C")]), (fromList [(5, "a"), (3, "b")])]
 // >     == fromList [(3, "B3"), (5, "A3"), (7, "C")]
 unions :: ![IntMap a] -> IntMap a
-unions xs = foldlStrict union empty xs
+unions xs = foldl union empty xs
 
 // | The union of a list of maps, with a combining operation.
 //
 // > unionsWith (++) [(fromList [(5, "a"), (3, "b")]), (fromList [(5, "A"), (7, "C")]), (fromList [(5, "A3"), (3, "B3")])]
 // >     == fromList [(3, "bB3"), (5, "aAA3"), (7, "C")]
 unionsWith :: (a a -> a) [IntMap a] -> IntMap a
-unionsWith f ts = foldlStrict (unionWith f) empty ts
+unionsWith f ts = foldl (unionWith f) empty ts
 
 // | /O(n+m)/. The (left-biased) union of two maps.
 // It prefers the first map when duplicate keys are encountered,
@@ -1226,7 +1226,7 @@ foldr` f z t =
 //
 // > let f len a = len + (length a)
 // > foldl f 0 (fromList [(5,"a"), (3,"bbb")]) == 4
-foldl :: (a  b -> a) a (IntMap b) -> a
+/*foldl :: (a  b -> a) a (IntMap b) -> a
 foldl f z t =
   case t of Bin _ m l r | m < 0 -> go (go z r) l // put negative numbers before
                         | otherwise -> go (go z l) r
@@ -1234,7 +1234,7 @@ foldl f z t =
   where
     go z` Nil           = z`
     go z` (Tip _ x)     = f z` x
-    go z` (Bin _ _ l r) = go (go z` l) r
+    go z` (Bin _ _ l r) = go (go z` l) r*/
 
 // | /O(n)/. A strict version of 'foldl'. Each application of the operator is
 // evaluated before using the result in the next application. This
@@ -1426,7 +1426,7 @@ toDescList m = foldlWithKey (\xs k x -> [(k,x):xs]) [] m
 // > fromList [(5,"c"), (3,"b"), (5, "a")] == fromList [(5,"a"), (3,"b")]
 fromList :: [(Int,a)] -> IntMap a
 fromList xs
-  = foldlStrict ins empty xs
+  = foldl ins empty xs
   where
     ins t (k,x)  = insert k x t
 
@@ -1445,7 +1445,7 @@ fromListWith f xs
 //// > fromListWithKey f [] == empty
 fromListWithKey :: (Int a a -> a) [(Int,a)] -> IntMap a
 fromListWithKey f xs
-  = foldlStrict ins empty xs
+  = foldl ins empty xs
   where
     ins t (k,x) = insertWithKey f k x t
 
@@ -1488,14 +1488,15 @@ fromAscListWithKey f [x0 : xs0] = fromDistinctAscList (combineEq x0 xs0)
 // /The precondition (input list is strictly ascending) is not checked./
 //
 // > fromDistinctAscList [(3,"b"), (5,"a")] == fromList [(3, "b"), (5, "a")]
-fromDistinctAscList :: ![(!Int, !a)] -> IntMap a
+fromDistinctAscList :: ![(Int, a)] -> IntMap a
 fromDistinctAscList []         = Nil
 fromDistinctAscList [z0 : zs0] = work z0 zs0 Nada
   where
+    work :: !(!Int, !a) ![(Int, a)] !(Stack a) -> IntMap a
     work (kx,vx) []             stk = finish kx (Tip kx vx) stk
     work (kx,vx) [z=:(kz,_):zs] stk = reduce z zs (branchMask kx kz) kx (Tip kx vx) stk
 
-    reduce :: (Int,a) [(Int,a)] Mask Prefix (IntMap a) (Stack a) -> IntMap a
+    reduce :: !(!Int, !a) ![(Int, a)] !Mask !Prefix !(IntMap a) !(Stack a) -> IntMap a
     reduce z zs _ px tx Nada = work z zs (Push px tx Nada)
     reduce z zs m px tx stk=:(Push py ty stk`) =
         let mxy = branchMask px py
@@ -1504,6 +1505,7 @@ fromDistinctAscList [z0 : zs0] = work z0 zs0 Nada
                  (reduce z zs m pxy (Bin pxy mxy ty tx) stk`)
                  (work z zs (Push px tx stk))
 
+    finish :: !Prefix !(IntMap a) !(Stack a) -> IntMap a
     finish _  t  Nada = t
     finish px tx (Push py ty stk) = finish p (link py ty px tx) stk
         where m = branchMask px py
@@ -1536,7 +1538,7 @@ nequal _   _   = True
 instance Functor IntMap where
     fmap f xs = map f xs
 
-link :: Prefix (IntMap a) Prefix (IntMap a) -> IntMap a
+link :: !Prefix !(IntMap a) !Prefix !(IntMap a) -> IntMap a
 link p1 t1 p2 t2
   | zero p1 m = Bin p m t1 t2
   | otherwise = Bin p m t2 t1
@@ -1549,39 +1551,37 @@ bin _ _ l Nil = l
 bin _ _ Nil r = r
 bin p m l r   = Bin p m l r
 
-zero :: Int Mask -> Bool
+zero :: !Int !Mask -> Bool
 zero i m = (i bitand m) == 0
 
 nomatch :: !Int !Prefix !Mask -> Bool
 nomatch i p m = mask i m <> p
 
-match :: Int Prefix Mask -> Bool
+match :: !Int !Prefix !Mask -> Bool
 match i p m = mask i m == p
 
 mask :: !Int !Mask -> Prefix
-mask i m = maskW i m
+mask i m = i bitand (~m bitxor m)
 
-maskW :: !Int !Int -> Prefix
-maskW i m = i bitand (bitnot (m - 1) bitxor m)
-
+// we have to treat the masks as unsigned ints
+// this means that the sign bit has to be inverted to preserve order
 shorter :: !Mask !Mask -> Bool
-shorter m1 m2 = m1 > m2
+shorter m1 m2 = (m1 bitxor signBitOnly) > (m2 bitxor signBitOnly)
 
 branchMask :: !Prefix !Prefix -> Mask
 branchMask p1 p2 = highestBitMask (p1 bitxor p2)
 
 highestBitMask :: !Int -> Int
-highestBitMask x0
-  = case (x0 bitor (x0 >> 1)) of
-     x1 -> case (x1 bitor (x1 >> 2)) of
-      x2 -> case (x2 bitor (x2 >> 4)) of
-       x3 -> case (x3 bitor (x3 >> 8)) of
-        x4 -> case (x4 bitor (x4 >> 16)) of
-         x5 -> case (x5 bitor (x5 >> 32)) of   // for 64 bit platforms
-          x6 -> (x6 bitxor (x6 >> 1))
+highestBitMask x0 =
+	// for the right shift `x6` has to be treated as unsigned int, so the highest bit has to be set to 0
+	x6 bitxor (allExceptSignBit bitand (x6 >> 1))
+where
+	x1 = x0 bitor (x0 >> 1)
+	x2 = x1 bitor (x1 >> 2)
+	x3 = x2 bitor (x2 >> 4)
+	x4 = x3 bitor (x3 >> 8)
+	x5 = x4 bitor (x4 >> 16)
+	x6 = x5 bitor (x5 >> 32)
 
-foldlStrict :: !(a b -> a) !a ![b] -> a
-foldlStrict f acc [] = acc
-foldlStrict f acc [x:xs]
-  #! z` = f acc x
-  = foldlStrict f z` xs
+signBitOnly      =: ~2^(IF_INT_64_OR_32 63 31)
+allExceptSignBit =: bitnot signBitOnly

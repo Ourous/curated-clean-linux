@@ -8,7 +8,7 @@ import qualified Text as T
 takePicture :: Task (Maybe JPEGPicture)
 takePicture
 	= catchAll (deviceRequest "takepicture" (\_ -> True)) (\_ -> return "")
-	>>= \result -> unpack ('T'.split " " result)
+	>>- \result -> unpack ('T'.split " " result)
 where
 	unpack :: [String] -> Task (Maybe JPEGPicture)
 	unpack ["OK", image] 	= return (Just (JPEGPicture image))

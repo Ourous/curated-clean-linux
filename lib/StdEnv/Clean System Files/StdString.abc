@@ -100,7 +100,6 @@ s12
 	jsr catAC
 .o 1 0
 .end
-
 .d 1 0
 	rtn
 .pe
@@ -167,7 +166,6 @@ s11
 	jsr sliceAC
 .o 1 0
 .end
-
 .d 1 0
 	rtn
 .pe
@@ -218,7 +216,6 @@ s10
 .inline toString;9
 	no_op
 .end
-
 .d 1 0
 	rtn
 .pe
@@ -269,7 +266,6 @@ s9
 	jsr BtoAC
 .o 1 0
 .end
-
 .d 1 0
 	rtn
 .pe
@@ -320,7 +316,6 @@ s8
 	jsr RtoAC
 .o 1 0
 .end
-
 .d 1 0
 	rtn
 .pe
@@ -369,7 +364,6 @@ s7
 .inline toString;6
 	CtoAC
 .end
-
 .d 1 0
 	rtn
 .pe
@@ -420,7 +414,6 @@ s6
 	jsr ItoAC
 .o 1 0
 .end
-
 .d 1 0
 	rtn
 .pe
@@ -472,7 +465,6 @@ s5
 .inline fromString;4
 	no_op
 .end
-
 .d 1 0
 	rtn
 .pe
@@ -537,7 +529,6 @@ s4
 	pushI 0
 	gtI
 .end
-
 .d 0 1 b
 	rtn
 .pe
@@ -600,7 +591,6 @@ s3
 	jsr eqAC
 .o 0 1 b	
 .end
-
 .d 0 1 b
 	rtn
 .pe
@@ -655,7 +645,6 @@ s2
 	jsr updateAC
 .o 1 0
 .end
-
 .d 1 0
 	rtn
 .pe
@@ -706,7 +695,6 @@ s1
 	jsr catAC
 .o 1 0
 .end
-
 .d 1 0
 	rtn
 .pe

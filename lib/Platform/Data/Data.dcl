@@ -5,4 +5,4 @@ definition module Data.Data
 //
 // Left True =+?= Left False == True
 //
-(=+?=) infix 6 :: a a -> Bool
+(=+?=) infix 6 :: !a !a -> Bool

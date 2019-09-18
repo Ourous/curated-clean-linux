@@ -13,7 +13,7 @@ definition module Gast.StdProperty
 
 import Gast.GenLibTest
 import Gast.Testable
-from Testing.TestEvents import :: Relation
+from Testing.TestEvents import :: TestLocation, :: Relation
 
 class (\/) infixr 2 a b	:: !a b -> Property	//	Conditional or  of arg1 and arg2
 class (/\) infixr 3	a b :: !a b -> Property	//	Conditional and of arg1 and arg2
@@ -54,6 +54,7 @@ classify :: !Bool l !p -> Property | Testable p & genShow{|*|} l
 label ::  !l !p -> Property | Testable p & genShow{|*|} l
 
 name :: !n !p -> Property | Testable p & toString n
+location_and_name :: !TestLocation !n !p -> Property | Testable p & toString n
 
 /**
 * Assigns a name to a testable property.

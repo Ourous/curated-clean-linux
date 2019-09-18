@@ -1,7 +1,9 @@
 implementation module iTasks.UI.Editor.Generic
 
 import StdMisc
+import iTasks.WF.Derives
 import iTasks.UI.Definition
+import iTasks.Internal.Serialization
 import iTasks.UI.Editor
 import iTasks.UI.Editor.Controls
 import iTasks.UI.Editor.Modifiers
@@ -27,17 +29,17 @@ where
 		Enter
 			| optional //Just show the ui to enable the remaining fields
 				# (enableUI,enableSt) = genEnableUI taskId dp False
-				= (Ok (uiac UIRecord attr [enableUI], (False, optional), [enableSt]), vst)
+				= (Ok (uiac UIContainer (addClassAttr "record" attr) [enableUI], (False, optional), [enableSt]), vst)
 			| otherwise
 				= case exGenUI emptyAttr (pairPath grd_arity dp) Enter {VSt|vst & optional = False} of
 					(Ok viz, vst)
-						# (ui, childSts) = fromPairUI UIRecord attr grd_arity viz
+						# (ui, childSts) = fromPairUI UIContainer (addClassAttr "record" attr) grd_arity viz
 						= (Ok (ui, (False, optional), childSts), vst)
 					(Error e,vst) = (Error e,vst)
 		Update (RECORD x)
 			= case exGenUI emptyAttr (pairPath grd_arity dp) (Update x) {VSt|vst & optional = False} of
 				(Ok viz,vst)
-					# (UI type attr items, childSts) = fromPairUI UIRecord attr grd_arity viz
+					# (UI type attr items, childSts) = fromPairUI UIContainer (addClassAttr "record" attr) grd_arity viz
 					//When optional we add a checkbox to clear the record
 					| optional
 						# (enableUI, enableSt) = genEnableUI taskId dp True
@@ -48,7 +50,7 @@ where
 		View  (RECORD x)
 			= case exGenUI emptyAttr (pairPath grd_arity dp) (View x) {VSt|vst & optional = False} of
 				(Ok viz,vst)
-					# (ui, childSts) = fromPairUI UIRecord attr grd_arity viz
+					# (ui, childSts) = fromPairUI UIContainer (addClassAttr "record" attr) grd_arity viz
 					= (Ok (ui, (True, optional), childSts),vst)
 				(Error e,vst) = (Error e,vst)
 
@@ -61,7 +63,7 @@ where
 		//Create and add the fields
 		= case exGenUI emptyAttr (pairPath grd_arity dp) Enter {vst & optional = False} of
 			(Ok viz,vst)
-				# (UI type attr items, childSts) = fromPairUI UIRecord emptyAttr grd_arity viz
+				# (UI type attr items, childSts) = fromPairUI UIContainer (classAttr ["record"]) grd_arity viz
 				# change = ChangeUI [] [(i,InsertChild ui) \\ ui <- items & i <- [1..]]
 				# enableSt = LeafState {touched=True,state=JSONBool True}
 				= (Ok (change, (viewMode, optional), [enableSt:childSts]), vst)
@@ -156,21 +158,21 @@ where
 		Enter
 			//Only generate a UI to select the constructor
 			# (consChooseUI, consChooseSt) = genConsChooseUI taskId dp gcd_names Nothing
-			= (Ok (UI UIVarCons attr [consChooseUI], False, [consChooseSt]),{vst & selectedConsIndex = selectedConsIndex})
+			= (Ok (UI UIContainer (addClassAttr "var-cons" attr) [consChooseUI], False, [consChooseSt]),{vst & selectedConsIndex = selectedConsIndex})
 		Update (OBJECT x)
 			//Generate the ui for the current value
 			= case exGenUI emptyAttr dp (Update x) vst of
-				(Ok (consUI=:(UI UICons attr` items), childSt),vst)
+				(Ok (consUI=:(UI _ attr` items), childSt),vst)
 					//Add the UI to select the constructor and change the type to UIVarCons
 					# (consChooseUI, consChooseSt) = genConsChooseUI taskId dp gcd_names (Just vst.selectedConsIndex)
-					= (Ok (UI UIVarCons ('DM'.union attr attr`) [consChooseUI:items], False, [consChooseSt, childSt])
+					= (Ok (UI UIContainer (addClassAttr "var-cons" ('DM'.union attr attr`)) [consChooseUI:items], False, [consChooseSt, childSt])
 							,{vst & selectedConsIndex = selectedConsIndex})
 				(Error e,vst) = (Error e, vst)
 		View (OBJECT x)
 			= case exGenUI emptyAttr dp (View x) vst of
-				(Ok (consUI=:(UI UICons attr` items), childSt),vst)
+				(Ok (consUI=:(UI _ attr` items), childSt),vst)
 					# (consViewUI,consViewSt) = genConsViewUI gcd_names vst.selectedConsIndex
-					= (Ok (UI UIVarCons ('DM'.union attr attr`) [consViewUI:items], True, [consViewSt, childSt])
+					= (Ok (UI UIContainer (addClassAttr "var-cons" ('DM'.union attr attr`)) [consViewUI:items], True, [consViewSt, childSt])
 						,{vst & selectedConsIndex = selectedConsIndex})
 				(Error e,vst) = (Error e,vst)
 
@@ -191,7 +193,7 @@ where
 		# (ui, vst) = exGenUI emptyAttr dp Enter {vst & pathInEditMode = consCreatePath consIdx gtd_num_conses}
 		# vst = {vst & pathInEditMode = pathInEditMode}
 		= case ui of
-			Ok (UI UICons attr items, childSt)
+			Ok (UI _ attr items, childSt)
 				//Construct a UI change that does the following: 
 				//1: If necessary remove the fields of the previously selected constructor
 				# removals = case state of
@@ -313,7 +315,7 @@ gEditor{|CONS of {gcd_index,gcd_arity}|} {Editor|genUI=exGenUI,onEdit=exOnEdit,o
 where
 	genUI attr dp mode vst = case exGenUI emptyAttr (pairPath gcd_arity dp) (mapEditMode (\(CONS x) -> x) mode) vst of
 		(Ok viz,vst)
-			# (ui, childSts) = fromPairUI UICons attr gcd_arity viz
+			# (ui, childSts) = fromPairUI UIContainer (addClassAttr "cons" attr) gcd_arity viz
 			= (Ok (ui, (), childSts), {VSt| vst & selectedConsIndex = gcd_index})
 		(Error e,vst) = (Error e,{VSt| vst & selectedConsIndex = gcd_index})
 
@@ -350,7 +352,7 @@ where
 		# (vizy, vst) = eyGenUI emptyAttr dpy (mapEditMode (\(PAIR _ y) -> y) mode) vst
 		| vizy =: (Error _) = (vizy,vst)
 		# ((vizx, stx), (vizy, sty)) = (fromOk vizx, fromOk vizy)
-		= (Ok (uiac UIPair attr [vizx, vizy],CompoundState JSONNull [stx, sty]),vst)
+		= (Ok (uiac UIContainer attr [vizx, vizy],CompoundState JSONNull [stx, sty]),vst)
 
 	onEdit dp ([0:ds],e) stX ust
 		# (dpx,_)   = pairPathSplit dp
@@ -494,11 +496,11 @@ where
 //These functions flatten this tree back to a single CompoundEditor or ChangeUI definition
 fromPairUI :: !UIType !UIAttributes !Int !(!UI, !EditState) -> (!UI, ![EditState])
 fromPairUI type attr arity (ui, st) | arity < 2 = (UI type attr [ui], [st])
-fromPairUI type attr 2 (UI UIPair _ [ul,ur], CompoundState _ [ml,mr])
+fromPairUI type attr 2 (UI _ _ [ul,ur], CompoundState _ [ml,mr])
 	= (UI type attr [ul,ur],[ml,mr])
-fromPairUI type attr 3 (UI UIPair _ [ul,UI UIPair _ [um,ur]], CompoundState _ [ml,CompoundState _ [mm,mr]])
+fromPairUI type attr 3 (UI _ _ [ul,UI _ _ [um,ur]], CompoundState _ [ml,CompoundState _ [mm,mr]])
 	= (UI type attr [ul,um,ur], [ml,mm,mr])
-fromPairUI type attr n (UI UIPair _ [ul,ur], CompoundState _ [ml,mr])
+fromPairUI type attr n (UI _ _ [ul,ur], CompoundState _ [ml,mr])
 	= (UI type attr (uls ++ urs), (mls ++ mrs))
 where
 	half = n / 2

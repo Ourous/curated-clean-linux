@@ -55,7 +55,7 @@ from syntax import
 	:: ParsedDefinition(..),
 	:: ParsedExpr,
 	:: ParsedImport,
-	:: ParsedInstance{pi_pos},
+	:: ParsedInstance{pi_ident,pi_pos},
 	:: ParsedInstanceAndMembers{pim_pi},
 	:: ParsedModule,
 	:: ParsedSelector{ps_field_pos,ps_field_ident},
@@ -97,7 +97,7 @@ scanCommentsFile f
 
 :: ScanState =
 	{ comment_level :: !Int
-	, comment_idxs  :: ![(!Int,!Int,!Int)] // line, col, idx
+	, comment_idxs  :: ![(Int,Int,Int)] // line, col, idx
 	, ln            :: !Int
 	, col           :: !Int
 	, input         :: !String
@@ -125,6 +125,8 @@ scan ss=:{idx}
 		-> scan (advance ss)
 	['\n':_]
 		-> scan {ss & idx=idx+1, ln=ss.ln+1, col=0}
+	['\t':_] // We assume that there are no tabs within a line: each tab counts as 4 characters
+		-> scan {ss & idx=idx+1, col=ss.col+4}
 	['//':_] | ss.comment_level == 0
 		# cmnt =
 			{ line      = ss.ln
@@ -245,7 +247,7 @@ collectComments comments pm
 # (_,_,coll) = collect comments Nothing pm.mod_defs coll
 = coll
 
-collect :: ![CleanComment] !(Maybe CleanComment) ![a] !CollectedComments -> (![CleanComment], !Maybe CleanComment, !CollectedComments) | pos, commentIndex, children a
+collect :: ![CleanComment] !(Maybe CleanComment) ![a] !CollectedComments -> (![CleanComment], !Maybe CleanComment, !CollectedComments) | pos, singleLineAbove, commentIndex, children a
 collect cc prev [] coll = (cc, prev, coll)
 collect [] (Just prev) [pd:pds] coll = ([], Nothing, putCC pd prev coll)
 collect [] Nothing _ coll = ([], Nothing, coll)
@@ -253,9 +255,9 @@ collect [{content}:cs] prev pds coll | not (startsWith "*" content) = collect cs
 collect allcmnts=:[c:cs] prev allpds=:[pd:pds] coll = case c canBelongTo pd of
 	Nothing -> collect allcmnts prev pds coll
 	Just True -> case prev of
-		Just prev | prev.multiline && not c.multiline
+		Just prev | not (singleLineAbove pd) && not c.multiline
 			# coll = putCC pd prev coll
-			# (allcmnts,prev,coll) = recurse allcmnts (Just c) (children pd) coll
+			# (allcmnts,prev,coll) = recurse allcmnts Nothing (children pd) coll
 			-> collect allcmnts prev pds coll
 		_
 			-> collect cs (Just c) allpds coll
@@ -271,7 +273,7 @@ where
 	recurse cs prev (Children xs) coll = collect cs prev xs coll
 collect _ _ _ _ = abort "internal error in Clean.Parse.Comments.collect\n"
 
-:: Children = E.t: Children ![t] & pos, commentIndex, children t
+:: Children = E.t: Children ![t] & pos, singleLineAbove, commentIndex, children t
 
 class children a :: !a -> Children
 
@@ -290,11 +292,22 @@ where
 instance children ParsedSelector where children ps = Children (tl [ps])
 instance children ParsedConstructor where children pc = Children (tl [pc])
 
-(canBelongTo) infix :: !CleanComment !a -> Maybe Bool | pos a
-(canBelongTo) {line,multiline} p = pos p >>= \p -> case p of
-	FunPos _ ln _ -> Just (if multiline (>) (>=) ln line)
-	LinePos _ ln  -> Just (if multiline (>) (>=) ln line)
-	_             -> Nothing
+(canBelongTo) infix :: !CleanComment !a -> Maybe Bool | pos, singleLineAbove a
+(canBelongTo) {line,column,multiline} elem
+| singleLineAbove elem && column > 4
+	= Just False
+| not (singleLineAbove elem) && column < 4
+	= Just False
+	= pos elem >>= \p -> case p of
+		FunPos _ ln _ -> Just (if multiline (>) (if (singleLineAbove elem) (>=) (<=)) ln line)
+		LinePos _ ln  -> Just (if multiline (>) (if (singleLineAbove elem) (>=) (<=)) ln line)
+		_             -> Nothing
+
+// If true, single-line documentation should be given above the element.
+class singleLineAbove a :: !a -> Bool
+instance singleLineAbove ParsedDefinition  where singleLineAbove _ = True
+instance singleLineAbove ParsedSelector    where singleLineAbove _ = False
+instance singleLineAbove ParsedConstructor where singleLineAbove _ = False
 
 class pos a :: !a -> Maybe Position
 
@@ -333,6 +346,8 @@ where
 	commentIndex pd = case pd of
 		PD_Function pos id is_infix args rhs kind -> Just (CI "PD_Function" pos id.id_name)
 		PD_TypeSpec pos id prio type specials -> Just (CI "PD_TypeSpec" pos id.id_name)
+		PD_Instance {pim_pi=pi} -> Just (CI "PD_Instance" pi.pi_pos pi.pi_ident.id_name)
+		PD_Instances [{pim_pi=pi}:_] -> Just (CI "PD_Instances" pi.pi_pos pi.pi_ident.id_name)
 		PD_Class cd pds -> Just (CI "PD_Class" cd.class_pos cd.class_ident.id_name)
 		PD_Type ptd -> Just (CI "PD_Type" ptd.td_pos ptd.td_ident.id_name)
 		PD_Generic gd -> Just (CI "PD_Generic" gd.gen_pos gd.gen_ident.id_name)

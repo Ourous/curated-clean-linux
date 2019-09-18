@@ -259,7 +259,7 @@ constructorsToFunctions :: !TypeDef -> [(String,Type,Maybe Priority)]
  * @param The type definition
  * @result A list of tuples of the name and type of the record fields
  */
-recordsToFunctions :: !TypeDef -> [(String,Type)]
+selectorsToFunctions :: !TypeDef -> [(String,Type)]
 
 /**
  * Wrapper around the {{`td_name`}} field of the {{`TypeDef`}} record.
@@ -275,6 +275,11 @@ td_uniq :: !TypeDef -> Bool
  * Wrapper around the {{`td_rhs`}} field of the {{`TypeDef`}} record.
  */
 td_rhs :: !TypeDef -> TypeDefRhs
+
+/**
+ * Make a type strict if it is not strict already.
+ */
+strict :: !Type -> Type
 
 /**
  * Wrapper to create a {{`TypeDef`}} record.

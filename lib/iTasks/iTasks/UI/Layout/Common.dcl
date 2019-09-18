@@ -6,14 +6,18 @@ definition module iTasks.UI.Layout.Common
 */
 import iTasks.UI.Layout
 from iTasks.UI.Definition import :: UISide(..), :: UIDirection(..), :: UIWindowType(..), :: UIHAlign(..), :: UIVAlign(..)
-from iTasks.UI.Prompt import :: Title, :: Label, :: Icon
 from iTasks.WF.Definition import :: Task
-from iTasks.WF.Combinators.Tune import class tune
+from iTasks.UI.Tune import class tune
 
 /**
 * Add a CSS class to customize styling
 */
 addCSSClass :: String -> LayoutRule
+
+/**
+* Remove a CSS class (to prevent standard styling)
+*/
+removeCSSClass :: String -> LayoutRule
 
 /**
 * Create a tabset with all child items as separate tabs
@@ -136,11 +140,6 @@ instance tune NoUserInterface Task
 actionToButton :: LayoutRule
 
 setActionIcon :: (Map String String) -> LayoutRule
-
-//Setting attributes 
-instance tune Title Task
-instance tune Label Task
-instance tune Icon Task
 
 /*
  * Format a basic editor as if it was a generic labelled iconized edtior

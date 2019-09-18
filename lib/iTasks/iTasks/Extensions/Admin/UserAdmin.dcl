@@ -48,8 +48,6 @@ usersWithRole			:: !Role ->		SDSLens () [User] ()
 * @param Password: The password
 *
 * @return A single user who matches the given credentials, or nothing of none or more than one exists.
-
-* @gin-icon key
 */
 authenticateUser	:: !Username !Password	-> Task (Maybe User)
 
@@ -57,8 +55,6 @@ authenticateUser	:: !Username !Password	-> Task (Maybe User)
 * Wraps a task with an authentication task
 *
 * @param	the task to wrap
-*
-* @gin-icon key
 */
 doAuthenticated :: (Task a) -> Task a | iTask a
 
@@ -71,8 +67,6 @@ doAuthenticatedWith :: !(Credentials -> Task (Maybe User)) (Task a) -> Task a | 
 * @param User details: The user-information which needs to be stored
 *
 * @return The stored user
-* 
-* @gin-icon user_add
 */
 createUser			:: !UserAccount -> Task StoredUserAccount
 /**
@@ -81,8 +75,6 @@ createUser			:: !UserAccount -> Task StoredUserAccount
 * @param User: The user who needs to be deleted
 *
 * @return The deleted user
-* 
-* @gin-icon user_delete
 */
 deleteUser			:: !UserId -> Task ()
 /**

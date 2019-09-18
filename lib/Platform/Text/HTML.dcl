@@ -206,6 +206,8 @@ from Data.GenEq import generic gEq
 			| OnselectAttr		!String
 			| OnsubmitAttr		!String
 			| OnunloadAttr		!String
+			| OntoggleAttr		!String
+			| OpenAttr			!String
 			| PlaceholderAttr	!String
 			| ProfileAttr		!String
 			| PromptAttr		!String
@@ -426,7 +428,5 @@ instance html String
 instance html HtmlTag
 instance html [a] | html a
 instance html (Maybe a) | html a
-
-browserFriendlySVGEltToString :: !SVGElt -> String
 
 escapeStr :: !String -> String

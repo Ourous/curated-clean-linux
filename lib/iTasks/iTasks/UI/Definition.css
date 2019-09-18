@@ -1,0 +1,259 @@
+/* Global themabable variables shared by the builtin editors. */
+:root {
+	--canvas-base-color: #eee;
+	--canvas-text-color: #000;
+
+	--panel-header-base-color: #ccc;
+	--panel-header-base-color-lighter: #ececec; /* lighten 12.5% */
+	--panel-header-base-color-lighter2: white; /* lighten 20% */
+	--panel-header-base-color-darker: #999999; /* darken 20% */
+	--panel-header-base-color-darker2: #b3b3b3; /* darken 10% */
+
+	--panel-header-text-color: #000;
+	--panel-border-color: #ccc;
+
+	--window-header-base-color: #ccc;
+	--window-header-base-color-lighter: #ececec; /* lighten 12.5% */
+	--window-header-text-color: #000;
+	--window-border-color: #ccc;
+
+	--toolbar-base-color: var(--canvas-base-color);
+	--toolbar-base-color-lighter: #f8f8f8; /* lighten 4% */
+	--toolbar-base-color-darker: #cecece; /* darken 12.5% */
+	--toolbar-base-color-darker2: #e1e1e1; /* darken 5% */
+
+	--button-base-color: var(--canvas-base-color);
+	--button-base-color-lighter: white; /* lighten 10% */
+	--button-base-color-darker: #bbbbbb; /* darken 20% */
+	--button-base-color-darkest: #888888; /* darken 40% */
+	--button-text-color: var(--canvas-text-color);
+	--button-text-color-lighter: #595959; /* lighten 35% */
+
+	--tab-base-color: var(--canvas-base-color);
+	--tab-base-color-darker: #e1e1e1; /* lighten 5% */
+	--tab-text-color: var(--canvas-text-color);
+	--tab-border-color: #ccc;
+
+	--select-base-color: #333;
+	--select-text-color: #fff;
+
+	--list-base-color: #fff;
+	--list-text-color: #000;
+	--list-highlight-color: #eee;
+	--list-border-color: #ccc;
+
+	--choicegrid-up-color: #d9d9d9; /* lighten 5% */
+	--choicegrid-down-color: #f2f2f2; /* lighten 15% */
+}
+
+/* Predefined themes: just add this class to the viewport or (any container) */
+.itasks-orangeblue {
+	--panel-header-base-color: #fb7322;
+	--panel-header-text-color: #fff;
+	--panel-border-color: #fb7322;
+
+	--window-header-base-color: #004584;
+	--window-header-text-color: #fff;
+	--window-border-color: #fb7322;
+
+	--toolbar-base-color: #fb7322;
+
+	--select-base-color: #004584;
+
+	--panel-header-base-color-lighter: #fc9b61;
+	--panel-header-base-color-lighter2: #fdb286;
+	--panel-header-base-color-darker: #b44503;
+	--panel-header-base-color-darker2: #e65804;
+	--window-header-base-color-lighter: #0066c4;
+	--toolbar-base-color-lighter: #fb8036;
+	--toolbar-base-color-darker: #d95404;
+	--toolbar-base-color-darker2: #fb6309;
+	--choicegrid-up-color: #fb833b;
+	--choicegrid-down-color: #fca36d;
+}
+
+/* Intermediate UI elements */
+.itasks-raw-record,
+.itasks-raw-cons,
+.itasks-raw-var-cons,
+.itasks-raw-interact,
+.itasks-raw-step,
+.itasks-raw-parallel,
+.itasks-raw-form,
+.itasks-raw-form-item {
+	border: dashed 2px #ccc;
+}
+.itasks-raw-record > .itasks-header,
+.itasks-raw-cons > .itasks-header,
+.itasks-raw-var-cons > .itasks-header,
+.itasks-raw-interact > .itasks-header,
+.itasks-raw-step > .itasks-header,
+.itasks-raw-parallel > .itasks-header,
+.itasks-raw-form > .itasks-header,
+.itasks-raw-form-item > .itasks-header {
+	color: #fff;
+	padding: 2px;
+}
+.itasks-raw-form {
+	border: solid 2px #f33;
+	background: #fee;
+}
+.itasks-raw-form > .itasks-header {
+	background: #f33;
+}
+.itasks-raw-form-item {
+	border: dashed 2px #f33;
+	border-radius: 5px;
+}
+.itasks-raw-form-item > .itasks-header {
+	background: #f33;
+}
+.itasks-raw-record {
+	border: solid 2px #f33;
+	background: #fee;
+}
+.itasks-raw-record > .itasks-header {
+	background: #f33;
+}
+.itasks-raw-cons {
+	border: solid 2px #ff3;
+	background: #ffe;
+}
+.itasks-raw-cons > .itasks-header {
+	background: #ff3;
+}
+.itasks-raw-var-cons {
+	border: solid 2px #ff3;
+	background: #ffe;
+}
+.itasks-raw-var-cons > .itasks-header {
+	background: #ff3;
+}
+.itasks-raw-interact {
+	border: solid 2px #f3f;
+	background: #fef;
+}
+.itasks-raw-interact > .itasks-header {
+	background: #f3f;
+}
+.itasks-raw-step {
+	border: solid 2px #33f;
+	background: #eef;
+}
+.itasks-raw-step > .itasks-header {
+	background: #33f;
+}
+.itasks-raw-parallel {
+	border: solid 2px #3f3;
+	background: #efe;
+}
+.itasks-raw-parallel > .itasks-header {
+	background: #3f3;
+}
+.itasks-raw-empty {
+	border: dashed 2px #eee;
+	color: #ccc;
+	font-style: italic;
+}
+.itasks-raw-action {
+	border: solid 2px #000;
+	padding: 5px 20px;
+	border-radius: 5px;	
+	color: #fff;
+	font-weight: bold;
+}
+.itasks-raw-action-enabled {
+	background-color: #0f0;
+}
+.itasks-raw-action-disabled {
+	background-color: #f00;
+}
+
+/* Predefined icon classes */
+*.itasks-viewport .icon-help {
+	background-image: url('/css/icons/help.png');
+}
+*.itasks-viewport .icon-info {
+	background-image: url('/css/icons/information.png') !important;
+}
+*.itasks-viewport .icon-valid {
+	background-image: url('/css/icons/accept.png') !important;
+}
+*.itasks-viewport .icon-warning {
+	background-image: url('/css/icons/warning.png') !important;
+}
+*.itasks-viewport .icon-invalid {
+	background-image: url('/css/icons/exclamation.png') !important;
+}
+*.itasks-viewport .icon-continue {
+	background-image: url('/css/icons/arrow_right.png');
+}
+*.itasks-viewport .icon-login, *.itasks-viewport .icon-log-in {
+	background-image: url('/css/icons/tick.png');
+}
+*.itasks-viewport .icon-logout, *.itasks-viewport .icon-log-out {
+	background-image: url('/css/icons/door_in.png');
+}
+*.itasks-viewport .icon-view {
+	background-image: url('/css/icons/page.png') !important;
+}
+*.itasks-viewport .icon-edit {
+	background-image: url('/css/icons/pencil.png') !important;
+}
+*.itasks-viewport .icon-delete {
+	background-image: url('/css/icons/trash.png') !important;
+}
+*.itasks-viewport .icon-refresh {
+	background-image: url('/css/icons/refresh.png') !important;
+}
+*.itasks-viewport .icon-up {
+	background-image: url('/css/icons/move-up.png') !important;
+}
+*.itasks-viewport .icon-down {
+	background-image: url('/css/icons/move-down.png') !important;
+}
+*.itasks-viewport .icon-add, *.itasks-viewport .icon-new {
+	background-image: url('/css/icons/add.png') !important;
+}
+*.itasks-viewport .icon-remove {
+	background-image: url('/css/icons/delete.png') !important;
+}
+*.itasks-viewport .icon-ok {
+	background-image: url('/css/icons/tick.png') !important;
+}
+*.itasks-viewport .icon-cancel {
+	background-image: url('/css/icons/cancel.png') !important;
+}
+*.itasks-viewport .icon-open {
+	background-image: url('/css/icons/document-open.png') !important;
+}
+*.itasks-viewport .icon-save {
+	background-image: url('/css/icons/document-save.png') !important;
+}
+*.itasks-viewport .icon-document {
+	background-image: url('/css/icons/document.png') !important;
+}
+*.itasks-viewport .icon-document-error {
+	background-image: url('/css/icons/document-error.png') !important;
+}
+*.itasks-viewport .icon-folder {
+	background-image: url('/css/icons/folder.png') !important;
+}
+*.itasks-viewport .icon-close {
+	background-image: url('/css/icons/cancel.png') !important;
+}
+*.itasks-viewport .icon-previous {
+	background-image: url('/css/icons/arrow_left.png') !important;
+}
+*.itasks-viewport .icon-next {
+	background-image: url('/css/icons/arrow_right.png') !important;
+}
+*.itasks-viewport .icon-preferences {
+	background-image: url('/css/icons/cog.png') !important;
+}
+*.itasks-viewport .icon-finish {
+	background-image: url('/css/icons/flag.png') !important;
+}
+*.itasks-viewport .icon-fullscreen {
+	background-image: url('/css/icons/fullscreen.png') !important;
+}

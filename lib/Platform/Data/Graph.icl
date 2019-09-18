@@ -224,7 +224,7 @@ where
 mapMap :: (a -> b) (Map k a) -> (Map k b) | Eq k & Ord k
 mapMap f m = (fromList o map (app2 (id,f)) o toList) m
 
-mapIndices :: ![(!NodeIndex,!NodeIndex)] !.(Graph n e) -> .(Graph n e)
+mapIndices :: ![(NodeIndex,NodeIndex)] !.(Graph n e) -> .(Graph n e)
 mapIndices updates { nodes, edges } 
 	# updMap = fromList updates
 	= { Graph

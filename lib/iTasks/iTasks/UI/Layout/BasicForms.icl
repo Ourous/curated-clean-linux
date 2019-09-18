@@ -17,17 +17,15 @@ basicFormsSessionLayout :: LayoutRule
 basicFormsSessionLayout = layoutCombinatorContainers
 
 layoutCombinatorContainers = sequenceLayouts
-	[layoutSubUIs (SelectByType UIInteract) layoutInteract
-	,layoutSubUIs (SelectByType UIStep) layoutStep
-	,layoutSubUIs (SelectByType UIParallel) layoutParallel
+	[layoutSubUIs (SelectByClass "interact") layoutInteract
+	,layoutSubUIs (SelectByClass "step-actions") layoutStep
 	,layoutSubUIs (SelectByType UIAction) layoutAsButton
 	,removeSubUIs (SelectByType UIEmpty)
 	]
 
 layoutStep = sequenceLayouts
-	[setUIType UIContainer
-	,addButtonBar
-	,layoutSubUIs (SelectAND SelectDescendents (SelectByType UIStep)) layoutStep
+	[addButtonBar
+	,layoutSubUIs (SelectAND SelectDescendents (SelectByClass "step-actions")) layoutStep
 	]
 where
 	addButtonBar = sequenceLayouts
@@ -36,24 +34,9 @@ where
 		,layoutSubUIs (SelectByPath [1]) (layoutSubUIs SelectChildren layoutAsButton) //Transform actions to buttons
 		]
 
-layoutParallel = sequenceLayouts
-	[setUIType UIContainer
-	,layoutSubUIs (SelectAND SelectDescendents (SelectByType UIParallel)) layoutParallel
-	]
-
 layoutInteract = sequenceLayouts
 	[setUIType UIPanel
-	,layoutSubUIs (SelectAND SelectDescendents SelectFormElement) toFormItem
-	,layoutSubUIs (SelectAND SelectDescendents SelectEditorContainers) layoutEditorContainer
-	]
-
-SelectFormElement = SelectByHasAttribute LABEL_ATTRIBUTE
-SelectEditorContainers = 'DF'.foldr1 SelectOR
-	(map SelectByType [UIPair,UIRecord,UICons,UIVarCons])
-
-layoutEditorContainer = sequenceLayouts
-	[setUIType UIContainer
-	,layoutSubUIs (SelectAND SelectDescendents SelectEditorContainers) layoutEditorContainer
+	,layoutSubUIs (SelectAND SelectDescendents (SelectByHasAttribute "label" )) toFormItem
 	]
 
 layoutAsButton = sequenceLayouts

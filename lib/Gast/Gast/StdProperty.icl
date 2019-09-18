@@ -12,6 +12,7 @@ implementation module Gast.StdProperty
 */
 
 import StdEnv
+import StdMaybe
 
 import Data.Func
 from Math.Random import genRandInt
@@ -26,12 +27,12 @@ import Gast.ThunkNames
 instance ==> Bool
 where
 	(==>) c p
-		| c	= Prop ("Bool ==> " +++ testname p) (evaluate p)
-			= Prop ("Bool ==> " +++ testname p) (\rs r = [{r & res = Rej}])
+		| c	= Prop ("Bool ==> " +++ testname p) (testlocation p) (evaluate p)
+			= Prop ("Bool ==> " +++ testname p) (testlocation p) (\rs r = [{r & res = Rej}])
 
 instance ==> Property
 where
-	(==>) c=:(Prop n _) p = Prop (n +++ " ==> " +++ testname p) imp
+	(==>) c=:(Prop n _ _) p = Prop (n +++ " ==> " +++ testname p) (testlocation p) imp
 	where
 		imp rs r
 		# r1 = testAnalysis r (evaluate c rs r)
@@ -46,7 +47,7 @@ instance /\ Bool     Bool      where (/\) x y = prop x /\ prop y
 instance /\ Property Bool      where (/\) x y = x /\ prop y
 instance /\ Bool     Property  where (/\) x y = prop x /\ y
 instance /\ Property Property
-where (/\) x y = Prop ("(" +++ testname x +++ " /\\ " +++ testname y +++ ")") (and x y)
+where (/\) x y = Prop ("(" +++ testname x +++ " /\\ " +++ testname y +++ ")") Nothing (and x y)
 	  where
 		and x y genState r 
 			# r1 = testAnalysis r (evaluate x genState r)
@@ -84,7 +85,7 @@ instance \/ Property Bool      where (\/) x y = x \/ prop y
 instance \/ Bool     Property  where (\/) x y = prop x \/ y
 instance \/ Property Property
 where
-    (\/) x y = Prop ("(" +++ testname x +++ " \\/ " +++ testname y +++ ")") (or x y)
+    (\/) x y = Prop ("(" +++ testname x +++ " \\/ " +++ testname y +++ ")") Nothing (or x y)
     where
         or x y genState r = case testAnalysis r (evaluate x genState r) of
             r=:{res=OK}   -> [r]
@@ -104,11 +105,11 @@ where
 (===>) p q = (not p) || q 
 
 ExistsIn :: (x->p) [x] -> Property | Testable p & TestArg x
-ExistsIn f l = Prop ("ExistsIn " +++ thunk_name_to_string f +++ " " +++ thunk_name_to_string l) p
+ExistsIn f l = Prop ("ExistsIn " +++ thunk_name_to_string f +++ " " +++ thunk_name_to_string l) Nothing p
 where p rs r = [exists r [testAnalysis r (evaluate (f a) rs r)\\a <- l] MaxExists]
 
 Exists :: (x->p) -> Property | Testable p & TestArg x
-Exists f = Prop ("Exists " +++ thunk_name_to_string f) p
+Exists f = Prop ("Exists " +++ thunk_name_to_string f) Nothing p
 where
     p genState r =
         [ exists
@@ -149,34 +150,34 @@ where
 				= abort "Unknow result in testAnalysis"
 
 ForAll :: !(x->p) -> Property | Testable p & TestArg x
-ForAll f = Prop ("ForAll " +++ thunk_name_to_string f) (evaluate f)
+ForAll f = Prop ("ForAll " +++ thunk_name_to_string f) Nothing (evaluate f)
 
 ForEach :: ![x] !(x->p) -> Property | Testable p & TestArg x
-ForEach list f = Prop ("ForEach " +++ thunk_name_to_string list +++ " " +++ thunk_name_to_string f) (forAll f list)
+ForEach list f = Prop ("ForEach " +++ thunk_name_to_string list +++ " " +++ thunk_name_to_string f) Nothing (forAll f list)
 
 (For) infixl 0 :: !(x->p) ![x] -> Property | Testable p & TestArg x
 (For) p list = ForEach list p
 
 check :: !(a b -> Bool) !a !b -> Property | genShow{|*|}, gPrint{|*|} a & genShow{|*|}, gPrint{|*|} b
-check op x y = Prop name (\gs a -> affirm op (Other relName) x y gs {a & namePath=[name:a.namePath]})
+check op x y = Prop name Nothing \gs a -> affirm op (Other relName) x y gs {a & namePath=[name:a.namePath]}
 where
 	name = thunk_name_to_string op
 	relName = concat [name, "{", thunk_to_module_name_string op, "}"]
 
 (=.=) infix 4 :: !a !a -> Property | Eq, genShow{|*|}, gPrint{|*|} a
-(=.=) x y = Prop "=.=" (affirm (==) Eq x y)
+(=.=) x y = Prop "=.=" Nothing (affirm (==) Eq x y)
 
 (<.)  infix 4 :: !a !a -> Property | Ord, genShow{|*|}, gPrint{|*|} a
-(<.) x y = Prop "<." (affirm (<) Lt x y)
+(<.) x y = Prop "<." Nothing (affirm (<) Lt x y)
 
 (<=.) infix 4 :: !a !a -> Property | Ord, genShow{|*|}, gPrint{|*|} a
-(<=.) x y = Prop "<=." (affirm (<=) Le x y)
+(<=.) x y = Prop "<=." Nothing (affirm (<=) Le x y)
 
 (>.)  infix 4 :: !a !a -> Property | Ord, genShow{|*|}, gPrint{|*|} a
-(>.) x y = Prop ">." (affirm (>) Gt x y)
+(>.) x y = Prop ">." Nothing (affirm (>) Gt x y)
 
 (>=.) infix 4 :: !a !a -> Property | Ord, genShow{|*|}, gPrint{|*|} a
-(>=.) x y = Prop ">=." (affirm (>=) Ge x y)
+(>=.) x y = Prop ">=." Nothing (affirm (>=) Ge x y)
 
 affirm :: !(a b->Bool) !Relation a b .GenState !.Admin -> [Admin] | genShow{|*|}, gPrint{|*|} a & genShow{|*|}, gPrint{|*|} b
 affirm op rel x y rs admin
@@ -194,7 +195,7 @@ affirm op rel x y rs admin
         }
 
 (ForAndGen) infixl 0 :: !(x->p) ![x] -> Property | Testable p & TestArg x
-(ForAndGen) p list = Prop (thunk_name_to_string p +++ " ForAndGen " +++ thunk_name_to_string list) (evaluate p)
+(ForAndGen) p list = Prop (thunk_name_to_string p +++ " ForAndGen " +++ thunk_name_to_string list) Nothing (evaluate p)
 where
     evaluate f rs result =
         forAll f
@@ -204,17 +205,20 @@ where
 
 classify :: !Bool l !p -> Property | Testable p & genShow{|*|} l
 classify c l p
-	| c	= Prop (testname p) (\rs r = evaluate p rs {r & labels = [show1 l:r.labels]})
-		= Prop (testname p) (evaluate p)
+	| c	= Prop (testname p) Nothing (\rs r = evaluate p rs {r & labels = [show1 l:r.labels]})
+		= Prop (testname p) Nothing (evaluate p)
 
 label ::  !l !p -> Property | Testable p & genShow{|*|} l
-label l p = Prop (testname p) (\rs r = evaluate p rs {r & labels = [show1 l:r.labels]})
+label l p = Prop (testname p) Nothing (\rs r = evaluate p rs {r & labels = [show1 l:r.labels]})
 
 name :: !n !p -> Property | Testable p & toString n
-name n p = Prop (toString n) (\rs r -> evaluate p rs {r & namePath=[toString n:r.namePath]})
+name n p = Prop (toString n) Nothing (\rs r -> evaluate p rs {r & namePath=[toString n:r.namePath]})
+
+location_and_name :: !TestLocation !n !p -> Property | Testable p & toString n
+location_and_name l n p = Prop (toString n) (Just l) \rs r -> evaluate p rs {r & namePath=[toString n:r.namePath]}
 
 limitNrOfRecFieldValues :: !(Map (TypeName, RecFieldName) Int) !p -> Property | Testable p
-limitNrOfRecFieldValues limits p = Prop (testname p) (\rs r = evaluate p rs {Admin| r & recFieldValueNrLimits = limits})
+limitNrOfRecFieldValues limits p = Prop (testname p) Nothing (\rs r = evaluate p rs {Admin| r & recFieldValueNrLimits = limits})
 
 instance ~ Bool where ~ b = not b
 
@@ -227,9 +231,9 @@ where
 	~ Undef = Undef
 
 instance ~ Property
-where ~ (Prop n p) = Prop ("~" +++ n) (\rs r = let r` = testAnalysis r (p rs r) in [{r` & res = ~r`.res}])
+where ~ (Prop n m p) = Prop ("~" +++ n) m (\rs r = let r` = testAnalysis r (p rs r) in [{r` & res = ~r`.res}])
 
 approxEqual :: !a !a !a -> Property | abs, Ord, -, genShow{|*|}, gPrint{|*|} a
-approxEqual err x y = Prop "approximately equals"
+approxEqual err x y = Prop "approximately equals" Nothing
                            (affirm (\x y -> abs (x - y) <= err)
                            (Other $ concat ["approximately equals (error = ", printToString err, ")"]) x y)

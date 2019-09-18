@@ -1,26 +1,26 @@
 system module StdChar
 
 // ****************************************************************************************
-//	Concurrent Clean Standard Library Module Version 2.0
-//	Copyright 1998 University of Nijmegen
+//	Concurrent Clean Standard Library Module Version 3.0
+//	Copyright 2019 University of Nijmegen
 // ****************************************************************************************
 
 import	StdOverloaded
 
-instance + 				Char
-instance - 				Char
-instance zero 			Char
-instance one 			Char
+instance + 				Char	:: !Char !Char -> Char		:== code { addI ; ItoC }
+instance - 				Char	:: !Char !Char -> Char		:== code { subI; ItoC }
+instance zero 			Char	:: Char						:== code { pushI 0; ItoC }
+instance one 			Char	:: Char						:== code { pushI 1; ItoC }
 
-instance ==				Char
-instance <  			Char
+instance ==				Char	:: !Char !Char -> Bool		:== code { eqC }
+instance <  			Char	:: !Char !Char -> Bool		:== code { ltC }
 
-instance toChar			Char
-instance toChar			Int
+instance toChar			Char	:: !Char -> Char			:== code { no_op }
+instance toChar			Int		:: !Int -> Char				:== code { ItoC }
 
-instance fromChar		Int
-instance fromChar		Char
-instance fromChar		{#Char}
+instance fromChar		Int		:: !Char -> Int				:== code { CtoI }
+instance fromChar		Char	:: !Char -> Char			:== code { no_op }
+instance fromChar		{#Char}	:: !Char -> {#Char}			:== code { CtoAC }
 
 //	Additional conversions:
 

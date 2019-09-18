@@ -34,7 +34,9 @@ where
 
 waitForDateTime` :: !DateTime -> Task DateTime
 waitForDateTime` datetime
-	= viewSharedInformation ("Connection interrupted", ("The connection with the other controller is interrupted, next attempt: " +++ toString datetime)) [] currentUTCDateTime >>* [OnValue (ifValue (\now -> datetime < now) return)]
+	= Title "Connection interrupted" @>>
+	  Hint ("The connection with the other controller is interrupted, next attempt: " +++ toString datetime) @>>
+		viewSharedInformation [] currentUTCDateTime >>* [OnValue (ifValue (\now -> datetime < now) return)]
 	>>* [ OnValue (ifValue (\now -> datetime < now) return)
 	    , OnAction (Action "Reconnect") (always (return datetime))
 	    ]

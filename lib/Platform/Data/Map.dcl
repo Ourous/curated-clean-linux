@@ -6,63 +6,63 @@ definition module Data.Map
  * such that lookup, insert and delete operations can be performed in O(log n).
  *
  * @property-bootstrap
- *   import StdBool, StdChar, StdInt, StdTuple
- *   from StdList import all, isMember, removeDup, reverse, instance length []
- *   from Data.Func import on, `on`
- *   import Data.GenDefault
- *   from Data.List import nubBy
+ *     import StdBool, StdChar, StdInt, StdTuple
+ *     from StdList import all, isMember, removeDup, reverse, instance length []
+ *     from Data.Func import on, `on`
+ *     import Data.GenDefault
+ *     from Data.List import nubBy
  *
- *   :: Predicate a = ConstTrue | IsMember [a]
+ *     :: Predicate a = ConstTrue | IsMember [a]
  *
- *   pred :: (Predicate a) a -> Bool | Eq a
- *   pred ConstTrue     _ = True
- *   pred (IsMember cs) c = isMember c cs
+ *     pred :: (Predicate a) a -> Bool | Eq a
+ *     pred ConstTrue     _ = True
+ *     pred (IsMember cs) c = isMember c cs
  *
- *   :: GMap k v =
- *     { gma  :: !v
- *     , gmb  :: !v
- *     , gmc  :: !v
- *     , gmd  :: !v
- *     , gme  :: !v
- *     , gmf  :: !v
- *     , rest :: ![(k,v)]
- *     }
+ *     :: GMap k v =
+ *         { gma  :: !v
+ *         , gmb  :: !v
+ *         , gmc  :: !v
+ *         , gmd  :: !v
+ *         , gme  :: !v
+ *         , gmf  :: !v
+ *         , rest :: ![(k,v)]
+ *         }
  *
- *   class Key k
- *   where keya :: k; keyb :: k; keyc :: k; keyd :: k; keye :: k; keyf :: k
+ *     class Key k
+ *     where keya :: k; keyb :: k; keyc :: k; keyd :: k; keye :: k; keyf :: k
  *
- *   instance Key Char
- *   where keya = 'a'; keyb = 'b'; keyc = 'c'; keyd = 'd'; keye = 'e'; keyf = 'f'
+ *     instance Key Char
+ *     where keya = 'a'; keyb = 'b'; keyc = 'c'; keyd = 'd'; keye = 'e'; keyf = 'f'
  *
- *   derive class Gast GMap, Predicate
- *   derive genShow Map, Maybe
- *   derive gPrint Map, Maybe
+ *     derive class Gast GMap, Predicate
+ *     derive genShow Map, Maybe
+ *     derive gPrint Map, Maybe
  *
- *   kvs :: (GMap k v) -> [(k,v)] | Key k
- *   kvs gm =
- *     [ (keya,gm.gma)
- *     , (keyb,gm.gmb)
- *     , (keyc,gm.gmc)
- *     , (keyd,gm.gmd)
- *     , (keye,gm.gme)
- *     , (keyf,gm.gmf)
- *     : gm.rest
- *     ]
+ *     kvs :: (GMap k v) -> [(k,v)] | Key k
+ *     kvs gm =
+ *         [ (keya,gm.gma)
+ *         , (keyb,gm.gmb)
+ *         , (keyc,gm.gmc)
+ *         , (keyd,gm.gmd)
+ *         , (keye,gm.gme)
+ *         , (keyf,gm.gmf)
+ *         : gm.rest
+ *         ]
  *
- *   all_present :: [(k,v)] (Map k v) -> Bool | <, == k & == v
- *   all_present kvs m = all (\(k,v) -> get k m == Just v) kvs`
- *   where
- *     kvs` = nubBy ((==) `on` fst) (reverse kvs) // Remove duplicate keys, assuming the last takes precedence
+ *     all_present :: [(k,v)] (Map k v) -> Bool | <, == k & == v
+ *     all_present kvs m = all (\(k,v) -> get k m == Just v) kvs`
+ *     where
+ *         kvs` = nubBy ((==) `on` fst) (reverse kvs) // Remove duplicate keys, assuming the last takes precedence
  *
- *   all_from :: (Map k v) [(k,v)] -> Bool | Eq k & Eq v
- *   all_from Tip _ = True
- *   all_from (Bin _ k v l r) kvs = isMember (k,v) kvs && all_from l kvs && all_from r kvs
+ *     all_from :: (Map k v) [(k,v)] -> Bool | Eq k & Eq v
+ *     all_from Tip _ = True
+ *     all_from (Bin _ k v l r) kvs = isMember (k,v) kvs && all_from l kvs && all_from r kvs
  *
  * @property-test-with k = Char
  * @property-test-with v = Char
  *
  * @property-test-generator (GMap k v) -> Map k v | Key, <, == k
- *   gen gm = fromList (kvs gm)
+ *     gen gm = fromList (kvs gm)
  */
 
 from Data.Maybe		import :: Maybe (..)
@@ -86,32 +86,33 @@ import StdClass
  * @var The type of the values stored in the mapping.
  *
  * @invariant integrity: A.m :: Map k v:
- *   log_size m /\
- *   sizes_correct m
+ *     log_size m /\
+ *     sizes_correct m
  *
  * @invariant log_size: A.m :: Map k v:
- *   check (<) nelem (2 ^ depth m)
- *   where
- *     nelem = mapSize m
+ *     check (<) nelem (2 ^ depth m)
+ *     where
+ *         nelem = mapSize m
  *
- *     depth :: (Map a b) -> Int
- *     depth Tip = 0
- *     depth (Bin _ _ _ l r) = 1 + (max `on` depth) l r
+ *         depth :: (Map a b) -> Int
+ *         depth Tip = 0
+ *         depth (Bin _ _ _ l r) = 1 + (max `on` depth) l r
  *
  * @invariant sizes_correct: A.m :: Map k v:
- *   case m of
- *     Tip                -> prop True
- *     b=:(Bin _ _ _ l r) ->
- *       mapSize b =.= 1 + mapSize l + mapSize r /\
- *       sizes_correct l /\
- *       sizes_correct r
+ *     case m of
+ *         Tip                -> prop True
+ *         b=:(Bin _ _ _ l r) ->
+ *             mapSize b =.= 1 + mapSize l + mapSize r /\
+ *             sizes_correct l /\
+ *             sizes_correct r
  */
 :: Map k v
   = Bin !Int !k !v !(Map k v) !(Map k v)
   | Tip
 
 instance Monoid (Map k v) | < k
-instance Semigroup (Map k v) | < k
+instance Semigroup (Map k v) | < k where
+	mappend :: !(Map k v) !(Map k v) -> Map k v | < k
 
 instance == (Map k v) | Eq k  & Eq v
 instance <  (Map k v) | Ord k & Ord v
@@ -122,9 +123,9 @@ instance <  (Map k v) | Ord k & Ord v
  * Check if a Map is empty.
  * @type (Map k a) -> Bool
  * @property equivalence with size 0: A.m :: Map k v:
- *   mapSize m == 0 <==> null m
+ *     mapSize m == 0 <==> null m
  * @property equivalence with newMap: A.m :: Map k v:
- *   m == newMap <==> null m
+ *     m == newMap <==> null m
  * @complexity O(1)
  */
 null mp :== case mp of
@@ -135,7 +136,7 @@ null mp :== case mp of
  * Create an empty Map.
  * @result An empty map
  * @property is null:
- *   null newMap
+ *     null newMap
  * @complexity O(1)
  */
 newMap      :: w:(Map k u:v), [ w <= u]
@@ -149,7 +150,7 @@ singleton   :: !k !v -> Map k v
 /**
  * The number of elements in a Map.
  * @property correctness: A.m :: Map k v:
- *   mapSize m =.= length (removeDup (keys m))
+ *     mapSize m =.= length (removeDup (keys m))
  */
 mapSize     :: !(Map k v) -> Int
 
@@ -161,11 +162,11 @@ mapSize     :: !(Map k v) -> Int
  * @param The original mapping
  * @result The modified mapping with the added value
  * @property correctness: A.m :: Map k v; k :: k; v :: v:
- *   get k m` =.= Just v /\                                           // Correctly put
- *     check all_present [kv \\ kv=:(k`,_) <- toList m | k <> k`] m` /\ // Other elements untouched
- *     integrity m`
- *   where
- *     m` = put k v m
+ *     get k m` =.= Just v /\                                           // Correctly put
+ *         check all_present [kv \\ kv=:(k`,_) <- toList m | k <> k`] m` /\ // Other elements untouched
+ *         integrity m`
+ *     where
+ *         m` = put k v m
  * @complexity O(log n)
  */
 put :: !k !a !(Map k a) -> Map k a | < k
@@ -201,11 +202,11 @@ getU :: !k !w:(Map k v) -> x:(!Maybe v, !y:(Map k v)) | == k & < k, [ x <= y, w 
  * @param The original mapping
  * @result The modified mapping with the value/key removed
  * @property correctness: A.m :: Map k v; k :: k:
- *   get k m` =.= Nothing /\                                            // Correctly deleted
- *     check all_present [kv \\ kv=:(k`,_) <- toList m | k <> k`] m` /\ // Other elements untouched
- *     integrity m`
- *   where
- *     m` = del k m
+ *     get k m` =.= Nothing /\                                            // Correctly deleted
+ *         check all_present [kv \\ kv=:(k`,_) <- toList m | k <> k`] m` /\ // Other elements untouched
+ *         integrity m`
+ *     where
+ *         m` = del k m
  */
 del :: !k !(Map k a) -> Map k a | < k
 
@@ -269,14 +270,14 @@ toAscList m :== foldrWithKey (\k x xs -> [(k,x):xs]) [] m
  * @param A list of key/value tuples
  * @result A mapping containing all the tuples in the list
  * @property correctness: A.elems :: [(k,v)]:
- *   check all_present elems m /\ // All elements put
- *     check all_from m elems /\  // No other elements
- *     integrity m
- *   where
- *     m = fromList elems
+ *     check all_present elems m /\ // All elements put
+ *         check all_from m elems /\  // No other elements
+ *         integrity m
+ *     where
+ *         m = fromList elems
  * @complexity O(n*log n)
  */
-fromList :: !u:[v:(!a, !b)] -> Map a b | == a & < a, [u <= v]
+fromList :: !u:[v:(a, b)] -> Map a b | == a & < a, [u <= v]
 
 /**
  * The keys of all keys of a map.
@@ -296,7 +297,7 @@ derive gLexOrd Map
 /**
  * Check if a key exists in a Map.
  * @property correctness: A.k :: k; m :: Map k v:
- *   member k m <==> isMember k (keys m)
+ *     member k m <==> isMember k (keys m)
  * @complexity O(log n)
  */
 member :: !k !(Map k a) -> Bool | < k
@@ -305,7 +306,7 @@ member :: !k !(Map k a) -> Bool | < k
  * Checks if a key is not a member of a Map.
  * @type k (Map k v) -> Bool | < k
  * @property correctness: A.k :: k; m :: Map k v:
- *   notMember k m <==> not (isMember k (keys m))
+ *     notMember k m <==> not (isMember k (keys m))
  */
 notMember k m :== not (member k m)
 
@@ -313,7 +314,7 @@ notMember k m :== not (member k m)
  * Find an element in a Map.
  * Aborts when the element is not found.
  * @property correctness: A.k :: k; v :: v; m :: Map k v:
- *   find k (put k v m) =.= v
+ *     find k (put k v m) =.= v
  * @complexity O(log n)
  */
 find :: !k !(Map k a) -> a | < k
@@ -325,9 +326,9 @@ find :: !k !(Map k a) -> a | < k
  * @param The default.
  * @param The key to look up.
  * @property correctness: A.k :: k; v :: v; m :: Map k v:
- *   findWithDefault default k (put k v m) =.= v /\
- *     findWithDefault default k (del k m) =.= default
- *   where default = gDefault{|*|}
+ *     findWithDefault default k (put k v m) =.= v /\
+ *         findWithDefault default k (del k m) =.= default
+ *     where default = gDefault{|*|}
  * @complexity O(log n)
  */
 findWithDefault :: !a !k !(Map k a) -> a | < k
@@ -339,9 +340,9 @@ findWithDefault :: !a !k !(Map k a) -> a | < k
  *
  * @param The element you're looking for.
  * @property correctness: A.v :: v; m :: Map k v:
- *   case [k \\ (k,v`) <- toList m | v == v`] of
- *     []    -> findKey v m =.= Nothing
- *     [k:_] -> findKey v m =.= Just k
+ *     case [k \\ (k,v`) <- toList m | v == v`] of
+ *         []    -> findKey v m =.= Nothing
+ *         [k:_] -> findKey v m =.= Just k
  * @complexity O(n)
  */
 findKey :: !a !(Map k a) -> Maybe k | == a
@@ -352,9 +353,9 @@ findKey :: !a !(Map k a) -> Maybe k | == a
  *
  * @param The search function for checking values in the Map.
  * @property correctness: A.p :: Predicate v; m :: Map k v:
- *   case [k \\ (k,v) <- toList m | pred p v] of
- *     []    -> findKeyWith (pred p) m =.= Nothing
- *     [k:_] -> findKeyWith (pred p) m =.= Just k
+ *     case [k \\ (k,v) <- toList m | pred p v] of
+ *         []    -> findKeyWith (pred p) m =.= Nothing
+ *         [k:_] -> findKeyWith (pred p) m =.= Just k
  * @complexity O(n)
  */
 findKeyWith :: !(a -> Bool) !(Map k a) -> Maybe k
@@ -366,10 +367,10 @@ findKeyWith :: !(a -> Bool) !(Map k a) -> Maybe k
  * @param The result if the second parameter does not occur as a value in the Map.
  * @param The element you're looking for.
  * @property correctness: A.v :: v; m :: Map k v:
- *   case findKey v m of
- *     Nothing -> findKeyWithDefault default v m =.= default
- *     Just k  -> findKeyWithDefault default v m =.= k
- *   where default = gDefault{|*|}
+ *     case findKey v m of
+ *         Nothing -> findKeyWithDefault default v m =.= default
+ *         Just k  -> findKeyWithDefault default v m =.= k
+ *     where default = gDefault{|*|}
  * @complexity O(n)
  */
 findKeyWithDefault :: !k !a !(Map k a) -> k | == a
@@ -381,10 +382,10 @@ findKeyWithDefault :: !k !a !(Map k a) -> k | == a
  * @param The search function for checking values in the Map.
  * @param The result when all values in the Map check as False.
  * @property correctness: A.p :: Predicate v; m :: Map k v:
- *   case findKeyWith (pred p) m of
- *     Nothing -> findKeyWithDefaultWith (pred p) default m =.= default
- *     Just k  -> findKeyWithDefaultWith (pred p) default m =.= k
- *   where default = gDefault{|*|}
+ *     case findKeyWith (pred p) m of
+ *         Nothing -> findKeyWithDefaultWith (pred p) default m =.= default
+ *         Just k  -> findKeyWithDefaultWith (pred p) default m =.= k
+ *     where default = gDefault{|*|}
  * @complexity O(n)
  */
 findKeyWithDefaultWith :: !(a -> Bool) !k !(Map k a) -> k
@@ -437,8 +438,6 @@ union :: !(Map k a) !(Map k a) -> Map k a | < k
 
 mergeWithKey :: !(k a b -> Maybe c) !((Map k a) -> Map k c) !((Map k b) -> Map k c)
              !(Map k a) !(Map k b) -> Map k c | < k
-
-foldlStrict :: !(a b -> a) !a ![b] -> a
 
 /**
  * Removes the values at given key positions. The mapping itself can be spine unique.

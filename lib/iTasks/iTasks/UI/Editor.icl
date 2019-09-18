@@ -16,7 +16,7 @@ derive gEq        EditState, LeafState
 leafEditorToEditor :: !(LeafEditor edit st a) -> Editor a | JSONEncode{|*|}, JSONDecode{|*|} st & JSONDecode{|*|} edit
 leafEditorToEditor leafEditor = leafEditorToEditor_ JSONEncode{|*|} JSONDecode{|*|} leafEditor
 
-leafEditorToEditor_ :: !(Bool st -> [JSONNode]) !(Bool [JSONNode] -> (!Maybe st, ![JSONNode])) !(LeafEditor edit st a)
+leafEditorToEditor_ :: !(Bool st -> [JSONNode]) !(Bool [JSONNode] -> (Maybe st, [JSONNode])) !(LeafEditor edit st a)
                     -> Editor a | JSONDecode{|*|} edit
 leafEditorToEditor_ jsonEncode jsonDecode leafEditor =
 	{Editor| genUI = genUI, onEdit = onEdit, onRefresh = onRefresh, valueFromState = valueFromState}
@@ -115,7 +115,7 @@ mapEditMode f (View x)   = View   $ f x
 
 derive bimap EditMode
 
-withVSt :: !TaskId !.(*VSt -> (!a, !*VSt)) !*IWorld -> (!a, !*IWorld)
+withVSt :: !TaskId !.(*VSt -> (a, *VSt)) !*IWorld -> (!a, !*IWorld)
 withVSt taskId f iworld=:{IWorld| abcInterpreterEnv}
 	# (x, vst) = f { VSt
 	               | taskId            = toString taskId
@@ -149,7 +149,7 @@ isCompound (CompoundState _ _)        = True
 
 withClientSideInit ::
 	!(JSVal *JSWorld -> *JSWorld)
-	!(UIAttributes DataPath a *VSt -> *(!MaybeErrorString (!UI, !st), !*VSt))
+	!(UIAttributes DataPath a *VSt -> *(MaybeErrorString (!UI, !st), *VSt))
 	!UIAttributes !DataPath !a !*VSt -> *(!MaybeErrorString (!UI, !st), !*VSt)
 withClientSideInit initUI genUI attr dp val vst=:{VSt| taskId} = case genUI attr dp val vst of
 	(Ok (UI type attr items,mask),vst)

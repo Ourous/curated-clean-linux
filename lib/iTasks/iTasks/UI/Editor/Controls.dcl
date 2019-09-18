@@ -118,6 +118,12 @@ grid          :: Editor (ChoiceGrid,   [Int])
 * Supported attributes:
 */
 tree          :: Editor ([ChoiceNode], [Int])
+
+/**
+* A horizontal bar with tabs to make a selection with
+*/
+tabBar        :: Editor ([ChoiceText], [Int])
+
 /**
  * Modifies the above editors for making choices such that they use a constant set of choices.
  */

@@ -1,6 +1,8 @@
 definition module Graphics.Scalable.Internal.Types
 
 import Graphics.Scalable.Types
+import Text.GenPrint
+from   Text.GenJSON import generic JSONEncode, generic JSONDecode, :: JSONNode
 
 :: Span
   = PxSpan      !Real                      // (PxSpan a) is a pixels
@@ -21,6 +23,14 @@ import Graphics.Scalable.Types
   
   | PathXSpan   !ImageTag                  // (PathXSpan t) is x-span of path element tagged with t
   | PathYSpan   !ImageTag                  // (PathYSpan t) is y-span of path element tagged with t
+:: FontDef`
+  = { fontfamily`  :: !String              // font family name
+    , fontysize`   :: !Real                // font size as span (px -)
+    , fontstretch` :: !String              // default value: "normal"
+    , fontstyle`   :: !String              // default value: "normal"
+    , fontvariant` :: !String              // default value: "normal"
+    , fontweight`  :: !String              // default value: "normal"
+    }
 
 class (*.) infixl 7 a :: !a !n -> Span | toReal n
 class (/.) infixl 7 a :: !a !n -> Span | toReal n
@@ -54,3 +64,27 @@ maxSpan     :: ![Span]          -> Span    // (maxSpan as) is the maximum of as 
 
 instance == ImageTag
 instance <  ImageTag
+
+derive   gEq        FontDef`
+derive   gPrint     FontDef`
+derive   JSONEncode FontDef`
+derive   JSONDecode FontDef`
+
+setfontfamily`  :: !String !FontDef` -> FontDef`
+setfontysize`   :: !Real   !FontDef` -> FontDef`
+setfontstretch` :: !String !FontDef` -> FontDef`
+setfontstyle`   :: !String !FontDef` -> FontDef`
+setfontvariant` :: !String !FontDef` -> FontDef`
+setfontweight`  :: !String !FontDef` -> FontDef`
+getfontfamily`  ::         !FontDef` -> String
+getfontysize`   ::         !FontDef` -> Real
+getfontstretch` ::         !FontDef` -> String
+getfontstyle`   ::         !FontDef` -> String
+getfontvariant` ::         !FontDef` -> String
+getfontweight`  ::         !FontDef` -> String
+
+/** to2dec r:
+		converts @r to a real value of two decimals in order to avoid errors in communicating real values
+		with SVG clients
+*/
+to2dec :: !Real -> Real

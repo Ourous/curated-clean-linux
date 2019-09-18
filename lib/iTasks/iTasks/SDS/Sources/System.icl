@@ -10,6 +10,7 @@ import iTasks.Engine
 import iTasks.Internal.SDS
 import iTasks.Internal.IWorld
 import iTasks.Internal.Util
+import iTasks.WF.Derives
 
 import iTasks.Internal.TaskStore
 import StdTuple, StdList, StdString
@@ -130,7 +131,7 @@ where
     writeItem [(n,c,p,_)] a = Ok (Just [(n,c,p,Just a)])
     writeItem _ _   = Error (exception "Task instance not found")
 
-taskInstancesByAttribute :: SDSLens (!String,!String) [TaskInstance] ()
+taskInstancesByAttribute :: SDSLens (!String,!JSONNode) [TaskInstance] ()
 taskInstancesByAttribute
     =
       (sdsProject (SDSLensRead readInstances) (SDSBlindWrite \_. Ok Nothing) Nothing

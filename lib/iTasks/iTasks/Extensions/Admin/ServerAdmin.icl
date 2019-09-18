@@ -3,7 +3,7 @@ import iTasks
 
 manageServer :: Task ()
 manageServer
-    =   enterChoiceWithShared "Session instances" [ChooseFromGrid id] currentSessions
+    =   (Hint "Session instances" @>> enterChoiceWithShared [ChooseFromGrid id] currentSessions)
     -&&-
-        enterChoiceWithShared "Persistent instances" [ChooseFromGrid id] currentProcesses
+        (Hint "Persistent instances" @>> enterChoiceWithShared [ChooseFromGrid id] currentProcesses)
     @!  ()

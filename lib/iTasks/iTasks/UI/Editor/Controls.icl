@@ -5,6 +5,7 @@ import iTasks.UI.Definition, iTasks.UI.Editor
 import Data.GenEq, Data.Error, Text.GenJSON, Text.HTML, Data.Func, Data.Functor, Data.Tuple, Data.List, Data.Maybe, Data.Map.GenJSON
 import qualified Data.Map as DM
 
+import iTasks.WF.Derives
 import iTasks.UI.Definition
 import iTasks.UI.Editor.Modifiers
 
@@ -75,6 +76,9 @@ checkGroup = choiceComponent (const 'DM'.newMap) id toOptionText checkBoundsText
 
 choiceList :: Editor ([ChoiceText], [Int])
 choiceList = choiceComponent (const 'DM'.newMap) id toOptionText checkBoundsText UIChoiceList
+
+tabBar :: Editor ([ChoiceText], [Int])
+tabBar = choiceComponent (const 'DM'.newMap) id toOptionText checkBoundsText UITabBar
 
 toOptionText {ChoiceText|id,text}= JSONObject [("id",JSONInt id),("text",JSONString text)]
 checkBoundsText options idx = or [id == idx \\ {ChoiceText|id} <- options]
@@ -205,19 +209,23 @@ where
 
 	onRefresh dp (newVal, newSel) (mbOldVal, oldSel, multiple) vst
 		//Check options
-		# oldOpts            = mbValToOptions mbOldVal
-		# newOpts            = mbValToOptions $ Just newVal
-		# cOptions           = if (newOpts =!= oldOpts)
-		                          (ChangeUI [SetAttribute "options" (JSONArray newOpts)] [])
+		# oldOptsJson        = mbValToOptions mbOldVal
+		# newOpts            = getOptions newVal
+		# newOptsJson        = toOption <$> newOpts
+		# cOptions           = if (newOptsJson =!= oldOptsJson)
+		                          (ChangeUI [SetAttribute "options" (JSONArray newOptsJson)] [])
 		                          NoChange
-		//Check selection
+		//Check selection, if the selection is out of bounds assume the empty selection
+		# newSel             = if (all (checkBounds newOpts) newSel) newSel []
 		# cSel               = if (newSel =!= oldSel) (ChangeUI [SetAttribute "value" (toJSON newSel)] []) NoChange
 		= (Ok (mergeUIChanges cOptions cSel, (Just newVal, newSel, multiple)),vst)
 
 	valueFromState (Just val, sel, multiple)
 		//The selection is only allowed to be empty when multiselect is enabled
-		| not multiple && isEmpty sel = Nothing
-		| otherwise                   = Just (val, sel)
+		| not multiple && lengthSel <> 0 && lengthSel <> 1 = Nothing
+		| otherwise                                        = Just (val, sel)
+	where
+		lengthSel = length sel
 	valueFromState _               = Nothing
 
 	mbValToOptions mbVal = toOption <$> maybe [] getOptions mbVal

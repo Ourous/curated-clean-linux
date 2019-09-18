@@ -1,8 +1,8 @@
 implementation module StdString
 
 // ****************************************************************************************
-//	Concurrent Clean Standard Library Module Version 2.0
-//	Copyright 1998 University of Nijmegen
+//	Concurrent Clean Standard Library Module Version 3.0
+//	Copyright 2019 University of Nijmegen
 // ****************************************************************************************
 
 import	StdOverloaded
@@ -31,6 +31,7 @@ where
 
 instance toString Int
 where
+ toString :: !Int -> {#Char}
  toString a
 	= code inline {
 		.d 0 1 i
@@ -40,6 +41,7 @@ where
 
 instance toString Char
 where
+ toString :: !Char -> {#Char}
  toString a
 	= code inline {
 			CtoAC
@@ -47,6 +49,7 @@ where
 
 instance toString Real
 where
+ toString :: !Real -> {#Char}
  toString a
 	= code inline {
 		.d 0 1 r

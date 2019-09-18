@@ -9,23 +9,27 @@ from StdFunc			import id, const, o
 from iTasks.SDS.Sources.Core import randomInt
 from iTasks.SDS.Sources.System import currentDateTime, topLevelTasks
 import iTasks.SDS.Combinators.Common
-from iTasks.Internal.TaskState		import :: TaskTree(..), :: DeferredJSON, :: AsyncAction
+from iTasks.Internal.TaskState		import :: DeferredJSON, :: AsyncAction
 from iTasks.Internal.TaskEval         import :: TaskTime
 import qualified Data.Map as DM
 from iTasks.Extensions.DateTime import waitForTimer
 from iTasks.UI.Definition import :: UIType(UILoader)
 
 import iTasks.Internal.SDS
+import iTasks.Engine
+import iTasks.WF.Derives
 import iTasks.WF.Tasks.Core
 import iTasks.WF.Tasks.SDS
 import iTasks.WF.Tasks.Interaction
 import iTasks.WF.Combinators.SDS
-import iTasks.WF.Combinators.Core, iTasks.WF.Combinators.Tune, iTasks.WF.Combinators.Overloaded
+import iTasks.WF.Combinators.Core, iTasks.WF.Combinators.Overloaded
+import iTasks.UI.Definition
+import iTasks.UI.Tune
 import iTasks.UI.Editor
 import iTasks.UI.Editor.Controls
-import iTasks.UI.Prompt
 import iTasks.UI.Layout
 import iTasks.UI.Layout.Common, iTasks.UI.Layout.Default
+import iTasks.SDS.Sources.System
 
 (>>*) infixl 1 :: !(Task a) ![TaskCont a (Task b)] -> Task b | iTask a & iTask b
 (>>*) task steps = step task (const Nothing) steps
@@ -80,42 +84,30 @@ removeWhenStable :: (Task a) -> ParallelTask b | iTask a & iTask b
 removeWhenStable t
     = \l -> t >>* [OnValue (ifStable (const (get (taskListSelfId l) >>- \id -> removeTask id l @? const NoValue)))]
 
-//Helper functions for projections
-projectJust :: (Maybe a) r -> Maybe (Maybe a)
-projectJust mba _ = Just mba
-
 justdo :: !(Task (Maybe a)) -> Task a | iTask a
 justdo task
-= task >>= \r -> case r of
+= task >>- \r -> case r of
 	Just x	= return x
 	Nothing	= throw ("The task returned nothing.")
 
 sequence :: ![Task a]  -> Task [a] | iTask a
-sequence tasks = foreverStIf
-	//Continue while there are tasks left
-	(not o isEmpty o snd)
-	//Initial state, empty accumulator, all tasks
-	([], tasks)
-	//Run the first task and add it to the accumulator
-	(\(acc, [todo:todos])->todo >>- \t->treturn ([t:acc], todos))
-	//When done, just return the accumulator
-	@ reverse o fst
+sequence tasks = foldr (\t ts->t >>- \tv->ts >>- \tvs->return [tv:tvs]) (return []) tasks
 
 foreverStIf :: (a -> Bool) a !(a -> Task a) -> Task a | iTask a
-foreverStIf pred st t = parallel [(Embedded, par st Nothing)] [] @? fromParValue
-where
-	par st (Just tid) tlist = removeTask tid tlist >-| par st Nothing tlist
-	par st Nothing tlist
-		| not (pred st) = treturn st
-		= step
-			(t st)
-			id
-			[ OnValue $ ifStable \st` -> get (sdsFocus {gDefault{|*|} & onlySelf=True} tlist) >>- \(_, [{TaskListItem|taskId}]) ->
-			                             appendTask Embedded (par st` (Just taskId)) tlist    @! st`
-		    ]
+foreverStIf pred st t
+	= step (t st) id [OnValue $ withStable \st->Just (if (pred st) (foreverStIf pred st t) (return st))]
 
-	fromParValue (Value [(_, val=:Value _ _)] _) = val
-	fromParValue _                               = NoValue
+(<!) infixl 6 :: (Task a) (a -> Bool) -> Task a | iTask a
+(<!) task pred = foreverIf (not o pred) task
+
+foreverIf :: (a -> Bool) !(Task a) -> Task a | iTask a
+foreverIf pred task = step task id [OnValue $ withStable \v->Just (if (pred v) (foreverIf pred task) (return v))]
+
+foreverSt :: a !(a -> Task a) -> Task a | iTask a
+foreverSt st t = step (t st) id [OnValue $ withStable $ Just o forever o t]
+
+forever :: (Task a) -> Task a | iTask a
+forever t = step t id [OnValue $ withStable \_->Just $ forever t]
 
 (-||-) infixr 3 :: !(Task a) !(Task a) -> (Task a) | iTask a
 (-||-) taska taskb = anyTask [taska,taskb]
@@ -213,7 +205,7 @@ eitherTask taska taskb = (taska @ Left) -||- (taskb @ Right)
 
 randomChoice :: ![a] -> Task a | iTask a
 randomChoice [] = throw "Cannot make a choice from an empty list"
-randomChoice list = get randomInt >>= \i -> return (list !! ((abs i) rem (length list)))
+randomChoice list = get randomInt >>- \i -> return (list !! ((abs i) rem (length list)))
 
 //We throw an exception when the share changes to make sure that the right hand side of
 //the -||- combinator is not evaluated anymore (because it was created from the 'old' share value)
@@ -238,17 +230,20 @@ onlyJust _                  = NoValue
 
 whileUnchangedWith :: !(r r -> Bool) !(sds () r w) (r -> Task b) -> Task b | iTask r & TC w & iTask b & Registrable sds
 whileUnchangedWith eq share task
-	= 	((get share >>= \val -> (wait () (eq val) share <<@ NoUserInterface @ const Nothing) -||- (task val @ Just)) <! isJust)
-	@?	onlyJust
+	=  ((get share >>- \val -> (wait (eq val) share <<@ NoUserInterface @ const Nothing) -||- (task val @ Just)) <! isJust)
+	@? onlyJust
 
 withSelection :: (Task c) (a -> Task b) (sds () (Maybe a) ()) -> Task b | iTask a & iTask b & iTask c & RWShared sds
 withSelection def tfun s = whileUnchanged s (maybe (def @? const NoValue) tfun)
 
 appendTopLevelTask :: !TaskAttributes !Bool !(Task a) -> Task TaskId | iTask a
-appendTopLevelTask attr evalDirect task = appendTask (Detached attr evalDirect) (\_ -> task <<@ ApplyLayout defaultSessionLayout @! ()) topLevelTasks
+appendTopLevelTask attr evalDirect task = get applicationOptions
+	>>- \eo->appendTask (Detached attr evalDirect) (\_->mtune eo task @! ()) topLevelTasks
+where
+	mtune eo = if eo.autoLayout (tune (ApplyLayout defaultSessionLayout)) id
 
 compute :: !String a -> Task a | iTask a
-compute s a = enterInformation s [EnterUsing id ed] >>~ \_->return a
+compute s a = Hint s @>> enterInformation [EnterUsing id ed] >>~ \_->return a
 where
 	ed :: Editor Bool
 	ed = fieldComponent UILoader Nothing (\_ _ -> True)

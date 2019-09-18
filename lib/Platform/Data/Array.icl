@@ -3,12 +3,12 @@ implementation module Data.Array
 import StdArray, StdInt, StdOverloaded, StdClass, StdFunctions
 import Data.Functor, Control.Applicative, Control.Monad
 
-mapArrSt :: !(.a -> .(*st -> *(!.a, !*st))) !*(arr .a) !*st -> *(!*(arr .a), !*st) | Array arr a
+mapArrSt :: !(.a -> .(*st -> *(.a, *st))) !*(arr .a) !*st -> *(!*(arr .a), !*st) | Array arr a
 mapArrSt f arr st
   #! (sz, arr) = usize arr
   = mapArrSt` sz 0 f arr st
   where
-  mapArrSt` :: !Int !Int !(.a -> .(*st -> *(!.a, !*st))) !*(arr .a) !*st -> *(!*(arr .a), !*st) | Array arr a
+  mapArrSt` :: !Int !Int !(.a -> .(*st -> *(.a, *st))) !*(arr .a) !*st -> *(!*(arr .a), !*st) | Array arr a
   mapArrSt` sz idx f arr st
     | idx == sz = (arr, st)
     | otherwise

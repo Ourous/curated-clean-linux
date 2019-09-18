@@ -1,4 +1,0 @@
-|| ?module? _SystemDynamic
-|| Only the types are here to make things compile
-
-_SystemDynamic.getDescriptor !_x_0 = getRunTimeDynamicDescriptor _x_0

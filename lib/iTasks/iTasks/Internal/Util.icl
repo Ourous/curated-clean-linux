@@ -5,10 +5,13 @@ import Data.Maybe, Data.Tuple, Data.Func, System.Time, System.OS, Text, System.F
 import Data.Error, System.OSError, System.File
 import iTasks.Internal.IWorld
 import iTasks.WF.Definition
+import iTasks.Internal.TaskEval
+import iTasks.UI.Definition
 from iTasks.Internal.IWorld 		import :: IWorld{current}, :: TaskEvalState
 from iTasks.Extensions.DateTime import :: Date{..}, :: Time{..}, :: DateTime(..)
 import qualified Control.Monad as M
 import qualified Data.Map as DM
+import qualified Data.Set as DS
 from Data.Map import :: Map
 
 show :: ![String] !*World -> *World
@@ -53,7 +56,7 @@ where
 		Error e = (Error e, w)
 		Ok a = (b a) w
 
-liftIWorld :: (*World -> *(.a, *World)) *IWorld -> *(.a, *IWorld)
+liftIWorld :: .(*World -> *(.a, *World)) *IWorld -> *(.a, *IWorld)
 liftIWorld f iworld
 # (a, world) = f iworld.world
 = (a, {iworld & world=world})
@@ -66,3 +69,15 @@ apIWTransformer iw f = case f iw of
 generateRandomString :: !Int !*IWorld -> (!String, !*IWorld)
 generateRandomString length iworld=:{IWorld|random}
 	= (toString (take length [toChar (97 +  abs (i rem 26)) \\ i <- random]) , {IWorld|iworld & random = drop length random})
+
+isRefreshForTask :: !Event !TaskId -> Bool
+isRefreshForTask (RefreshEvent taskIds _) taskId = 'DS'.member taskId taskIds
+isRefreshForTask ResetEvent _ = True
+isRefreshForTask _ _ = False
+
+mkTaskEvalInfo :: !TaskTime -> TaskEvalInfo
+mkTaskEvalInfo ts = {TaskEvalInfo|lastEvent=ts,removedTasks=[]}
+
+mkUIIfReset :: !Event !UI -> UIChange
+mkUIIfReset ResetEvent ui = ReplaceUI ui
+mkUIIfReset _ ui = NoChange

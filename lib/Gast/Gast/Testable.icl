@@ -17,6 +17,7 @@ from Data.Func import $
 import Data.Functor
 from Data.List import instance Functor [], concatMap
 import qualified Data.Map
+import Data.Maybe
 import Math.Random
 import Testing.TestEvents
 import Text
@@ -49,8 +50,9 @@ instance Testable Result where
 
 instance Testable Property
 where
-	evaluate (Prop _ p) genState result = p genState result
-	testname (Prop n _) = n
+	evaluate (Prop _ _ p) genState result = p genState result
+	testname (Prop n _ _) = n
+	testlocation (Prop _ l _) = l
 
 instance Testable (a->b) | Testable b & genShow{|*|} a & ggen{|*|} a & TestArg a  
 where
@@ -58,6 +60,7 @@ where
 	where
 		genState` = {GenState| genState & recFieldValueNrLimits = admin.Admin.recFieldValueNrLimits}
 	testname f = thunk_name_to_string f
+	testlocation f = Just {moduleName=Just (thunk_to_module_name_string f)}
 
 instance Testable [a] | Testable a  
 where
@@ -65,7 +68,7 @@ where
 	testname xs = "[" +++ join "," (map testname xs) +++ "]"
 
 prop :: a -> Property | Testable a
-prop p = Prop (testname p) (evaluate p)
+prop p = Prop (testname p) (testlocation p) (evaluate p)
 
 forAll :: !(a->b) ![a] GenState !Admin -> [Admin] | Testable b & TestArg a
 forAll f []   genState r=:{Admin| args} = [{r & args = reverse args, res = OK}] // to handle empty sets of values
@@ -109,10 +112,10 @@ printEvents pc [ge:ges] = case s of
 	s  -> [s:printEvents pc ges]
 where
 	s = case ge of
-		GE_TestStarted n               -> pc.beforeStartOutput n
-		GE_TestFinished n r ces labels -> pc.resultOutput n r ces labels
-		GE_CounterExample ce           -> pc.counterExampleOutput ce
-		GE_Tick n adm                  -> pc.everyOutput n adm
+		GE_TestStarted l n               -> pc.beforeStartOutput l n
+		GE_TestFinished l n r ces labels -> pc.resultOutput l n r ces labels
+		GE_CounterExample ce             -> pc.counterExampleOutput ce
+		GE_Tick n adm                    -> pc.everyOutput n adm
 printEvents _ [] = []
 
 defaultTestConfig =
@@ -170,8 +173,8 @@ testEventsPrintConfig =
 noCounterExampleOutput :: CounterExampleRes -> String
 noCounterExampleOutput _ = ""
 
-noBeforeOutput :: !String -> String
-noBeforeOutput _ = ""
+noBeforeOutput :: !(Maybe TestLocation) !String -> String
+noBeforeOutput _ _ = ""
 
 noEveryOutput :: !Int Admin -> String
 noEveryOutput n _ = ""
@@ -194,8 +197,8 @@ where
 	showFailedAssertion :: !(!FailedAssertion, !String, !String) -> [String]
 	showFailedAssertion (ExpectedRelation _ rel _, x, y) = ["not (", x, " ", toString rel, " ", y, ")\n"]
 
-humanReadableResOutput :: Bool String TestsResult [CounterExampleRes] [(String, Int)] -> String
-humanReadableResOutput addWhite name {maxTests, nRej, resultType} _ labels = withBlank $ showName True name +++ resStr
+humanReadableResOutput :: Bool (Maybe TestLocation) String TestsResult [CounterExampleRes] [(String, Int)] -> String
+humanReadableResOutput addWhite _ name {maxTests, nRej, resultType} _ labels = withBlank $ showName True name +++ resStr
 where
 	resStr = case resultType of
 		Proof nTests -> "Proof: " +++ msgStr +++ conclude nTests 0 labels
@@ -234,17 +237,18 @@ where
 	showLabels 0      [(lab,n):rest] = ["\n",lab,": ",toString n:showLabels 0 rest]
 	showLabels ntests [(lab,n):rest] = ["\n",lab,": ",toString n," (",toString (toReal (n*100)/toReal ntests),"%)":showLabels ntests rest]
 
-jsonEventStart :: !String -> String
-jsonEventStart name = toString (toJSON {StartEvent | name=name}) +++ "\n"
+jsonEventStart :: !(Maybe TestLocation) !String -> String
+jsonEventStart loc name = toString (toJSON {StartEvent | name=name, location=loc}) +++ "\n"
 
-jsonEventEnd :: String TestsResult [CounterExampleRes] [(String, Int)] -> String
-jsonEventEnd name res counterExamples labels = toString (toJSON endEvent) +++ "\n"
+jsonEventEnd :: !(Maybe TestLocation) !String !TestsResult ![CounterExampleRes] ![(String, Int)] -> String
+jsonEventEnd loc name res counterExamples labels = toString (toJSON endEvent) +++ "\n"
 where
 	endEvent =
-		{ name    = showName False name
-		, event   = eventType
-		, message = concat
-			[ humanReadableResOutput False name res counterExamples labels
+		{ name     = showName False name
+		, location = loc
+		, event    = eventType
+		, message  = concat
+			[ humanReadableResOutput False loc name res counterExamples labels
 			: map (humanReadableCEOutput False False) counterExamples
 			]
 		}
@@ -286,12 +290,13 @@ Test options p = testConfig config.randoms {config & randoms = []} p
 where
 	config = foldl handleOption defaultTestConfig options
 
-	handleOption c (Tests i)      = {c & maxTests = i, maxArgs = 2*i}
-	handleOption c (Fails i)      = {c & fails = i}
-	handleOption c (Args i)       = {c & maxArgs = i}
-	handleOption c (RandomSeed i) = {c & randoms = genRandInt i}
-	handleOption c (RandomList r) = {c & randoms = r}
-	handleOption c (MaxDepth i)   = {c & genState = {c.genState & maxDepth = i}}
+	handleOption c (Tests i)           = {c & maxTests = i, maxArgs = 2*i}
+	handleOption c (Fails i)           = {c & fails = i}
+	handleOption c (Args i)            = {c & maxArgs = i}
+	handleOption c (RandomSeed i)      = {c & randoms = genRandInt i}
+	handleOption c (RandomList r)      = {c & randoms = r}
+	handleOption c (MaxDepth i)        = {c & genState = {c.genState & maxDepth = i}}
+	handleOption c (MaxStringLength i) = {c & genState = {c.genState & maxStringLength = i}}
 	handleOption c (Skew s)
 	| s > 0     = {c & genState = {c.genState & mode = SkewGeneration {skewl = 1, skewr = s}}}
 	| s < 0     = {c & genState = {c.genState & mode = SkewGeneration {skewl = ~s, skewr = 1}}}
@@ -347,14 +352,14 @@ testEventsn n rs p = printEvents testEventsPrintConfig $ testConfig rs { default
 testConfig :: RandomStream Config p -> [GastEvent] | Testable p
 testConfig rs {maxTests,maxArgs,fails,genState} p
 	# res = evaluate p genState newAdmin
-	= [GE_TestStarted (testname p):analyse res maxTests maxArgs 0 0 0 [] []]
+	= [GE_TestStarted (testlocation p) (testname p):analyse res maxTests maxArgs 0 0 0 [] []]
 where
 	analyse :: ![.Admin] !Int !Int !Int !Int !Int [CounterExampleRes] ![(String,Int)] -> [GastEvent]
 	analyse results nTests nArgs nRej nUnd nE counterExamples labels =
 		case analyse` results nTests nArgs nRej nUnd nE of
 			// testing of property finished
 			Just resType -> [GE_TestFinished
-				(testname p)
+				(testlocation p) (testname p)
 				{maxTests = maxTests, nRej = nRej, resultType = resType}
 				counterExamples
 				labels]
@@ -378,7 +383,7 @@ where
 						more | nE+1<fails
 							= analyse rest (nTests-1) (nArgs-1) nRej nUnd (nE+1) [counterExample: counterExamples] (admin res.labels labels)
 							= [GE_TestFinished
-								(testname p)
+								(testlocation p) (testname p)
 								{ maxTests   = maxTests
 								, nRej       = nRej
 								, resultType = CounterExpls (nTests - 1) nUnd (nE + 1)

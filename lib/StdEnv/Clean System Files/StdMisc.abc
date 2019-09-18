@@ -68,7 +68,6 @@ s2
 	jsr print_string_
 .o 0 0
 	halt
-
 .d 1 0
 	rtn
 .pe
@@ -111,7 +110,6 @@ s1
 .o 0 0
 	halt
 .end
-
 .d 1 0
 	rtn
 .pe

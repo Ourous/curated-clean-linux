@@ -9,7 +9,7 @@ import StdOverloaded, StdGeneric, Data.Either
 from Data.Maybe	import :: Maybe
 from Data.Error	import :: MaybeErrorString, :: MaybeError
 
-:: XMLDoc = XMLDoc !(Maybe XMLURI) ![(!XMLNamespacePrefix,!XMLURI)] !XMLNode
+:: XMLDoc = XMLDoc !(Maybe XMLURI) ![(XMLNamespacePrefix,XMLURI)] !XMLNode
 
 :: XMLNode	= XMLElem !XMLQName ![XMLAttr] ![XMLNode]
 			| XMLText !String

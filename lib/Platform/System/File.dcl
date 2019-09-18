@@ -55,7 +55,7 @@ writeFile :: !String !String !*env -> (!MaybeError FileError (), !*env) | FileSy
 * @param file operation function
 * @return file operation result
 */
-withFile :: !String !Int (*File -> (!MaybeError FileError a,!*File)) !*env
+withFile :: !String !Int (*File -> (MaybeError FileError a,*File)) !*env
 			-> (!MaybeError FileError a, !*env) | FileSystem env
 
 /**

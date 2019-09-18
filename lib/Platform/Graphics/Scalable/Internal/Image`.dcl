@@ -38,8 +38,8 @@ import Graphics.Scalable.Internal.Types
   | LineMarkerAttr` !(LineMarkerAttr m)
   | MaskAttr`       !(Image` m)
   | HandlerAttr`    !(ImgEventhandler m)
-:: ImgTables m
-  = { imgEventhandlers :: !ImgEventhandlers m
+:: ImgTables
+  = { imgEventhandlers :: !ImgEventhandlers`
     , imgNewFonts      :: !ImgFonts
     , imgNewTexts      :: !ImgTexts
     , imgMasks         :: !ImgMasks
@@ -50,30 +50,48 @@ import Graphics.Scalable.Internal.Types
     , imgTags          :: !ImgTags
     , imgUniqIds       :: !ImgTagNo
     }
-:: FontSpans          :== Map FontDef FontDescent              // of each font, the font descent
-:: ImgFonts           :== Set FontDef                          // the collection of fonts used in the image for which no metrics are available
-:: TextSpans          :== Map FontDef (Map String TextSpan)    // of each font, of each text of that font, the width
-:: ImgEventhandlers m :== Map ImgTagNo [ImgEventhandler m]     // the registered event handlers of the image identified by the id (once registered, an event handler can not be overruled)
-:: ImgTexts           :== Map FontDef (Set String)             // of each font, the collection of texts
-:: ImgMasks           :== Map ImgTagNo Img                     // of each mask, the mask-image (associate the id with (MaskImg id))
-:: ImgLineMarkers     :== Map ImgTagNo LineMarkers             // of each poly(gon/line) with markers, its markers
-:: ImgPaths           :== Map ImgTagNo ImgPath                 // of each poly(gon/line), initially its connecting points, and secondly, its span
-:: ImgSpans           :== Map ImgTagNo ImageSpan               // of each image, its (width,height)
-:: GridSpans          :== Map ImgTagNo GridSpan                // of each grid, the spans of its columns and the spans of its rows
-:: ImgTags            :== Map ImageTag ImgTagNo                // map user-tag to system number
+:: ViaImg                                                                 // navigation in Img
+  = ViaChild !Int                                                         // ViaChild i: visit child image with index @i
+  | ViaHost                                                               // ViaHost:    visit host image
+  | ViaAttr                                                               // ViaAttr:    visit attribute image
+:: ImgNodePath        :== [ViaImg]                                        // [i:_] visit child with index i; [] arrived at node
+:: FontSpans          :== Map FontDef FontDescent                         // of each font, the font descent
+:: ImgFonts           :== Set FontDef                                     // the collection of fonts used in the image for which no metrics are available
+:: TextSpans          :== Map FontDef (Map String TextSpan)               // of each font, of each text of that font, the width
+:: ImgEventhandlers`  :== Map ImgTagNo [(ImgNodePath,ImgEventhandler`)]   // the defunctionalized version of ImgEventhandlers
+:: ImgTexts           :== Map FontDef (Set String)                        // of each font, the collection of texts
+:: ImgMasks           :== Map ImgTagNo Img                                // of each mask, the mask-image (associate the id with (MaskImg id))
+:: ImgLineMarkers     :== Map ImgTagNo LineMarkers                        // of each poly(gon/line) with markers, its markers
+:: ImgPaths           :== Map ImgTagNo ImgPath                            // of each poly(gon/line), initially its connecting points, and secondly, its span
+:: ImgSpans           :== Map ImgTagNo ImageSpan                          // of each image, its (width,height)
+:: GridSpans          :== Map ImgTagNo GridSpan                           // of each grid, the spans of its columns and the spans of its rows
+:: ImgTags            :== Map ImageTag ImgTagNo                           // map user-tag to system number
 :: FontDescent        :== Real
 :: TextSpan           :== Real
 :: ImgEventhandler m
   = ImgEventhandlerOnClickAttr     !(OnClickAttr     m)
+  | ImgEventhandlerOnNClickAttr    !(OnNClickAttr    m)
   | ImgEventhandlerOnMouseDownAttr !(OnMouseDownAttr m)
   | ImgEventhandlerOnMouseUpAttr   !(OnMouseUpAttr   m)
   | ImgEventhandlerOnMouseOverAttr !(OnMouseOverAttr m)
   | ImgEventhandlerOnMouseMoveAttr !(OnMouseMoveAttr m)
   | ImgEventhandlerOnMouseOutAttr  !(OnMouseOutAttr  m)
   | ImgEventhandlerDraggableAttr   !(DraggableAttr   m)
+:: ImgEventhandler`
+  = { handler :: !DefuncImgEventhandler`, local :: !Bool }
+:: DefuncImgEventhandler`
+  = ImgEventhandlerOnClickAttr`
+  | ImgEventhandlerOnNClickAttr`
+  | ImgEventhandlerOnMouseDownAttr`
+  | ImgEventhandlerOnMouseUpAttr`
+  | ImgEventhandlerOnMouseOverAttr`
+  | ImgEventhandlerOnMouseMoveAttr`
+  | ImgEventhandlerOnMouseOutAttr`
+  | ImgEventhandlerDraggableAttr`
+instance == DefuncImgEventhandler`
 :: ImgPath
-  = { pathPoints   :: ![ImageOffset]                           // the connecting points of the path
-    , pathSpan     :: !ImageSpan                               // the span of the path (also stored in imgSpans after resolving span-expressions)
+  = { pathPoints   :: ![ImageOffset]                                      // the connecting points of the path
+    , pathSpan     :: !ImageSpan                                          // the span of the path (also stored in imgSpans after resolving span-expressions)
     }
 :: LineMarkers
   = { lineStart    :: !Maybe Img
@@ -85,11 +103,11 @@ import Graphics.Scalable.Internal.Types
     , row_spans    :: ![Span]
     }
 :: Img
-  = { uniqId       :: !ImgTagNo                                // the unique system identification within the entire image
-    , host         :: !HostImg                                 // the host of this image
-    , transform    :: !Maybe ImgTransform                      // the optional transform of the basic/composite image
-    , overlays     :: ![Img]                                   // the back-to-front ordering of images 'on top of' host
-    , offsets      :: ![ImageOffset]                           // the offsets matching one-by-one with .overlays
+  = { uniqId       :: !ImgTagNo                                           // the unique system identification within the entire image
+    , host         :: !HostImg                                            // the host of this image
+    , transform    :: !Maybe ImgTransform                                 // the optional transform of the basic/composite image
+    , overlays     :: ![Img]                                              // the back-to-front ordering of images 'on top of' host
+    , offsets      :: ![ImageOffset]                                      // the offsets matching one-by-one with .overlays
     }
 :: HostImg
   = BasicHostImg !BasicImg !(Set BasicImgAttr)
@@ -103,7 +121,7 @@ import Graphics.Scalable.Internal.Types
   | EllipseImg
   | PolylineImg
   | PolygonImg
-:: BasicImgAttr                                                // attributes that are applicable only on basic images
+:: BasicImgAttr                                                           // attributes that are applicable only on basic images
   = BasicImgDashAttr          ![Int]
   | BasicImgFillAttr          !SVGColor
   | BasicImgFillOpacityAttr   !Real
@@ -126,7 +144,7 @@ import Graphics.Scalable.Internal.Types
   | ScaleImg  !Real !Real
   | FlipXImg
   | FlipYImg
-  | MaskImg   !ImgTagNo                                        // the id-img pair is stored in the ImgMasks table
+  | MaskImg   !ImgTagNo                                                   // the id-img pair is stored in the ImgMasks table
 :: Host` m
   = NoHost`
   | Host` (Image` m)
@@ -143,7 +161,9 @@ defaultLineMarkers :: LineMarkers
   = { n :: !Span, e :: !Span, s :: !Span, w :: !Span }
 defaultMargins`     :: Margins`
 
-toImg :: !(Image` m) !FontSpans !TextSpans !(ImgTables m) -> (!Img,!ImgTables m)
+toImg :: !(Image` m) !ImgNodePath !FontSpans !TextSpans !ImgTables -> (!Img,!ImgTables)
+
+getImgEventhandler :: !(Image` m) !ImgNodePath -> Maybe (ImgEventhandler m)
 
 :: SpanResolveError :== String
 

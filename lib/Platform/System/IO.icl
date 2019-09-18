@@ -18,7 +18,7 @@ execIO (IO f) world
 evalIO :: !(IO a) !*World -> *(a, !*World)
 evalIO (IO f) world = f world
 
-withWorld :: (*World -> *(.a, !*World)) -> IO .a
+withWorld :: (*World -> *(.a, *World)) -> IO .a
 withWorld f = IO f
 
 instance Functor IO
@@ -92,13 +92,13 @@ writeFileM name txt = withWorld f
     # (ok, world)       = fclose file world
     = ((), world)
 
-unsafePerformIO :: !(*World -> *(.a, !*World)) -> .a
+unsafePerformIO :: !(*World -> *(.a, *World)) -> .a
 unsafePerformIO f
   # (x, world) = f make_world
   | world_to_true world = x
   | otherwise           = abort "error in unsafePerformIO\n"
 
-unsafePerformIOTrue :: !(*World -> *(a, !*World)) -> Bool
+unsafePerformIOTrue :: !(*World -> *(a, *World)) -> Bool
 unsafePerformIOTrue f
   # (x, world) = f make_world
   = world_to_true world

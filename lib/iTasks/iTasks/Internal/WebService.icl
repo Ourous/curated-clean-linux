@@ -134,11 +134,18 @@ httpServer port keepAliveTime requestProcessHandlers sds
     = wrapIWorldConnectionTask {ConnectionHandlersIWorld|onConnect=onConnect, onData=onData, onShareChange=onShareChange, onTick=onTick, onDisconnect=onDisconnect, onDestroy=onDestroy} sds
 where
     onConnect connId host r iworld=:{IWorld|world,clock,options={allowedHosts}}
-		| allowedHosts =: [] || isMember host allowedHosts
+		| isAllowed host allowedHosts
 			= (Ok (NTIdle host clock),Nothing,[],False,{IWorld|iworld & world = world})
 		| otherwise
 			//Close the connection immediately if the remote host is not in the whitelist
 			= (Ok (NTIdle host clock),Nothing,[],True,{IWorld|iworld & world = world})
+	where
+		//Simple check to also match (sub)networks such as 192.168.0.0 or 0.0.0.0
+		isAllowed host [] = True
+		isAllowed host hosts = any (allowedIP (split "." host)) (map (split ".") hosts)
+		allowedIP [h1,h2,h3,h4] [p1,p2,p3,p4]
+			= (p1 == "0" || h1 == p1) && (p2 == "0" || h2 == p2) && (p3 == "0" || h3 == p3) && (p4 == "0" || h4 == p4)
+		allowedIP _ _ = False
 
     onData data connState=:(NTProcessingRequest request localState) r env
         //Select handler based on request path
@@ -405,7 +412,7 @@ where
 
 	uiUrl matchUrl = (if (endsWith "/" matchUrl) matchUrl (matchUrl +++ "/")) +++ "gui-wsock"
 
-	dequeueOutput :: ![InstanceNo] !(Map InstanceNo TaskOutput) -> (![(!InstanceNo,!TaskOutputMessage)],!Map InstanceNo TaskOutput)
+	dequeueOutput :: ![InstanceNo] !(Map InstanceNo TaskOutput) -> (![(InstanceNo,TaskOutputMessage)],!Map InstanceNo TaskOutput)
 	dequeueOutput [] states = ([],states)
 	dequeueOutput [i:is] states
 		# (output,states) = dequeueOutput is states

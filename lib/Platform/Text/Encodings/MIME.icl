@@ -23,7 +23,7 @@ decodeMimeMultipart boundary body
 	# parts				= split ("\r\n" +++ "--" +++ boundary +++ "\r\n") body
 	= map parsePart parts
 where
-	parsePart :: String -> ([(!String,!String)], String)
+	parsePart :: String -> ([(String,String)], String)
 	parsePart part 
 		# index 		= indexOf "\r\n\r\n" part
 		| index < 1 	= ([], part)

@@ -14,6 +14,6 @@ from StdOverloaded import class toString
 
 instance toString Voice
 
-tts :: String *World -> *World
+tts :: !String !*World -> *World
 
-ttsWithVoice :: Voice String *World -> *World
+ttsWithVoice :: !Voice !String *World -> *World

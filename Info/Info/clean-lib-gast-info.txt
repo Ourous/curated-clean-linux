@@ -1,0 +1,4 @@
+clean-lib-gast linux x64 20190917
+[svn sources]
+[git sources]
+clean-and-itasks gast master 88a2de70e49bd3535d6f3dfdb8c3f056c5e620a7

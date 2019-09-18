@@ -58,11 +58,10 @@ allTaskInstances                :: SDSLens () [TaskInstance] ()
 detachedTaskInstances	        :: SDSLens () [TaskInstance] () //Exclude sessions
 taskInstanceByNo                :: SDSLens InstanceNo TaskInstance TaskAttributes
 taskInstanceAttributesByNo      :: SDSLens InstanceNo TaskAttributes TaskAttributes
-taskInstancesByAttribute		:: SDSLens (!String,!String) [TaskInstance] () //Parameter is (key,value)
+taskInstancesByAttribute		:: SDSLens (!String,!JSONNode) [TaskInstance] () //Parameter is (key,value)
 
 // Application
 applicationName			:: SDSSource () String ()         // Application name
 applicationVersion      :: SDSSource () String ()          // Application build identifier
 applicationDirectory	:: SDSSource () FilePath ()       // Directory in which the applicaton resides
 applicationOptions      :: SDSSource () EngineOptions ()   //Full engine options
-

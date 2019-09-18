@@ -10,7 +10,6 @@ import iTasks.SDS.Sources.System
 from iTasks.Internal.Task import mkInstantTask
 import iTasks.Internal.IWorld
 import iTasks.UI.Definition
-import iTasks.UI.Prompt
 import iTasks.UI.Editor
 import iTasks.UI.Editor.Controls
 import iTasks.UI.Editor.Modifiers
@@ -218,20 +217,22 @@ utcDateTimeToTimestamp {DateTime|day,mon,year,hour,min,sec} =
     timeGm {Tm|sec = sec, min = min, hour = hour, mday = day, mon = mon - 1, year = year - 1900, wday = 0, yday = 0, isdst = -1}
 
 waitForTime :: !Time -> Task Time
-waitForTime time =
-	viewSharedInformation ("Wait for time", ("Wait until " +++ toString time)) [] currentTime >>* [OnValue (ifValue (\now -> time < now) return)]
+waitForTime time
+	= Title "Wait for time" @>> Hint ("Wait until " +++ toString time) @>> viewSharedInformation [] currentTime
+	>>* [OnValue (ifValue (\now -> time < now) return)]
 
 waitForDate :: !Date -> Task Date
-waitForDate date =
-	viewSharedInformation ("Wait for date", ("Wait until " +++ toString date)) [] currentDate >>* [OnValue (ifValue (\now -> date < now) return)]
+waitForDate date
+	= Title "Wait for date" @>> Hint ("Wait until " +++ toString date) @>> viewSharedInformation [] currentDate
+	>>* [OnValue (ifValue (\now -> date < now) return)]
 	
 waitForDateTime :: !DateTime -> Task DateTime
-waitForDateTime datetime =
-	viewSharedInformation ("Wait for date and time", ("Wait until " +++ toString datetime)) [] currentDateTime >>* [OnValue (ifValue (\now -> datetime < now) return)]
+waitForDateTime datetime
+	= Title "Wait for date and time" @>> Hint ("Wait until " +++ toString datetime) @>> viewSharedInformation [] currentDateTime
+	>>* [OnValue (ifValue (\now -> datetime < now) return)]
 
 waitForTimer :: !Int -> Task DateTime
 waitForTimer interval =
     get currentTimestamp                                  >>- \(Timestamp now) ->
     timestampToLocalDateTime (Timestamp (now + interval)) >>- \endTime ->
     waitForDateTime endTime
-

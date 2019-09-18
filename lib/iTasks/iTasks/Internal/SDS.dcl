@@ -64,25 +64,25 @@ instance Writeable SDSDebug
 instance Modifiable SDSDebug
 instance Registrable SDSDebug
 
-:: DeferredWrite = E. p r w sds: DeferredWrite !p !w !(sds p r w) & iTask p & TC r & TC w & RWShared sds
+:: DeferredWrite = E. p r w sds: DeferredWrite !p !w !(sds p r w) & gText{|*|}, TC p & TC r & TC w & RWShared sds
 
 //Internal creation functions:
 
 createReadWriteSDS ::
 	!String
 	!String
-	!(p *IWorld -> *(!MaybeError TaskException r, !*IWorld))
-	!(p w *IWorld -> *(!MaybeError TaskException (SDSNotifyPred p), !*IWorld))
+	!(p *IWorld -> *(MaybeError TaskException r, *IWorld))
+	!(p w *IWorld -> *(MaybeError TaskException (SDSNotifyPred p), *IWorld))
 	->
 	SDSSource p r w
 
 createReadOnlySDS ::
-	!(p *IWorld -> *(!r, !*IWorld))
+	!(p *IWorld -> *(r, *IWorld))
 	->
 	SDSSource p r ()
 
 createReadOnlySDSError ::
-	!(p *IWorld -> *(!MaybeError TaskException r, !*IWorld))
+	!(p *IWorld -> *(MaybeError TaskException r, *IWorld))
 	->
 	SDSSource p r ()
 
@@ -136,7 +136,3 @@ formatSDSRegistrationsList :: [SDSNotifyRequest] -> String
 
 //Flush all deffered/cached writes of
 flushDeferredSDSWrites :: !*IWorld -> (!MaybeError TaskException (), !*IWorld)
-
-// Used to turn any read/write/modified operation (with all arguments except the environment
-// curried in) into one which returns a dynamic. Use to store sdsEvalStates in the environment.
-dynamicResult :: (*IWorld -> (MaybeError TaskException a, !*IWorld)) !*IWorld -> (MaybeError TaskException Dynamic, !*IWorld) | TC a

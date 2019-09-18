@@ -1,0 +1,34 @@
+# vim: syntax=sh
+_cleantest()
+{
+	local cur prev opts
+	COMPRREPLY=()
+	cur="${COMP_WORDS[COMP_CWORD]}"
+	prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+	opts="--help -h --strategy -s --output-format -f --hide -H --stop-on-first-failure -F --list -l --option -O --run -r --skip"
+
+	case $prev in
+		"--strategy" | "-s")
+			opts="default failed-first"
+			;;
+		"--output-format" | "-f")
+			opts="json human"
+			;;
+		"--hide" | "-H")
+			opts="start pass fail skip lost"
+			;;
+		"--option" | "-O")
+			return 0
+			;;
+		"--run" | "-r" | "--skip")
+			_clean_file
+			return 0
+			;;
+	esac
+
+	# Complete options
+	COMPREPLY=($(compgen -W "$opts" -- $cur))
+	return 0
+}
+complete -F _cleantest cleantest

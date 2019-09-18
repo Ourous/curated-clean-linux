@@ -11,8 +11,6 @@ from iTasks.Extensions.Document import :: Document
 *
 * @return The imported content
 * @throws FileException
-* 
-* @gin-icon page_white_text
 */
 importTextFile		:: !FilePath -> Task String
 
@@ -34,7 +32,5 @@ importTextDocument :: !Document -> Task String
 *
 * @return The exported content
 * @throws FileException
-* 
-* @gin-icon page_white_text
 */
 exportTextFile		:: !FilePath !String -> Task String

@@ -10,13 +10,14 @@ from System.OSError import :: MaybeOSError, :: OSError, :: OSErrorCode, :: OSErr
 
 import iTasks.WF.Definition
 import iTasks.WF.Tasks.IO
+import iTasks.WF.Tasks.Core
 from   iTasks.WF.Combinators.Core import :: AttachmentStatus
 import iTasks.UI.Editor, iTasks.UI.Editor.Common
 import iTasks.Internal.SDS
 from iTasks.UI.Layout import :: LUI, :: LUIMoves, :: LUIMoveID, :: LUIEffectStage, :: LUINo
 
-from iTasks.Internal.TaskState		import :: TaskTree(..), :: DeferredJSON(..), :: TIMeta(..) , :: TIType(..), :: AsyncAction
-from iTasks.Internal.TaskEval         import :: TaskEvalInfo(..)
+from iTasks.Internal.TaskState		import :: DeferredJSON(..), :: TIMeta(..) , :: TIType(..), :: AsyncAction
+import iTasks.Internal.TaskEval
 from iTasks.SDS.Combinators.Common import toDynamic
 from iTasks.Internal.Serialization    import JSONEncode, JSONDecode, dynamicJSONEncode, dynamicJSONDecode
 
@@ -111,18 +112,18 @@ where
 		= (toDyn <$> mbl, out, env)
 	onDestroy` l env = abort ("onDestroy does not match with type l=" +++ toString (typeCodeOfDynamic l))
 
-mkInstantTask :: (TaskId *IWorld -> (!MaybeError (Dynamic,String) a,!*IWorld)) -> Task a | iTask a
-mkInstantTask iworldfun = Task (evalOnce iworldfun)
+mkInstantTask :: (TaskId *IWorld -> (MaybeError TaskException a,*IWorld)) -> Task a | iTask a
+mkInstantTask iworldfun = Task eval
 where
-	evalOnce f DestroyEvent _ _ iworld = (DestroyedResult,iworld)
-	evalOnce f event repOpts (TCInit taskId ts) iworld = case f taskId iworld of
-		(Ok a,iworld)							= (ValueResult (Value a True) {lastEvent=ts,removedTasks=[],attributes='DM'.newMap} (rep event) (TCStable taskId ts (DeferredJSON a)), iworld)
-		(Error e, iworld)					    = (ExceptionResult e, iworld)
+	eval DestroyEvent _ iworld = (DestroyedResult, iworld)
+	eval event {taskId,lastEval} iworld
+		= case iworldfun taskId iworld of
+			(Ok a,iworld)     = (ValueResult (Value a True) (mkTaskEvalInfo lastEval) (mkUIIfReset event (ui UIEmpty)) (treturn a), iworld)
+			(Error e, iworld) = (ExceptionResult e, iworld)
 
-	evalOnce f event repOpts state=:(TCStable taskId ts enc) iworld = case fromJSONOfDeferredJSON enc of
-		Just a	= (ValueResult (Value a True) {lastEvent=ts,attributes='DM'.newMap,removedTasks=[]} (rep event) state, iworld)
-		Nothing	= (ExceptionResult (exception "Corrupt task result"), iworld)
-
-	rep ResetEvent  = ReplaceUI (ui UIEmpty)
-	rep _ 			= NoChange
-
+nopTask :: Task a
+nopTask = Task eval
+where
+	eval DestroyEvent _ iworld = (DestroyedResult, iworld)
+	eval event {lastEval} iworld
+		= (ValueResult NoValue (mkTaskEvalInfo lastEval) (mkUIIfReset event (ui UIEmpty)) (Task eval), iworld)

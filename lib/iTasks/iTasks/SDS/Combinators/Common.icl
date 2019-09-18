@@ -13,6 +13,7 @@ import Data.Maybe, Data.Error, Data.Either, StdString
 import Text.GenJSON
 import System.FilePath
 import iTasks.Internal.SDS
+import iTasks.WF.Derives
 
 sdsFocus :: !p !(sds p r w) -> (SDSLens p` r w) | gText{|*|} p & JSONEncode{|*|} p & TC p & TC r & TC w & RWShared sds
 sdsFocus p sds = sdsTranslate ("("+++ toString (toJSON p)+++")/") (const p) sds
@@ -38,7 +39,7 @@ sdsTranslate name param sds = sdsLens name param
   (Just \p ws. Ok (ws))
   sds
 
-sdsSplit :: !String !(p -> (ps,pn)) !(pn rs -> r) !(pn rs w -> (ws,SDSNotifyPred pn)) !(Maybe (!SDSReducer p ws w)) !(sds ps rs ws) -> SDSLens p r w | gText{|*|} ps & TC ps & gText{|*|} pn & TC pn & TC rs  & TC ws & RWShared sds
+sdsSplit :: !String !(p -> (ps,pn)) !(pn rs -> r) !(pn rs w -> (ws,SDSNotifyPred pn)) !(Maybe (SDSReducer p ws w)) !(sds ps rs ws) -> SDSLens p r w | gText{|*|} ps & TC ps & gText{|*|} pn & TC pn & TC rs  & TC ws & RWShared sds
 sdsSplit name param read write reducer sds = sdsLens name param` (SDSRead read`) (SDSWrite write`) (SDSNotify notify`) reducer sds
 where
     param` p            = fst (param p)

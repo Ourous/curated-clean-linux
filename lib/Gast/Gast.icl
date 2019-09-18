@@ -8,4 +8,5 @@ implementation module Gast
 	The Netherlands
 	pieter@cs.ru.nl
 */
-	
+import Math.Random, Data.GenEq
+import Gast.Gen, Gast.GenLibTest, Gast.Testable, Gast.StdProperty, Gast.ConfSM

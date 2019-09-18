@@ -6,7 +6,7 @@ from Data.Functor import class Functor
 from Control.Applicative import class pure, class <*>, class Applicative
 from Control.Monad import class Monad
 
-mapArrSt :: !(.a -> .(*st -> *(!.a, !*st))) !*(arr .a) !*st -> *(!*(arr .a), !*st) | Array arr a
+mapArrSt :: !(.a -> .(*st -> *(.a, *st))) !*(arr .a) !*st -> *(!*(arr .a), !*st) | Array arr a
 
 foldrArr :: !(a .b -> .b) !.b !.(arr a) -> .b | Array arr a
 

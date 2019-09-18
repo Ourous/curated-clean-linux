@@ -11,6 +11,7 @@ import Data.GenEq
 import Data.Either
 import Data.Error
 import Data.Maybe
+import iTasks.WF.Derives
 import StdTuple
 
 import Internet.HTTP

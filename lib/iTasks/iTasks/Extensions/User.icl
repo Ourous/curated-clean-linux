@@ -1,4 +1,5 @@
 implementation module iTasks.Extensions.User
+
 import iTasks
 import Text
 import Data.Functor, Data.Either, Data.Maybe
@@ -136,17 +137,18 @@ where
 
 userFromAttr :: a TaskAttributes -> MaybeError TaskException User
 userFromAttr _ attr = case 'DM'.get "auth-user" attr of
-	Just userId 	= Ok (AuthenticatedUser userId (maybe [] (split ",") ('DM'.get "auth-roles" attr)) ('DM'.get "auth-title" attr))
+	Just (JSONString userId) 
+		= Ok (AuthenticatedUser userId (maybe [] (\(JSONString s) -> split "," s) ('DM'.get "auth-roles" attr)) (fmap toString ('DM'.get "auth-title" attr)))
 	_ 				= case 'DM'.get "session" attr of
-		Just session 	= Ok (AnonymousUser session)
-		_				= Ok SystemUser
+		Just (JSONString session) 	= Ok (AnonymousUser session)
+		_							= Ok SystemUser
 
 userToAttr :: a TaskAttributes User -> MaybeError TaskException (Maybe TaskAttributes)
 userToAttr _ attr (AuthenticatedUser userId userRoles userTitle)
 	//Update user properties
-	# attr = 'DM'.put "auth-user" userId attr
-	# attr = if (isEmpty userRoles) ('DM'.del "auth-roles" attr) ('DM'.put "auth-roles" (join "," userRoles) attr)
-	# attr = maybe ('DM'.del "auth-title" attr) (\title -> 'DM'.put "auth-title" title attr) userTitle
+	# attr = 'DM'.put "auth-user" (JSONString userId) attr
+	# attr = if (isEmpty userRoles) ('DM'.del "auth-roles" attr) ('DM'.put "auth-roles" (JSONString (join "," userRoles)) attr)
+	# attr = maybe ('DM'.del "auth-title" attr) (\title -> 'DM'.put "auth-title" (JSONString title) attr) userTitle
 	= Ok (Just attr) 
 userToAttr _ attr _
 	//Remove user properties
@@ -164,11 +166,11 @@ where
 	readPrj (items,user)	= filter (forWorker user) items
 
 forWorker user {TaskListItem|attributes} = case 'DM'.get "user" attributes of
-    Just uid1 = case user of
+    Just (JSONString uid1) = case user of
         (AuthenticatedUser uid2 _ _)    = uid1 == uid2
         _                               = False
     Nothing = case 'DM'.get "role" attributes of
-        Just role = case user of
+        Just (JSONString role) = case user of
             (AuthenticatedUser _ roles _)   = isMember role roles
             _                               = False
         Nothing = True
@@ -181,12 +183,12 @@ where
 	notify _ _ _ = const (const False)
 
 	forUser user {TaskInstance|attributes} = case 'DM'.get "user" attributes of
-	    Just uid1 = case user of
+	    Just (JSONString uid1) = case user of
 			(AuthenticatedUser uid2 _ _)    = uid1 == uid2
 			_                               = False
 
 		Nothing = case 'DM'.get "role" attributes of
-			Just role = case user of
+			Just (JSONString role) = case user of
 				(AuthenticatedUser _ roles _)   = isMember role roles
 				_                               = False
 			Nothing = True
@@ -208,7 +210,7 @@ workOn t
 	= 			 		get currentUser -&&- get (sdsFocus no taskInstanceAttributesByNo)
 	>>- \(user,attr) -> set user (sdsFocus no taskInstanceUser)
 	//Attach the instance
-	>>|			 		attach no True <<@ Title (fromMaybe "Untitled" ('DM'.get "title" attr))
+	>-|			 		attach no True <<@ Title (maybe "Untitled" (\(JSONString t) -> t) ('DM'.get "title" attr))
 where
 	no = toInstanceNo t
 /*
@@ -218,13 +220,9 @@ where
 */
 workAs :: !User !(Task a) -> Task a | iTask a
 workAs asUser task
-	= 	get currentUser
-	>>- \prevUser -> 
-		set asUser currentUser
-	>>| ((task 
-	>>- \tvalue -> //TODO: What if the wrapped task never becomes stable? And what if the composition is terminated early because of a step?
-		set prevUser currentUser
-	@!	tvalue) <<@ ApplyLayout unwrapUI)
+	=   get currentUser
+	>>- \prevUser->set asUser currentUser
+	>-| withCleanupHook (set prevUser currentUser) task
 /*
 * When a task is assigned to a user a synchronous task instance process is created.
 * It is created once and loaded and evaluated on later runs.
@@ -235,7 +233,7 @@ assign attr task
 	@?	result
 where
 	processControl tlist
-		= viewSharedInformation () [ViewAs toView] (sdsFocus filter tlist) @? const NoValue
+		= viewSharedInformation [ViewAs toView] (sdsFocus filter tlist) @? const NoValue
     where
         filter = {TaskListFilter|onlySelf=False,onlyTaskId = Nothing, onlyIndex = Just [1]
                  ,includeValue=False,includeAttributes=True,includeProgress=True}
@@ -271,33 +269,32 @@ where
 						}
 derive class iTask ProcessControlView
 
-workerAttributes :: worker [(String, String)] -> TaskAttributes | toUserConstraint worker
+workerAttributes :: worker [(String, JSONNode)] -> TaskAttributes | toUserConstraint worker
 workerAttributes worker attr = case toUserConstraint worker of
     AnyUser           = 'DM'.newMap
-    UserWithId uid    = 'DM'.fromList [("user", uid):attr]
-    UserWithRole role = 'DM'.fromList [("role", role):attr]
+    UserWithId uid    = 'DM'.fromList [("user", JSONString uid):attr]
+    UserWithRole role = 'DM'.fromList [("role", JSONString role):attr]
     
 (@:) infix 3 :: !worker !(Task a) -> Task a | iTask a & toUserConstraint worker
 (@:) worker task
   =                get currentUser -&&- get currentDateTime
   >>- \(me,now) -> assign (workerAttributes worker
-                             [ ("title",      toTitle worker)
-                             , ("createdBy",  toString (toUserConstraint me))
-                             , ("createdAt",  toString now)
-                             , ("priority",   toString 5)
-                             , ("createdFor", toString (toUserConstraint worker))
+                             [ ("title",      toJSON (toTitle worker))
+                             , ("createdBy",  toJSON (toUserConstraint me))
+                             , ("createdAt",  toJSON now)
+                             , ("priority",   toJSON 5)
+                             , ("createdFor", toJSON (toUserConstraint worker))
                              ])
                           task
-
 appendTopLevelTaskPrioFor :: !worker !String !String !Bool !(Task a) -> Task TaskId | iTask a & toUserConstraint worker
 appendTopLevelTaskPrioFor worker title priority evalDirect task 
 	= 				  get currentUser -&&- get currentDateTime
   	>>- \(me,now) ->  appendTopLevelTask (workerAttributes worker 
-  							 [ ("title",      title)
-                             , ("createdBy",  toString (toUserConstraint me))
-                             , ("createdAt",  toString now)
-                             , ("priority",   priority)
-                             , ("createdFor", toString (toUserConstraint worker))
+  							 [ ("title",      toJSON title)
+                             , ("createdBy",  toJSON (toUserConstraint me))
+                             , ("createdAt",  toJSON now)
+                             , ("priority",   toJSON priority)
+                             , ("createdFor", toJSON (toUserConstraint worker))
                              ]) evalDirect task
 
 appendTopLevelTaskFor :: !worker !Bool !(Task a) -> Task TaskId | iTask a & toUserConstraint worker

@@ -172,13 +172,17 @@ where
 			((dynamicCompoundEditor $ editor p).CompoundEditor.onEdit dp event mbSt childSts vst)
 
 	onRefresh dp (p, new) st=:(p`, mbSt) childSts vst
-		= appFst
-			(fmap $ appSnd3 \st -> (p, st))
-			((dynamicCompoundEditor $ editor p).CompoundEditor.onRefresh dp new mbSt childSts vst)
+		| p === p` =
+			appFst
+				(fmap $ appSnd3 \st -> (p, st))
+				((dynamicCompoundEditor $ editor p).CompoundEditor.onRefresh dp new mbSt childSts vst)
+		| otherwise =
+			appFst
+				(fmap $ \(ui, st, childSts) -> (ReplaceUI ui, (p, st), childSts))
+				((dynamicCompoundEditor $ editor p).CompoundEditor.genUI 'Map'.newMap dp (Update new) vst)
 
 	valueFromState (p, st) childSts
 		= (\val -> (p, val)) <$> (dynamicCompoundEditor $ editor p).CompoundEditor.valueFromState st childSts
-
 
 dynamicEditor :: !(DynamicEditor a) -> Editor (DynamicEditorValue a) | TC a
 dynamicEditor dynEditor = compoundEditorToEditor $ dynamicCompoundEditor dynEditor

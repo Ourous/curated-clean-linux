@@ -190,11 +190,15 @@ where
 	consfun c = (c.cons_name, Func c.cons_args ret c.cons_context, c.cons_priority)
 	where ret = if td_uniq Uniq id $ Type td_name td_args
 
-recordsToFunctions :: !TypeDef -> [(String,Type)]
-recordsToFunctions {td_name,td_uniq,td_args,td_rhs=TDRRecord _ _ fields}
-	= [(f.rf_name, Func [arg] f.rf_type []) \\ f <- fields]
-where arg = if td_uniq Uniq id $ Type td_name td_args
-recordsToFunctions _ = []
+selectorsToFunctions :: !TypeDef -> [(String,Type)]
+selectorsToFunctions {td_name,td_uniq,td_args,td_rhs=TDRRecord _ _ fields}
+	= [(f.rf_name, Func [strict arg] (unStrict f.rf_type) []) \\ f <- fields]
+where
+	arg = if td_uniq Uniq id $ Type td_name td_args
+	unStrict t = case t of
+		Strict t -> t
+		t        -> t
+selectorsToFunctions _ = []
 
 td_name :: !TypeDef -> String
 td_name {td_name} = td_name
@@ -204,6 +208,11 @@ td_uniq {td_uniq} = td_uniq
 
 td_rhs :: !TypeDef -> TypeDefRhs
 td_rhs {td_rhs} = td_rhs
+
+strict :: !Type -> Type
+strict t = case t of
+	Strict _ -> t
+	_ -> Strict t
 
 typedef :: !String !Bool ![Type] !TypeDefRhs -> TypeDef
 typedef name uniq args rhs

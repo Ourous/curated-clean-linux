@@ -23,22 +23,22 @@ from Text import instance + String
 createReadWriteSDS ::
 	!String
 	!String
-	!(p *IWorld -> *(!MaybeError TaskException r, !*IWorld))
-	!(p w *IWorld -> *(!MaybeError TaskException (SDSNotifyPred p), !*IWorld))
+	!(p *IWorld -> *(MaybeError TaskException r, *IWorld))
+	!(p w *IWorld -> *(MaybeError TaskException (SDSNotifyPred p), *IWorld))
 	->
 	SDSSource p r w
 createReadWriteSDS ns id read write
 	= createSDS ns id read write
 
 createReadOnlySDS ::
-	!(p *IWorld -> *(!r, !*IWorld))
+	!(p *IWorld -> *(r, *IWorld))
 	->
 	SDSSource p r ()
 createReadOnlySDS read
 	= createReadOnlySDSError (\p iworld -> appFst Ok (read p iworld))
 
 createReadOnlySDSError ::
-	!(p *IWorld -> *(!MaybeError TaskException r, !*IWorld))
+	!(p *IWorld -> *(MaybeError TaskException r, *IWorld))
 	->
 	SDSSource p r ()
 createReadOnlySDSError read
@@ -47,8 +47,8 @@ createReadOnlySDSError read
 createSDS ::
 	!String
 	!String
-	!(p *IWorld -> *(!MaybeError TaskException r, !*IWorld))
-	!(p w *IWorld -> *(!MaybeError TaskException (SDSNotifyPred p), !*IWorld))
+	!(p *IWorld -> *(MaybeError TaskException r, *IWorld))
+	!(p w *IWorld -> *(MaybeError TaskException (SDSNotifyPred p), *IWorld))
 	->
 	SDSSource p r w
 createSDS ns id read write = SDSSource
@@ -134,7 +134,7 @@ checkRegistrations sdsId pred iworld
 	= (match,nomatch,iworld)
 where
 	//Find all notify requests for the given share id
-	lookupRegistrations :: String !*IWorld -> (![(!SDSNotifyRequest, !Timespec)], !*IWorld)
+	lookupRegistrations :: String !*IWorld -> (![(SDSNotifyRequest, Timespec)], !*IWorld)
 	lookupRegistrations sdsId iworld=:{sdsNotifyRequests} =
 		('DM'.toList $ 'DM'.findWithDefault 'DM'.newMap sdsId sdsNotifyRequests, iworld)
 
@@ -223,11 +223,6 @@ where
 			(Error e,iworld)
 				# (errors,iworld) = flushAll rest iworld
 				= ([e:errors],iworld)
-
-dynamicResult :: (*IWorld -> (MaybeError TaskException a, !*IWorld)) !*IWorld -> (MaybeError TaskException Dynamic, !*IWorld) | TC a
-dynamicResult f iworld = case f iworld of
-	(Error e, iworld)   = (Error e, iworld)
-	(Ok a, iworld)      = (Ok (dynamic a), iworld)
 
 instance Identifiable SDSSource
 where

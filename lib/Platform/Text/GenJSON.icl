@@ -1,7 +1,7 @@
 implementation module Text.GenJSON
 
 import StdGeneric, Data.Maybe, StdList, StdOrdList, StdString, _SystemArray, StdTuple, StdBool, StdFunc, StdOverloadedList, StdFile
-import Data.List, Text, Text.PPrint, Text.GenJSON, Data.GenEq
+import Data.Func, Data.List, Text, Text.PPrint, Text.GenJSON, Data.GenEq
 
 //Basic JSON serialization
 instance toString JSONNode
@@ -29,7 +29,7 @@ sizeOf (JSONArray x)
 //For objects we need to allocate extra size for the enclosing braces, comma's and labels
 sizeOf (JSONObject x)
   #! len = length x
-  = (if (len > 0) (foldl (\s (l,o) -> s + size l + 2 + 1 + sizeOf o) (len - 1) x) 0) + 2
+  = (if (len > 0) (foldl (\s (l,o) -> s + sizeOf (JSONString l) + 1 + sizeOf o) (len - 1) x) 0) + 2
 sizeOf (JSONRaw x)      = size x
 sizeOf (JSONError)      = 0
 
@@ -40,15 +40,12 @@ where
 	count i s n
 		| i < size s
 			#! c = s.[i]
-			| c == '"' || c == '/' || c == '\b' || c == '\f' || c == '\n' || c == '\r' || c == '\t' || c == '\\'
+			| c == '"' || c == '\b' || c == '\f' || c == '\n' || c == '\r' || c == '\t' || c == '\\'
 				= count (i + 1) s (n + 1) //We'll add a '\' to escape
-			| needsUniEscape c
+			| c < ' '
 				= count (i + 1) s (n + 5) //We'll replace the character by '\uXXXX'
 			= count(i + 1) s n
 		= n
-
-needsUniEscape :: Char -> Bool
-needsUniEscape c = c < ' ' || c >= '\x7f'
 
 //Copy structure to a string
 copyNode :: !Int !JSONNode !*{#Char} -> *(!Int, !*{#Char})
@@ -81,13 +78,15 @@ copyNode start (JSONObject items) buffer
 	#! (start, buffer) = copyObjectItems start items buffer
 	= (start + 1, {buffer &	[start] = '}'})
 where
-    copyObjectItems :: !Int ![(!String, !JSONNode)] !*String -> *(!Int, !*String)
+    copyObjectItems :: !Int ![(String, JSONNode)] !*String -> *(!Int, !*String)
 	copyObjectItems start [] buffer = (start,buffer)
 	copyObjectItems start [(l,x)] buffer
-		# (start,buffer) = let len = size l in (start + len + 3 , copyChars (start + 1) len l {buffer & [start] = '"', [start + len + 1] = '"', [start + len + 2] = ':'})
+		# (start,buffer) = copyNode start (JSONString l) buffer
+		# (start,buffer) = (start + 1, {buffer & [start] = ':'})
 		= copyNode start x buffer
 	copyObjectItems start [(l,x):xs] buffer
-		# (start,buffer) = let len = size l in (start + len + 3 , copyChars (start + 1) len l {buffer & [start] = '"', [start + len + 1] = '"', [start + len + 2] = ':'})
+		# (start,buffer) = copyNode start (JSONString l) buffer
+		# (start,buffer) = (start + 1, {buffer & [start] = ':'})
 		# (start,buffer) = copyNode start x buffer
 		= copyObjectItems (start + 1) xs {buffer & [start] = ','}
 copyNode start (JSONRaw x) buffer	= (start + size x, copyChars start (size x) x buffer) 	
@@ -119,11 +118,11 @@ copyAndEscapeChars soffset doffset num src dst
 	| num > 0
 		#! c = src.[soffset]
 		//Check for special characters
-		| c == '"' || c == '/' || c == '\b' || c == '\f' || c == '\n' || c == '\r' || c == '\t' || c == '\\'
+		| c == '"' || c == '\b' || c == '\f' || c == '\n' || c == '\r' || c == '\t' || c == '\\'
 			#! dst & [doffset] = '\\'
 			#! dst & [doffset + 1] = charOf c
 			= copyAndEscapeChars (soffset + 1) (doffset + 2) (num - 1) src dst	
-		| needsUniEscape c
+		| c < ' '
             #! cint = toInt c
 			#! dst & [doffset] = '\\'
 			#! dst & [doffset + 1] = 'u'
@@ -139,7 +138,6 @@ copyAndEscapeChars soffset doffset num src dst
 	= dst
 where
 	charOf '"' = '"'
-	charOf '/' = '/'
 	charOf '\b' = 'b'
 	charOf '\f' = 'f'
 	charOf '\n' = 'n'
@@ -319,7 +317,7 @@ where
 			= (JSONObject [], offset+1)
 			= parse_object_items offset [] offset input
 	where
-		parse_object_items :: !Int !*[(!{#Char}, !JSONNode)] !Int !{#Char} -> (!JSONNode,!Int)
+		parse_object_items :: !Int !*[({#Char}, JSONNode)] !Int !{#Char} -> (!JSONNode,!Int)
 		parse_object_items offset items offset_after_bracket_open input
 			| offset<size input
 				| input.[offset]=='"'
@@ -363,7 +361,7 @@ where
 						= (jsonUnescape string, offset+1)
 					= ("",-1) // missing '"'
 
-		parse_object_items_after_label_and_colon :: !{#Char} !Int !*[(!{#Char}, !JSONNode)] !Int !{#Char} -> (!JSONNode,!Int)
+		parse_object_items_after_label_and_colon :: !{#Char} !Int !*[({#Char}, JSONNode)] !Int !{#Char} -> (!JSONNode,!Int)
 		parse_object_items_after_label_and_colon label offset items offset_after_brace_open input
 			#! (item,offset) = parse offset input
 			| offset<size input && input.[offset]==','
@@ -531,7 +529,7 @@ JSONDecode{|UNIT|} _ l					= (Just UNIT, l)
 
 JSONDecode{|PAIR|} fx fy _ l = d1 fy (fx False l) l
   where
-  d1 :: !(Bool [JSONNode] -> (!Maybe b, ![JSONNode])) !(!Maybe a, ![JSONNode]) ![JSONNode]
+  d1 :: !(Bool [JSONNode] -> (Maybe b, [JSONNode])) !(!Maybe a, ![JSONNode]) ![JSONNode]
      -> (!Maybe (PAIR a b), ![JSONNode])
   d1 fy (Just x,xs)  l = d2 x (fy False xs) l
   d1 _  (Nothing, _) l = (Nothing, l)
@@ -575,7 +573,7 @@ JSONDecode{|FIELD of {gfd_name}|} fx _ l =:[JSONObject fields]
       (Just x, _) = (Just (FIELD x), l)
       (_, _)      = (Nothing, l)
   where
-  findField :: !String ![(!String, !JSONNode)] -> [JSONNode]
+  findField :: !String ![(String, JSONNode)] -> [JSONNode]
   findField match [(l,x):xs]
     | l == match = [x]
     | otherwise  = findField match xs
@@ -708,7 +706,7 @@ JSONDecode{|{!}|} fx _ l =:[JSONArray items:xs]
 		_				= (Nothing, l)
 JSONDecode{|{!}|} fx _ l = (Nothing, l)
 
-decodeItems :: !(Bool [JSONNode] -> (!Maybe a, ![JSONNode])) ![JSONNode] -> Maybe [a]
+decodeItems :: !(Bool [JSONNode] -> (Maybe a, [JSONNode])) ![JSONNode] -> Maybe [a]
 decodeItems fx [] 		= Just []
 decodeItems fx [ox:oxs]	= case fx False [ox] of
 	(Just x, _)	= case decodeItems fx oxs of
@@ -753,29 +751,33 @@ where
 		| otherwise								= Nothing
 	findNode _ _		= Nothing
 	
-    findField :: !String ![(!String, !JSONNode)] -> Maybe JSONNode
+    findField :: !String ![(String, JSONNode)] -> Maybe JSONNode
 	findField s []			= Nothing
 	findField s [(l,x):xs]	= if (l == s) (Just x) (findField s xs)
 
-instance == JSONNode where
-  (==) JSONNull        JSONNull        = True
-  (==) (JSONBool x)    (JSONBool y)    = x == y
-  (==) (JSONInt x)     (JSONInt y)     = x == y
-  (==) (JSONReal x)    (JSONReal y)    = toString x == toString y
-  (==) (JSONInt x)     (JSONReal y)    = toString (toReal x) == toString y
-  (==) (JSONReal x)    (JSONInt y)     = toString x == toString (toReal y)
-  (==) (JSONString x)  (JSONString y)  = x == y
-  (==) (JSONArray xs)  (JSONArray ys)  = xs == ys
-  (==) (JSONObject xs) (JSONObject ys) = sortBy cmpFst (filter (notNull o snd) xs) == sortBy cmpFst (filter (notNull o snd) ys)
-    where
-    cmpFst :: !(!a, b) !(!a, c) -> Bool | < a
-    cmpFst a b = fst a < fst b
-    notNull :: !JSONNode -> Bool
-    notNull JSONNull = False
-    notNull _        = True
-  (==) (JSONRaw x)     (JSONRaw y)     = x == y
-  (==) JSONError       JSONError       = True
-  (==) _               _               = False
+instance == JSONNode
+where
+	// NB: put the most frequently encountered constructors at the top for performance
+	== (JSONObject xs) y = case y of
+		JSONObject ys
+			-> sortBy cmpFst xs == sortBy cmpFst ys
+			-> False
+	where
+		cmpFst = (<) `on` fst
+	== (JSONArray x)   y = case y of JSONArray y  -> x==y; _ -> False
+	== (JSONString x)  y = case y of JSONString y -> x==y; _ -> False
+	== (JSONInt x)     y = case y of
+		JSONInt y  -> x==y
+		JSONReal y -> toString (toReal x) == toString y
+		_          -> False
+	== (JSONReal x)    y = case y of
+		JSONReal y -> x==y
+		JSONInt y  -> toString (toReal y) == toString x
+		_          -> False
+	== JSONNull        y = y=:JSONNull
+	== (JSONBool x)    y = case y of JSONBool y -> x==y; _ -> False
+	== (JSONRaw x)     y = case y of JSONRaw y    -> x==y; _ -> False
+	== JSONError       y = y=:JSONError
 
 gEq{|JSONNode|} x y = x == y
 

@@ -11,10 +11,11 @@ definition module Gast.Testable
 	pieter@cs.ru.nl
 */
 
+from StdMaybe import :: Maybe(Nothing)
 import Gast.GenLibTest 
 from Gast.StdProperty import ::Property // for instance of testable
 import Gast.Gen
-from Testing.TestEvents import :: CounterExample, :: FailedAssertion
+from Testing.TestEvents import :: TestLocation, :: CounterExample, :: FailedAssertion
 from Text.GenPrint import class PrintOutput, :: PrintState, generic gPrint
 
 //--- basics --//
@@ -25,8 +26,8 @@ from Text.GenPrint import class PrintOutput, :: PrintState, generic gPrint
 	, argsRepresentation    :: ![String]
 	, namePath              :: ![String]
 	, res                   :: !Result
-	, failedAssertions      :: ![(!FailedAssertion, !String, !String)] //* Failed assertion & string representation of args
-	, recFieldValueNrLimits :: !Map (TypeName, RecFieldName) Int       //* Restricts the number of values generated for record fields
+	, failedAssertions      :: ![(FailedAssertion, String, String)] //* Failed assertion & string representation of args
+	, recFieldValueNrLimits :: !Map (TypeName, RecFieldName) Int    //* Restricts the number of values generated for record fields
 	}
 :: Result = Undef | Rej | Pass | OK | CE
 newAdmin :: Admin
@@ -34,15 +35,19 @@ newAdmin :: Admin
 derive gLess Result
 instance == Result
 
-:: Property = Prop String (GenState Admin -> [Admin])
+:: Property = Prop String (Maybe TestLocation) (GenState Admin -> [Admin])
 
 prop :: a -> Property | Testable a
 
 class TestArg a | genShow{|*|}, ggen{|*|}, gPrint{|*|} a
+
 class Testable a
 where
 	evaluate :: !a GenState !Admin -> [Admin]
 	testname :: a -> String
+
+	testlocation :: a -> Maybe TestLocation
+	testlocation _ = Nothing
 
 instance Testable Bool
 instance Testable Result
@@ -71,15 +76,16 @@ generateAll :: !GenState -> [a] | ggen{|*|} a //& genType{|*|} a
 //--- testing --//
 
 :: Testoption
-	= Tests      Int
-	| Fails      Int
-	| Args       Int
-	| RandomSeed Int
-	| RandomList [Int]
-	| Skew       Int
+	= Tests           !Int
+	| Fails           !Int
+	| Args            !Int
+	| RandomSeed      !Int
+	| RandomList      ![Int]
+	| Skew            !Int
 	| Bent
-	| MaxDepth   Int
-	| ArgTypes   [GenType]
+	| MaxDepth        !Int
+	| MaxStringLength !Int
+	| ArgTypes        ![GenType]
 
 /**
  * The combined results of all tests for a single property.
@@ -109,14 +115,14 @@ generateAll :: !GenState -> [a] | ggen{|*|} a //& genType{|*|} a
 	, args               :: ![String] //* Arguments used for test (string representation)
 	, argsRepresentation :: ![String] //* Arguments used for test ({{`gPrint`}} encoding)
 	, name               :: !String   //* Name of property
-	, failedAssertions   :: ![(!FailedAssertion, !String, !String)] //* Failed assertions leading to counter example & string representation of arguments
+	, failedAssertions   :: ![(FailedAssertion, String, String)] //* Failed assertions leading to counter example & string representation of arguments
 	}
 
 :: GastEvent
-	= GE_TestStarted String
-	| GE_TestFinished String TestsResult [CounterExampleRes] [(String,Int)]
-	| GE_CounterExample CounterExampleRes
-	| GE_Tick Int Admin
+	= GE_TestStarted !(Maybe TestLocation) !String
+	| GE_TestFinished !(Maybe TestLocation) !String !TestsResult ![CounterExampleRes] ![(String,Int)]
+	| GE_CounterExample !CounterExampleRes
+	| GE_Tick !Int !Admin
 
 :: PrintOption
 	= Verbose
@@ -128,8 +134,8 @@ generateAll :: !GenState -> [a] | ggen{|*|} a //& genType{|*|} a
 :: PrintConfig =
 	{ everyOutput          :: Int Admin -> String
 	, counterExampleOutput :: CounterExampleRes -> String
-	, beforeStartOutput    :: String -> String
-	, resultOutput         :: String TestsResult [CounterExampleRes] [(!String, !Int)] -> String
+	, beforeStartOutput    :: (Maybe TestLocation) String -> String
+	, resultOutput         :: (Maybe TestLocation) String TestsResult [CounterExampleRes] [(String, Int)] -> String
 	}
 
 printEvents :: PrintConfig [GastEvent] -> [String]

@@ -79,7 +79,7 @@ unzip5          :: ![(.a,.b,.c,.d,.e)] -> ([.a],[.b],[.c],[.d],[.e])
  * @result The original list, with all elements x for which p r x holds replaced by r
  */
 replaceInList   :: !(a a -> Bool) !a ![a] -> [a]
-sortByIndex     :: ![(!Int,!a)] -> [a]
+sortByIndex     :: ![(Int,a)] -> [a]
 intersperse     :: !a ![a] -> [a]
 intercalate     :: !.[a] ![.[a]] -> .[a]
 transpose       :: ![[a]] -> [.[a]]
@@ -148,17 +148,17 @@ strictTRMapAcc      :: !(u:a -> v:b) !w:[u:a] !x:[v:b] -> y:[v:b], [w <= u,y <= 
 strictTRMap         :: !(.a -> .b) ![.a] -> [.b]
 reverseTR           :: ![.a] -> [.a]
 flattenTR           :: ![[a]] -> [a]
-strictTRMapSt       :: !(a .st -> (!b, !.st)) ![a] !.st -> (![b], !.st)
-strictTRMapStAcc    :: !(a .st -> (!b, !.st)) ![a] ![b] !.st -> (![b], !.st)
+strictTRMapSt       :: !(a .st -> (b, .st)) ![a] !.st -> (![b], !.st)
+strictTRMapStAcc    :: !(a .st -> (b, .st)) ![a] ![b] !.st -> (![b], !.st)
 strictTRZipWith     :: !(a b -> c) ![a] ![b] -> [c]
 strictTRZipWithRev  :: !(a b -> c) ![a] ![b] -> [c]
 strictTRZipWithAcc  :: !(a b -> c) ![a] ![b] ![c] -> [c]
-strictTRZip4        :: ![a] ![b] ![c] ![d] -> [(!a, !b, !c, !d)]
-strictTRZip4Rev     :: ![a] ![b] ![c] ![d] -> [(!a, !b, !c, !d)]
-strictTRZip4Acc     :: ![a] ![b] ![c] ![d] ![(!a, !b, !c, !d)] -> [(!a, !b, !c, !d)]
-strictTRZip2        :: ![a] ![b]-> [(!a, !b)]
-strictTRZip2Rev     :: ![a] ![b]-> [(!a, !b)]
-strictTRZip2Acc     :: ![a] ![b] ![(!a, !b)] -> [(!a, !b)]
+strictTRZip4        :: ![a] ![b] ![c] ![d] -> [(a, b, c, d)]
+strictTRZip4Rev     :: ![a] ![b] ![c] ![d] -> [(a, b, c, d)]
+strictTRZip4Acc     :: ![a] ![b] ![c] ![d] ![(a, b, c, d)] -> [(a, b, c, d)]
+strictTRZip2        :: ![a] ![b]-> [(a, b)]
+strictTRZip2Rev     :: ![a] ![b]-> [(a, b)]
+strictTRZip2Acc     :: ![a] ![b] ![(a, b)] -> [(a, b)]
 strictTRZipWith3    :: !(a b c -> d) ![a] ![b] ![c] -> [d]
 strictTRZipWith3Rev :: !(a b c -> d) ![a] ![b] ![c] -> [d]
 strictTRZipWith3Acc :: !(a b c -> d) ![a] ![b] ![c] ![d] -> [d]

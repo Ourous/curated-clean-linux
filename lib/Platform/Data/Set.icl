@@ -40,8 +40,21 @@ gEq{|Set|} eEq x y = (size x == size y) && gEq{|* -> *|} eEq (toAscList x) (toAs
 gLexOrd{|Set|} eLexOrd x y = gLexOrd{|* -> *|} eLexOrd (toAscList x) (toAscList y)
 
 instance Foldable Set where
+	foldr :: (a .b -> .b) .b !(Set a) -> .b
 	foldr _ z Tip           = z
 	foldr f z (Bin _ x l r) = foldr f (f x (foldr f z r)) l
+
+	foldr` :: (a .b -> .b) !.b !(Set a) -> .b
+	foldr` _ z Tip           = z
+	foldr` f z (Bin _ x l r) = foldr` f (f x (foldr` f z r)) l
+
+	foldl :: (.b -> .(a -> .b)) .b !(Set a) -> .b
+	foldl _ z Tip           = z
+	foldl f z (Bin _ x l r) = foldl f (f (foldl f z l) x) r
+
+	foldl` :: (.b -> .(a -> .b)) !.b !(Set a) -> .b
+	foldl` _ z Tip           = z
+	foldl` f z (Bin _ x l r) = foldl` f (f (foldl` f z l) x) r
 
 /*--------------------------------------------------------------------
  * Query

@@ -58,12 +58,12 @@ where
 	mkRow {TaskInstance|instanceNo,attributes,listId} =
 		{WorklistRow
 		|taskNr		= Just (toString instanceNo)
-		,title      = fmap toString ('DM'.get "title"          attributes)
-		,priority   = fmap toString ('DM'.get "priority"       attributes)
-		,createdBy	= fmap toString ('DM'.get "createdBy"      attributes)
-		,date       = fmap toString ('DM'.get "createdAt"      attributes)
+		,title      = fmap (\(JSONString x) -> x) ('DM'.get "title" attributes)
+		,priority   = fmap (\(JSONInt x) -> toString x) ('DM'.get "priority" attributes)
+		,createdBy	= fmap toString ('DM'.get "createdBy" attributes)
+		,date       = fmap toString ('DM'.get "createdAt" attributes)
 		,deadline   = fmap toString ('DM'.get "completeBefore" attributes)
-		,createdFor = fmap toString ('DM'.get "createdFor"     attributes)
+		,createdFor = fmap toString ('DM'.get "createdFor" attributes)
 		,parentTask = if (listId == TaskId 0 0) Nothing (Just (toString listId))
 		}
 
@@ -116,11 +116,14 @@ loginAndManageWork applicationName loginMessage welcomeMessage allowGuests
 		(((	identifyApplication applicationName loginMessage
 			||-
 			(anyTask [
-	 				enterInformation ("Authenticated access","Enter your credentials and login") [] @ Just
+	 				Title "Authenticated access" @>> Hint "Enter your credentials and login" @>> enterInformation [] @ Just
 				>>* [OnAction (Action "Login")  (hasValue return)]
 				:if allowGuests
-					[viewInformation ("Guest access","Alternatively, you can continue anonymously as guest user") [] ()
-					 >>| (return Nothing)
+					[
+						Title "Guest access" @>>
+						Hint "Alternatively, you can continue anonymously as guest user" @>>
+						viewInformation [] ()
+					 	>>| (return Nothing)
 					]
 					[]
 				] <<@ ArrangeHorizontal)
@@ -130,55 +133,53 @@ loginAndManageWork applicationName loginMessage welcomeMessage allowGuests
 where
 	browse (Just {Credentials|username,password})
 		= authenticateUser username password
-		>>= \mbUser -> case mbUser of
+		>>- \mbUser -> case mbUser of
 			Just user 	= workAs user (manageWorkOfCurrentUser welcomeMessage)
-			Nothing		= (viewInformation (Title "Login failed") [] "Your username or password is incorrect" >>| return ()) <<@ ApplyLayout frameCompact
+			Nothing		= (Title "Login failed" @>> viewInformation [] "Your username or password is incorrect" >>| return ()) <<@ ApplyLayout frameCompact
 	browse Nothing
 		= workAs (AuthenticatedUser "guest" ["manager"] (Just "Guest user")) (manageWorkOfCurrentUser welcomeMessage)
 
-	identifyApplication name welcomeMessage = viewInformation () [] html
+	identifyApplication name welcomeMessage = viewInformation [] html
 	where
 		html = DivTag [ClassAttr cssClass] [H1Tag [] [Text name]:maybe [] (\msg -> [msg]) welcomeMessage]
 		cssClass = "welcome-" +++ (toLowerCase $ replaceSubString " " "-" name)
 	
-	layout = sequenceLayouts [layoutSubUIs (SelectByType UIAction) (setActionIcon ('DM'.fromList [("Login","login")])) ,frameCompact]
+	layout = sequenceLayouts [layoutSubUIs (SelectByType UIAction) (setActionIcon ('DM'.fromList [("Login","login")])), frameCompact]
 
 manageWorkOfCurrentUser :: !(Maybe HtmlTag) -> Task ()
 manageWorkOfCurrentUser welcomeMessage
-	= 	((manageSession -||
+	= ((manageSession -||
 		  (chooseWhatToDo welcomeMessage >&> withSelection
-			(viewInformation () [] "Welcome!")
+			(viewInformation [] "Welcome!")
 			(\wf -> unwrapWorkflowTask wf.Workflow.task)
 		  )
 		)
 	>>* [OnValue (ifStable (const (return ())))]) <<@ ApplyLayout layout
 where
 	layout = sequenceLayouts
-		[unwrapUI //Get rid of the step
-		,arrangeWithHeader 0
+		[arrangeWithHeader 0
 		,layoutSubUIs (SelectByPath [0]) layoutManageSession
-		,layoutSubUIs (SelectByPath [1]) (sequenceLayouts [unwrapUI,layoutWhatToDo])
+		,layoutSubUIs (SelectByPath [1]) layoutWhatToDo
 		//Use maximal screen space
 		,setUIAttributes (sizeAttr FlexSize FlexSize)
 		]
 
 	layoutManageSession = sequenceLayouts
-		[layoutSubUIs SelectChildren actionToButton
-		,layoutSubUIs (SelectByPath [0]) (setUIType UIContainer)
-		,setUIType UIContainer
-		,addCSSClass "manage-work-header"
+		[removeCSSClass "step-actions" //Don't layout as a regular step
+		,addCSSClass "manage-work-header" 
 		]
-	layoutWhatToDo = sequenceLayouts [arrangeWithSideBar 0 LeftSide True, layoutSubUIs (SelectByPath [1]) unwrapUI]
+	layoutWhatToDo = sequenceLayouts [unwrapUI, arrangeWithSideBar 0 LeftSide True]
 
 manageSession :: Task ()
 manageSession =
-		(viewSharedInformation () [ViewAs view] currentUser
+		(viewSharedInformation [ViewAs view] currentUser
 	>>* [OnAction (Action "Log out") (always (return ()))])
 		 <<@ ApplyLayout (layoutSubUIs (SelectByType UIAction) (setActionIcon ('DM'.fromList [("Log out","logout")])))
 where
 	view user	= "Welcome " +++ toString user
 
-chooseWhatToDo welcomeMessage = updateChoiceWithShared (Title "Menu") [ChooseFromList workflowTitle] (mapRead addManageWork allowedTransientTasks) manageWorkWf
+chooseWhatToDo welcomeMessage
+	= Title "Menu" @>> updateChoiceWithShared [ChooseFromList workflowTitle] (mapRead addManageWork allowedTransientTasks) manageWorkWf
 where
 	addManageWork wfs = [manageWorkWf:wfs]
 	manageWorkWf = transientWorkflow "My Tasks" "Manage your worklist"  (manageWork welcomeMessage)
@@ -190,7 +191,7 @@ where
 		= get currentUser @ userRoles
 		>>- \roles ->
 			forever
-			(	enterChoiceWithSharedAs () [ChooseFromGrid snd] (worklist roles) (appSnd (\{WorklistRow|parentTask} -> isNothing parentTask))
+			(	enterChoiceWithSharedAs [ChooseFromGrid snd] (worklist roles) (appSnd (\{WorklistRow|parentTask} -> isNothing parentTask))
 				>>* (continuations roles taskList)
 			)
 
@@ -214,7 +215,7 @@ where
 		]
 
 viewWelcomeMessage :: HtmlTag -> Task ()
-viewWelcomeMessage html = viewInformation (Title "Welcome") [] html @! ()
+viewWelcomeMessage html = Title "Welcome" @>> viewInformation [] html @! ()
 	
 addNewTask :: !(SharedTaskList ()) -> Task ()
 addNewTask list
@@ -225,7 +226,7 @@ addNewTask list
 
 chooseWorkflow :: Task Workflow
 chooseWorkflow
-	=  editSelectionWithShared [Att (Title "Tasks"), Att IconEdit] False (SelectInTree toTree fromTree) allowedPersistentWorkflows (const []) 
+	=  Title "Tasks" @>> editSelectionWithShared [SelectMultiple False, SelectInTree toTree fromTree] allowedPersistentWorkflows (const []) 
 	@? tvHd
 where
 	//We assign unique negative id's to each folder and unique positive id's to each workflow in the list
@@ -258,7 +259,7 @@ where
 
 viewWorkflowDetails :: !(sds () (Maybe Workflow) ()) -> Task Workflow | RWShared sds
 viewWorkflowDetails sel
-	= viewSharedInformation [Att (Title "Task description"), Att IconView] [ViewUsing view textView] sel
+	= Title "Task description" @>> viewSharedInformation [ViewUsing view textView] sel
 	@? onlyJust
 where
 	view = maybe "" (\wf -> wf.Workflow.description)
@@ -268,23 +269,23 @@ where
 
 startWorkflow :: !(SharedTaskList ()) !Workflow -> Task Workflow
 startWorkflow list wf
-	= 	get currentUser -&&- get currentDateTime
-	>>=	\(user,now) ->
-		appendTopLevelTask ('DM'.fromList [ ("title",      workflowTitle wf)
-                                          , ("catalogId",  wf.Workflow.path)
-                                          , ("createdBy",  toString (toUserConstraint user))
-                                          , ("createdAt",  toString now)
-                                          , ("createdFor", toString (toUserConstraint user))
-                                          , ("priority",   toString 5):userAttr user]) False (unwrapWorkflowTask wf.Workflow.task)
+	=   get currentUser -&&- get currentDateTime
+	>>- \(user,now) ->
+	    appendTopLevelTask ('DM'.fromList [ ("title",      toJSON (workflowTitle wf))
+	                                      , ("catalogId",  toJSON wf.Workflow.path)
+	                                      , ("createdBy",  toJSON (toUserConstraint user))
+	                                      , ("createdAt",  toJSON now)
+	                                      , ("createdFor", toJSON (toUserConstraint user))
+	                                      , ("priority",   toJSON 5):userAttr user]) False (unwrapWorkflowTask wf.Workflow.task)
 	>>= \procId ->
-		openTask list procId
-	@	const wf
+	    openTask list procId
+	@   const wf
 where
-    userAttr (AuthenticatedUser uid _ _) = [("user", uid)]
-    userAttr _                           = []
+	userAttr (AuthenticatedUser uid _ _) = [("user", JSONString uid)]
+	userAttr _                           = []
 
 unwrapWorkflowTask (WorkflowTask t) = t @! ()
-unwrapWorkflowTask (ParamWorkflowTask tf) = (enterInformation "Enter parameters" [] >>= tf @! ())
+unwrapWorkflowTask (ParamWorkflowTask tf) = (Hint "Enter parameters" @>> enterInformation [] >>= tf @! ())
 
 openTask :: !(SharedTaskList ()) !TaskId -> Task ()
 openTask taskList taskId
@@ -293,7 +294,7 @@ openTask taskList taskId
 workOnTask :: !TaskId -> Task ()
 workOnTask taskId
     =   (workOn taskId <<@ ApplyLayout (setUIAttributes (heightAttr FlexSize))
-    >>* [OnValue    (ifValue (\v. case v of (ASExcepted _) = True; _ = False) (\(ASExcepted excs) -> viewInformation (Title "Error: An exception occurred in this task") [] excs >>| return ()))
+    >>* [OnValue    (ifValue (\v. case v of (ASExcepted _) = True; _ = False) (\(ASExcepted excs) -> Hint "Error: An exception occurred in this task" @>> viewInformation [] excs >>| return ()))
         ,OnValue    (ifValue ((===) ASIncompatible) (\_ -> dealWithIncompatibleTask))
         ,OnValue    (ifValue ((===) ASDeleted) (\_ -> return ()))
         ,OnValue    (ifValue ((===) (ASAttached True)) (\_ -> return ())) //If the task is stable, there is no need to work on it anymore
@@ -301,7 +302,7 @@ workOnTask taskId
         ] ) <<@ ApplyLayout (copySubUIAttributes (SelectKeys ["title"]) [0] []) //Use the title from the workOn for the composition
 where
     dealWithIncompatibleTask
-        =   viewInformation (Title "Error") [] "This this task is incompatible with the current application version. Restart?"
+        =   Title "Error" @>> viewInformation [] "This this task is incompatible with the current application version. Restart?"
         >>* [OnAction ActionYes (always restartTask)
             ,OnAction ActionNo (always (return ()))
             ]
@@ -310,11 +311,11 @@ where
         =   findReplacement taskId
         >>- \mbReplacement -> case mbReplacement of
             Nothing
-                =   viewInformation (Title "Error") [] "Sorry, this task is no longer available in the workflow catalog"
+                =   Title "Error" @>> viewInformation [] "Sorry, this task is no longer available in the workflow catalog"
                 >>| return ()
             Just replacement
                 =   replaceTask taskId (const (unwrapWorkflowTask replacement.Workflow.task)) topLevelTasks
-                >>| workOnTask taskId
+                >-| workOnTask taskId
 
     //Look in the catalog for an entry that has the same path as
     //the 'catalogId' that is stored in the incompatible task instance's properties
@@ -322,28 +323,32 @@ where
         =  get ((sdsFocus taskId (taskListEntryMeta topLevelTasks)) |*| workflows)
         @  \(taskListEntry,catalog) -> maybe Nothing (lookup catalog) ('DM'.get "catalogId" taskListEntry.TaskListItem.attributes)
     where
-        lookup [wf=:{Workflow|path}:wfs] cid = if (path == cid) (Just wf) (lookup wfs cid)
+        lookup [wf=:{Workflow|path}:wfs] (JSONString cid) = if (path == cid) (Just wf) (lookup wfs (JSONString cid))
         lookup [] _ = Nothing
 
 appendOnce :: TaskId (Task a) (SharedTaskList a) -> Task () | iTask a
 appendOnce identity task slist
-    =   get (taskListMeta slist)
-    >>- \items -> if (checkItems name items)
-        (return ())
-	    (appendTask (NamedEmbedded name) (removeWhenStable task) slist @! ())
+	=   get (taskListMeta slist)
+	>>- \items -> if (checkItems name items)
+		(upd (bringToFront name) (taskListMeta slist) @! ())
+		(appendTask Embedded (removeWhenStable (task <<@ ("name", JSONString name) <<@ ("order", JSONInt (maxOrder items + 1)))) slist @! ())
 where
     name = toString identity
+	maxOrder items = foldr max 0 [maybe 0 (\(JSONInt i) -> i) ('DM'.get "order" attributes) \\ {TaskListItem|attributes} <- items]
+	hasName name {TaskListItem|attributes} = maybe False ((==) (JSONString name)) ('DM'.get "name" attributes)
+
     checkItems name [] = False
-    checkItems name [{TaskListItem|attributes}:is]
-        | maybe False ((==) name) ('DM'.get "name" attributes)  = True //Item with name exists!
-                                                                = checkItems name is
+    checkItems name [i:is] = hasName name i || checkItems name is
+
+	bringToFront name items =
+		[(taskId, if (hasName name i) ('DM'.singleton "order" (JSONInt (maxOrder items + 1))) 'DM'.newMap)
+		\\ i=:{TaskListItem|taskId} <- items]
 
 removeWhenStable :: (Task a) (SharedTaskList a) -> Task a | iTask a
 removeWhenStable task slist
     =   (task
     >>* [OnValue (ifStable (\_ -> get (taskListSelfId slist) >>- \selfId -> removeTask selfId slist))]
     @?  const NoValue)
-	<<@ ApplyLayout unwrapUI
 
 addWorkflows :: ![Workflow] -> Task [Workflow]
 addWorkflows additional
@@ -364,7 +369,7 @@ restrictedTransientWorkflow path description roles task = toWorkflow path descri
 
 inputWorkflow :: String String String (a -> Task b) -> Workflow | iTask a & iTask b
 inputWorkflow name desc inputdesc tfun
-	= workflow name desc (enterInformation inputdesc [] >>= tfun)
+	= workflow name desc (Hint inputdesc @>> enterInformation [] >>= tfun)
 
 instance toWorkflow (Task a) | iTask a
 where

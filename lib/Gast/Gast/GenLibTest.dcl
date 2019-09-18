@@ -25,7 +25,7 @@ generic gLess a :: a a -> Bool
 derive genShow Int, Char, Bool, Real, String,
 	UNIT, PAIR, EITHER, OBJECT, CONS of {gcd_name,gcd_arity}, RECORD of {grd_name}, FIELD of {gfd_name},
 	{}, {!}, [], [!], [ !], [!!], (->),
-	(,), (,,), (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,), (,,,,,,,,), (,,,,,,,,,)
+	(), (,), (,,), (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,), (,,,,,,,,), (,,,,,,,,,)
 derive gLess Int, Char, Bool, Real, String,
 	UNIT, PAIR, EITHER, OBJECT, CONS, FIELD, RECORD,
 	[],

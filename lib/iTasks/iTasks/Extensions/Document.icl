@@ -31,7 +31,6 @@ where
 
 derive JSONEncode		Document
 derive JSONDecode		Document
-derive gDefault			Document
 derive gEq				Document
 
 instance toString Document

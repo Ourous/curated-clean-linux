@@ -27,17 +27,17 @@ decodeInt xs = reverse (rldInt` xs [])
 encode :: ![a] -> [(Int, a)] | == a
 encode xs = reverse (rle` xs [])
   where
-  rle` :: ![a] ![(!Int, !a)] -> [(Int, a)] | == a
+  rle` :: ![a] ![(Int, a)] -> [(Int, a)] | == a
   rle` []     acc = acc
   rle` [x:xs] [] = rle` xs [(1, x)]
   rle` [x:xs] [t=:(n, y) : ys]
     | x == y    = rle` xs [(n + 1, y) : ys]
     | otherwise = rle` xs [(1, x) : t : ys]
 
-decode :: ![(!Int, !a)] -> [a] | == a
+decode :: ![(Int, a)] -> [a] | == a
 decode xs = reverse (rld` xs [])
   where
-  rld` :: ![(!Int, !a)] ![a] -> [a] | == a
+  rld` :: ![(Int, a)] ![a] -> [a] | == a
   rld` []            acc = acc
   rld` [(0, x) : xs] acc = rld` xs acc
   rld` [(n, x) : xs] acc = rld` [(n - 1, x) : xs] [x : acc]

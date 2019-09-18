@@ -71,22 +71,22 @@ class Show a where
     // That is, 'Text.Read.readsPrec' parses the string produced by
     // 'showsPrec', and delivers the value that 'showsPrec' started with.
 
-    showsPrec :: Int    // ^ the operator precedence of the enclosing
+    showsPrec :: !Int   // ^ the operator precedence of the enclosing
                         // context (a number from @0@ to @11@).
                         // Function application has precedence @10@.
-                 a      // ^ the value to be converted to a 'String'
+                 !a     // ^ the value to be converted to a 'String'
               -> ShowS
 
     // | A specialised variant of 'showsPrec', using precedence context
     // zero, and returning an ordinary 'String'.
-    show      :: a   -> String
+    show      :: !a   -> String
 
     // | The method 'showList' is provided to allow the programmer to
     // give a specialised way of showing lists of values.
     // For example, this is used by the predefined 'Show' instance of
     // the 'Char' type, where values of type 'String' should be shown
     // in double quotes, rather than between square brackets.
-    showList  :: [a] -> ShowS
+    showList  :: ![a] -> ShowS
 
 //------------------------------------------------------------
 // Simple Instances
@@ -121,26 +121,26 @@ instance Show (a,b,c,d,e,f,g,h,i,j) | Show a & Show b & Show c & Show d & Show e
 instance Show (a,b,c,d,e,f,g,h,i,j,k) | Show a & Show b & Show c & Show d & Show e & Show f & Show g & Show h & Show i & Show j & Show k
 instance Show (a,b,c,d,e,f,g,h,i,j,k,l) | Show a & Show b & Show c & Show d & Show e & Show f & Show g & Show h & Show i & Show j & Show k & Show l
 
-show_tuple :: [ShowS] -> ShowS
+show_tuple :: ![ShowS] -> ShowS
 
 //------------------------------------------------------------
 // Support code for Show
 //------------------------------------------------------------
 
 // | equivalent to 'showsPrec' with a precedence of 0.
-shows :: a -> ShowS | Show a
+shows :: !a -> ShowS | Show a
 
 // | utility function converting a 'Char' to a show function that
 // simply prepends the character unchanged.
-showChar :: Char -> ShowS
+showChar :: !Char -> ShowS
 
 // | utility function converting a 'String' to a show function that
 // simply prepends the string unchanged.
-showString :: String -> ShowS
+showString :: !String -> ShowS
 
 // | utility function that surrounds the inner show function with
 // parentheses when the 'Bool' parameter is 'True'.
-showParen :: Bool ShowS -> ShowS
+showParen :: !Bool !ShowS -> ShowS
 
 showSpace :: ShowS
 
@@ -151,11 +151,11 @@ showSpace :: ShowS
 //
 // > showLitChar '\n' s  =  "\\n" ++ s
 //
-showLitChar :: Char -> ShowS
+showLitChar :: !Char -> ShowS
         // I've done manual eta-expansion here, because otherwise it's
         // impossible to stop (asciiTab!!ord) getting floated out as an MFE
 
-showLitString :: String -> ShowS
+showLitString :: !String -> ShowS
 // | Same as 'showLitChar', but for strings
 // It converts the string to a string using Haskell escape conventions
 // for non-printable characters. Does not add double-quotes around the
@@ -167,7 +167,7 @@ showLitString :: String -> ShowS
    // The sticking point is the recursive call to (showLitString cs), which
    // it can't figure out would be ok with arity 2.
 
-showMultiLineString :: String -> [String]
+showMultiLineString :: !String -> [String]
 // | Like 'showLitString' (expand escape characters using Haskell
 // escape conventions), but
 //   * break the string into multiple lines
@@ -175,11 +175,11 @@ showMultiLineString :: String -> [String]
 // Example:  @showMultiLineString "hello\ngoodbye\nblah"@
 // returns   @["\"hello\\n\\", "\\goodbye\n\\", "\\blah\""]@
 
-isDec :: Char -> Bool
+isDec :: !Char -> Bool
 
-protectEsc :: (Char -> Bool) ShowS -> ShowS
+protectEsc :: !(Char -> Bool) !ShowS -> ShowS
 
 asciiTab :: {String}
 
-showSignedInt :: Int Int -> ShowS
+showSignedInt :: !Int !Int -> ShowS
 

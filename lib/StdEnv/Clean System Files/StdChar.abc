@@ -93,7 +93,6 @@ e_StdChar_sfromChar;24
 .o 0 1 c
 s25
 	CtoAC
-
 .d 1 0
 	rtn
 .pe
@@ -147,7 +146,6 @@ s24
 .inline fromChar;23
 	no_op
 .end
-
 .d 0 1 c
 	rtn
 .pe
@@ -201,7 +199,6 @@ s23
 .inline fromChar;22
 	CtoI
 .end
-
 .d 0 1 i
 	rtn
 .pe
@@ -252,7 +249,6 @@ s22
 .inline toChar;21
 	ItoC
 .end
-
 .d 0 1 c
 	rtn
 .pe
@@ -303,7 +299,6 @@ s21
 .inline toChar;20
 	no_op
 .end
-
 .d 0 1 c
 	rtn
 .pe
@@ -346,7 +341,6 @@ s18
 	pushI 1
 	ItoC
 .end
-
 .d 0 1 c
 	rtn
 .pe
@@ -389,7 +383,6 @@ s17
 	pushI 0
 	ItoC
 .end
-
 .d 0 1 c
 	rtn
 .pe
@@ -452,7 +445,6 @@ s16
 	subI
 	ItoC
 .end
-
 .d 0 1 c
 	rtn
 .pe
@@ -515,7 +507,6 @@ s15
 	addI
 	ItoC
 .end
-
 .d 0 1 c
 	rtn
 .pe
@@ -607,7 +598,6 @@ s13
 	pushC ' '
 	push_b 1
 	ltC
-
 	notB
 	jmp_false else.1
 	push_b 0
@@ -615,7 +605,6 @@ s13
 	update_b 1 2
 	updatepop_b 0 1
 	ltC
-
 	notB
 .d 0 1 b
 	rtn
@@ -664,7 +653,6 @@ s12
 	pushC ' '
 	push_b 1
 	ltC
-
 	jmp_false else.2
 	pop_b 1
 	pushB TRUE
@@ -676,7 +664,6 @@ else.2
 	update_b 1 2
 	updatepop_b 0 1
 	eqC
-
 .d 0 1 b
 	rtn
 .pe
@@ -719,7 +706,6 @@ s11
 	pushC ' '
 	push_b 1
 	eqC
-
 	jmp_false else.3
 	pop_b 1
 	pushB TRUE
@@ -729,7 +715,6 @@ else.3
 	pushC '\t'
 	push_b 1
 	eqC
-
 	jmp_false else.4
 	pop_b 1
 	pushB TRUE
@@ -739,7 +724,6 @@ else.4
 	pushC '\n'
 	push_b 1
 	eqC
-
 	jmp_false else.5
 	pop_b 1
 	pushB TRUE
@@ -749,7 +733,6 @@ else.5
 	pushC '\r'
 	push_b 1
 	eqC
-
 	jmp_false else.6
 	pop_b 1
 	pushB TRUE
@@ -759,7 +742,6 @@ else.6
 	pushC '\f'
 	push_b 1
 	eqC
-
 	jmp_false else.7
 	pop_b 1
 	pushB TRUE
@@ -771,7 +753,6 @@ else.7
 	update_b 1 2
 	updatepop_b 0 1
 	eqC
-
 .d 0 1 b
 	rtn
 .pe
@@ -828,7 +809,6 @@ s19
 .inline ==;18
 	eqC
 .end
-
 .d 0 1 b
 	rtn
 .pe
@@ -871,13 +851,11 @@ s10
 	pushC '0'
 	push_b 1
 	ltC
-
 	notB
 	jmp_false else.8
 	push_b 0
 	pushC '9'
 	ltC
-
 	notB
 	jmp_false else.8
 	pop_b 1
@@ -889,11 +867,9 @@ else.8
 	updatepop_b 0 1
 	pushI 223
 	and%
-
 	pushC 'A'
 	push_b 1
 	ltC
-
 	notB
 	jmp_false else.10
 	push_b 0
@@ -901,7 +877,6 @@ else.8
 	update_b 1 2
 	updatepop_b 0 1
 	ltC
-
 	notB
 .d 0 1 b
 	rtn
@@ -950,7 +925,6 @@ s9
 	pushC '0'
 	push_b 1
 	ltC
-
 	notB
 	jmp_false else.11
 	push_b 0
@@ -958,7 +932,6 @@ s9
 	update_b 1 2
 	updatepop_b 0 1
 	ltC
-
 	notB
 .d 0 1 b
 	rtn
@@ -1007,7 +980,6 @@ s8
 	pushC '0'
 	push_b 1
 	ltC
-
 	notB
 	jmp_false else.12
 	push_b 0
@@ -1015,7 +987,6 @@ s8
 	update_b 1 2
 	updatepop_b 0 1
 	ltC
-
 	notB
 .d 0 1 b
 	rtn
@@ -1064,11 +1035,9 @@ s7
 	push_b 0
 	pushI 223
 	and%
-
 	pushC 'A'
 	push_b 1
 	ltC
-
 	notB
 	jmp_false else.13
 	push_b 0
@@ -1076,7 +1045,6 @@ s7
 	update_b 1 2
 	updatepop_b 0 1
 	ltC
-
 	notB
 	pushI 0
 	update_b 1 0
@@ -1091,7 +1059,6 @@ else.13
 	update_b 1 2
 	updatepop_b 0 1
 	ltC
-
 	notB
 	jmp_false else.15
 	push_b 0
@@ -1099,7 +1066,6 @@ else.13
 	update_b 1 2
 	updatepop_b 0 1
 	ltC
-
 	notB
 .d 0 1 b
 	rtn
@@ -1149,11 +1115,9 @@ s6
 	updatepop_b 0 1
 	pushI 223
 	and%
-
 	pushC 'A'
 	push_b 1
 	ltC
-
 	notB
 	jmp_false else.16
 	push_b 0
@@ -1161,7 +1125,6 @@ s6
 	update_b 1 2
 	updatepop_b 0 1
 	ltC
-
 	notB
 .d 0 1 b
 	rtn
@@ -1210,7 +1173,6 @@ s5
 	pushC 'a'
 	push_b 1
 	ltC
-
 	notB
 	jmp_false else.17
 	push_b 0
@@ -1218,7 +1180,6 @@ s5
 	update_b 1 2
 	updatepop_b 0 1
 	ltC
-
 	notB
 .d 0 1 b
 	rtn
@@ -1267,7 +1228,6 @@ s4
 	pushC 'A'
 	push_b 1
 	ltC
-
 	notB
 	jmp_false else.18
 	push_b 0
@@ -1275,7 +1235,6 @@ s4
 	update_b 1 2
 	updatepop_b 0 1
 	ltC
-
 	notB
 .d 0 1 b
 	rtn
@@ -1324,20 +1283,17 @@ s3
 	pushC 'A'
 	push_b 1
 	ltC
-
 	notB
 	jmp_false else.19
 	push_b 0
 	pushC 'Z'
 	ltC
-
 	notB
 	jmp_false else.19
 	push_b 0
 	updatepop_b 0 1
 	pushI 32
 	or%
-
 .d 0 1 c
 	rtn
 else.19
@@ -1351,7 +1307,6 @@ s27
 	pushI 32
 	or%
 .end
-
 .d 0 1 c
 	rtn
 .pe
@@ -1394,20 +1349,17 @@ s2
 	pushC 'a'
 	push_b 1
 	ltC
-
 	notB
 	jmp_false else.21
 	push_b 0
 	pushC 'z'
 	ltC
-
 	notB
 	jmp_false else.21
 	push_b 0
 	updatepop_b 0 1
 	pushI 223
 	and%
-
 .d 0 1 c
 	rtn
 else.21
@@ -1467,7 +1419,6 @@ s20
 .inline <;19
 	ltC
 .end
-
 .d 0 1 b
 	rtn
 .pe
@@ -1478,7 +1429,6 @@ s26
 	pushI 223
 	and%
 .end
-
 .d 0 1 c
 	rtn
 .pe

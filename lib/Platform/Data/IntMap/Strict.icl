@@ -513,7 +513,7 @@ mapWithKey f t
 //
 // > let f a b = (a ++ b, b ++ "X")
 // > mapAccum f "Everything: " (fromList [(5,"a"), (3,"b")]) == ("Everything: ba", fromList [(3, "bX"), (5, "aX")])
-mapAccum :: !(a b -> (!a, !c)) !a !(IntMap b) -> (!a, !IntMap c)
+mapAccum :: !(a b -> (a, c)) !a !(IntMap b) -> (!a, !IntMap c)
 mapAccum f v m = mapAccumWithKey (\a` _ x -> f a` x) v m
 
 // | /O(n)/. The function @'mapAccumWithKey'@ threads an accumulating
@@ -521,14 +521,14 @@ mapAccum f v m = mapAccumWithKey (\a` _ x -> f a` x) v m
 //
 // > let f a k b = (a ++ " " ++ (show k) ++ "-" ++ b, b ++ "X")
 // > mapAccumWithKey f "Everything:" (fromList [(5,"a"), (3,"b")]) == ("Everything: 3-b 5-a", fromList [(3, "bX"), (5, "aX")])
-mapAccumWithKey :: !(a Int b -> (!a, !c)) !a !(IntMap b) -> (!a, !IntMap c)
+mapAccumWithKey :: !(a Int b -> (a, c)) !a !(IntMap b) -> (!a, !IntMap c)
 mapAccumWithKey f a t = mapAccumL f a t
 
 // | /O(n)/. The function @'mapAccumL'@ threads an accumulating
 // argument through the map in ascending order of keys.  Strict in
 // the accumulating argument and the both elements of the
 // result of the function.
-mapAccumL :: !(a Int b -> (!a, !c)) !a !(IntMap b) -> (!a, !IntMap c)
+mapAccumL :: !(a Int b -> (a, c)) !a !(IntMap b) -> (!a, !IntMap c)
 mapAccumL f a t
   = case t of
       Bin p m l r
@@ -542,7 +542,7 @@ mapAccumL f a t
 
 // | /O(n)/. The function @'mapAccumR'@ threads an accumulating
 // argument through the map in descending order of keys.
-mapAccumRWithKey :: !(a Int b -> (!a, !c)) !a !(IntMap b) -> (!a, !IntMap c)
+mapAccumRWithKey :: !(a Int b -> (a, c)) !a !(IntMap b) -> (!a, !IntMap c)
 mapAccumRWithKey f a t
   = case t of
       Bin p m l r
@@ -645,7 +645,7 @@ mapEitherWithKey _ Nil = (Nil, Nil)
 // > fromList [] == empty
 // > fromList [(5,"a"), (3,"b"), (5, "c")] == fromList [(5,"c"), (3,"b")]
 // > fromList [(5,"c"), (3,"b"), (5, "a")] == fromList [(5,"a"), (3,"b")]
-fromList :: ![(!Int, !a)] -> IntMap a
+fromList :: ![(Int, a)] -> IntMap a
 fromList xs
   = foldlStrict ins empty xs
   where
@@ -655,14 +655,14 @@ fromList xs
 //
 // > fromListWith (++) [(5,"a"), (5,"b"), (3,"b"), (3,"a"), (5,"a")] == fromList [(3, "ab"), (5, "aba")]
 // > fromListWith (++) [] == empty
-fromListWith :: !(a a -> a) ![(!Int, !a)] -> IntMap a
+fromListWith :: !(a a -> a) ![(Int, a)] -> IntMap a
 fromListWith f xs = fromListWithKey (\_ x y -> f x y) xs
 
 // | /O(n*min(n,W))/. Build a map from a list of key\/value pairs with a combining function. See also fromAscListWithKey'.
 //
 // > fromListWith (++) [(5,"a"), (5,"b"), (3,"b"), (3,"a"), (5,"a")] == fromList [(3, "ab"), (5, "aba")]
 // > fromListWith (++) [] == empty
-fromListWithKey :: !(Int a a -> a) ![(!Int, !a)] -> IntMap a
+fromListWithKey :: !(Int a a -> a) ![(Int, a)] -> IntMap a
 fromListWithKey f xs = foldlStrict ins empty xs
   where
   ins t (k,x) = insertWithKey f k x t
@@ -672,7 +672,7 @@ fromListWithKey f xs = foldlStrict ins empty xs
 //
 // > fromAscList [(3,"b"), (5,"a")]          == fromList [(3, "b"), (5, "a")]
 // > fromAscList [(3,"b"), (5,"a"), (5,"b")] == fromList [(3, "b"), (5, "b")]
-fromAscList :: ![(!Int, a)] -> IntMap a
+fromAscList :: ![(Int, a)] -> IntMap a
 fromAscList xs = fromAscListWithKey (\_ x _ -> x) xs
 
 // | /O(n)/. Build a map from a list of key\/value pairs where
@@ -680,7 +680,7 @@ fromAscList xs = fromAscListWithKey (\_ x _ -> x) xs
 // /The precondition (input list is ascending) is not checked./
 //
 // > fromAscListWith (++) [(3,"b"), (5,"a"), (5,"b")] == fromList [(3, "b"), (5, "ba")]
-fromAscListWith :: !(a a -> a) ![(!Int, !a)] -> IntMap a
+fromAscListWith :: !(a a -> a) ![(Int, a)] -> IntMap a
 fromAscListWith f xs = fromAscListWithKey (\_ x y -> f x y) xs
 
 // | /O(n)/. Build a map from a list of key\/value pairs where
@@ -688,7 +688,7 @@ fromAscListWith f xs = fromAscListWithKey (\_ x y -> f x y) xs
 // /The precondition (input list is ascending) is not checked./
 //
 // > fromAscListWith (++) [(3,"b"), (5,"a"), (5,"b")] == fromList [(3, "b"), (5, "ba")]
-fromAscListWithKey :: !(Int a a -> a) ![(!Int, !a)] -> IntMap a
+fromAscListWithKey :: !(Int a a -> a) ![(Int, a)] -> IntMap a
 fromAscListWithKey _ []         = Nil
 fromAscListWithKey f [x0 : xs0] = fromDistinctAscList (combineEq x0 xs0)
   where
@@ -705,14 +705,14 @@ fromAscListWithKey f [x0 : xs0] = fromDistinctAscList (combineEq x0 xs0)
 // /The precondition (input list is strictly ascending) is not checked./
 //
 // > fromDistinctAscList [(3,"b"), (5,"a")] == fromList [(3, "b"), (5, "a")]
-//fromDistinctAscList :: ![(!Int, !a)] -> IntMap a
+//fromDistinctAscList :: ![(Int, a)] -> IntMap a
 //fromDistinctAscList []         = Nil
 //fromDistinctAscList [z0 : zs0] = work z0 zs0 Nada
   //where
     //work (kx,vx) []             stk = finish kx (Tip kx vx) stk
     //work (kx,vx) [z=:(kz,_):zs] stk = reduce z zs (branchMask kx kz) kx (Tip kx vx) stk
 
-    //reduce :: !(!Int, !a) ![(!Int, !a)] !Mask !Prefix !(IntMap a) !(Stack a) -> IntMap a
+    //reduce :: !(!Int, !a) ![(Int, a)] !Mask !Prefix !(IntMap a) !(Stack a) -> IntMap a
     //reduce z zs _ px tx Nada = work z zs (Push px tx Nada)
     //reduce z zs m px tx stk=:(Push py ty stk`) =
         //let mxy = branchMask px py
@@ -733,7 +733,7 @@ instance Functor IntMap where
   fmap f (Tip n x) = Tip n (f x)
   fmap f (Bin p m l r) = Bin p m (fmap f l) (fmap f r)
 
-mapSt :: !(a *st -> *(!b, !*st)) !.(IntMap a) !*st -> *(!IntMap b, !*st)
+mapSt :: !(a *st -> *(b, *st)) !.(IntMap a) !*st -> *(!IntMap b, !*st)
 mapSt _ Nil       st = (Nil, st)
 mapSt f (Tip n x) st
   #! (x, st) = f x st
@@ -829,12 +829,12 @@ maybe_link p1 t1 p2 t2 = link p1 t1 p2 t2
 //
 // > toList (fromList [(5,"a"), (3,"b")]) == [(3,"b"), (5,"a")]
 // > toList empty == []
-toList :: !(IntMap a) -> [(!Int, !a)]
+toList :: !(IntMap a) -> [(Int, a)]
 toList m = toAscList m
 
 // | /O(n)/. Convert the map to a list of key\/value pairs where the
 // keys are in ascending order. Subject to list fusion.
 //
 // > toAscList (fromList [(5,"a"), (3,"b")]) == [(3,"b"), (5,"a")]
-toAscList :: !(IntMap a) -> [(!Int, !a)]
+toAscList :: !(IntMap a) -> [(Int, a)]
 toAscList m = foldrWithKey (\k x xs -> [(k,x):xs]) [] m

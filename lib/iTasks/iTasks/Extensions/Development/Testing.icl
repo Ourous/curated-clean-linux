@@ -11,10 +11,9 @@ import Text, Data.Tuple, Data.Error, Data.Func, System.FilePath, System.OS
 
 derive class iTask EndEventType, Expression
 
-derive gEditor EndEvent, FailReason, FailedAssertion, CounterExample, Relation
-derive gText EndEvent, FailReason, FailedAssertion, CounterExample, Relation
-derive gDefault EndEvent, FailReason, FailedAssertion, CounterExample, Relation
-derive gEq EndEvent, FailReason, FailedAssertion, CounterExample, Relation
+derive gEditor EndEvent, TestLocation, FailReason, FailedAssertion, CounterExample, Relation
+derive gText EndEvent, TestLocation, FailReason, FailedAssertion, CounterExample, Relation
+derive gEq EndEvent, TestLocation, FailReason, FailedAssertion, CounterExample, Relation
 
 compileTestModule :: CleanModuleName -> Task EndEvent
 compileTestModule (path,name)
@@ -22,8 +21,8 @@ compileTestModule (path,name)
 	>-|         get cpmExecutable
 	>>- \cpm -> runWithOutput cpm [prjPath] Nothing //Build the test
 	@   \(c,o) -> if (passed c o) 
-			{name = testName, event = Passed, message = join "" o}
-			{name = testName, event = (Failed Nothing), message = join "" o}
+			{name = testName, location=Just {moduleName=Just name}, event = Passed, message = join "" o}
+			{name = testName, location=Just {moduleName=Just name}, event = (Failed Nothing), message = join "" o}
 where
 	testName = "Compile: " +++ name
 	iclPath = cleanFilePath (path,name,Icl)
@@ -54,8 +53,8 @@ where
 		= [res \\ Just res <- map (fromJSON o fromString) lines]		
 	where
 		//If we can't parse the output, We'll treat it as a single simple test executable
-		fallback 0 _ = [{name=name,event=Passed,message="Execution returned 0"}]
-		fallback _ output = [{name=name,event=Failed Nothing,message=output}]
+		fallback 0 _ = [{name=name,location=Just {moduleName=Just name},event=Passed,message="Execution returned 0"}]
+		fallback _ output = [{name=name,location=Just {moduleName=Just name},event=Failed Nothing,message=output}]
 
 runWithOutput :: FilePath [String] (Maybe FilePath) -> Task (Int,[String])
 runWithOutput prog args dir = withShared ([], []) \out->withShared [] \stdin->

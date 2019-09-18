@@ -1,6 +1,6 @@
 definition module Data.Tuple
 
-from Control.Monad import class pure, class <*>, class Applicative
+from Control.Monad import class pure, class <*>, class Applicative, class Monad
 from Data.Functor import class Functor
 from Data.Monoid import class Semigroup, class Monoid
 from Data.Foldable import class Foldable

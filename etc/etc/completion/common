@@ -1,0 +1,59 @@
+# vim: syntax=sh
+_clean_library()
+{
+	local opts cur
+	cur="${COMP_WORDS[COMP_CWORD]}"
+	opts="$(find "$CLEAN_HOME/lib" -mindepth 1 -type d -not -name exe -regex ".*/lib/\([^/]*\|Platform/Deprecated/[^/]*\)" | cut -c $((${#CLEAN_HOME}+6))-)"
+	COMPREPLY=($(compgen -W "$opts" -- $cur))
+	return 0
+}
+
+_clean_dir()
+{
+	_filedir
+	for index in "${!COMPREPLY[@]}"; do
+		[ -d "${COMPREPLY[index]}" ] || unset -v 'COMPREPLY[$index]'
+	done
+	return 0
+}
+
+_clean_file()
+{
+	_filedir
+	# Don't remove directories because you may want to complete a file further down the directory tree
+	return 0
+}
+
+_clean_module()
+{
+	local opts cur
+	cur="${COMP_WORDS[COMP_CWORD]}"
+	opts="$(find -name '*.icl' -maxdepth 4 -type f -print 2>/dev/null | sed 's:^\./::;s:/:.:g;s:\.icl$::;s:`:\\`:' | grep -v '[- ]')"
+	COMPREPLY=($(compgen -W "$opts" -- $cur))
+	return 0
+}
+
+# Platform's Clean.ModuleFinder
+_clean_module_finding_options="-I --include -IL --include-library -H --clean-home --include-applications"
+_clean_module_finding()
+{
+	local prev
+	prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+	case $prev in
+		"-I" | "--include")
+			_clean_dir
+			return 0
+			;;
+		"-IL" | "--include-library")
+			_clean_library
+			return 0
+			;;
+		"-H" | "--clean-home")
+			_clean_dir
+			return 0
+			;;
+	esac
+
+	return 1
+}

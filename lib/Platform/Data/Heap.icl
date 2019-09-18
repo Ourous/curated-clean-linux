@@ -72,7 +72,7 @@ instance < (Heap a) where
 //
 // >>> null (singleton "hello")
 // False
-null :: (Heap a) -> Bool
+null :: !(Heap a) -> Bool
 null Empty = True
 null _     = False
 
@@ -84,7 +84,7 @@ null _     = False
 // 1
 // >>> size (fromList [4,1,2])
 // 3
-size :: (Heap a) -> Int
+size :: !(Heap a) -> Int
 size Empty        = 0
 size (Heap s _ _) = s
 
@@ -124,7 +124,7 @@ singletonWith f a :== Heap 1 f (Node 0 a Nil)
 //insert :: a (Heap a) -> (Heap a) | Ord a
 insert :== insertWith (<=)
 
-insertWith :: (a a -> Bool) a (Heap a) -> Heap a
+insertWith :: (a a -> Bool) a !(Heap a) -> Heap a
 insertWith leq x Empty = singletonWith leq x
 insertWith leq x (Heap s _ t=:(Node _ y f))
   | leq x y   = Heap (s + 1) leq (Node 0 x (Cons t Nil))
@@ -136,7 +136,7 @@ insertWith leq x (Heap s _ t=:(Node _ y f))
 // fromList [1,2,6,4,3,5]
 // >>> union (fromList [1,1,1]) (fromList [1,2,1])
 // fromList [1,1,1,2,1,1]
-union :: (Heap a) (Heap a) -> Heap a
+union :: !(Heap a) !(Heap a) -> Heap a
 union Empty q = q
 union q Empty = q
 union (Heap s1 leq t1=:(Node _ x1 f1)) (Heap s2 _ t2=:(Node _ x2 f2))
@@ -148,7 +148,7 @@ union _ _ = abort "error in union\n"
 //
 // >>> replicate 'a' 10
 // fromList "aaaaaaaaaa"
-replicate :: a Int -> Heap a | Ord a
+replicate :: a !Int -> Heap a | Ord a
 replicate x0 y0 = fromList (repeatn y0 x0)
   //| y0 < 0 = abort "Heap.replicate: negative length"
   //| y0 == 0 = mempty
@@ -168,7 +168,7 @@ replicate x0 y0 = fromList (repeatn y0 x0)
 //
 // >>> uncons (fromList [2,1,3])
 // Just (1,fromList [2,3])
-uncons :: (Heap a) -> Maybe (a, Heap a) | Ord a
+uncons :: !(Heap a) -> Maybe (a, Heap a) | Ord a
 uncons l=:(Heap _ _ t) = Just (root t, deleteMin l)
 uncons _               = Nothing
 
@@ -180,11 +180,11 @@ viewMin :== uncons
 //
 // >>> minimum (fromList [3,1,2])
 // 1
-minimum :: (Heap a) -> a
+minimum :: !(Heap a) -> a
 minimum (Heap _ _ t) = root t
 minimum _            = abort "Heap.minimum: empty heap"
 
-trees :: (Forest a) -> [Tree a]
+trees :: !(Forest a) -> [Tree a]
 trees (Cons a as) = [a : trees as]
 trees _           = []
 
@@ -192,7 +192,7 @@ trees _           = []
 //
 // >>> deleteMin (fromList [3,1,2])
 // fromList [2,3]
-deleteMin :: (Heap a) -> Heap a
+deleteMin :: !(Heap a) -> Heap a
 deleteMin Empty                      = Empty
 deleteMin (Heap _ _ (Node _ _ Nil))  = Empty
 deleteMin (Heap s leq (Node _ _ f0)) = Heap (s - 1) leq (Node 0 x f3)
@@ -206,7 +206,7 @@ deleteMin (Heap s leq (Node _ _ f0)) = Heap (s - 1) leq (Node 0 x f3)
 //
 // >>> adjustMin (+1) (fromList [1,2,3])
 // fromList [2,2,3]
-adjustMin :: (a -> a) (Heap a) -> Heap a
+adjustMin :: (a -> a) !(Heap a) -> Heap a
 adjustMin _ Empty = Empty
 adjustMin f (Heap s leq (Node r x xs)) = Heap s leq (heapify leq (Node r (f x) xs))
 
@@ -274,7 +274,8 @@ fromListWith f xs :== 'StdList'.foldr (insertWith f) mempty xs
 sort xs = 'Data.Foldable'.toList (fromList xs)
 
 instance Semigroup (Heap a) where
-  mappend l r = union l r
+	mappend :: !(Heap a) !(Heap a) -> Heap a
+	mappend l r = union l r
 
 instance Monoid (Heap a) where
   mempty = empty
@@ -314,7 +315,7 @@ instance Foldable Heap where
 //
 // >>> map negate (fromList [3,1,2])
 // fromList [-3,-1,-2]
-map :: (a -> b) (Heap a) -> Heap b | Ord b
+map :: (a -> b) !(Heap a) -> Heap b | Ord b
 map _ Empty = Empty
 map f (Heap _ _ t) = foldMap (singleton o f) t
 
@@ -325,7 +326,7 @@ map f (Heap _ _ t) = foldMap (singleton o f) t
 // fromList [2,3,4]
 // >>> map (*2) (fromList [1,2,3])
 // fromList [2,4,6]
-mapMonotonic :: (a -> b) (Heap a) -> Heap b | Ord b
+mapMonotonic :: (a -> b) !(Heap a) -> Heap b | Ord b
 mapMonotonic _ Empty = Empty
 mapMonotonic f (Heap s _ t) = Heap s (<=) (fmap f t)
 
@@ -339,7 +340,7 @@ mapMonotonic f (Heap s _ t) = Heap s (<=) (fmap f t)
 // fromList []
 // >>> filter (<'a') (fromList "ab")
 // fromList []
-filter :: (a -> Bool) (Heap a) -> Heap a
+filter :: (a -> Bool) !(Heap a) -> Heap a
 filter _ Empty = Empty
 filter p (Heap _ leq t) = foldMap f t
   where
@@ -350,7 +351,7 @@ filter p (Heap _ leq t) = foldMap f t
 //
 // >>> partition (>'a') (fromList "ab")
 // (fromList "b",fromList "a")
-partition :: (a -> Bool) (Heap a) -> (Heap a, Heap a)
+partition :: (a -> Bool) !(Heap a) -> (Heap a, Heap a)
 partition _ Empty = (Empty, Empty)
 partition p (Heap _ leq t) = foldMap f t
   where
@@ -361,7 +362,7 @@ partition p (Heap _ leq t) = foldMap f t
 //
 // >>> split 'h' (fromList "hello")
 // (fromList "e",fromList "h",fromList "llo")
-split :: a (Heap a) -> (Heap a, Heap a, Heap a)
+split :: a !(Heap a) -> (Heap a, Heap a, Heap a)
 split a Empty = (Empty, Empty, Empty)
 split a (Heap s leq t) = foldMap f t
   where
@@ -427,7 +428,7 @@ dropWhile :== withList o 'Data.List'.dropWhile
 //
 // >>> nub (fromList [1,1,2,6,6])
 // fromList [1,2,6]
-nub :: (Heap a) -> Heap a
+nub :: !(Heap a) -> Heap a
 nub Empty             = Empty
 nub h=:(Heap _ leq t) = insertWith leq x (nub zs)
   where
@@ -439,7 +440,7 @@ nub h=:(Heap _ leq t) = insertWith leq x (nub zs)
 //
 // >>> concatMap (\a -> fromList [a,a+1]) (fromList [1,4])
 // fromList [1,4,5,2]
-concatMap :: (a -> Heap b) (Heap a) -> Heap b | Ord b
+concatMap :: (a -> Heap b) !(Heap a) -> Heap b | Ord b
 concatMap _ Empty = Empty
 concatMap f h=:(Heap _ _ t) = foldMap f t
 
@@ -447,12 +448,12 @@ concatMap f h=:(Heap _ _ t) = foldMap f t
 //
 // >>> group (fromList "hello")
 // fromList [fromList "e",fromList "h",fromList "ll",fromList "o"]
-group :: (Heap a) -> Heap (Heap a)
+group :: !(Heap a) -> Heap (Heap a)
 group Empty             = Empty
 group h=:(Heap _ leq _) = groupBy (flip leq) h
 
 // /O(n log n)/. Group using a user supplied function.
-groupBy :: (a a -> Bool) (Heap a) -> Heap (Heap a)
+groupBy :: (a a -> Bool) !(Heap a) -> Heap (Heap a)
 groupBy f Empty = Empty
 groupBy f h=:(Heap _ leq t) = insert (insertWith leq x ys) (groupBy f zs)
   where
@@ -461,7 +462,7 @@ groupBy f h=:(Heap _ leq t) = insert (insertWith leq x ys) (groupBy f zs)
   (ys,zs) = span (f x) xs
 
 // /O(n log n + m log m)/. Intersect the values in two heaps, returning the value in the left heap that compares as equal
-intersect :: (Heap a) (Heap a) -> Heap a
+intersect :: !(Heap a) (Heap a) -> Heap a
 intersect Empty _ = Empty
 intersect _ Empty = Empty
 intersect a=:(Heap _ leq _) b = go leq ('Data.Foldable'.toList a) ('Data.Foldable'.toList b)
@@ -478,7 +479,7 @@ intersect a=:(Heap _ leq _) b = go leq ('Data.Foldable'.toList a) ('Data.Foldabl
 intersect _ _ = abort "error in intersect\n"
 
 /// /O(n log n + m log m)/. Intersect the values in two heaps using a function to generate the elements in the right heap.
-intersectWith :: (a a -> b) (Heap a) (Heap a) -> Heap b | Ord b
+intersectWith :: (a a -> b) !(Heap a) (Heap a) -> Heap b | Ord b
 intersectWith _ Empty _ = Empty
 intersectWith _ _ Empty = Empty
 intersectWith f a=:(Heap _ leq _) b = go leq f ('Data.Foldable'.toList a) ('Data.Foldable'.toList b)
@@ -636,11 +637,11 @@ splitForest r zs ts (Cons t1 (Cons t2 cf))
   r2 = rank t2
 splitForest _ _ _ _ = abort "Heap.splitForest: invalid arguments"
 
-withList :: ([a] -> [a]) (Heap a) -> Heap a
+withList :: ([a] -> [a]) !(Heap a) -> Heap a
 withList _ Empty = Empty
 withList f hp=:(Heap _ leq _) = fromListWith leq (f ('Data.Foldable'.toList hp))
 
-splitWithList :: ([a] -> ([a], [a])) (Heap a) -> (Heap a, Heap a)
+splitWithList :: ([a] -> ([a], [a])) !(Heap a) -> (Heap a, Heap a)
 splitWithList _ Empty = (Empty, Empty)
 splitWithList f hp=:(Heap _ leq _) = both (fromListWith leq) (f ('Data.Foldable'.toList hp))
 

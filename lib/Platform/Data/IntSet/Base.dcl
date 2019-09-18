@@ -24,6 +24,6 @@ definition module Data.IntSet.Base
 :: BitMap :== Int
 :: Key    :== Int
 
-member :: !Key IntSet -> Bool
+member :: !Key !IntSet -> Bool
 
-fromList :: [Key] -> IntSet
+fromList :: ![Key] -> IntSet

@@ -62,7 +62,7 @@ setNodeData :: NodeIndex a u:(Graph a b) -> v:(Graph a b), [u <= v]
 //Mapping
 mapNodes :: !(a -> b) !.(Graph a e) -> .(Graph b e)
 mapEdges :: !(a -> b) !.(Graph n a) -> .(Graph n b)
-mapIndices :: ![(!NodeIndex,!NodeIndex)] !.(Graph n e) -> .(Graph n e)
+mapIndices :: ![(NodeIndex,NodeIndex)] !.(Graph n e) -> .(Graph n e)
 
 //Folding
 foldrNodes :: (NodeIndex (Node n) .a -> .a) .a .(Graph n e) -> .a

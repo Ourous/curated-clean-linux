@@ -7,6 +7,7 @@ from Data.Func import $
 import Data.GenDefault
 import Data.Maybe
 import System.Options
+import Text
 
 derive gDefault TestOptions, TestRun
 
@@ -24,6 +25,14 @@ testOptionDescription = WithHelp True $ Options
 				Ok {opts & runs=init rs ++ [{r & options=r.options ++ [opt]}]})
 		"OPT"
 		"Add OPT to the options of the previously added test"
+	, Option
+		"--options"
+		(\optstring opts -> case opts.runs of
+			[] -> Error ["--options used before --run"]
+			rs -> let r = last rs in
+				Ok {opts & runs=init rs ++ [{r & options=r.options ++ split ";" optstring}]})
+		"'OPT;OPT;OPT'"
+		"Add the semicolon-separated OPTs to the options of the previously added test"
 	, Shorthand "-r" "--run"  $ Option
 		"--run"
 		(\r opts -> Ok {opts & runs=opts.runs ++ [{name=r, options=[]}]})

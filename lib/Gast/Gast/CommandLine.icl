@@ -30,6 +30,7 @@ instance Testable (o1, o2, a) | Testable a
 where
 	evaluate (_,_,p) g a = evaluate p g a
 	testname (_,_,p) = testname p
+	testlocation (_,_,p) = testlocation p
 
 instance getOptions ([Testoption], a, b) where getOptions (opts,_,_) = opts
 instance getPrintOptions (a, [PrintOption], b) where getPrintOptions (_,opts,_) = opts
@@ -38,6 +39,7 @@ instance Testable ExposedProperty
 where
 	evaluate (EP p) g a = evaluate p g a
 	testname (EP p) = testname p
+	testlocation (EP p) = testlocation p
 
 instance getOptions ExposedProperty where getOptions (EP p) = getOptions p
 
@@ -89,9 +91,9 @@ where
 		stream pc [ge:ges] io w
 		# io = foldl (\io ev -> snd $ fflush $ io <<< ev) io $ printEvents pc [ge]
 		# w = case ge of
-			GE_TestFinished _ {resultType=CounterExpls _ _ _} _ _ -> setReturnCode 1 w
-			GE_TestFinished _ {resultType=Undefined _}        _ _ -> setReturnCode 1 w
-			_                                                     -> w
+			GE_TestFinished _ _ {resultType=CounterExpls _ _ _} _ _ -> setReturnCode 1 w
+			GE_TestFinished _ _ {resultType=Undefined _}        _ _ -> setReturnCode 1 w
+			_                                                       -> w
 		= stream pc ges io w
 		stream _  [] io w = (io,w)
 
@@ -104,6 +106,7 @@ where
 			, "RandomSeed N:       a custom random seed"
 			, "Skew N:             0 for symmetric test generation; positive for right-skewn generation; negative for left-skewn generation"
 			, "MaxDepth N:         the maximum tree depth in generated test cases"
+			, "MaxStringLength N:  the maximum length of generated strings"
 			, "Output options:"
 			, "- Quiet:            only show the end result"
 			, "- Concise N:        show a test counter for every N tests"

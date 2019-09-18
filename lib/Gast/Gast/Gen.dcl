@@ -25,6 +25,7 @@ generic ggen a :: !GenState -> [a]
 :: GenState =
 	{ depth                 :: !Int //* depth
 	, maxDepth              :: !Int
+	, maxStringLength       :: !Int
 	, path                  :: ![ConsPos] //* path to nonrecursive constructor
 	, mode                  :: !Mode
 	, recInfo               :: !Map TypeName (Set TypeName)
@@ -54,14 +55,14 @@ genState :: GenState
  * @param A list of random numbers (e.g. aStream)
  * @result An inifinite list of strings
  */
-ggenString :: Int Real Int Int RandomStream -> [String]
+ggenString :: !Int !Real !Int !Int !RandomStream -> [String]
 
 derive ggen Int, Bool, Real, Char, String
 derive ggen UNIT, PAIR, EITHER, CONS of gcd, OBJECT of gtd, FIELD of d, RECORD of grd
-derive ggen (,), (,,), (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,)
+derive ggen (), (,), (,,), (,,,), (,,,,), (,,,,,), (,,,,,,), (,,,,,,,)
 derive ggen [], [!], [ !], [!!]
 derive ggen {}, {!}
 
-maxint	:: Int
-minint	:: Int
-StrLen	:== 16384
+maxint :: Int
+minint :: Int
+defaultMaxStrLen :== 16384

@@ -2,6 +2,7 @@ implementation module iTasks.Engine
 
 import Data.Func
 import Data.Functor
+import Data.List
 import Data.Queue
 import Internet.HTTP
 import StdEnv
@@ -25,6 +26,7 @@ import iTasks.WF.Combinators.Common
 import iTasks.WF.Definition
 import iTasks.WF.Tasks.SDS
 import iTasks.WF.Tasks.System
+import iTasks.WF.Derives
 
 import qualified Data.Map as DM
 
@@ -52,21 +54,29 @@ doTasksWithOptions initFun startable world
 	# (Right iworld)             = mbIWorld
 	# (symbolsResult, iworld)    = initSymbolsShare options.distributed options.appName iworld
 	| symbolsResult =: (Error _) = show ["Error reading symbols while required: " +++ fromError symbolsResult] (setReturnCode 1 (destroyIWorld iworld))
+	# iworld = if (hasDup requestPaths)
+		(iShow ["Warning: duplicate paths in the web tasks: " +++ join ", " ["'" +++ p +++ "'"\\p<-requestPaths]] iworld)
+		iworld
 	# iworld                     = serve (startupTasks options) (tcpTasks options.serverPort options.keepaliveTime) (timeout options.timeout) iworld
 	= destroyIWorld iworld
 where
-    webTasks = [t \\ WebTask t <- toStartable startable]
+	requestPaths = [path\\{path}<-webTasks]
+	webTasks = [t \\ WebTask t <- toStartable startable]
 	startupTasks {distributed, sdsPort}
+		=  if webTasks=:[]
+		   //if there are no webtasks: stop when stable
+		   [systemTask (startTask stopOnStable)]
+		   //if there are: show instructions andcleanup old sessions
+		   [startTask viewWebServerInstructions
+		   ,systemTask (startTask removeOutdatedSessions)]
 		//If distributed, start sds service task
-		=  (if distributed [systemTask (startTask (sdsServiceTask sdsPort))] [])
+		++ (if distributed [systemTask (startTask (sdsServiceTask sdsPort))] [])
 		++ [systemTask (startTask flushWritesWhenIdle)
-		//If there no webtasks, stop when stable, otherwise cleanup old sessions
-		   ,systemTask (startTask if (webTasks =: []) stopOnStable removeOutdatedSessions)
 		//Start all startup tasks
 		   :[t \\ StartupTask t <- toStartable startable]]
 
 	startTask t = {StartupTask|attributes=defaultValue,task=TaskWrapper t}
-	systemTask t = {StartupTask|t&attributes='DM'.put "system" "yes" t.StartupTask.attributes}
+	systemTask t = {StartupTask|t&attributes='DM'.put "system" (JSONBool True) t.StartupTask.attributes}
 
 	initSymbolsShare False _ iworld = (Ok (), iworld)
 	initSymbolsShare True appName iworld = case storeSymbols (IF_WINDOWS (appName +++ ".exe") appName) iworld of
@@ -111,7 +121,7 @@ where
 			("Specify the HTTP port (default: " +++ toString defaults.serverPort +++ ")")
 		, Option [] ["timeout"] (OptArg (\mp->fmap \o->{o & timeout=fmap toInt mp}) "MILLISECONDS")
 			"Specify the timeout in ms (default: 500)\nIf not given, use an indefinite timeout."
-		, Option [] ["allowed-hosts"] (ReqArg (\p->fmap \o->{o & allowedHosts = split "," p}) "IPADRESSES")
+		, Option [] ["allowed-hosts"] (ReqArg (\p->fmap \o->{o & allowedHosts = if (p == "") [] (split "," p)}) "IPADRESSES")
 			("Specify a comma separated white list of hosts that are allowed to connected to this application\ndefault: "
 			 +++ join "," defaults.allowedHosts)
 		, Option [] ["keepalive"] (ReqArg (\p->fmap \o->{o & keepaliveTime={tv_sec=toInt p,tv_nsec=0}}) "SECONDS")
@@ -160,17 +170,11 @@ where
 
 instance Startable (Task a) | iTask a //Default as web task
 where
-	toStartable task =
-		[onStartup viewWebServerInstructions
-		,onRequest "/" task
-		]
+	toStartable task = [onRequest "/" task]
 
 instance Startable (HTTPRequest -> Task a) | iTask a //As web task
 where
-	toStartable task =
-		[onStartup viewWebServerInstructions
-		,onRequestFromRequest "/" task
-		]
+	toStartable task = [onRequestFromRequest "/" task]
 
 instance Startable StartableTask
 where
@@ -273,10 +277,13 @@ where
 	where
 		getTimeoutFromClock` :: (!SDSNotifyRequest, !Timespec) -> Maybe Timeout
 		getTimeoutFromClock` (snr=:{cmpParam=(ts :: ClockParameter Timespec)}, reqTimespec)
-			| startsWith "$IWorld:timespec$" snr.reqSDSId && ts.interval <> zero
+			| dependsOnClock snr && ts.interval <> zero
 				# fire = iworldTimespecNextFire now reqTimespec ts
 				= Just (max 0 (toMs fire - toMs now))
 			= mt
 		getTimeoutFromClock` _ = mt
+
+	dependsOnClock :: !SDSNotifyRequest -> Bool
+	dependsOnClock snr = indexOf "$IWorld:timespec$" snr.reqSDSId >= 0
 
 	toMs x = x.tv_sec * 1000 + x.tv_nsec / 1000000

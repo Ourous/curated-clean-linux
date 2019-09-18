@@ -51,20 +51,20 @@ itemShare :: (c -> i) (Shared sds [c]) i -> Shared SDSLens (Maybe c) | iTask i &
 * Select an item from a shared collection and project the selection on another shared state
 *
 */
-selectItem :: !d (Shared sds [c]) (c -> i) -> Task i | toPrompt d & iTask c & iTask i & RWShared sds
+selectItem :: (Shared sds [c]) (c -> i) -> Task i | iTask c & iTask i & RWShared sds
 /**
 * View an item in the collection (without actions)
 */
-viewItem :: !d (Shared sdsc [c]) ((Shared sdsc [c]) i -> Shared sdss (Maybe c)) (Maybe i) -> Task (Maybe i) | toPrompt d & iTask c & iTask i & RWShared sdsc & RWShared sdss
+viewItem :: (Shared sdsc [c]) ((Shared sdsc [c]) i -> Shared sdss (Maybe c)) (Maybe i) -> Task (Maybe i) | iTask c & iTask i & RWShared sdsc & RWShared sdss
 /**
 * Add an item to the collection
 */
-addItem :: !d (Shared sds [c]) (c -> i) -> Task (Maybe i) | toPrompt d & iTask i & iTask c & RWShared sds
+addItem :: (Shared sds [c]) (c -> i) -> Task (Maybe i) | iTask i & iTask c & RWShared sds
 /**
 * Edit an item in the collection
 */
-editItem :: !d (Shared sdsc [c]) ((Shared sdsc [c]) i -> Shared sdss (Maybe c)) (c -> i) i -> Task (Maybe i) | toPrompt d & iTask c & iTask i & RWShared sdsc & RWShared sdss
+editItem :: (Shared sdsc [c]) ((Shared sdsc [c]) i -> Shared sdss (Maybe c)) (c -> i) i -> Task (Maybe i) | iTask c & iTask i & RWShared sdsc & RWShared sdss
 /**
 * Delete an item from the collection
 */
-deleteItem :: !d (Shared sdsc [c]) ((Shared sdsc [c]) i -> Shared sdss (Maybe c)) (c -> i) i -> Task (Maybe i) | toPrompt d & iTask c & iTask i & RWShared sdsc & RWShared sdss
+deleteItem :: (Shared sdsc [c]) ((Shared sdsc [c]) i -> Shared sdss (Maybe c)) (c -> i) i -> Task (Maybe i) | iTask c & iTask i & RWShared sdsc & RWShared sdss

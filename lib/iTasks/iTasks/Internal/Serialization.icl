@@ -51,5 +51,7 @@ dynamicJSONDecode :: !JSONNode -> Maybe a
 dynamicJSONDecode (JSONArray [JSONString "_DYNAMICENCODE_",JSONString str]) = Just (fst (copy_from_string (base64URLDecode str)))
 dynamicJSONDecode _					= Nothing
 
-serializeForClient :: f !*VSt -> *(!String, !*VSt)
-serializeForClient f vst=:{VSt| abcInterpreterEnv} = (serialize_for_prelinked_interpretation f abcInterpreterEnv, vst)
+serializeForClient :: a !*VSt -> *(!String, !*VSt)
+serializeForClient graph vst=:{VSt| abcInterpreterEnv}
+	# serialized = serialize_for_prelinked_interpretation graph abcInterpreterEnv
+	= (base64Encode serialized, vst)

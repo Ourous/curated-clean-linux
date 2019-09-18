@@ -10,7 +10,7 @@ uname name = XMLQName Nothing name
 qname :: !XMLNamespacePrefix !String -> XMLQName
 qname namespace name = XMLQName (Just namespace) name
 
-addNamespaces :: !(Maybe XMLURI) [(!XMLNamespacePrefix,!String)] !XMLNode -> XMLNode
+addNamespaces :: !(Maybe XMLURI) [(XMLNamespacePrefix,String)] !XMLNode -> XMLNode
 addNamespaces mbDefaultNamespace namespaces (XMLElem qname attrs children)
 	# ns = map (\(prefix,uri) -> XMLAttr (XMLQName (Just "xmlns") prefix) uri) namespaces
 	# ns = case mbDefaultNamespace of

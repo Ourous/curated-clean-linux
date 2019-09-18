@@ -147,14 +147,14 @@ where
 		= printp st (cv :+: " " :+: join {st & cpp_parens=True} " " ats)
 	print st (TB bt)
 		= print st bt
-	//print st (TFA atvs type)
-	//	= "TFA"
 	print st (GTV tv)
 		= print st (tv :+: "^")
 	print st (TV tv)
 		= print st tv
+	print st (TFA atvs type)
+		= print {st & cpp_parens=False} ("(A." :+: join st " " atvs :+: ": " :+: type :+: ")")
 	print st (TFAC atvs t tc)
-		= print st ("(A." :+: join st " " atvs :+: ": " :+: t :+: " | " :+: join st " & " tc :+: ")")
+		= print {st & cpp_parens=False} ("(A." :+: join st " " atvs :+: ": " :+: t :+: " | " :+: join st " & " tc :+: ")")
 	print st (TQualifiedIdent id s [])
 		= print st ("'" :+: id :+: "'." :+: s)
 	print st (TQualifiedIdent id s ats)
